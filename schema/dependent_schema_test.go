@@ -292,7 +292,7 @@ var testSchemaWithAttributes = &BlockSchema{
 				IsDepKey:  true,
 			},
 			"depref": {
-				ValueType: cty.NilType,
+				ValueType: cty.DynamicPseudoType,
 				IsDepKey:  true,
 			},
 		},

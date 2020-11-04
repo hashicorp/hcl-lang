@@ -91,12 +91,12 @@ func TestSnippetForAttribute(t *testing.T) {
 }`,
 		},
 		{
-			"nil type",
+			"unknown type",
 			"mynil",
 			&schema.AttributeSchema{
-				ValueType: cty.NilType,
+				ValueType: cty.DynamicPseudoType,
 			},
-			`mynil = `,
+			`mynil = ${1}`,
 		},
 		// TODO: Indent nested objects correctly
 		// 		{

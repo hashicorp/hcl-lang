@@ -283,7 +283,7 @@ func TestDecoder_CandidatesAtPos_endOfLabel(t *testing.T) {
 			}): {
 				Attributes: map[string]*schema.AttributeSchema{
 					"four": {ValueType: cty.Number},
-					"five": {ValueType: cty.NilType},
+					"five": {ValueType: cty.DynamicPseudoType},
 				},
 			},
 		},
@@ -511,7 +511,7 @@ func TestDecoder_CandidatesAtPos_emptyLabel(t *testing.T) {
 			}): {
 				Attributes: map[string]*schema.AttributeSchema{
 					"four": {ValueType: cty.Number},
-					"five": {ValueType: cty.NilType},
+					"five": {ValueType: cty.DynamicPseudoType},
 				},
 			},
 		},
@@ -606,7 +606,7 @@ func TestDecoder_CandidatesAtPos_basic(t *testing.T) {
 			}): {
 				Attributes: map[string]*schema.AttributeSchema{
 					"four": {ValueType: cty.Number},
-					"five": {ValueType: cty.NilType},
+					"five": {ValueType: cty.DynamicPseudoType},
 				},
 			},
 		},

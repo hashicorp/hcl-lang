@@ -33,9 +33,7 @@ func detailForAttribute(attr *schema.AttributeSchema) string {
 		detail = "Optional"
 	}
 
-	if attr.ValueType != cty.NilType {
-		detail += fmt.Sprintf(", %s", attr.ValueType.FriendlyName())
-	}
+	detail += fmt.Sprintf(", %s", attr.ValueType.FriendlyName())
 
 	return detail
 }
@@ -57,6 +55,8 @@ func snippetForAttrValue(placeholder uint, equalSign bool, attrType cty.Type) st
 		return fmt.Sprintf(`%s${%d:false}`, eq, placeholder)
 	case cty.Number:
 		return fmt.Sprintf(`%s${%d:1}`, eq, placeholder)
+	case cty.DynamicPseudoType:
+		return fmt.Sprintf(`%s${%d}`, eq, placeholder)
 	}
 
 	if attrType.IsMapType() {
@@ -66,7 +66,7 @@ func snippetForAttrValue(placeholder uint, equalSign bool, attrType cty.Type) st
 
 	if attrType.IsListType() || attrType.IsSetType() {
 		elType := attrType.ElementType()
-		if elType.IsPrimitiveType() {
+		if elType.IsPrimitiveType() || elType == cty.DynamicPseudoType {
 			return fmt.Sprintf("%s[ %s ]", eq, snippetForAttrValue(placeholder, false, elType))
 		}
 
