@@ -45,40 +45,31 @@ func detailForAttribute(attr *schema.AttributeSchema) string {
 
 func snippetForAttribute(name string, attr *schema.AttributeSchema) string {
 	if len(attr.ValueTypes) > 0 {
-		return fmt.Sprintf("%s %s", name, snippetForAttrValue(1, true, attr.ValueTypes[0]))
+		return fmt.Sprintf("%s = %s", name, snippetForAttrValue(1, attr.ValueTypes[0]))
 	}
-	return fmt.Sprintf("%s %s", name, snippetForAttrValue(1, true, attr.ValueType))
+	return fmt.Sprintf("%s = %s", name, snippetForAttrValue(1, attr.ValueType))
 }
 
-func snippetForAttrValue(placeholder uint, equalSign bool, attrType cty.Type) string {
-	eq := ""
-	if equalSign {
-		eq = "= "
-	}
-
+func snippetForAttrValue(placeholder uint, attrType cty.Type) string {
 	switch attrType {
 	case cty.String:
-		return fmt.Sprintf(`%s"${%d:value}"`, eq, placeholder)
+		return fmt.Sprintf(`"${%d:value}"`, placeholder)
 	case cty.Bool:
-		return fmt.Sprintf(`%s${%d:false}`, eq, placeholder)
+		return fmt.Sprintf(`${%d:false}`, placeholder)
 	case cty.Number:
-		return fmt.Sprintf(`%s${%d:1}`, eq, placeholder)
+		return fmt.Sprintf(`${%d:1}`, placeholder)
 	case cty.DynamicPseudoType:
-		return fmt.Sprintf(`%s${%d}`, eq, placeholder)
+		return fmt.Sprintf(`${%d}`, placeholder)
 	}
 
 	if attrType.IsMapType() {
-		return fmt.Sprintf("%s{\n"+`  "${1:key}" %s`+"\n}", eq,
-			snippetForAttrValue(placeholder+1, true, *attrType.MapElementType()))
+		return fmt.Sprintf("{\n"+`  "${1:key}" = %s`+"\n}",
+			snippetForAttrValue(placeholder+1, *attrType.MapElementType()))
 	}
 
 	if attrType.IsListType() || attrType.IsSetType() {
 		elType := attrType.ElementType()
-		if elType.IsPrimitiveType() || elType == cty.DynamicPseudoType {
-			return fmt.Sprintf("%s[ %s ]", eq, snippetForAttrValue(placeholder, false, elType))
-		}
-
-		return snippetForAttrValue(placeholder, true, elType)
+		return fmt.Sprintf("[ %s ]", snippetForAttrValue(placeholder, elType))
 	}
 
 	if attrType.IsObjectType() {
@@ -86,8 +77,8 @@ func snippetForAttrValue(placeholder uint, equalSign bool, attrType cty.Type) st
 		for _, name := range sortedObjectAttrNames(attrType) {
 			valType := attrType.AttributeType(name)
 
-			objSnippet += fmt.Sprintf("  %s %s\n", name,
-				snippetForAttrValue(placeholder, true, valType))
+			objSnippet += fmt.Sprintf("  %s = %s\n", name,
+				snippetForAttrValue(placeholder, valType))
 			placeholder++
 		}
 		return fmt.Sprintf("{\n%s}", objSnippet)
@@ -96,18 +87,18 @@ func snippetForAttrValue(placeholder uint, equalSign bool, attrType cty.Type) st
 	if attrType.IsTupleType() {
 		elTypes := attrType.TupleElementTypes()
 		if len(elTypes) == 1 {
-			return fmt.Sprintf("%s[ %s ]", eq, snippetForAttrValue(placeholder, false, elTypes[0]))
+			return fmt.Sprintf("[ %s ]", snippetForAttrValue(placeholder, elTypes[0]))
 		}
 
 		tupleSnippet := ""
 		for _, elType := range elTypes {
 			placeholder++
-			tupleSnippet += snippetForAttrValue(placeholder, false, elType)
+			tupleSnippet += snippetForAttrValue(placeholder, elType)
 		}
-		return fmt.Sprintf("%s[\n%s]", eq, tupleSnippet)
+		return fmt.Sprintf("[\n%s]", tupleSnippet)
 	}
 
-	return eq
+	return ""
 }
 
 func sortedObjectAttrNames(obj cty.Type) []string {

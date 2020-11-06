@@ -61,10 +61,10 @@ func TestSnippetForAttribute(t *testing.T) {
 					"second": cty.Number,
 				})),
 			},
-			`mylistobj {
+			`mylistobj = [ {
   first = "${1:value}"
   second = ${2:1}
-}`,
+} ]`,
 		},
 		{
 			"set of numbers",
@@ -84,7 +84,7 @@ func TestSnippetForAttribute(t *testing.T) {
 					"keybool": cty.Bool,
 				}),
 			},
-			`myobj {
+			`myobj = {
   keybool = ${1:false}
   keynum = ${2:1}
   keystr = "${3:value}"
