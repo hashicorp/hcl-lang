@@ -830,6 +830,69 @@ resource "random_resource" "test" {
 	}
 }
 
+func TestDecoder_CandidatesAtPos_AnyAttribute(t *testing.T) {
+	providersSchema := &schema.BlockSchema{
+		Body: &schema.BodySchema{
+			AnyAttribute: &schema.AttributeSchema{
+				ValueType: cty.Object(map[string]cty.Type{
+					"source":  cty.String,
+					"version": cty.String,
+				}),
+			},
+		},
+	}
+
+	bodySchema := &schema.BodySchema{
+		Blocks: map[string]*schema.BlockSchema{
+			"required_providers": providersSchema,
+		},
+	}
+
+	cfg := []byte(`required_providers {
+
+}
+`)
+
+	d := NewDecoder()
+	d.SetSchema(bodySchema)
+
+	f, pDiags := hclsyntax.ParseConfig(cfg, "test.tf", hcl.InitialPos)
+	if len(pDiags) > 0 {
+		t.Fatal(pDiags)
+	}
+	err := d.LoadFile("test.tf", f)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	pos := hcl.Pos{Line: 2, Column: 1, Byte: 21}
+	candidates, err := d.CandidatesAtPos("test.tf", pos)
+	if err != nil {
+		t.Fatal(err)
+	}
+	expectedCandidates := lang.CompleteCandidates([]lang.Candidate{
+		{
+			Label:  "name",
+			Detail: "Optional, object",
+			TextEdit: lang.TextEdit{
+				Range: hcl.Range{
+					Filename: "test.tf",
+					Start:    hcl.Pos{Line: 2, Column: 1, Byte: 21},
+					End:      hcl.Pos{Line: 2, Column: 1, Byte: 21},
+				},
+				NewText: "name",
+				Snippet: "name = {\n  source = \"${1:value}\"\n  version = \"${2:value}\"\n}",
+			},
+			Kind: lang.AttributeCandidateKind,
+		},
+	})
+
+	diff := cmp.Diff(expectedCandidates, candidates, ctydebug.CmpOptions)
+	if diff != "" {
+		t.Fatalf("unexpected schema for %s: %s", stringPos(pos), diff)
+	}
+}
+
 func TestDecoder_CandidatesAtPos_multipleTypes(t *testing.T) {
 	resourceLabelSchema := []*schema.LabelSchema{
 		{Name: "type", IsDepKey: true},

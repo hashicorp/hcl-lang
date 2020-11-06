@@ -15,22 +15,31 @@ func (d *Decoder) bodySchemaCandidates(body *hclsyntax.Body, schema *schema.Body
 
 	candidates := lang.NewCandidates()
 	count := 0
-	attrNames := sortedAttributeNames(schema.Attributes)
 
-	for _, name := range attrNames {
-		attr := schema.Attributes[name]
+	if len(schema.Attributes) > 0 {
+		attrNames := sortedAttributeNames(schema.Attributes)
+		for _, name := range attrNames {
+			attr := schema.Attributes[name]
 
-		if !isAttributeDeclarable(body, name, attr) {
-			continue
+			if !isAttributeDeclarable(body, name, attr) {
+				continue
+			}
+			if len(prefix) > 0 && !strings.HasPrefix(name, string(prefix)) {
+				continue
+			}
+			if uint(count) >= d.maxCandidates {
+				return candidates
+			}
+
+			candidates.List = append(candidates.List, attributeSchemaToCandidate(name, attr, editRng))
+			count++
 		}
-		if len(prefix) > 0 && !strings.HasPrefix(name, string(prefix)) {
-			continue
-		}
+	} else if attr := schema.AnyAttribute; attr != nil && len(prefix) == 0 {
 		if uint(count) >= d.maxCandidates {
 			return candidates
 		}
 
-		candidates.List = append(candidates.List, attributeSchemaToCandidate(name, attr, editRng))
+		candidates.List = append(candidates.List, attributeSchemaToCandidate("name", attr, editRng))
 		count++
 	}
 
