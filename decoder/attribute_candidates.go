@@ -3,6 +3,7 @@ package decoder
 import (
 	"fmt"
 	"sort"
+	"strings"
 
 	"github.com/hashicorp/hcl-lang/lang"
 	"github.com/hashicorp/hcl-lang/schema"
@@ -33,12 +34,19 @@ func detailForAttribute(attr *schema.AttributeSchema) string {
 		detail = "Optional"
 	}
 
-	detail += fmt.Sprintf(", %s", attr.ValueType.FriendlyName())
+	if len(attr.ValueTypes) > 0 {
+		detail += fmt.Sprintf(", %s", strings.Join(attr.ValueTypes.FriendlyNames(), " or "))
+	} else {
+		detail += fmt.Sprintf(", %s", attr.ValueType.FriendlyName())
+	}
 
 	return detail
 }
 
 func snippetForAttribute(name string, attr *schema.AttributeSchema) string {
+	if len(attr.ValueTypes) > 0 {
+		return fmt.Sprintf("%s %s", name, snippetForAttrValue(1, true, attr.ValueTypes[0]))
+	}
 	return fmt.Sprintf("%s %s", name, snippetForAttrValue(1, true, attr.ValueType))
 }
 

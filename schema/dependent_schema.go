@@ -109,7 +109,7 @@ func (ev ExpressionValue) MarshalJSON() ([]byte, error) {
 	var val exprVal
 
 	if ev.Static.Type() != cty.NilType {
-		val.Static = ctyjson.SimpleJSONValue{ev.Static}
+		val.Static = ctyjson.SimpleJSONValue{Value: ev.Static}
 	}
 
 	v, err := ev.Reference.Marshal()

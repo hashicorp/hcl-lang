@@ -830,6 +830,77 @@ resource "random_resource" "test" {
 	}
 }
 
+func TestDecoder_CandidatesAtPos_multipleTypes(t *testing.T) {
+	resourceLabelSchema := []*schema.LabelSchema{
+		{Name: "type", IsDepKey: true},
+		{Name: "name"},
+	}
+
+	resourceSchema := &schema.BlockSchema{
+		Labels: resourceLabelSchema,
+		Body: &schema.BodySchema{
+			Attributes: map[string]*schema.AttributeSchema{
+				"for_each": {
+					ValueTypes: schema.ValueTypes{
+						cty.Set(cty.DynamicPseudoType),
+						cty.Map(cty.DynamicPseudoType),
+					},
+				},
+			},
+		},
+	}
+
+	bodySchema := &schema.BodySchema{
+		Blocks: map[string]*schema.BlockSchema{
+			"resource": resourceSchema,
+		},
+	}
+
+	cfg := []byte(`resource "azurerm_subnet" "example" {
+
+}
+`)
+
+	d := NewDecoder()
+	d.SetSchema(bodySchema)
+
+	f, pDiags := hclsyntax.ParseConfig(cfg, "test.tf", hcl.InitialPos)
+	if len(pDiags) > 0 {
+		t.Fatal(pDiags)
+	}
+	err := d.LoadFile("test.tf", f)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	pos := hcl.Pos{Line: 2, Column: 1, Byte: 38}
+	candidates, err := d.CandidatesAtPos("test.tf", pos)
+	if err != nil {
+		t.Fatal(err)
+	}
+	expectedCandidates := lang.CompleteCandidates([]lang.Candidate{
+		{
+			Label:  "for_each",
+			Detail: "Optional, set of dynamic or map of dynamic",
+			TextEdit: lang.TextEdit{
+				Range: hcl.Range{
+					Filename: "test.tf",
+					Start:    hcl.Pos{Line: 2, Column: 1, Byte: 38},
+					End:      hcl.Pos{Line: 2, Column: 1, Byte: 38},
+				},
+				NewText: "for_each",
+				Snippet: "for_each = [ ${1} ]",
+			},
+			Kind: lang.AttributeCandidateKind,
+		},
+	})
+
+	diff := cmp.Diff(expectedCandidates, candidates, ctydebug.CmpOptions)
+	if diff != "" {
+		t.Fatalf("unexpected schema for %s: %s", stringPos(pos), diff)
+	}
+}
+
 func TestDecoder_CandidatesAtPos_incompleteAttrOrBlock(t *testing.T) {
 	resourceLabelSchema := []*schema.LabelSchema{
 		{Name: "type"},
