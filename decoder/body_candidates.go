@@ -94,7 +94,7 @@ func sortedBlockTypes(blocks map[string]*schema.BlockSchema) []string {
 }
 
 func isAttributeDeclarable(body *hclsyntax.Body, name string, attr *schema.AttributeSchema) bool {
-	if attr.IsReadOnly {
+	if attr.IsComputed && !attr.IsOptional {
 		return false
 	}
 

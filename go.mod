@@ -4,6 +4,7 @@ go 1.14
 
 require (
 	github.com/google/go-cmp v0.3.1
+	github.com/hashicorp/go-multierror v1.1.0
 	github.com/hashicorp/hcl/v2 v2.6.0
 	github.com/mitchellh/copystructure v1.0.0
 	github.com/zclconf/go-cty v1.6.1

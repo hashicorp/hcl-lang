@@ -1,6 +1,9 @@
 package schema
 
 import (
+	"fmt"
+
+	"github.com/hashicorp/go-multierror"
 	"github.com/hashicorp/hcl-lang/lang"
 )
 
@@ -14,7 +17,6 @@ type BodySchema struct {
 	Detail       string
 	Description  lang.MarkupContent
 
-	// TODO: validate conflict between Attributes and AnyAttribute
 	// TODO: Functions
 }
 
@@ -28,4 +30,36 @@ func NewBodySchema() *BodySchema {
 		Blocks:     make(map[string]*BlockSchema, 0),
 		Attributes: make(map[string]*AttributeSchema, 0),
 	}
+}
+
+func (bs *BodySchema) Validate() error {
+	if len(bs.Attributes) > 0 && bs.AnyAttribute != nil {
+		return fmt.Errorf("one of Attributes or AnyAttribute must be set, not both")
+	}
+
+	var result *multierror.Error
+	for name, attr := range bs.Attributes {
+		err := attr.Validate()
+		if err != nil {
+			result = multierror.Append(result, fmt.Errorf("%s: %s", name, err))
+		}
+	}
+
+	for bType, block := range bs.Blocks {
+		if block.Body == nil {
+			continue
+		}
+		err := block.Body.Validate()
+		if err != nil {
+			if me, ok := err.(*multierror.Error); ok {
+				for _, err := range me.Errors {
+					result = multierror.Append(result, fmt.Errorf("%s: %s", bType, err))
+				}
+			} else {
+				result = multierror.Append(result, fmt.Errorf("%s: %s", bType, err))
+			}
+		}
+	}
+
+	return result.ErrorOrNil()
 }
