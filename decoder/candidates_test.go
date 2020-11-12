@@ -96,6 +96,71 @@ func TestDecoder_CandidatesAtPos_unknownBlock(t *testing.T) {
 	}
 }
 
+func TestDecoder_CandidatesAtPos_prefixNearEOF(t *testing.T) {
+	resourceLabelSchema := []*schema.LabelSchema{
+		{Name: "type"},
+		{Name: "name"},
+	}
+	resourceSchema := &schema.BlockSchema{
+		Labels: resourceLabelSchema,
+		Body: &schema.BodySchema{
+			Attributes: map[string]*schema.AttributeSchema{
+				"count": {ValueType: cty.Number},
+			},
+		},
+	}
+	bodySchema := &schema.BodySchema{
+		Blocks: map[string]*schema.BlockSchema{
+			"resource": resourceSchema,
+		},
+	}
+
+	d := NewDecoder()
+	d.SetSchema(bodySchema)
+	f, _ := hclsyntax.ParseConfig([]byte(`res`), "test.tf", hcl.InitialPos)
+
+	err := d.LoadFile("test.tf", f)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	candidates, err := d.CandidatesAtPos("test.tf", hcl.Pos{
+		Line:   1,
+		Column: 4,
+		Byte:   3,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	expectedCandidates := lang.CompleteCandidates([]lang.Candidate{
+		{
+			Label:  "resource",
+			Detail: "Block",
+			TextEdit: lang.TextEdit{
+				Range: hcl.Range{
+					Filename: "test.tf",
+					Start: hcl.Pos{
+						Line:   1,
+						Column: 1,
+						Byte:   0,
+					},
+					End: hcl.Pos{
+						Line:   1,
+						Column: 4,
+						Byte:   3,
+					},
+				},
+				NewText: "resource",
+				Snippet: "resource \"${1:type}\" \"${2:name}\" {\n  ${3}\n}",
+			},
+			Kind: lang.BlockCandidateKind,
+		},
+	})
+	if diff := cmp.Diff(expectedCandidates, candidates, ctydebug.CmpOptions); diff != "" {
+		t.Fatalf("candidates mismatch: %s", diff)
+	}
+}
+
 func TestDecoder_CandidatesAtPos_invalidBlockPositions(t *testing.T) {
 	resourceLabelSchema := []*schema.LabelSchema{
 		{Name: "type"},
