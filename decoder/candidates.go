@@ -177,6 +177,15 @@ func nameTokenRangeAtPos(tokens hclsyntax.Tokens, pos hcl.Pos) (hcl.Range, error
 			}
 			return hcl.Range{}, fmt.Errorf("token is %s, not Ident", t.Type.String())
 		}
+
+		// EOF token has zero length
+		// so we just compare start/end position
+		if t.Type == hclsyntax.TokenEOF && t.Range.Start == pos && t.Range.End == pos && i > 0 {
+			previousToken := tokens[i-1]
+			if previousToken.Type == hclsyntax.TokenIdent {
+				return previousToken.Range, nil
+			}
+		}
 	}
 	return hcl.Range{}, fmt.Errorf("no token found at %s", stringPos(pos))
 }
