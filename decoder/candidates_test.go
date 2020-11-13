@@ -474,7 +474,8 @@ func TestDecoder_CandidatesAtPos_zeroByteContent(t *testing.T) {
 				NewText: "resource",
 				Snippet: "resource \"${1}\" \"${2:name}\" {\n  ${3}\n}",
 			},
-			Kind: 2,
+			Kind: lang.BlockCandidateKind,
+			TriggerSuggest: true,
 		},
 	})
 	if diff := cmp.Diff(expectedCandidates, candidates); diff != "" {
@@ -536,6 +537,7 @@ func TestDecoder_CandidatesAtPos_endOfFilePos(t *testing.T) {
 					Snippet: "resource \"${1}\" \"${2:name}\" {\n  ${3}\n}",
 				},
 				Kind: lang.BlockCandidateKind,
+				TriggerSuggest: true,
 			},
 		},
 		IsComplete: true,
@@ -726,6 +728,7 @@ resource "random_resource" "test" {
 						Snippet: "resource \"${1}\" \"${2:name}\" {\n  ${3}\n}",
 					},
 					Kind: lang.BlockCandidateKind,
+					TriggerSuggest: true,
 				},
 			}),
 		},
@@ -746,6 +749,7 @@ resource "random_resource" "test" {
 						Snippet: "resource \"${1}\" \"${2:name}\" {\n  ${3}\n}",
 					},
 					Kind: lang.BlockCandidateKind,
+					TriggerSuggest: true,
 				},
 			}),
 		},

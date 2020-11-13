@@ -23,6 +23,10 @@ type Candidate struct {
 	TextEdit            TextEdit
 	AdditionalTextEdits []TextEdit
 	Kind                CandidateKind
+
+	// TriggerSuggest allows server to instruct the client whether
+	// to reopen candidate suggestion popup after insertion
+	TriggerSuggest bool
 }
 
 // TextEdit represents a change (edit) of an HCL config file
