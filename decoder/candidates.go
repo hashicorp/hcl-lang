@@ -39,11 +39,16 @@ func (d *Decoder) candidatesAtPos(body *hclsyntax.Body, bodySchema *schema.BodyS
 		return lang.ZeroCandidates(), nil
 	}
 
+	filename := body.Range().Filename
+
 	for _, attr := range body.Attributes {
 		if isRightHandSidePos(attr, pos) {
 			// TODO: RHS candidates (requires a form of expression schema)
-			return lang.ZeroCandidates(), fmt.Errorf(
-				"no candidates for attribute value at %s", stringPos(pos))
+			return lang.ZeroCandidates(), &PositionalError{
+				Filename: filename,
+				Pos:      pos,
+				Msg:      fmt.Sprintf("%s: no candidates for attribute value", attr.Name),
+			}
 		}
 		if attr.NameRange.ContainsPos(pos) {
 			prefixRng := attr.NameRange
@@ -52,7 +57,6 @@ func (d *Decoder) candidatesAtPos(body *hclsyntax.Body, bodySchema *schema.BodyS
 		}
 	}
 
-	filename := body.Range().Filename
 	rng := hcl.Range{
 		Filename: filename,
 		Start:    pos,

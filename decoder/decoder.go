@@ -160,6 +160,32 @@ func mergeBlockBodySchemas(block *hclsyntax.Block, blockSchema *schema.BlockSche
 		mergedSchema.Blocks = make(map[string]*schema.BlockSchema, 0)
 	}
 
+	dk := dependencyKeysFromBlock(block, blockSchema)
+
+	depSchema, ok := blockSchema.DependentBodySchema(dk)
+	if ok {
+		for name, attr := range depSchema.Attributes {
+			if _, exists := mergedSchema.Attributes[name]; !exists {
+				mergedSchema.Attributes[name] = attr
+			} else {
+				// Skip duplicate attribute
+				continue
+			}
+		}
+		for bType, block := range depSchema.Blocks {
+			if _, exists := mergedSchema.Blocks[bType]; !exists {
+				mergedSchema.Blocks[bType] = block
+			} else {
+				// Skip duplicate block type
+				continue
+			}
+		}
+	}
+
+	return mergedSchema, nil
+}
+
+func dependencyKeysFromBlock(block *hclsyntax.Block, blockSchema *schema.BlockSchema) schema.DependencyKeys {
 	dk := schema.DependencyKeys{
 		Labels:     []schema.LabelDependent{},
 		Attributes: []schema.AttributeDependent{},
@@ -210,28 +236,7 @@ func mergeBlockBodySchemas(block *hclsyntax.Block, blockSchema *schema.BlockSche
 			})
 		}
 	}
-
-	depSchema, ok := blockSchema.DependentBodySchema(dk)
-	if ok {
-		for name, attr := range depSchema.Attributes {
-			if _, exists := mergedSchema.Attributes[name]; !exists {
-				mergedSchema.Attributes[name] = attr
-			} else {
-				// Skip duplicate attribute
-				continue
-			}
-		}
-		for bType, block := range depSchema.Blocks {
-			if _, exists := mergedSchema.Blocks[bType]; !exists {
-				mergedSchema.Blocks[bType] = block
-			} else {
-				// Skip duplicate block type
-				continue
-			}
-		}
-	}
-
-	return mergedSchema, nil
+	return dk
 }
 
 func ctyTypeCopier(v interface{}) (interface{}, error) {

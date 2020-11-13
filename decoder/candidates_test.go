@@ -33,7 +33,7 @@ func TestDecoder_CandidatesAtPos_noSchema(t *testing.T) {
 	}
 }
 
-func TestDecoder_CandidateAtPos_emptyBody(t *testing.T) {
+func TestDecoder_CandidatesAtPos_emptyBody(t *testing.T) {
 	d := NewDecoder()
 	f := &hcl.File{
 		Body: hcl.EmptyBody(),
