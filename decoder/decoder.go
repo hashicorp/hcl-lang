@@ -198,6 +198,11 @@ func dependencyKeysFromBlock(block *hclsyntax.Block, blockSchema *schema.BlockSc
 			})
 		}
 	}
+
+	if blockSchema.Body == nil {
+		return dk
+	}
+
 	for name, attrSchema := range blockSchema.Body.Attributes {
 		if attrSchema.IsDepKey {
 			attr, ok := block.Body.Attributes[name]
