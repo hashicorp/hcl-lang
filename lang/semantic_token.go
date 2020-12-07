@@ -1,6 +1,8 @@
 package lang
 
 import (
+	"fmt"
+
 	"github.com/hashicorp/hcl/v2"
 )
 
@@ -10,6 +12,7 @@ type SemanticToken struct {
 	Range     hcl.Range
 }
 
+//go:generate stringer -type=SemanticTokenType -output=semantic_token_type_string.go
 type SemanticTokenType uint
 
 const (
@@ -19,6 +22,11 @@ const (
 	TokenBlockLabel
 )
 
+func (t SemanticTokenType) GoString() string {
+	return fmt.Sprintf("lang.%s", t.String())
+}
+
+//go:generate stringer -type=SemanticTokenModifier -output=semantic_token_modifier_string.go
 type SemanticTokenModifier uint
 
 const (
@@ -26,3 +34,7 @@ const (
 	TokenModifierDependent
 	TokenModifierDeprecated
 )
+
+func (m SemanticTokenModifier) GoString() string {
+	return fmt.Sprintf("lang.%s", m.String())
+}

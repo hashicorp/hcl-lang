@@ -327,7 +327,7 @@ resource "aws_instance" "beta" {
 		{
 			Type:      lang.TokenBlockLabel,
 			Modifiers: []lang.SemanticTokenModifier{},
-			Range:     hcl.Range{
+			Range: hcl.Range{
 				Filename: "test.tf",
 				Start: hcl.Pos{
 					Line:   1,
@@ -344,7 +344,7 @@ resource "aws_instance" "beta" {
 		{
 			Type:      lang.TokenBlockType,
 			Modifiers: []lang.SemanticTokenModifier{},
-			Range:     hcl.Range{
+			Range: hcl.Range{
 				Filename: "test.tf",
 				Start: hcl.Pos{
 					Line:   4,
@@ -380,7 +380,7 @@ resource "aws_instance" "beta" {
 		{
 			Type:      lang.TokenBlockLabel,
 			Modifiers: []lang.SemanticTokenModifier{},
-			Range:     hcl.Range{
+			Range: hcl.Range{
 				Filename: "test.tf",
 				Start: hcl.Pos{
 					Line:   4,
