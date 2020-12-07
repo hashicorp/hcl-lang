@@ -260,8 +260,8 @@ func TestDecoder_HoverAtPos_rightHandSide(t *testing.T) {
 		Content: lang.Markdown("**str_attr** _Optional, string_\n\nSpecial attribute"),
 		Range: hcl.Range{
 			Filename: "test.tf",
-			Start: hcl.Pos{Line: 2, Column: 3, Byte: 18},
-			End: hcl.Pos{Line: 2, Column: 20, Byte: 35},
+			Start:    hcl.Pos{Line: 2, Column: 3, Byte: 18},
+			End:      hcl.Pos{Line: 2, Column: 20, Byte: 35},
 		},
 	}
 	if diff := cmp.Diff(expectedData, data, ctydebug.CmpOptions); diff != "" {
@@ -275,7 +275,7 @@ func TestDecoder_HoverAtPos_basic(t *testing.T) {
 		{Name: "name"},
 	}
 	blockSchema := &schema.BlockSchema{
-		Labels: resourceLabelSchema,
+		Labels:      resourceLabelSchema,
 		Description: lang.Markdown("My special block"),
 		Body: &schema.BodySchema{
 			Attributes: map[string]*schema.AttributeSchema{
@@ -289,7 +289,7 @@ func TestDecoder_HoverAtPos_basic(t *testing.T) {
 					{Index: 0, Value: "sushi"},
 				},
 			}): {
-				Detail: "rice, fish etc.",
+				Detail:      "rice, fish etc.",
 				Description: lang.Markdown("Sushi, the Rolls-Rice of Japanese cuisine"),
 			},
 			schema.NewSchemaKey(schema.DependencyKeys{
@@ -297,7 +297,7 @@ func TestDecoder_HoverAtPos_basic(t *testing.T) {
 					{Index: 0, Value: "ramen"},
 				},
 			}): {
-				Detail: "noodles, broth etc.",
+				Detail:      "noodles, broth etc.",
 				Description: lang.Markdown("Ramen, a Japanese noodle soup"),
 			},
 		},
@@ -333,20 +333,20 @@ func TestDecoder_HoverAtPos_basic(t *testing.T) {
 				Content: lang.Markdown("**str_attr** _Optional, string_\n\nSpecial attribute"),
 				Range: hcl.Range{
 					Filename: "test.tf",
-					Start: hcl.Pos{Line: 2, Column: 3, Byte: 29},
-					End: hcl.Pos{Line: 2, Column: 20, Byte: 46},
+					Start:    hcl.Pos{Line: 2, Column: 3, Byte: 29},
+					End:      hcl.Pos{Line: 2, Column: 20, Byte: 46},
 				},
 			},
 		},
 		{
 			"block type",
-			hcl.Pos{Line:1, Column: 3, Byte: 2},
+			hcl.Pos{Line: 1, Column: 3, Byte: 2},
 			&lang.HoverData{
 				Content: lang.Markdown("**myblock** _Block_\n\nMy special block"),
 				Range: hcl.Range{
 					Filename: "test.tf",
-					Start: hcl.Pos{Line: 1, Column: 1, Byte: 0},
-					End: hcl.Pos{Line: 1, Column: 8, Byte: 7},
+					Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
+					End:      hcl.Pos{Line: 1, Column: 8, Byte: 7},
 				},
 			},
 		},
@@ -357,8 +357,8 @@ func TestDecoder_HoverAtPos_basic(t *testing.T) {
 				Content: lang.Markdown("`sushi` rice, fish etc.\n\nSushi, the Rolls-Rice of Japanese cuisine"),
 				Range: hcl.Range{
 					Filename: "test.tf",
-					Start: hcl.Pos{Line: 1, Column: 9, Byte: 8},
-					End: hcl.Pos{Line: 1, Column: 16, Byte: 15},
+					Start:    hcl.Pos{Line: 1, Column: 9, Byte: 8},
+					End:      hcl.Pos{Line: 1, Column: 16, Byte: 15},
 				},
 			},
 		},
@@ -369,8 +369,8 @@ func TestDecoder_HoverAtPos_basic(t *testing.T) {
 				Content: lang.Markdown(`"salmon" (name)`),
 				Range: hcl.Range{
 					Filename: "test.tf",
-					Start: hcl.Pos{Line: 1, Column: 17, Byte: 16},
-					End: hcl.Pos{Line: 1, Column: 25, Byte: 24},
+					Start:    hcl.Pos{Line: 1, Column: 17, Byte: 16},
+					End:      hcl.Pos{Line: 1, Column: 25, Byte: 24},
 				},
 			},
 		},
