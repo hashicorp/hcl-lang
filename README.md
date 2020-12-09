@@ -1,4 +1,4 @@
-# hcl-lang
+# hcl-lang [![Go Reference](https://pkg.go.dev/badge/hashicorp/hcl-lang.svg)](https://pkg.go.dev/hashicorp/hcl-lang)
 
 This library provides basic building blocks for an HCL2-based
 language server in the form of a schema and a decoder.
@@ -190,23 +190,7 @@ if err != nil {
 }
 ```
 
-### Symbols
-
-The following method can be used to find symbols (represented as blocks or
-attributes) in a given (previously loaded) file.
-
-```go
-SymbolsInFile(filename string) ([]Symbol, error)
-```
-
-### Completion Candidates
-
-The following method can be used to find completion candidates using
-the schema provided. The method will error if no schema was provided.
-
-```go
-CandidatesAtPos(filename string, pos hcl.Pos) (lang.Candidates, hcl.Diagnostics)
-```
+See available methods in [the documentation](https://pkg.go.dev/github.com/hashicorp/hcl-lang/decoder#Decoder).
 
 ## Experimental Status
 
