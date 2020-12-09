@@ -6,7 +6,7 @@ language server in the form of a schema and a decoder.
 ## Current Status
 
 This project is in use by the Terraform Language Server and it is designed
-to be used by any HCL2 language server, but it's stil in early stage
+to be used by any HCL2 language server, but it's still in early stage
 of development.
 
 For that reason the API is **not considered stable yet** and should not be relied upon.
