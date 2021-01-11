@@ -1,4 +1,4 @@
-# hcl-lang [![Go Reference](https://pkg.go.dev/badge/hashicorp/hcl-lang.svg)](https://pkg.go.dev/hashicorp/hcl-lang)
+# hcl-lang [![Go Reference](https://pkg.go.dev/badge/github.com/hashicorp/hcl-lang.svg)](https://pkg.go.dev/github.com/hashicorp/hcl-lang)
 
 This library provides basic building blocks for an HCL2-based
 language server in the form of a schema and a decoder.
