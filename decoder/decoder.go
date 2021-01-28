@@ -20,6 +20,14 @@ type Decoder struct {
 	rootSchema    *schema.BodySchema
 	rootSchemaMu  *sync.RWMutex
 	maxCandidates uint
+
+	// UTM parameters for docs URLs
+	// utm_source parameter, typically language server identification
+	utmSource string
+	// utm_medium parameter, typically language client identification
+	utmMedium string
+	// utm_content parameter, e.g. documentHover or documentLink
+	useUtmContent bool
 }
 
 // NewDecoder creates a new Decoder
@@ -45,6 +53,18 @@ func (d *Decoder) SetSchema(schema *schema.BodySchema) {
 	defer d.rootSchemaMu.Unlock()
 
 	d.rootSchema = schema
+}
+
+func (d *Decoder) SetUtmSource(src string) {
+	d.utmSource = src
+}
+
+func (d *Decoder) SetUtmMedium(medium string) {
+	d.utmMedium = medium
+}
+
+func (d *Decoder) UseUtmContent(use bool) {
+	d.useUtmContent = use
 }
 
 // LoadFile loads a new (non-empty) parsed file

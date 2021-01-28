@@ -90,7 +90,7 @@ func (d *Decoder) hoverAtPos(body *hclsyntax.Body, bodySchema *schema.BodySchema
 					}
 
 					return &lang.HoverData{
-						Content: hoverContentForLabel(i, block, bSchema),
+						Content: d.hoverContentForLabel(i, block, bSchema),
 						Range:   labelRange,
 					}, nil
 				}
@@ -123,7 +123,7 @@ func (d *Decoder) hoverAtPos(body *hclsyntax.Body, bodySchema *schema.BodySchema
 	}
 }
 
-func hoverContentForLabel(i int, block *hclsyntax.Block, bSchema *schema.BlockSchema) lang.MarkupContent {
+func (d *Decoder) hoverContentForLabel(i int, block *hclsyntax.Block, bSchema *schema.BlockSchema) lang.MarkupContent {
 	value := block.Labels[i]
 	labelSchema := bSchema.Labels[i]
 
@@ -142,6 +142,16 @@ func hoverContentForLabel(i int, block *hclsyntax.Block, bSchema *schema.BlockSc
 			} else if labelSchema.Description.Value != "" {
 				content += "\n\n" + labelSchema.Description.Value
 			}
+
+			if bs.DocsLink != nil {
+				link := bs.DocsLink
+				u, err := d.docsURL(link.URL, "documentHover")
+				if err == nil {
+					content += fmt.Sprintf("\n\n[`%s` on %s](%s)",
+						value, u.Hostname(), u.String())
+				}
+			}
+
 			return lang.Markdown(content)
 		}
 	}

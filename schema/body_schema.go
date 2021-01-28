@@ -17,7 +17,14 @@ type BodySchema struct {
 	Detail       string
 	Description  lang.MarkupContent
 
+	DocsLink *DocsLink
+
 	// TODO: Functions
+}
+
+type DocsLink struct {
+	URL     string
+	Tooltip string
 }
 
 func (*BodySchema) isSchemaImpl() schemaImplSigil {
