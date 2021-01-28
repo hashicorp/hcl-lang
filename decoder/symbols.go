@@ -89,5 +89,9 @@ func symbolsForBody(body *hclsyntax.Body) []Symbol {
 		})
 	}
 
+	sort.SliceStable(symbols, func(i, j int) bool {
+		return symbols[i].Range().Start.Byte < symbols[j].Range().Start.Byte
+	})
+
 	return symbols
 }
