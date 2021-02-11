@@ -1,10 +1,31 @@
 package lang
 
-// SymbolKind represents kind of a symbol in configuration
-type SymbolKind uint
-
-const (
-	NilSymbolKind SymbolKind = iota
-	AttributeSymbolKind
-	BlockSymbolKind
+import (
+	"github.com/zclconf/go-cty/cty"
 )
+
+type exprKindSigil struct{}
+
+type SymbolExprKind interface {
+	isSymbolExprKindSigil() exprKindSigil
+}
+
+type LiteralTypeKind struct {
+	Type cty.Type
+}
+
+func (LiteralTypeKind) isSymbolExprKindSigil() exprKindSigil {
+	return exprKindSigil{}
+}
+
+type TupleConsExprKind struct{}
+
+func (TupleConsExprKind) isSymbolExprKindSigil() exprKindSigil {
+	return exprKindSigil{}
+}
+
+type ObjectConsExprKind struct{}
+
+func (ObjectConsExprKind) isSymbolExprKindSigil() exprKindSigil {
+	return exprKindSigil{}
+}

@@ -59,7 +59,7 @@ func TestDecoder_CandidatesAtPos_unknownBlock(t *testing.T) {
 		Labels: resourceLabelSchema,
 		Body: &schema.BodySchema{
 			Attributes: map[string]*schema.AttributeSchema{
-				"count": {ValueType: cty.Number},
+				"count": {Expr: schema.LiteralTypeOnly(cty.Number)},
 			},
 		},
 	}
@@ -105,7 +105,7 @@ func TestDecoder_CandidatesAtPos_prefixNearEOF(t *testing.T) {
 		Labels: resourceLabelSchema,
 		Body: &schema.BodySchema{
 			Attributes: map[string]*schema.AttributeSchema{
-				"count": {ValueType: cty.Number},
+				"count": {Expr: schema.LiteralTypeOnly(cty.Number)},
 			},
 		},
 	}
@@ -169,7 +169,7 @@ func TestDecoder_CandidatesAtPos_invalidBlockPositions(t *testing.T) {
 		Labels: resourceLabelSchema,
 		Body: &schema.BodySchema{
 			Attributes: map[string]*schema.AttributeSchema{
-				"num_attr": {ValueType: cty.Number},
+				"num_attr": {Expr: schema.LiteralTypeOnly(cty.Number)},
 			},
 		},
 	}
@@ -244,8 +244,8 @@ func TestDecoder_CandidatesAtPos_rightHandSide(t *testing.T) {
 		Labels: resourceLabelSchema,
 		Body: &schema.BodySchema{
 			Attributes: map[string]*schema.AttributeSchema{
-				"num_attr": {ValueType: cty.Number},
-				"str_attr": {ValueType: cty.String},
+				"num_attr": {Expr: schema.LiteralTypeOnly(cty.Number)},
+				"str_attr": {Expr: schema.LiteralTypeOnly(cty.String)},
 			},
 		},
 	}
@@ -267,16 +267,17 @@ func TestDecoder_CandidatesAtPos_rightHandSide(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	_, err = d.CandidatesAtPos("test.tf", hcl.Pos{
+	candidates, err := d.CandidatesAtPos("test.tf", hcl.Pos{
 		Line:   2,
 		Column: 13,
 		Byte:   28,
 	})
-	if err == nil {
-		t.Fatal("expected error")
+	if err != nil {
+		t.Fatal(err)
 	}
-	if !strings.Contains(err.Error(), "no candidates for attribute value") {
-		t.Fatalf("unexpected error message: %q", err.Error())
+	expectedCandidates := lang.CompleteCandidates([]lang.Candidate{})
+	if diff := cmp.Diff(expectedCandidates, candidates); diff != "" {
+		t.Fatalf("unexpected candidates: %s", diff)
 	}
 }
 
@@ -288,8 +289,8 @@ func TestDecoder_CandidatesAtPos_rightHandSideInString(t *testing.T) {
 		Labels: resourceLabelSchema,
 		Body: &schema.BodySchema{
 			Attributes: map[string]*schema.AttributeSchema{
-				"num_attr": {ValueType: cty.Number},
-				"str_attr": {ValueType: cty.String},
+				"num_attr": {Expr: schema.LiteralTypeOnly(cty.Number)},
+				"str_attr": {Expr: schema.LiteralTypeOnly(cty.String)},
 			},
 		},
 	}
@@ -311,16 +312,17 @@ func TestDecoder_CandidatesAtPos_rightHandSideInString(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	_, err = d.CandidatesAtPos("test.tf", hcl.Pos{
+	candidates, err := d.CandidatesAtPos("test.tf", hcl.Pos{
 		Line:   2,
 		Column: 15,
 		Byte:   30,
 	})
-	if err == nil {
-		t.Fatal("expected error")
+	if err != nil {
+		t.Fatal(err)
 	}
-	if !strings.Contains(err.Error(), "no candidates for attribute value") {
-		t.Fatalf("unexpected error message: %q", err.Error())
+	expectedCandidates := lang.CompleteCandidates([]lang.Candidate{})
+	if diff := cmp.Diff(expectedCandidates, candidates); diff != "" {
+		t.Fatalf("unexpected candidates: %s", diff)
 	}
 }
 
@@ -336,9 +338,9 @@ func TestDecoder_CandidatesAtPos_endOfLabel(t *testing.T) {
 				},
 			}): {
 				Attributes: map[string]*schema.AttributeSchema{
-					"one":   {ValueType: cty.String},
-					"two":   {ValueType: cty.Number},
-					"three": {ValueType: cty.Bool},
+					"one":   {Expr: schema.LiteralTypeOnly(cty.String)},
+					"two":   {Expr: schema.LiteralTypeOnly(cty.Number)},
+					"three": {Expr: schema.LiteralTypeOnly(cty.Bool)},
 				},
 			},
 			schema.NewSchemaKey(schema.DependencyKeys{
@@ -347,8 +349,8 @@ func TestDecoder_CandidatesAtPos_endOfLabel(t *testing.T) {
 				},
 			}): {
 				Attributes: map[string]*schema.AttributeSchema{
-					"four": {ValueType: cty.Number},
-					"five": {ValueType: cty.DynamicPseudoType},
+					"four": {Expr: schema.LiteralTypeOnly(cty.Number)},
+					"five": {Expr: schema.LiteralTypeOnly(cty.DynamicPseudoType)},
 				},
 			},
 		},
@@ -436,7 +438,7 @@ func TestDecoder_CandidatesAtPos_zeroByteContent(t *testing.T) {
 		Labels: resourceLabelSchema,
 		Body: &schema.BodySchema{
 			Attributes: map[string]*schema.AttributeSchema{
-				"count": {ValueType: cty.Number},
+				"count": {Expr: schema.LiteralTypeOnly(cty.Number)},
 			},
 		},
 	}
@@ -492,7 +494,7 @@ func TestDecoder_CandidatesAtPos_endOfFilePos(t *testing.T) {
 		Labels: resourceLabelSchema,
 		Body: &schema.BodySchema{
 			Attributes: map[string]*schema.AttributeSchema{
-				"count": {ValueType: cty.Number},
+				"count": {Expr: schema.LiteralTypeOnly(cty.Number)},
 			},
 		},
 	}
@@ -556,7 +558,7 @@ func TestDecoder_CandidatesAtPos_emptyLabel(t *testing.T) {
 		Labels: resourceLabelSchema,
 		Body: &schema.BodySchema{
 			Attributes: map[string]*schema.AttributeSchema{
-				"count": {ValueType: cty.Number},
+				"count": {Expr: schema.LiteralTypeOnly(cty.Number)},
 			},
 		},
 		DependentBody: map[schema.SchemaKey]*schema.BodySchema{
@@ -566,9 +568,9 @@ func TestDecoder_CandidatesAtPos_emptyLabel(t *testing.T) {
 				},
 			}): {
 				Attributes: map[string]*schema.AttributeSchema{
-					"one":   {ValueType: cty.String, IsRequired: true},
-					"two":   {ValueType: cty.Number},
-					"three": {ValueType: cty.Bool},
+					"one":   {Expr: schema.LiteralTypeOnly(cty.String), IsRequired: true},
+					"two":   {Expr: schema.LiteralTypeOnly(cty.Number)},
+					"three": {Expr: schema.LiteralTypeOnly(cty.Bool)},
 				},
 			},
 			schema.NewSchemaKey(schema.DependencyKeys{
@@ -577,8 +579,8 @@ func TestDecoder_CandidatesAtPos_emptyLabel(t *testing.T) {
 				},
 			}): {
 				Attributes: map[string]*schema.AttributeSchema{
-					"four": {ValueType: cty.Number},
-					"five": {ValueType: cty.DynamicPseudoType},
+					"four": {Expr: schema.LiteralTypeOnly(cty.Number)},
+					"five": {Expr: schema.LiteralTypeOnly(cty.DynamicPseudoType)},
 				},
 			},
 		},
@@ -651,7 +653,7 @@ func TestDecoder_CandidatesAtPos_basic(t *testing.T) {
 		Labels: resourceLabelSchema,
 		Body: &schema.BodySchema{
 			Attributes: map[string]*schema.AttributeSchema{
-				"count": {ValueType: cty.Number},
+				"count": {Expr: schema.LiteralTypeOnly(cty.Number)},
 			},
 		},
 		DependentBody: map[schema.SchemaKey]*schema.BodySchema{
@@ -661,9 +663,9 @@ func TestDecoder_CandidatesAtPos_basic(t *testing.T) {
 				},
 			}): {
 				Attributes: map[string]*schema.AttributeSchema{
-					"one":   {ValueType: cty.String, IsRequired: true},
-					"two":   {ValueType: cty.Number},
-					"three": {ValueType: cty.Bool},
+					"one":   {Expr: schema.LiteralTypeOnly(cty.String), IsRequired: true},
+					"two":   {Expr: schema.LiteralTypeOnly(cty.Number)},
+					"three": {Expr: schema.LiteralTypeOnly(cty.Bool)},
 				},
 			},
 			schema.NewSchemaKey(schema.DependencyKeys{
@@ -672,8 +674,8 @@ func TestDecoder_CandidatesAtPos_basic(t *testing.T) {
 				},
 			}): {
 				Attributes: map[string]*schema.AttributeSchema{
-					"four": {ValueType: cty.Number},
-					"five": {ValueType: cty.DynamicPseudoType},
+					"four": {Expr: schema.LiteralTypeOnly(cty.Number)},
+					"five": {Expr: schema.LiteralTypeOnly(cty.DynamicPseudoType)},
 				},
 			},
 		},
@@ -903,10 +905,10 @@ func TestDecoder_CandidatesAtPos_AnyAttribute(t *testing.T) {
 	providersSchema := &schema.BlockSchema{
 		Body: &schema.BodySchema{
 			AnyAttribute: &schema.AttributeSchema{
-				ValueType: cty.Object(map[string]cty.Type{
+				Expr: schema.LiteralTypeOnly(cty.Object(map[string]cty.Type{
 					"source":  cty.String,
 					"version": cty.String,
-				}),
+				})),
 			},
 		},
 	}
@@ -973,9 +975,9 @@ func TestDecoder_CandidatesAtPos_multipleTypes(t *testing.T) {
 		Body: &schema.BodySchema{
 			Attributes: map[string]*schema.AttributeSchema{
 				"for_each": {
-					ValueTypes: schema.ValueTypes{
-						cty.Set(cty.DynamicPseudoType),
-						cty.Map(cty.DynamicPseudoType),
+					Expr: schema.ExprConstraints{
+						schema.LiteralTypeExpr{Type: cty.Set(cty.DynamicPseudoType)},
+						schema.LiteralTypeExpr{Type: cty.Map(cty.DynamicPseudoType)},
 					},
 				},
 			},
@@ -1013,7 +1015,7 @@ func TestDecoder_CandidatesAtPos_multipleTypes(t *testing.T) {
 	expectedCandidates := lang.CompleteCandidates([]lang.Candidate{
 		{
 			Label:  "for_each",
-			Detail: "Optional, set of dynamic or map of dynamic",
+			Detail: "Optional, set of any single type or map of any single type",
 			TextEdit: lang.TextEdit{
 				Range: hcl.Range{
 					Filename: "test.tf",
@@ -1043,7 +1045,7 @@ func TestDecoder_CandidatesAtPos_incompleteAttrOrBlock(t *testing.T) {
 		Labels: resourceLabelSchema,
 		Body: &schema.BodySchema{
 			Attributes: map[string]*schema.AttributeSchema{
-				"count": {ValueType: cty.Number},
+				"count": {Expr: schema.LiteralTypeOnly(cty.Number)},
 			},
 		},
 	}
@@ -1171,7 +1173,7 @@ func TestDecoder_CandidatesAtPos_incompleteLabel(t *testing.T) {
 		Labels: resourceLabelSchema,
 		Body: &schema.BodySchema{
 			Attributes: map[string]*schema.AttributeSchema{
-				"count": {ValueType: cty.Number},
+				"count": {Expr: schema.LiteralTypeOnly(cty.Number)},
 			},
 		},
 		DependentBody: map[schema.SchemaKey]*schema.BodySchema{

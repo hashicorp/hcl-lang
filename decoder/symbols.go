@@ -1,9 +1,11 @@
 package decoder
 
 import (
+	"fmt"
 	"sort"
 	"strings"
 
+	"github.com/hashicorp/hcl-lang/lang"
 	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hclsyntax"
 	"github.com/zclconf/go-cty/cty"
@@ -63,21 +65,11 @@ func symbolsForBody(body *hclsyntax.Body) []Symbol {
 	}
 
 	for name, attr := range body.Attributes {
-		var typ cty.Type
-
-		switch expr := attr.Expr.(type) {
-		case *hclsyntax.LiteralValueExpr:
-			typ = expr.Val.Type()
-		case *hclsyntax.TemplateExpr:
-			if expr.IsStringLiteral() {
-				typ = cty.String
-			}
-		}
-
 		symbols = append(symbols, &AttributeSymbol{
-			AttrName: name,
-			Type:     typ,
-			rng:      attr.Range(),
+			AttrName:      name,
+			ExprKind:      symbolExprKind(attr.Expr),
+			rng:           attr.Range(),
+			nestedSymbols: nestedSymbolsForExpr(attr.Expr),
 		})
 	}
 	for _, block := range body.Blocks {
@@ -92,6 +84,58 @@ func symbolsForBody(body *hclsyntax.Body) []Symbol {
 	sort.SliceStable(symbols, func(i, j int) bool {
 		return symbols[i].Range().Start.Byte < symbols[j].Range().Start.Byte
 	})
+
+	return symbols
+}
+
+func symbolExprKind(expr hcl.Expression) lang.SymbolExprKind {
+	switch e := expr.(type) {
+	case *hclsyntax.LiteralValueExpr:
+		return lang.LiteralTypeKind{Type: e.Val.Type()}
+	case *hclsyntax.TemplateExpr:
+		if e.IsStringLiteral() {
+			return lang.LiteralTypeKind{Type: cty.String}
+		}
+		if isMultilineStringLiteral(e) {
+			return lang.LiteralTypeKind{Type: cty.String}
+		}
+	case *hclsyntax.TupleConsExpr:
+		return lang.TupleConsExprKind{}
+	case *hclsyntax.ObjectConsExpr:
+		return lang.ObjectConsExprKind{}
+	}
+	return nil
+}
+
+func nestedSymbolsForExpr(expr hcl.Expression) []Symbol {
+	symbols := make([]Symbol, 0)
+
+	switch e := expr.(type) {
+	case *hclsyntax.TupleConsExpr:
+		for i, item := range e.ExprList() {
+			symbols = append(symbols, &ExprSymbol{
+				ExprName:      fmt.Sprintf("%d", i),
+				ExprKind:      symbolExprKind(item),
+				rng:           item.Range(),
+				nestedSymbols: nestedSymbolsForExpr(item),
+			})
+		}
+	case *hclsyntax.ObjectConsExpr:
+		for _, item := range e.Items {
+			key, _ := item.KeyExpr.Value(nil)
+			if key.IsNull() || key.Type() != cty.String {
+				// skip items keys that can't be interpolated
+				// without further context
+				continue
+			}
+			symbols = append(symbols, &ExprSymbol{
+				ExprName:      key.AsString(),
+				ExprKind:      symbolExprKind(item.ValueExpr),
+				rng:           hcl.RangeBetween(item.KeyExpr.Range(), item.ValueExpr.Range()),
+				nestedSymbols: nestedSymbolsForExpr(item.ValueExpr),
+			})
+		}
+	}
 
 	return symbols
 }

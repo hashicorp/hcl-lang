@@ -34,71 +34,18 @@ func detailForAttribute(attr *schema.AttributeSchema) string {
 		detail = "Optional"
 	}
 
-	if len(attr.ValueTypes) > 0 {
-		detail += fmt.Sprintf(", %s", strings.Join(attr.ValueTypes.FriendlyNames(), " or "))
-	} else {
-		detail += fmt.Sprintf(", %s", attr.ValueType.FriendlyName())
+	ec := ExprConstraints(attr.Expr)
+	names := ec.FriendlyNames()
+
+	if len(names) > 0 {
+		detail += fmt.Sprintf(", %s", strings.Join(names, " or "))
 	}
 
 	return detail
 }
 
 func snippetForAttribute(name string, attr *schema.AttributeSchema) string {
-	if len(attr.ValueTypes) > 0 {
-		return fmt.Sprintf("%s = %s", name, snippetForAttrValue(1, attr.ValueTypes[0]))
-	}
-	return fmt.Sprintf("%s = %s", name, snippetForAttrValue(1, attr.ValueType))
-}
-
-func snippetForAttrValue(placeholder uint, attrType cty.Type) string {
-	switch attrType {
-	case cty.String:
-		return fmt.Sprintf(`"${%d:value}"`, placeholder)
-	case cty.Bool:
-		return fmt.Sprintf(`${%d:false}`, placeholder)
-	case cty.Number:
-		return fmt.Sprintf(`${%d:1}`, placeholder)
-	case cty.DynamicPseudoType:
-		return fmt.Sprintf(`${%d}`, placeholder)
-	}
-
-	if attrType.IsMapType() {
-		return fmt.Sprintf("{\n"+`  "${1:key}" = %s`+"\n}",
-			snippetForAttrValue(placeholder+1, *attrType.MapElementType()))
-	}
-
-	if attrType.IsListType() || attrType.IsSetType() {
-		elType := attrType.ElementType()
-		return fmt.Sprintf("[ %s ]", snippetForAttrValue(placeholder, elType))
-	}
-
-	if attrType.IsObjectType() {
-		objSnippet := ""
-		for _, name := range sortedObjectAttrNames(attrType) {
-			valType := attrType.AttributeType(name)
-
-			objSnippet += fmt.Sprintf("  %s = %s\n", name,
-				snippetForAttrValue(placeholder, valType))
-			placeholder++
-		}
-		return fmt.Sprintf("{\n%s}", objSnippet)
-	}
-
-	if attrType.IsTupleType() {
-		elTypes := attrType.TupleElementTypes()
-		if len(elTypes) == 1 {
-			return fmt.Sprintf("[ %s ]", snippetForAttrValue(placeholder, elTypes[0]))
-		}
-
-		tupleSnippet := ""
-		for _, elType := range elTypes {
-			placeholder++
-			tupleSnippet += snippetForAttrValue(placeholder, elType)
-		}
-		return fmt.Sprintf("[\n%s]", tupleSnippet)
-	}
-
-	return ""
+	return fmt.Sprintf("%s = %s", name, snippetForExprContraints(1, attr.Expr))
 }
 
 func sortedObjectAttrNames(obj cty.Type) []string {

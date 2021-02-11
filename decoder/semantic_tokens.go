@@ -7,6 +7,7 @@ import (
 	"github.com/hashicorp/hcl-lang/schema"
 	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hclsyntax"
+	"github.com/zclconf/go-cty/cty"
 )
 
 // SemanticTokensInFile returns a sequence of semantic tokens
@@ -65,6 +66,9 @@ func tokensForBody(body *hclsyntax.Body, bodySchema *schema.BodySchema, isDepend
 			Modifiers: modifiers,
 			Range:     attr.NameRange,
 		})
+
+		ec := ExprConstraints(attrSchema.Expr)
+		tokens = append(tokens, tokensForExpression(attr.Expr, ec)...)
 	}
 
 	for _, block := range body.Blocks {
@@ -117,6 +121,207 @@ func tokensForBody(body *hclsyntax.Body, bodySchema *schema.BodySchema, isDepend
 		if ok {
 			tokens = append(tokens, tokensForBody(block.Body, depSchema, true)...)
 		}
+	}
+
+	return tokens
+}
+
+func tokensForExpression(expr hclsyntax.Expression, constraints ExprConstraints) []lang.SemanticToken {
+	tokens := make([]lang.SemanticToken, 0)
+
+	switch eType := expr.(type) {
+	case *hclsyntax.ScopeTraversalExpr:
+		exprKeyword := eType.Traversal.RootName()
+		kw, ok := constraints.KeywordExpr()
+		if ok && len(eType.Traversal) == 1 && exprKeyword == kw.Keyword {
+			return []lang.SemanticToken{
+				{
+					Type:      lang.TokenKeyword,
+					Modifiers: []lang.SemanticTokenModifier{},
+					Range:     eType.Range(),
+				},
+			}
+		}
+	case *hclsyntax.TemplateExpr:
+		// complex templates are not supported yet
+		if !eType.IsStringLiteral() && !isMultilineStringLiteral(eType) {
+			return tokens
+		}
+		if constraints.HasLiteralTypeOf(cty.String) {
+			return tokenForTypedExpression(eType, cty.String)
+		}
+		literal := eType.Parts[0].(*hclsyntax.LiteralValueExpr)
+		if constraints.HasLiteralValueOf(literal.Val) {
+			return tokenForTypedExpression(eType, cty.String)
+		}
+	case *hclsyntax.TemplateWrapExpr:
+		return tokensForExpression(eType.Wrapped, constraints)
+	case *hclsyntax.TupleConsExpr:
+		tc, ok := constraints.TupleConsExpr()
+		if ok {
+			for _, expr := range eType.Exprs {
+				ec := ExprConstraints(tc.AnyElem)
+				tokens = append(tokens, tokensForExpression(expr, ec)...)
+			}
+			return tokens
+		}
+		lt, ok := constraints.LiteralTypeOfTupleExpr()
+		if ok {
+			return tokensForTupleConsExpr(eType, lt.Type)
+		}
+		litVal, ok := constraints.LiteralValueOfTupleExpr(eType)
+		if ok {
+			return tokensForTupleConsExpr(eType, litVal.Val.Type())
+		}
+	case *hclsyntax.ObjectConsExpr:
+		me, ok := constraints.MapExpr()
+		if ok {
+			for _, item := range eType.Items {
+				tokens = append(tokens, lang.SemanticToken{
+					Type:      lang.TokenMapKey,
+					Modifiers: []lang.SemanticTokenModifier{},
+					Range:     item.KeyExpr.Range(),
+				})
+				ec := ExprConstraints(me.Elem)
+				tokens = append(tokens, tokensForExpression(item.ValueExpr, ec)...)
+			}
+			return tokens
+		}
+		lt, ok := constraints.LiteralTypeOfObjectConsExpr()
+		if ok {
+			return tokensForObjectConsExpr(eType, lt.Type)
+		}
+		litVal, ok := constraints.LiteralValueOfObjectConsExpr(eType)
+		if ok {
+			return tokensForObjectConsExpr(eType, litVal.Val.Type())
+		}
+	case *hclsyntax.LiteralValueExpr:
+		valType := eType.Val.Type()
+		if constraints.HasLiteralTypeOf(valType) {
+			return tokenForTypedExpression(eType, valType)
+		}
+		if constraints.HasLiteralValueOf(eType.Val) {
+			return tokenForTypedExpression(eType, valType)
+		}
+	}
+	return tokens
+}
+
+func tokenForTypedExpression(expr hclsyntax.Expression, consType cty.Type) []lang.SemanticToken {
+	switch eType := expr.(type) {
+	case *hclsyntax.LiteralValueExpr:
+		if consType.IsPrimitiveType() {
+			return tokensForLiteralValueExpr(eType, consType)
+		}
+	case *hclsyntax.TemplateExpr:
+		if eType.IsStringLiteral() {
+			literal := eType.Parts[0].(*hclsyntax.LiteralValueExpr)
+			if !literal.Val.Type().Equals(consType) {
+				return []lang.SemanticToken{}
+			}
+
+			return []lang.SemanticToken{
+				{
+					Type:      lang.TokenString,
+					Modifiers: []lang.SemanticTokenModifier{},
+					Range:     expr.Range(),
+				},
+			}
+		}
+	case *hclsyntax.ObjectConsExpr:
+		return tokensForObjectConsExpr(eType, consType)
+	case *hclsyntax.TupleConsExpr:
+		return tokensForTupleConsExpr(eType, consType)
+	}
+
+	return []lang.SemanticToken{}
+}
+
+func tokensForLiteralValueExpr(expr *hclsyntax.LiteralValueExpr, consType cty.Type) []lang.SemanticToken {
+	tokens := make([]lang.SemanticToken, 0)
+
+	if !expr.Val.Type().Equals(consType) {
+		// type mismatch
+		return tokens
+	}
+
+	switch consType {
+	case cty.Bool:
+		tokens = append(tokens, lang.SemanticToken{
+			Type:      lang.TokenBool,
+			Modifiers: []lang.SemanticTokenModifier{},
+			Range:     expr.Range(),
+		})
+	case cty.String:
+		tokens = append(tokens, lang.SemanticToken{
+			Type:      lang.TokenString,
+			Modifiers: []lang.SemanticTokenModifier{},
+			Range:     expr.Range(),
+		})
+	case cty.Number:
+		tokens = append(tokens, lang.SemanticToken{
+			Type:      lang.TokenNumber,
+			Modifiers: []lang.SemanticTokenModifier{},
+			Range:     expr.Range(),
+		})
+	}
+
+	return tokens
+}
+
+func tokensForObjectConsExpr(expr *hclsyntax.ObjectConsExpr, exprType cty.Type) []lang.SemanticToken {
+	tokens := make([]lang.SemanticToken, 0)
+
+	if exprType.IsObjectType() {
+		attrTypes := exprType.AttributeTypes()
+		for _, item := range expr.Items {
+			key, _ := item.KeyExpr.Value(nil)
+			if key.IsWhollyKnown() && key.Type() == cty.String {
+				valType, ok := attrTypes[key.AsString()]
+				if !ok {
+					// unknown attribute
+					continue
+				}
+				tokens = append(tokens, lang.SemanticToken{
+					Type:      lang.TokenObjectKey,
+					Modifiers: []lang.SemanticTokenModifier{},
+					Range:     item.KeyExpr.Range(),
+				})
+				tokens = append(tokens, tokenForTypedExpression(item.ValueExpr, valType)...)
+			}
+		}
+	}
+	if exprType.IsMapType() {
+		elemType := *exprType.MapElementType()
+		for _, item := range expr.Items {
+			tokens = append(tokens, lang.SemanticToken{
+				Type:      lang.TokenMapKey,
+				Modifiers: []lang.SemanticTokenModifier{},
+				Range:     item.KeyExpr.Range(),
+			})
+			tokens = append(tokens, tokenForTypedExpression(item.ValueExpr, elemType)...)
+		}
+	}
+
+	return tokens
+}
+
+func tokensForTupleConsExpr(expr *hclsyntax.TupleConsExpr, exprType cty.Type) []lang.SemanticToken {
+	tokens := make([]lang.SemanticToken, 0)
+
+	for i, e := range expr.Exprs {
+		var elemType cty.Type
+		if exprType.IsListType() {
+			elemType = *exprType.ListElementType()
+		}
+		if exprType.IsSetType() {
+			elemType = *exprType.SetElementType()
+		}
+		if exprType.IsTupleType() {
+			elemType = exprType.TupleElementType(i)
+		}
+
+		tokens = append(tokens, tokenForTypedExpression(e, elemType)...)
 	}
 
 	return tokens

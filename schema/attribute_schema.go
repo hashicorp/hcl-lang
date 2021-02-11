@@ -4,7 +4,6 @@ import (
 	"errors"
 
 	"github.com/hashicorp/hcl-lang/lang"
-	"github.com/zclconf/go-cty/cty"
 )
 
 // AttributeSchema describes schema for an attribute
@@ -15,22 +14,11 @@ type AttributeSchema struct {
 	IsDeprecated bool
 	IsComputed   bool
 
-	ValueType  cty.Type
-	ValueTypes ValueTypes
+	Expr ExprConstraints
 
 	// IsDepKey describes whether to use this attribute (and its value)
 	// as key when looking up dependent schema
 	IsDepKey bool
-}
-
-type ValueTypes []cty.Type
-
-func (vt ValueTypes) FriendlyNames() []string {
-	names := make([]string, len(vt))
-	for i, t := range vt {
-		names[i] = t.FriendlyName()
-	}
-	return names
 }
 
 func (*AttributeSchema) isSchemaImpl() schemaImplSigil {
@@ -38,13 +26,6 @@ func (*AttributeSchema) isSchemaImpl() schemaImplSigil {
 }
 
 func (as *AttributeSchema) Validate() error {
-	if len(as.ValueTypes) == 0 && as.ValueType == cty.NilType {
-		return errors.New("one of ValueType or ValueTypes must be specified")
-	}
-	if len(as.ValueTypes) > 0 && as.ValueType != cty.NilType {
-		return errors.New("ValueType or ValueTypes must be specified, not both")
-	}
-
 	if as.IsOptional && as.IsRequired {
 		return errors.New("IsOptional or IsRequired must be set, not both")
 	}

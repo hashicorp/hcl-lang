@@ -6,7 +6,6 @@ import (
 
 	"github.com/hashicorp/hcl-lang/lang"
 	"github.com/hashicorp/hcl/v2"
-	"github.com/zclconf/go-cty/cty"
 )
 
 type symbolImplSigil struct{}
@@ -16,7 +15,6 @@ type Symbol interface {
 	Name() string
 	NestedSymbols() []Symbol
 	Range() hcl.Range
-	Kind() lang.SymbolKind
 
 	isSymbolImpl() symbolImplSigil
 }
@@ -54,10 +52,6 @@ func (bs *BlockSymbol) Name() string {
 	return name
 }
 
-func (*BlockSymbol) Kind() lang.SymbolKind {
-	return lang.BlockSymbolKind
-}
-
 func (bs *BlockSymbol) NestedSymbols() []Symbol {
 	return bs.nestedSymbols
 }
@@ -66,12 +60,13 @@ func (bs *BlockSymbol) Range() hcl.Range {
 	return bs.rng
 }
 
-// BlockSymbol is Symbol implementation representing an attribute
+// AttributeSymbol is Symbol implementation representing an attribute
 type AttributeSymbol struct {
 	AttrName string
-	Type     cty.Type
+	ExprKind lang.SymbolExprKind
 
-	rng hcl.Range
+	rng           hcl.Range
+	nestedSymbols []Symbol
 }
 
 func (*AttributeSymbol) isSymbolImpl() symbolImplSigil {
@@ -94,14 +89,46 @@ func (as *AttributeSymbol) Name() string {
 	return as.AttrName
 }
 
-func (*AttributeSymbol) Kind() lang.SymbolKind {
-	return lang.AttributeSymbolKind
-}
-
 func (as *AttributeSymbol) NestedSymbols() []Symbol {
-	return []Symbol{}
+	return as.nestedSymbols
 }
 
 func (as *AttributeSymbol) Range() hcl.Range {
+	return as.rng
+}
+
+type ExprSymbol struct {
+	ExprName string
+	ExprKind lang.SymbolExprKind
+
+	rng           hcl.Range
+	nestedSymbols []Symbol
+}
+
+func (*ExprSymbol) isSymbolImpl() symbolImplSigil {
+	return symbolImplSigil{}
+}
+
+func (as *ExprSymbol) Equal(other Symbol) bool {
+	oas, ok := other.(*ExprSymbol)
+	if !ok {
+		return false
+	}
+	if as == nil || oas == nil {
+		return as == oas
+	}
+
+	return reflect.DeepEqual(*as, *oas)
+}
+
+func (as *ExprSymbol) Name() string {
+	return as.ExprName
+}
+
+func (as *ExprSymbol) NestedSymbols() []Symbol {
+	return as.nestedSymbols
+}
+
+func (as *ExprSymbol) Range() hcl.Range {
 	return as.rng
 }

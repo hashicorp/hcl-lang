@@ -42,18 +42,23 @@ func (d *Decoder) candidatesAtPos(body *hclsyntax.Body, bodySchema *schema.BodyS
 	filename := body.Range().Filename
 
 	for _, attr := range body.Attributes {
-		if isRightHandSidePos(attr, pos) {
-			// TODO: RHS candidates (requires a form of expression schema)
-			return lang.ZeroCandidates(), &PositionalError{
-				Filename: filename,
-				Pos:      pos,
-				Msg:      fmt.Sprintf("%s: no candidates for attribute value", attr.Name),
+		if attr.Expr.Range().ContainsPos(pos) || attr.EqualsRange.End.Byte == pos.Byte {
+			if aSchema, ok := bodySchema.Attributes[attr.Name]; ok {
+				return d.attrValueCandidatesAtPos(attr, aSchema, pos)
 			}
+			if bodySchema.AnyAttribute != nil {
+				return d.attrValueCandidatesAtPos(attr, bodySchema.AnyAttribute, pos)
+			}
+
+			return lang.ZeroCandidates(), nil
 		}
 		if attr.NameRange.ContainsPos(pos) {
 			prefixRng := attr.NameRange
 			prefixRng.End = pos
 			return d.bodySchemaCandidates(body, bodySchema, prefixRng, attr.Range()), nil
+		}
+		if attr.EqualsRange.ContainsPos(pos) {
+			return lang.ZeroCandidates(), nil
 		}
 	}
 
@@ -126,25 +131,6 @@ func (d *Decoder) candidatesAtPos(body *hclsyntax.Body, bodySchema *schema.BodyS
 	}
 
 	return d.bodySchemaCandidates(body, bodySchema, rng, rng), nil
-}
-
-func isRightHandSidePos(attr *hclsyntax.Attribute, pos hcl.Pos) bool {
-	// Here we assume 1 attribute per line
-	// which allows us to also catch position in trailing whitespace
-	// (which HCL parser doesn't consider attribute's range)
-	if attr.Range().End.Line != pos.Line {
-		// entirely different line
-		return false
-	}
-	if pos.Column < attr.Range().Start.Column {
-		// indentation
-		return false
-	}
-	if attr.NameRange.ContainsPos(pos) {
-		return false
-	}
-
-	return true
 }
 
 func (d *Decoder) nameTokenRangeAtPos(filename string, pos hcl.Pos) (hcl.Range, error) {

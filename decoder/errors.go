@@ -12,6 +12,17 @@ func (*NoSchemaError) Error() string {
 	return fmt.Sprintf("no schema available")
 }
 
+type ConstraintMismatch struct {
+	Expr hcl.Expression
+}
+
+func (cm *ConstraintMismatch) Error() string {
+	if cm.Expr != nil {
+		return fmt.Sprintf("%T does not match any constraint", cm.Expr)
+	}
+	return fmt.Sprintf("expression does not match any constraint")
+}
+
 type FileNotFoundError struct {
 	Filename string
 }

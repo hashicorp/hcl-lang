@@ -20,7 +20,7 @@ func TestSnippetForAttribute(t *testing.T) {
 			"primitive type",
 			"primitive",
 			&schema.AttributeSchema{
-				ValueType: cty.String,
+				Expr: schema.LiteralTypeOnly(cty.String),
 			},
 			`primitive = "${1:value}"`,
 		},
@@ -28,7 +28,7 @@ func TestSnippetForAttribute(t *testing.T) {
 			"map of strings",
 			"mymap",
 			&schema.AttributeSchema{
-				ValueType: cty.Map(cty.String),
+				Expr: schema.LiteralTypeOnly(cty.Map(cty.String)),
 			},
 			`mymap = {
   "${1:key}" = "${2:value}"
@@ -38,7 +38,7 @@ func TestSnippetForAttribute(t *testing.T) {
 			"map of numbers",
 			"mymap",
 			&schema.AttributeSchema{
-				ValueType: cty.Map(cty.Number),
+				Expr: schema.LiteralTypeOnly(cty.Map(cty.Number)),
 			},
 			`mymap = {
   "${1:key}" = ${2:1}
@@ -48,7 +48,7 @@ func TestSnippetForAttribute(t *testing.T) {
 			"list of numbers",
 			"mylist",
 			&schema.AttributeSchema{
-				ValueType: cty.List(cty.Number),
+				Expr: schema.LiteralTypeOnly(cty.List(cty.Number)),
 			},
 			`mylist = [ ${1:1} ]`,
 		},
@@ -56,10 +56,10 @@ func TestSnippetForAttribute(t *testing.T) {
 			"list of objects",
 			"mylistobj",
 			&schema.AttributeSchema{
-				ValueType: cty.List(cty.Object(map[string]cty.Type{
+				Expr: schema.LiteralTypeOnly(cty.List(cty.Object(map[string]cty.Type{
 					"first":  cty.String,
 					"second": cty.Number,
-				})),
+				}))),
 			},
 			`mylistobj = [ {
   first = "${1:value}"
@@ -70,7 +70,7 @@ func TestSnippetForAttribute(t *testing.T) {
 			"set of numbers",
 			"myset",
 			&schema.AttributeSchema{
-				ValueType: cty.Set(cty.Number),
+				Expr: schema.LiteralTypeOnly(cty.Set(cty.Number)),
 			},
 			`myset = [ ${1:1} ]`,
 		},
@@ -78,11 +78,11 @@ func TestSnippetForAttribute(t *testing.T) {
 			"object",
 			"myobj",
 			&schema.AttributeSchema{
-				ValueType: cty.Object(map[string]cty.Type{
+				Expr: schema.LiteralTypeOnly(cty.Object(map[string]cty.Type{
 					"keystr":  cty.String,
 					"keynum":  cty.Number,
 					"keybool": cty.Bool,
-				}),
+				})),
 			},
 			`myobj = {
   keybool = ${1:false}
@@ -94,31 +94,30 @@ func TestSnippetForAttribute(t *testing.T) {
 			"unknown type",
 			"mynil",
 			&schema.AttributeSchema{
-				ValueType: cty.DynamicPseudoType,
+				Expr: schema.LiteralTypeOnly(cty.DynamicPseudoType),
 			},
 			`mynil = ${1}`,
 		},
-		// TODO: Indent nested objects correctly
-		// 		{
-		// 			"nested object",
-		// 			"myobj",
-		// 			&schema.AttributeSchema{
-		// 				ValueType: cty.Object(map[string]cty.Type{
-		// 					"keystr": cty.String,
-		// 					"another": cty.Object(map[string]cty.Type{
-		// 						"nestedstr": cty.String,
-		// 						"nested_number": cty.Number,
-		// 					}),
-		// 				}),
-		// 			},
-		// 			`myobj {
-		//   another {
-		//     nested_number = ${1:1}
-		//     nestedstr = "${2:value}"
-		//   }
-		//   keystr = "${2:value}"
-		// }`,
-		// 		},
+		{
+			"nested object",
+			"myobj",
+			&schema.AttributeSchema{
+				Expr: schema.LiteralTypeOnly(cty.Object(map[string]cty.Type{
+					"keystr": cty.String,
+					"another": cty.Object(map[string]cty.Type{
+						"nestedstr":     cty.String,
+						"nested_number": cty.Number,
+					}),
+				})),
+			},
+			`myobj = {
+  another = {
+    nested_number = ${1:1}
+    nestedstr = "${2:value}"
+  }
+  keystr = "${3:value}"
+}`,
+		},
 	}
 
 	for i, tc := range testCases {
