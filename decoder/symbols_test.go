@@ -136,3 +136,180 @@ func TestDecoder_SymbolsInFile_basic(t *testing.T) {
 		t.Fatalf("unexpected symbols: %s", diff)
 	}
 }
+
+func TestDecoder_Symbols_basic(t *testing.T) {
+	d := NewDecoder()
+
+	testCfg1 := []byte(`
+resource "aws_vpc" "main" {
+  cidr_block = "10.0.0.0/16"
+}
+`)
+	f1, pDiags := hclsyntax.ParseConfig(testCfg1, "first.tf", hcl.InitialPos)
+	if len(pDiags) > 0 {
+		t.Fatal(pDiags)
+	}
+	testCfg2 := []byte(`
+provider "google" {
+  project     = "my-project-id"
+  region      = "us-central1"
+}
+`)
+	f2, pDiags := hclsyntax.ParseConfig(testCfg2, "second.tf", hcl.InitialPos)
+	if len(pDiags) > 0 {
+		t.Fatal(pDiags)
+	}
+
+	err := d.LoadFile("first.tf", f1)
+	if err != nil {
+		t.Fatal(err)
+	}
+	err = d.LoadFile("second.tf", f2)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	symbols, err := d.Symbols("")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	expectedSymbols := []Symbol{
+		&BlockSymbol{
+			Type: "resource",
+			Labels: []string{
+				"aws_vpc",
+				"main",
+			},
+			rng: hcl.Range{
+				Filename: "first.tf",
+				Start:    hcl.Pos{Line: 2, Column: 1, Byte: 1},
+				End:      hcl.Pos{Line: 4, Column: 2, Byte: 59},
+			},
+			nestedSymbols: []Symbol{
+				&AttributeSymbol{
+					AttrName: "cidr_block",
+					Type:     cty.String,
+					rng: hcl.Range{
+						Filename: "first.tf",
+						Start:    hcl.Pos{Line: 3, Column: 3, Byte: 31},
+						End:      hcl.Pos{Line: 3, Column: 29, Byte: 57},
+					},
+				},
+			},
+		},
+		&BlockSymbol{
+			Type: "provider",
+			Labels: []string{
+				"google",
+			},
+			rng: hcl.Range{
+				Filename: "second.tf",
+				Start:    hcl.Pos{Line: 2, Column: 1, Byte: 1},
+				End:      hcl.Pos{Line: 5, Column: 2, Byte: 84},
+			},
+			nestedSymbols: []Symbol{
+				&AttributeSymbol{
+					AttrName: "project",
+					Type:     cty.String,
+					rng: hcl.Range{
+						Filename: "second.tf",
+						Start:    hcl.Pos{Line: 3, Column: 3, Byte: 23},
+						End:      hcl.Pos{Line: 3, Column: 32, Byte: 52},
+					},
+				},
+				&AttributeSymbol{
+					AttrName: "region",
+					Type:     cty.String,
+					rng: hcl.Range{
+						Filename: "second.tf",
+						Start:    hcl.Pos{Line: 4, Column: 3, Byte: 55},
+						End:      hcl.Pos{Line: 4, Column: 30, Byte: 82},
+					},
+				},
+			},
+		},
+	}
+
+	diff := cmp.Diff(expectedSymbols, symbols)
+	if diff != "" {
+		t.Fatalf("unexpected symbols: %s", diff)
+	}
+}
+
+func TestDecoder_Symbols_query(t *testing.T) {
+	d := NewDecoder()
+
+	testCfg1 := []byte(`
+resource "aws_vpc" "main" {
+  cidr_block = "10.0.0.0/16"
+}
+`)
+	f1, pDiags := hclsyntax.ParseConfig(testCfg1, "first.tf", hcl.InitialPos)
+	if len(pDiags) > 0 {
+		t.Fatal(pDiags)
+	}
+	testCfg2 := []byte(`
+provider "google" {
+  project     = "my-project-id"
+  region      = "us-central1"
+}
+`)
+	f2, pDiags := hclsyntax.ParseConfig(testCfg2, "second.tf", hcl.InitialPos)
+	if len(pDiags) > 0 {
+		t.Fatal(pDiags)
+	}
+
+	err := d.LoadFile("first.tf", f1)
+	if err != nil {
+		t.Fatal(err)
+	}
+	err = d.LoadFile("second.tf", f2)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	symbols, err := d.Symbols("google")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	expectedSymbols := []Symbol{
+		&BlockSymbol{
+			Type: "provider",
+			Labels: []string{
+				"google",
+			},
+			rng: hcl.Range{
+				Filename: "second.tf",
+				Start:    hcl.Pos{Line: 2, Column: 1, Byte: 1},
+				End:      hcl.Pos{Line: 5, Column: 2, Byte: 84},
+			},
+			nestedSymbols: []Symbol{
+				&AttributeSymbol{
+					AttrName: "project",
+					Type:     cty.String,
+					rng: hcl.Range{
+						Filename: "second.tf",
+						Start:    hcl.Pos{Line: 3, Column: 3, Byte: 23},
+						End:      hcl.Pos{Line: 3, Column: 32, Byte: 52},
+					},
+				},
+				&AttributeSymbol{
+					AttrName: "region",
+					Type:     cty.String,
+					rng: hcl.Range{
+						Filename: "second.tf",
+						Start:    hcl.Pos{Line: 4, Column: 3, Byte: 55},
+						End:      hcl.Pos{Line: 4, Column: 30, Byte: 82},
+					},
+				},
+			},
+		},
+	}
+
+	diff := cmp.Diff(expectedSymbols, symbols)
+	if diff != "" {
+		t.Fatalf("unexpected symbols: %s", diff)
+	}
+}
