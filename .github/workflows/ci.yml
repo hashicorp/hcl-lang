@@ -1,0 +1,68 @@
+name: ci
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+
+env:
+  GOPROXY: https://proxy.golang.org/
+
+jobs:
+  test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os:
+          - ubuntu-18.04
+          - windows-2019
+          - macos-10.15
+    steps:
+      -
+        name: Checkout
+        uses: actions/checkout@v2
+      -
+        name: Unshallow
+        run: git fetch --prune --unshallow
+      -
+        name: Read go version (Unix)
+        if: ${{ runner.os != 'Windows' }}
+        id: go-version-unix
+        run: |
+          content=`cat ./.go-version`
+          echo "::set-output name=content::$content"
+      -
+        name: Read go version (Windows)
+        if: ${{ runner.os == 'Windows' }}
+        id: go-version-win
+        run: |
+          $content = Get-Content .\.go-version -Raw
+          echo "::set-output name=content::$content"
+      -
+        name: Set up Go
+        uses: actions/setup-go@v2
+        with:
+          # TODO: Replace with go-version-from-file when it is supported
+          # https://github.com/actions/setup-go/pull/62
+          go-version: ${{ steps.go-version-unix.outputs.content || steps.go-version-win.outputs.content }}
+      -
+        name: Go mod download
+        run: go mod download -x
+      -
+        name: Go mod verify
+        run: go mod verify
+      -
+        name: Run go fmt
+        run: go run github.com/mh-cbon/go-fmt-fail ./...
+      -
+        name: Run tests
+        run: go test -v -coverprofile="coverage.txt" -covermode=atomic ./...
+      - 
+        name: Upload code coverage report
+        uses: codecov/codecov-action@v1
+        with:
+          file: coverage.txt
+          env_vars: "GOOS,GOARCH"
