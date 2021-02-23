@@ -39,7 +39,7 @@ func (d *Decoder) Symbols(query string) ([]Symbol, error) {
 	symbols := make([]Symbol, 0)
 
 	files := d.Filenames()
-	files = sort.StringSlice(files)
+	sort.Strings(files)
 
 	for _, filename := range files {
 		fSymbols, err := d.SymbolsInFile(filename)
