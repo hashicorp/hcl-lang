@@ -59,7 +59,7 @@ func TestDecoder_HoverAtPos_unknownAttribute(t *testing.T) {
 		Labels: resourceLabelSchema,
 		Body: &schema.BodySchema{
 			Attributes: map[string]*schema.AttributeSchema{
-				"count": {ValueType: cty.Number},
+				"count": {Expr: schema.LiteralTypeOnly(cty.Number)},
 			},
 		},
 	}
@@ -105,7 +105,7 @@ func TestDecoder_HoverAtPos_unknownBlock(t *testing.T) {
 		Labels: resourceLabelSchema,
 		Body: &schema.BodySchema{
 			Attributes: map[string]*schema.AttributeSchema{
-				"count": {ValueType: cty.Number},
+				"count": {Expr: schema.LiteralTypeOnly(cty.Number)},
 			},
 		},
 	}
@@ -150,7 +150,7 @@ func TestDecoder_HoverAtPos_invalidBlockPositions(t *testing.T) {
 		Labels: resourceLabelSchema,
 		Body: &schema.BodySchema{
 			Attributes: map[string]*schema.AttributeSchema{
-				"num_attr": {ValueType: cty.Number},
+				"num_attr": {Expr: schema.LiteralTypeOnly(cty.Number)},
 			},
 		},
 	}
@@ -225,8 +225,8 @@ func TestDecoder_HoverAtPos_rightHandSide(t *testing.T) {
 		Labels: resourceLabelSchema,
 		Body: &schema.BodySchema{
 			Attributes: map[string]*schema.AttributeSchema{
-				"num_attr": {ValueType: cty.Number},
-				"str_attr": {ValueType: cty.String, Description: lang.PlainText("Special attribute")},
+				"num_attr": {Expr: schema.LiteralTypeOnly(cty.Number)},
+				"str_attr": {Expr: schema.LiteralTypeOnly(cty.String), Description: lang.PlainText("Special attribute")},
 			},
 		},
 	}
@@ -257,10 +257,10 @@ func TestDecoder_HoverAtPos_rightHandSide(t *testing.T) {
 		t.Fatal(err)
 	}
 	expectedData := &lang.HoverData{
-		Content: lang.Markdown("**str_attr** _Optional, string_\n\nSpecial attribute"),
+		Content: lang.Markdown("`\"test\"` _string_"),
 		Range: hcl.Range{
 			Filename: "test.tf",
-			Start:    hcl.Pos{Line: 2, Column: 3, Byte: 18},
+			Start:    hcl.Pos{Line: 2, Column: 14, Byte: 29},
 			End:      hcl.Pos{Line: 2, Column: 20, Byte: 35},
 		},
 	}
@@ -279,8 +279,8 @@ func TestDecoder_HoverAtPos_basic(t *testing.T) {
 		Description: lang.Markdown("My special block"),
 		Body: &schema.BodySchema{
 			Attributes: map[string]*schema.AttributeSchema{
-				"num_attr": {ValueType: cty.Number},
-				"str_attr": {ValueType: cty.String, Description: lang.PlainText("Special attribute")},
+				"num_attr": {Expr: schema.LiteralTypeOnly(cty.Number)},
+				"str_attr": {Expr: schema.LiteralTypeOnly(cty.String), Description: lang.PlainText("Special attribute")},
 			},
 		},
 		DependentBody: map[schema.SchemaKey]*schema.BodySchema{

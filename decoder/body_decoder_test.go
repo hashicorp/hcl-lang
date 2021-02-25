@@ -20,10 +20,10 @@ func TestDecoder_CandidateAtPos_incompleteAttributes(t *testing.T) {
 				},
 				Body: &schema.BodySchema{
 					Attributes: map[string]*schema.AttributeSchema{
-						"attr1":           {ValueType: cty.Number},
-						"attr2":           {ValueType: cty.Number},
-						"some_other_attr": {ValueType: cty.Number},
-						"another_attr":    {ValueType: cty.Number},
+						"attr1":           {Expr: schema.LiteralTypeOnly(cty.Number)},
+						"attr2":           {Expr: schema.LiteralTypeOnly(cty.Number)},
+						"some_other_attr": {Expr: schema.LiteralTypeOnly(cty.Number)},
+						"another_attr":    {Expr: schema.LiteralTypeOnly(cty.Number)},
 					},
 				},
 			},
@@ -93,10 +93,10 @@ func TestDecoder_CandidateAtPos_computedAttributes(t *testing.T) {
 				},
 				Body: &schema.BodySchema{
 					Attributes: map[string]*schema.AttributeSchema{
-						"attr1":           {ValueType: cty.Number, IsComputed: true},
-						"attr2":           {ValueType: cty.Number, IsComputed: true, IsOptional: true},
-						"some_other_attr": {ValueType: cty.Number},
-						"another_attr":    {ValueType: cty.Number},
+						"attr1":           {Expr: schema.LiteralTypeOnly(cty.Number), IsComputed: true},
+						"attr2":           {Expr: schema.LiteralTypeOnly(cty.Number), IsComputed: true, IsOptional: true},
+						"some_other_attr": {Expr: schema.LiteralTypeOnly(cty.Number)},
+						"another_attr":    {Expr: schema.LiteralTypeOnly(cty.Number)},
 					},
 				},
 			},

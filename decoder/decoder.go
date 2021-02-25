@@ -165,6 +165,7 @@ func mergeBlockBodySchemas(block *hclsyntax.Block, blockSchema *schema.BlockSche
 	// cty.Type has private fields, so we have to declare custom copier
 	copystructure.Copiers = map[reflect.Type]copystructure.CopierFunc{
 		reflect.TypeOf(cty.NilType): ctyTypeCopier,
+		reflect.TypeOf(cty.Value{}): ctyValueCopier,
 	}
 
 	schemaCopy, err := copystructure.Copy(blockSchema.Body)
@@ -266,6 +267,10 @@ func dependencyKeysFromBlock(block *hclsyntax.Block, blockSchema *schema.BlockSc
 
 func ctyTypeCopier(v interface{}) (interface{}, error) {
 	return v.(cty.Type), nil
+}
+
+func ctyValueCopier(v interface{}) (interface{}, error) {
+	return v.(cty.Value), nil
 }
 
 func traversalToReference(traversal hcl.Traversal) (lang.Reference, error) {

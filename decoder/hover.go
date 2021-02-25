@@ -8,6 +8,7 @@ import (
 	"github.com/hashicorp/hcl-lang/schema"
 	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hclsyntax"
+	"github.com/zclconf/go-cty/cty"
 )
 
 func (d *Decoder) HoverAtPos(filename string, pos hcl.Pos) (*lang.HoverData, error) {
@@ -47,17 +48,38 @@ func (d *Decoder) hoverAtPos(body *hclsyntax.Body, bodySchema *schema.BodySchema
 		if attr.Range().ContainsPos(pos) {
 			aSchema, ok := bodySchema.Attributes[attr.Name]
 			if !ok {
-				return nil, &PositionalError{
-					Filename: filename,
-					Pos:      pos,
-					Msg:      fmt.Sprintf("unknown attribute %q", attr.Name),
+				if bodySchema.AnyAttribute == nil {
+					return nil, &PositionalError{
+						Filename: filename,
+						Pos:      pos,
+						Msg:      fmt.Sprintf("unknown attribute %q", attr.Name),
+					}
 				}
+				aSchema = bodySchema.AnyAttribute
 			}
 
-			return &lang.HoverData{
-				Content: hoverContentForAttribute(name, aSchema),
-				Range:   attr.Range(),
-			}, nil
+			if attr.NameRange.ContainsPos(pos) {
+				return &lang.HoverData{
+					Content: hoverContentForAttribute(name, aSchema),
+					Range:   attr.Range(),
+				}, nil
+			}
+
+			if attr.Expr.Range().ContainsPos(pos) {
+				exprCons := ExprConstraints(aSchema.Expr)
+				content, err := hoverContentForExpr(attr.Expr, exprCons)
+				if err != nil {
+					return nil, &PositionalError{
+						Filename: filename,
+						Pos:      pos,
+						Msg:      err.Error(),
+					}
+				}
+				return &lang.HoverData{
+					Content: lang.Markdown(content),
+					Range:   attr.Expr.Range(),
+				}, nil
+			}
 		}
 	}
 
@@ -119,7 +141,7 @@ func (d *Decoder) hoverAtPos(body *hclsyntax.Body, bodySchema *schema.BodySchema
 	return nil, &PositionalError{
 		Filename: filename,
 		Pos:      pos,
-		Msg:      "position outside of any attribute or block",
+		Msg:      "position outside of any attribute name, value or block",
 	}
 }
 
@@ -188,4 +210,248 @@ func hoverContentForBlock(bType string, schema *schema.BlockSchema) lang.MarkupC
 		Kind:  lang.MarkdownKind,
 		Value: value,
 	}
+}
+
+func hoverContentForExpr(expr hcl.Expression, constraints ExprConstraints) (string, error) {
+	switch e := expr.(type) {
+	case *hclsyntax.ScopeTraversalExpr:
+		kw, ok := constraints.KeywordExpr()
+		if ok && len(e.Traversal) == 1 {
+			return fmt.Sprintf("`%s` _%s_", kw.Keyword, kw.FriendlyName()), nil
+		}
+	case *hclsyntax.TemplateExpr:
+		if e.IsStringLiteral() {
+			return hoverContentForExpr(e.Parts[0], constraints)
+		}
+		if v, ok := stringValFromTemplateExpr(e); ok {
+			if constraints.HasLiteralTypeOf(cty.String) {
+				return hoverContentForValue(v, 0)
+			}
+			lv, ok := constraints.LiteralValueOf(v)
+			if ok {
+				return hoverContentForValue(lv.Val, 0)
+			}
+		}
+	case *hclsyntax.TemplateWrapExpr:
+		return hoverContentForExpr(e.Wrapped, constraints)
+	case *hclsyntax.TupleConsExpr:
+		tupleCons, ok := constraints.TupleConsExpr()
+		if ok {
+			content := fmt.Sprintf("_%s_", tupleCons.FriendlyName())
+			if tupleCons.Description.Value != "" {
+				content += "\n\n" + tupleCons.Description.Value
+			}
+			return content, nil
+		}
+
+		lt, ok := constraints.LiteralTypeOfTupleExpr()
+		if ok {
+			return hoverContentForType(lt.Type)
+		}
+		litVal, ok := constraints.LiteralValueOfTupleExpr(e)
+		if ok {
+			return hoverContentForValue(litVal.Val, 0)
+		}
+	case *hclsyntax.ObjectConsExpr:
+		mapExpr, ok := constraints.MapExpr()
+		if ok {
+			content := fmt.Sprintf("_%s_", mapExpr.FriendlyName())
+			if mapExpr.Description.Value != "" {
+				content += "\n\n" + mapExpr.Description.Value
+			}
+			return content, nil
+		}
+		lt, ok := constraints.LiteralTypeOfObjectConsExpr()
+		if ok {
+			return hoverContentForType(lt.Type)
+		}
+		litVal, ok := constraints.LiteralValueOfObjectConsExpr(e)
+		if ok {
+			return hoverContentForValue(litVal.Val, 0)
+		}
+	case *hclsyntax.LiteralValueExpr:
+		if constraints.HasLiteralTypeOf(e.Val.Type()) {
+			return hoverContentForValue(e.Val, 0)
+		}
+		lv, ok := constraints.LiteralValueOf(e.Val)
+		if ok {
+			return hoverContentForValue(lv.Val, 0)
+		}
+		return "", &ConstraintMismatch{e}
+	}
+
+	return "", fmt.Errorf("unsupported expression (%T)", expr)
+}
+
+func isMultilineStringLiteral(tplExpr *hclsyntax.TemplateExpr) bool {
+	if len(tplExpr.Parts) < 1 {
+		return false
+	}
+	for _, part := range tplExpr.Parts {
+		if _, ok := part.(*hclsyntax.LiteralValueExpr); !ok {
+			return false
+		}
+	}
+	return true
+}
+
+func stringValFromTemplateExpr(tplExpr *hclsyntax.TemplateExpr) (cty.Value, bool) {
+	value := ""
+	for _, part := range tplExpr.Parts {
+		if lv, ok := part.(*hclsyntax.LiteralValueExpr); ok {
+			v, _ := lv.Value(nil)
+			if !v.IsWhollyKnown() || v.Type() != cty.String {
+				return cty.NilVal, false
+			}
+			value += v.AsString()
+		} else {
+			return cty.NilVal, false
+		}
+	}
+	return cty.StringVal(value), true
+}
+
+func hoverContentForValue(val cty.Value, nestingLvl int) (string, error) {
+	if !val.IsWhollyKnown() {
+		if nestingLvl > 0 {
+			return "", nil
+		}
+		return fmt.Sprintf("_%s_", val.Type().FriendlyName()), nil
+	}
+
+	attrType := val.Type()
+	if attrType.IsPrimitiveType() {
+		var value string
+		switch attrType {
+		case cty.Bool:
+			value = fmt.Sprintf("%t", val.True())
+		case cty.String:
+			if strings.ContainsAny(val.AsString(), "\n") && nestingLvl == 0 {
+				// avoid double newline
+				strValue := strings.TrimSuffix(val.AsString(), "\n")
+				return fmt.Sprintf("```\n%s\n```\n_string_",
+					strValue), nil
+			}
+			value = fmt.Sprintf("%q", val.AsString())
+		case cty.Number:
+			value = formatNumberVal(val)
+		}
+
+		if nestingLvl > 0 {
+			return value, nil
+		}
+		return fmt.Sprintf("`%s` _%s_",
+			value, attrType.FriendlyName()), nil
+	}
+
+	if attrType.IsObjectType() {
+		attrNames := sortedObjectAttrNames(attrType)
+		if len(attrNames) == 0 {
+			return attrType.FriendlyName(), nil
+		}
+		value := ""
+		if nestingLvl == 0 {
+			value += "```\n"
+		}
+		value += "{\n"
+		for _, name := range attrNames {
+			whitespace := strings.Repeat("  ", nestingLvl+1)
+			val, err := hoverContentForValue(val.GetAttr(name), nestingLvl+1)
+			if err == nil {
+				value += fmt.Sprintf("%s%s = %s\n",
+					whitespace, name, val)
+			}
+		}
+		value += fmt.Sprintf("%s}", strings.Repeat("  ", nestingLvl))
+		if nestingLvl == 0 {
+			value += "\n```\n_object_"
+		}
+
+		return value, nil
+	}
+
+	if attrType.IsMapType() {
+		elems := val.AsValueMap()
+		if len(elems) == 0 {
+			return attrType.FriendlyName(), nil
+		}
+		value := ""
+		if nestingLvl == 0 {
+			value += "```\n"
+		}
+		value += "{\n"
+		mapKeys := sortedKeysOfValueMap(elems)
+		for _, key := range mapKeys {
+			val := elems[key]
+			elHover, err := hoverContentForValue(val, nestingLvl+1)
+			if err == nil {
+				whitespace := strings.Repeat("  ", nestingLvl+1)
+				value += fmt.Sprintf("%s%q = %s\n",
+					whitespace, key, elHover)
+			}
+		}
+		value += fmt.Sprintf("%s}", strings.Repeat("  ", nestingLvl))
+		if nestingLvl == 0 {
+			value += fmt.Sprintf("\n```\n_%s_", attrType.FriendlyName())
+		}
+
+		return value, nil
+	}
+
+	if attrType.IsListType() || attrType.IsSetType() || attrType.IsTupleType() {
+		elems := val.AsValueSlice()
+		if len(elems) == 0 {
+			return fmt.Sprintf(`_%s_`, attrType.FriendlyName()), nil
+		}
+		value := ""
+		if nestingLvl == 0 {
+			value += "```\n"
+		}
+
+		value += "[\n"
+		for _, elem := range elems {
+			whitespace := strings.Repeat("  ", nestingLvl+1)
+			elHover, err := hoverContentForValue(elem, nestingLvl+1)
+			if err == nil {
+				value += fmt.Sprintf("%s%s,\n", whitespace, elHover)
+			}
+		}
+		value += fmt.Sprintf("%s]", strings.Repeat("  ", nestingLvl))
+		if nestingLvl == 0 {
+			value += fmt.Sprintf("\n```\n_%s_", attrType.FriendlyName())
+		}
+
+		return value, nil
+	}
+
+	return "", fmt.Errorf("unsupported type: %q", attrType.FriendlyName())
+}
+
+func hoverContentForType(attrType cty.Type) (string, error) {
+	if attrType.IsPrimitiveType() {
+		return fmt.Sprintf(`_%s_`, attrType.FriendlyName()), nil
+	}
+
+	if attrType.IsObjectType() {
+		attrNames := sortedObjectAttrNames(attrType)
+		if len(attrNames) == 0 {
+			return attrType.FriendlyName(), nil
+		}
+		value := "```\n{\n"
+		for _, name := range attrNames {
+			valType := attrType.AttributeType(name)
+			value += fmt.Sprintf("  %s = %s\n", name,
+				valType.FriendlyName())
+		}
+		value += "}\n```\n_object_"
+
+		return value, nil
+	}
+
+	if attrType.IsMapType() || attrType.IsListType() || attrType.IsSetType() || attrType.IsTupleType() {
+		value := fmt.Sprintf(`_%s_`, attrType.FriendlyName())
+		return value, nil
+	}
+
+	return "", fmt.Errorf("unsupported type: %q", attrType.FriendlyName())
 }

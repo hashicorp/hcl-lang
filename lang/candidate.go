@@ -6,11 +6,25 @@ import (
 
 const (
 	NilCandidateKind CandidateKind = iota
+
+	// structural kinds
 	AttributeCandidateKind
 	BlockCandidateKind
 	LabelCandidateKind
+
+	// expressions
+	BoolCandidateKind
+	KeywordCandidateKind
+	ListCandidateKind
+	MapCandidateKind
+	NumberCandidateKind
+	ObjectCandidateKind
+	SetCandidateKind
+	StringCandidateKind
+	TupleCandidateKind
 )
 
+//go:generate stringer -type=CandidateKind -output=candidate_kind_string.go
 type CandidateKind uint
 
 // Candidate represents a completion candidate in the form of

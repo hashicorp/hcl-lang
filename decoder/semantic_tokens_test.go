@@ -76,10 +76,10 @@ func TestDecoder_SemanticTokensInFile_basic(t *testing.T) {
 				Body: &schema.BodySchema{
 					Attributes: map[string]*schema.AttributeSchema{
 						"count": {
-							ValueType: cty.Number,
+							Expr: schema.LiteralTypeOnly(cty.Number),
 						},
 						"source": {
-							ValueType:    cty.String,
+							Expr:         schema.LiteralTypeOnly(cty.String),
 							IsDeprecated: true,
 						},
 					},
@@ -154,6 +154,23 @@ resource "vault_auth_backend" "blah" {
 				},
 			},
 		},
+		{ // "./sub"
+			Type:      lang.TokenString,
+			Modifiers: []lang.SemanticTokenModifier{},
+			Range: hcl.Range{
+				Filename: "test.tf",
+				Start: hcl.Pos{
+					Line:   2,
+					Column: 12,
+					Byte:   26,
+				},
+				End: hcl.Pos{
+					Line:   2,
+					Column: 19,
+					Byte:   33,
+				},
+			},
+		},
 		{ // count
 			Type:      lang.TokenAttrName,
 			Modifiers: []lang.SemanticTokenModifier{},
@@ -168,6 +185,23 @@ resource "vault_auth_backend" "blah" {
 					Line:   3,
 					Column: 8,
 					Byte:   41,
+				},
+			},
+		},
+		{ // 1
+			Type:      lang.TokenNumber,
+			Modifiers: []lang.SemanticTokenModifier{},
+			Range: hcl.Range{
+				Filename: "test.tf",
+				Start: hcl.Pos{
+					Line:   3,
+					Column: 12,
+					Byte:   45,
+				},
+				End: hcl.Pos{
+					Line:   3,
+					Column: 13,
+					Byte:   46,
 				},
 			},
 		},
@@ -252,10 +286,10 @@ func TestDecoder_SemanticTokensInFile_dependentSchema(t *testing.T) {
 					}): {
 						Attributes: map[string]*schema.AttributeSchema{
 							"instance_type": {
-								ValueType: cty.String,
+								Expr: schema.LiteralTypeOnly(cty.String),
 							},
 							"deprecated": {
-								ValueType: cty.Bool,
+								Expr: schema.LiteralTypeOnly(cty.Bool),
 							},
 						},
 					},
@@ -288,7 +322,7 @@ resource "aws_instance" "beta" {
 	}
 
 	expectedTokens := []lang.SemanticToken{
-		{
+		{ // resource
 			Type:      lang.TokenBlockType,
 			Modifiers: []lang.SemanticTokenModifier{},
 			Range: hcl.Range{
@@ -305,7 +339,7 @@ resource "aws_instance" "beta" {
 				},
 			},
 		},
-		{
+		{ // "vault_auth_backend"
 			Type: lang.TokenBlockLabel,
 			Modifiers: []lang.SemanticTokenModifier{
 				lang.TokenModifierDependent,
@@ -324,7 +358,7 @@ resource "aws_instance" "beta" {
 				},
 			},
 		},
-		{
+		{ // "alpha"
 			Type:      lang.TokenBlockLabel,
 			Modifiers: []lang.SemanticTokenModifier{},
 			Range: hcl.Range{
@@ -341,7 +375,7 @@ resource "aws_instance" "beta" {
 				},
 			},
 		},
-		{
+		{ // resource
 			Type:      lang.TokenBlockType,
 			Modifiers: []lang.SemanticTokenModifier{},
 			Range: hcl.Range{
@@ -358,7 +392,7 @@ resource "aws_instance" "beta" {
 				},
 			},
 		},
-		{
+		{ // "aws_instance"
 			Type: lang.TokenBlockLabel,
 			Modifiers: []lang.SemanticTokenModifier{
 				lang.TokenModifierDependent,
@@ -377,7 +411,7 @@ resource "aws_instance" "beta" {
 				},
 			},
 		},
-		{
+		{ // "beta"
 			Type:      lang.TokenBlockLabel,
 			Modifiers: []lang.SemanticTokenModifier{},
 			Range: hcl.Range{
@@ -394,7 +428,7 @@ resource "aws_instance" "beta" {
 				},
 			},
 		},
-		{
+		{ // instance_type
 			Type: lang.TokenAttrName,
 			Modifiers: []lang.SemanticTokenModifier{
 				lang.TokenModifierDependent,
@@ -413,7 +447,24 @@ resource "aws_instance" "beta" {
 				},
 			},
 		},
-		{
+		{ // "t2.micro"
+			Type:      lang.TokenString,
+			Modifiers: []lang.SemanticTokenModifier{},
+			Range: hcl.Range{
+				Filename: "test.tf",
+				Start: hcl.Pos{
+					Line:   5,
+					Column: 19,
+					Byte:   125,
+				},
+				End: hcl.Pos{
+					Line:   5,
+					Column: 29,
+					Byte:   135,
+				},
+			},
+		},
+		{ // deprecated
 			Type: lang.TokenAttrName,
 			Modifiers: []lang.SemanticTokenModifier{
 				lang.TokenModifierDependent,
@@ -429,6 +480,23 @@ resource "aws_instance" "beta" {
 					Line:   6,
 					Column: 13,
 					Byte:   148,
+				},
+			},
+		},
+		{ // true
+			Type:      lang.TokenBool,
+			Modifiers: []lang.SemanticTokenModifier{},
+			Range: hcl.Range{
+				Filename: "test.tf",
+				Start: hcl.Pos{
+					Line:   6,
+					Column: 16,
+					Byte:   151,
+				},
+				End: hcl.Pos{
+					Line:   6,
+					Column: 20,
+					Byte:   155,
 				},
 			},
 		},

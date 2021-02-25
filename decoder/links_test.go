@@ -21,8 +21,8 @@ func TestLinksInFile(t *testing.T) {
 		Description: lang.Markdown("My special block"),
 		Body: &schema.BodySchema{
 			Attributes: map[string]*schema.AttributeSchema{
-				"num_attr": {ValueType: cty.Number},
-				"str_attr": {ValueType: cty.String, Description: lang.PlainText("Special attribute")},
+				"num_attr": {Expr: schema.LiteralTypeOnly(cty.Number)},
+				"str_attr": {Expr: schema.LiteralTypeOnly(cty.String), Description: lang.PlainText("Special attribute")},
 			},
 		},
 		DependentBody: map[schema.SchemaKey]*schema.BodySchema{
