@@ -426,6 +426,7 @@ resource "aws_instance" "test" {
 				},
 				&AttributeSymbol{
 					AttrName: "random_kw",
+					ExprKind: lang.TraversalExprKind{},
 					rng: hcl.Range{
 						Filename: "test.tf",
 						Start: hcl.Pos{

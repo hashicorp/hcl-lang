@@ -29,3 +29,9 @@ type ObjectConsExprKind struct{}
 func (ObjectConsExprKind) isSymbolExprKindSigil() exprKindSigil {
 	return exprKindSigil{}
 }
+
+type TraversalExprKind struct{}
+
+func (TraversalExprKind) isSymbolExprKindSigil() exprKindSigil {
+	return exprKindSigil{}
+}
