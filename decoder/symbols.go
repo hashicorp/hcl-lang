@@ -90,6 +90,8 @@ func symbolsForBody(body *hclsyntax.Body) []Symbol {
 
 func symbolExprKind(expr hcl.Expression) lang.SymbolExprKind {
 	switch e := expr.(type) {
+	case *hclsyntax.ScopeTraversalExpr:
+		return lang.TraversalExprKind{}
 	case *hclsyntax.LiteralValueExpr:
 		return lang.LiteralTypeKind{Type: e.Val.Type()}
 	case *hclsyntax.TemplateExpr:
