@@ -74,7 +74,7 @@ func TestBodySchema_FindSchemaDependingOn_attributes(t *testing.T) {
 				{
 					Name: "depref",
 					Expr: ExpressionValue{
-						Reference: lang.Reference{
+						Address: lang.Address{
 							lang.RootStep{Name: "myroot"},
 							lang.AttrStep{Name: "attrstep"},
 						},
@@ -331,7 +331,7 @@ var testSchemaWithAttributes = &BlockSchema{
 				{
 					Name: "depref",
 					Expr: ExpressionValue{
-						Reference: lang.Reference{
+						Address: lang.Address{
 							lang.RootStep{Name: "myroot"},
 							lang.AttrStep{Name: "attrstep"},
 						},

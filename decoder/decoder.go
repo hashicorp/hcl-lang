@@ -234,15 +234,15 @@ func dependencyKeysFromBlock(block *hclsyntax.Block, blockSchema *schema.BlockSc
 
 			st, ok := attr.Expr.(*hclsyntax.ScopeTraversalExpr)
 			if ok {
-				refVal, err := traversalToReference(st.AsTraversal())
+				addr, err := traversalToAddress(st.AsTraversal())
 				if err != nil {
-					// skip unparsable reference
+					// skip unparsable traversal
 					continue
 				}
 				dk.Attributes = append(dk.Attributes, schema.AttributeDependent{
 					Name: name,
 					Expr: schema.ExpressionValue{
-						Reference: refVal,
+						Address: addr,
 					},
 				})
 				continue
@@ -273,27 +273,27 @@ func ctyValueCopier(v interface{}) (interface{}, error) {
 	return v.(cty.Value), nil
 }
 
-func traversalToReference(traversal hcl.Traversal) (lang.Reference, error) {
-	r := lang.Reference{}
+func traversalToAddress(traversal hcl.Traversal) (lang.Address, error) {
+	addr := lang.Address{}
 	for _, tr := range traversal {
 		switch t := tr.(type) {
 		case *hcl.TraverseRoot:
-			r = append(r, lang.RootStep{
+			addr = append(addr, lang.RootStep{
 				Name: t.Name,
 			})
 		case *hcl.TraverseAttr:
-			r = append(r, lang.AttrStep{
+			addr = append(addr, lang.AttrStep{
 				Name: t.Name,
 			})
 		case *hcl.TraverseIndex:
-			r = append(r, lang.IndexStep{
+			addr = append(addr, lang.IndexStep{
 				Key: t.Key,
 			})
 		default:
-			return r, fmt.Errorf("invalid traversal: %T", tr)
+			return addr, fmt.Errorf("invalid traversal: %T", tr)
 		}
 	}
-	return r, nil
+	return addr, nil
 }
 
 func stringPos(pos hcl.Pos) string {
