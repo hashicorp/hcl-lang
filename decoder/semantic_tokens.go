@@ -27,7 +27,7 @@ func (d *Decoder) SemanticTokensInFile(filename string) ([]lang.SemanticToken, e
 		return []lang.SemanticToken{}, nil
 	}
 
-	tokens := tokensForBody(body, d.rootSchema, false)
+	tokens := d.tokensForBody(body, d.rootSchema, false)
 
 	sort.Slice(tokens, func(i, j int) bool {
 		return tokens[i].Range.Start.Byte < tokens[j].Range.Start.Byte
@@ -36,7 +36,7 @@ func (d *Decoder) SemanticTokensInFile(filename string) ([]lang.SemanticToken, e
 	return tokens, nil
 }
 
-func tokensForBody(body *hclsyntax.Body, bodySchema *schema.BodySchema, isDependent bool) []lang.SemanticToken {
+func (d *Decoder) tokensForBody(body *hclsyntax.Body, bodySchema *schema.BodySchema, isDependent bool) []lang.SemanticToken {
 	tokens := make([]lang.SemanticToken, 0)
 
 	if bodySchema == nil {
@@ -68,7 +68,7 @@ func tokensForBody(body *hclsyntax.Body, bodySchema *schema.BodySchema, isDepend
 		})
 
 		ec := ExprConstraints(attrSchema.Expr)
-		tokens = append(tokens, tokensForExpression(attr.Expr, ec)...)
+		tokens = append(tokens, d.tokensForExpression(attr.Expr, ec)...)
 	}
 
 	for _, block := range body.Blocks {
@@ -113,20 +113,20 @@ func tokensForBody(body *hclsyntax.Body, bodySchema *schema.BodySchema, isDepend
 		}
 
 		if block.Body != nil {
-			tokens = append(tokens, tokensForBody(block.Body, blockSchema.Body, false)...)
+			tokens = append(tokens, d.tokensForBody(block.Body, blockSchema.Body, false)...)
 		}
 
 		dk := dependencyKeysFromBlock(block, blockSchema)
 		depSchema, ok := blockSchema.DependentBodySchema(dk)
 		if ok {
-			tokens = append(tokens, tokensForBody(block.Body, depSchema, true)...)
+			tokens = append(tokens, d.tokensForBody(block.Body, depSchema, true)...)
 		}
 	}
 
 	return tokens
 }
 
-func tokensForExpression(expr hclsyntax.Expression, constraints ExprConstraints) []lang.SemanticToken {
+func (d *Decoder) tokensForExpression(expr hclsyntax.Expression, constraints ExprConstraints) []lang.SemanticToken {
 	tokens := make([]lang.SemanticToken, 0)
 
 	switch eType := expr.(type) {
@@ -142,6 +142,82 @@ func tokensForExpression(expr hclsyntax.Expression, constraints ExprConstraints)
 				},
 			}
 		}
+
+		te, ok := constraints.TraversalExpr()
+		if ok && d.refReader != nil {
+			refs := References(d.refReader())
+			traversal := eType.AsTraversal()
+
+			_, err := refs.FirstTraversalMatch(traversal, te)
+			if err != nil {
+				return tokens
+			}
+
+			for _, t := range traversal {
+				// TODO: Add meaning to each step/token?
+				// This would require declaring the meaning in schema.AddrStep
+				// and exposing it via lang.AddressStep
+				// See https://github.com/hashicorp/vscode-terraform/issues/574
+
+				switch ts := t.(type) {
+				case hcl.TraverseRoot:
+					tokens = append(tokens, lang.SemanticToken{
+						Type:      lang.TokenTraversalStep,
+						Modifiers: []lang.SemanticTokenModifier{},
+						Range:     t.SourceRange(),
+					})
+				case hcl.TraverseAttr:
+					rng := t.SourceRange()
+					tokens = append(tokens, lang.SemanticToken{
+						Type:      lang.TokenTraversalStep,
+						Modifiers: []lang.SemanticTokenModifier{},
+						Range: hcl.Range{
+							Filename: rng.Filename,
+							// omit the initial '.'
+							Start: hcl.Pos{
+								Line:   rng.Start.Line,
+								Column: rng.Start.Column + 1,
+								Byte:   rng.Start.Byte + 1,
+							},
+							End: rng.End,
+						},
+					})
+				case hcl.TraverseIndex:
+					// for index steps we only report
+					// what's inside brackets
+					rng := t.SourceRange()
+					idxRange := hcl.Range{
+						Filename: rng.Filename,
+						Start: hcl.Pos{
+							Line:   rng.Start.Line,
+							Column: rng.Start.Column + 1,
+							Byte:   rng.Start.Byte + 1,
+						},
+						End: hcl.Pos{
+							Line:   rng.End.Line,
+							Column: rng.End.Column - 1,
+							Byte:   rng.End.Byte - 1,
+						},
+					}
+
+					if ts.Key.Type() == cty.String {
+						tokens = append(tokens, lang.SemanticToken{
+							Type:      lang.TokenMapKey,
+							Modifiers: []lang.SemanticTokenModifier{},
+							Range:     idxRange,
+						})
+					}
+					if ts.Key.Type() == cty.Number {
+						tokens = append(tokens, lang.SemanticToken{
+							Type:      lang.TokenNumber,
+							Modifiers: []lang.SemanticTokenModifier{},
+							Range:     idxRange,
+						})
+					}
+				}
+
+			}
+		}
 	case *hclsyntax.TemplateExpr:
 		// complex templates are not supported yet
 		if !eType.IsStringLiteral() && !isMultilineStringLiteral(eType) {
@@ -155,13 +231,13 @@ func tokensForExpression(expr hclsyntax.Expression, constraints ExprConstraints)
 			return tokenForTypedExpression(eType, cty.String)
 		}
 	case *hclsyntax.TemplateWrapExpr:
-		return tokensForExpression(eType.Wrapped, constraints)
+		return d.tokensForExpression(eType.Wrapped, constraints)
 	case *hclsyntax.TupleConsExpr:
 		tc, ok := constraints.TupleConsExpr()
 		if ok {
 			ec := ExprConstraints(tc.AnyElem)
 			for _, expr := range eType.Exprs {
-				tokens = append(tokens, tokensForExpression(expr, ec)...)
+				tokens = append(tokens, d.tokensForExpression(expr, ec)...)
 			}
 			return tokens
 		}
@@ -169,7 +245,7 @@ func tokensForExpression(expr hclsyntax.Expression, constraints ExprConstraints)
 		if ok {
 			ec := ExprConstraints(se.Elem)
 			for _, expr := range eType.Exprs {
-				tokens = append(tokens, tokensForExpression(expr, ec)...)
+				tokens = append(tokens, d.tokensForExpression(expr, ec)...)
 			}
 			return tokens
 		}
@@ -177,7 +253,7 @@ func tokensForExpression(expr hclsyntax.Expression, constraints ExprConstraints)
 		if ok {
 			ec := ExprConstraints(le.Elem)
 			for _, expr := range eType.Exprs {
-				tokens = append(tokens, tokensForExpression(expr, ec)...)
+				tokens = append(tokens, d.tokensForExpression(expr, ec)...)
 			}
 			return tokens
 		}
@@ -188,7 +264,7 @@ func tokensForExpression(expr hclsyntax.Expression, constraints ExprConstraints)
 					break
 				}
 				ec := ExprConstraints(te.Elems[i])
-				tokens = append(tokens, tokensForExpression(expr, ec)...)
+				tokens = append(tokens, d.tokensForExpression(expr, ec)...)
 			}
 			return tokens
 		}
@@ -222,7 +298,7 @@ func tokensForExpression(expr hclsyntax.Expression, constraints ExprConstraints)
 				})
 
 				ec := ExprConstraints(attr.Expr)
-				tokens = append(tokens, tokensForExpression(item.ValueExpr, ec)...)
+				tokens = append(tokens, d.tokensForExpression(item.ValueExpr, ec)...)
 			}
 			return tokens
 		}
@@ -235,7 +311,7 @@ func tokensForExpression(expr hclsyntax.Expression, constraints ExprConstraints)
 					Range:     item.KeyExpr.Range(),
 				})
 				ec := ExprConstraints(me.Elem)
-				tokens = append(tokens, tokensForExpression(item.ValueExpr, ec)...)
+				tokens = append(tokens, d.tokensForExpression(item.ValueExpr, ec)...)
 			}
 			return tokens
 		}

@@ -29,6 +29,15 @@ func (ec ExprConstraints) KeywordExpr() (schema.KeywordExpr, bool) {
 	return schema.KeywordExpr{}, false
 }
 
+func (ec ExprConstraints) TraversalExpr() (schema.TraversalExpr, bool) {
+	for _, c := range ec {
+		if te, ok := c.(schema.TraversalExpr); ok {
+			return te, ok
+		}
+	}
+	return schema.TraversalExpr{}, false
+}
+
 func (ec ExprConstraints) MapExpr() (schema.MapExpr, bool) {
 	for _, c := range ec {
 		if me, ok := c.(schema.MapExpr); ok {
@@ -90,6 +99,15 @@ func (ec ExprConstraints) HasLiteralTypeOf(exprType cty.Type) bool {
 		}
 	}
 	return false
+}
+
+func (ec ExprConstraints) LiteralType() (cty.Type, bool) {
+	for _, c := range ec {
+		if lt, ok := c.(schema.LiteralTypeExpr); ok {
+			return lt.Type, true
+		}
+	}
+	return cty.NilType, false
 }
 
 func (ec ExprConstraints) HasLiteralValueOf(val cty.Value) bool {

@@ -12,6 +12,7 @@ type addrStepSigil struct{}
 
 type AddressStep interface {
 	isRefStepImpl() addrStepSigil
+	String() string
 }
 
 func (a Address) Marshal() ([]byte, error) {
@@ -21,32 +22,17 @@ func (a Address) Marshal() ([]byte, error) {
 func (r Address) String() string {
 	addr := ""
 	for _, s := range r {
-		switch step := s.(type) {
-		case RootStep:
-			addr += step.Name
-		case AttrStep:
-			addr += fmt.Sprintf(".%s", step.Name)
-		case IndexStep:
-			key := step.Key
-			switch key.Type() {
-			case cty.Number:
-				f := key.AsBigFloat()
-				idx, _ := f.Int64()
-				addr += fmt.Sprintf("[%d]", idx)
-			case cty.String:
-				addr += fmt.Sprintf("[%q]", key.AsString())
-			default:
-				addr += fmt.Sprintf("<INVALIDKEY-%T>", step)
-			}
-		default:
-			addr += fmt.Sprintf("<INVALIDSTEP-%T>", step)
-		}
+		addr += s.String()
 	}
 	return addr
 }
 
 type RootStep struct {
 	Name string `json:"name"`
+}
+
+func (s RootStep) String() string {
+	return s.Name
 }
 
 func (RootStep) isRefStepImpl() addrStepSigil {
@@ -57,12 +43,29 @@ type AttrStep struct {
 	Name string `json:"name"`
 }
 
+func (s AttrStep) String() string {
+	return fmt.Sprintf(".%s", s.Name)
+}
+
 func (AttrStep) isRefStepImpl() addrStepSigil {
 	return addrStepSigil{}
 }
 
 type IndexStep struct {
 	Key cty.Value `json:"key"`
+}
+
+func (s IndexStep) String() string {
+	switch s.Key.Type() {
+	case cty.Number:
+		f := s.Key.AsBigFloat()
+		idx, _ := f.Int64()
+		return fmt.Sprintf("[%d]", idx)
+	case cty.String:
+		return fmt.Sprintf("[%q]", s.Key.AsString())
+	}
+
+	return fmt.Sprintf("<INVALIDKEY-%T>", s)
 }
 
 func (IndexStep) isRefStepImpl() addrStepSigil {

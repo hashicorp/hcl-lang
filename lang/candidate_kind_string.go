@@ -21,11 +21,12 @@ func _() {
 	_ = x[SetCandidateKind-10]
 	_ = x[StringCandidateKind-11]
 	_ = x[TupleCandidateKind-12]
+	_ = x[TraversalCandidateKind-13]
 }
 
-const _CandidateKind_name = "NilCandidateKindAttributeCandidateKindBlockCandidateKindLabelCandidateKindBoolCandidateKindKeywordCandidateKindListCandidateKindMapCandidateKindNumberCandidateKindObjectCandidateKindSetCandidateKindStringCandidateKindTupleCandidateKind"
+const _CandidateKind_name = "NilCandidateKindAttributeCandidateKindBlockCandidateKindLabelCandidateKindBoolCandidateKindKeywordCandidateKindListCandidateKindMapCandidateKindNumberCandidateKindObjectCandidateKindSetCandidateKindStringCandidateKindTupleCandidateKindTraversalCandidateKind"
 
-var _CandidateKind_index = [...]uint8{0, 16, 38, 56, 74, 91, 111, 128, 144, 163, 182, 198, 217, 235}
+var _CandidateKind_index = [...]uint16{0, 16, 38, 56, 74, 91, 111, 128, 144, 163, 182, 198, 217, 235, 257}
 
 func (i CandidateKind) String() string {
 	if i >= CandidateKind(len(_CandidateKind_index)-1) {

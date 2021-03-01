@@ -1398,3 +1398,191 @@ EOT
 		})
 	}
 }
+
+func TestDecoder_SemanticTokensInFile_traversalExpression(t *testing.T) {
+	testCases := []struct {
+		name           string
+		attrSchema     map[string]*schema.AttributeSchema
+		refs           lang.References
+		cfg            string
+		expectedTokens []lang.SemanticToken
+	}{
+		{
+			"unknown traversal",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Expr: schema.ExprConstraints{
+						schema.TraversalExpr{OfType: cty.String},
+					},
+				},
+			},
+			lang.References{},
+			`attr = var.blah
+`,
+			[]lang.SemanticToken{
+				{ // attr
+					Type:      lang.TokenAttrName,
+					Modifiers: []lang.SemanticTokenModifier{},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   1,
+							Column: 1,
+							Byte:   0,
+						},
+						End: hcl.Pos{
+							Line:   1,
+							Column: 5,
+							Byte:   4,
+						},
+					},
+				},
+			},
+		},
+		{
+			"known mismatching traversal",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Expr: schema.ExprConstraints{
+						schema.TraversalExpr{OfType: cty.String},
+					},
+				},
+			},
+			lang.References{
+				lang.Reference{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "blah"},
+					},
+					Type: cty.Bool,
+				},
+			},
+			`attr = var.blah
+`,
+			[]lang.SemanticToken{
+				{ // attr
+					Type:      lang.TokenAttrName,
+					Modifiers: []lang.SemanticTokenModifier{},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   1,
+							Column: 1,
+							Byte:   0,
+						},
+						End: hcl.Pos{
+							Line:   1,
+							Column: 5,
+							Byte:   4,
+						},
+					},
+				},
+			},
+		},
+		{
+			"known matching traversal",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Expr: schema.ExprConstraints{
+						schema.TraversalExpr{OfType: cty.String},
+					},
+				},
+			},
+			lang.References{
+				lang.Reference{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "blah"},
+					},
+					Type: cty.String,
+				},
+			},
+			`attr = var.blah
+`,
+			[]lang.SemanticToken{
+				{ // attr
+					Type:      lang.TokenAttrName,
+					Modifiers: []lang.SemanticTokenModifier{},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   1,
+							Column: 1,
+							Byte:   0,
+						},
+						End: hcl.Pos{
+							Line:   1,
+							Column: 5,
+							Byte:   4,
+						},
+					},
+				},
+				{ // var
+					Type:      lang.TokenTraversalStep,
+					Modifiers: []lang.SemanticTokenModifier{},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   1,
+							Column: 8,
+							Byte:   7,
+						},
+						End: hcl.Pos{
+							Line:   1,
+							Column: 11,
+							Byte:   10,
+						},
+					},
+				},
+				{ // blah
+					Type:      lang.TokenTraversalStep,
+					Modifiers: []lang.SemanticTokenModifier{},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   1,
+							Column: 12,
+							Byte:   11,
+						},
+						End: hcl.Pos{
+							Line:   1,
+							Column: 16,
+							Byte:   15,
+						},
+					},
+				},
+			},
+		},
+	}
+
+	for i, tc := range testCases {
+		t.Run(fmt.Sprintf("%d-%s", i, tc.name), func(t *testing.T) {
+			d := NewDecoder()
+			d.SetSchema(&schema.BodySchema{
+				Attributes: tc.attrSchema,
+			})
+			d.SetReferenceReader(func() lang.References {
+				return tc.refs
+			})
+
+			f, pDiags := hclsyntax.ParseConfig([]byte(tc.cfg), "test.tf", hcl.InitialPos)
+			if len(pDiags) > 0 {
+				t.Fatal(pDiags)
+			}
+			err := d.LoadFile("test.tf", f)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			tokens, err := d.SemanticTokensInFile("test.tf")
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			diff := cmp.Diff(tc.expectedTokens, tokens)
+			if diff != "" {
+				t.Fatalf("unexpected tokens: %s", diff)
+			}
+		})
+	}
+}

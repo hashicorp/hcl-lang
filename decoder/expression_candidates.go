@@ -13,16 +13,25 @@ import (
 	"github.com/zclconf/go-cty/cty"
 )
 
-func (d *Decoder) attrValueCandidatesAtPos(attr *hclsyntax.Attribute, schema *schema.AttributeSchema, pos hcl.Pos) (lang.Candidates, error) {
-	constraints, rng := constraintsAtPos(attr.Expr, ExprConstraints(schema.Expr), pos)
+func (d *Decoder) attrValueCandidatesAtPos(attr *hclsyntax.Attribute, schema *schema.AttributeSchema, outerBodyRng hcl.Range, pos hcl.Pos) (lang.Candidates, error) {
+	constraints, editRng := constraintsAtPos(attr.Expr, ExprConstraints(schema.Expr), pos)
 	if len(constraints) > 0 {
-		return d.expressionCandidatesAtPos(constraints, rng)
+		prefixRng := editRng
+		prefixRng.End = pos
+		return d.expressionCandidatesAtPos(constraints, outerBodyRng, prefixRng, editRng)
 	}
 	return lang.ZeroCandidates(), nil
 }
 
 func constraintsAtPos(expr hcl.Expression, constraints ExprConstraints, pos hcl.Pos) (ExprConstraints, hcl.Range) {
 	// TODO: Support middle-of-expression completion
+
+	// Ideally the edit range should always match the expression range
+	// but expression range in many cases includes the last newline character
+	// so we'd have to reinsert that character in the text edit.
+	// More importantly LSP does not support multi-line text edits.
+	// Overall this is not an issue (yet) as we don't support more complex
+	// completion in nested expressions
 
 	switch eType := expr.(type) {
 	case *hclsyntax.LiteralValueExpr:
@@ -31,6 +40,28 @@ func constraintsAtPos(expr hcl.Expression, constraints ExprConstraints, pos hcl.
 				Start:    eType.Range().Start,
 				End:      eType.Range().Start,
 				Filename: eType.Range().Filename,
+			}
+		}
+	case *hclsyntax.ScopeTraversalExpr:
+		matchedConstraints := make(ExprConstraints, 0)
+		ke, ok := constraints.KeywordExpr()
+		if ok {
+			matchedConstraints = append(matchedConstraints, ke)
+		}
+		te, ok := constraints.TraversalExpr()
+		if ok {
+			matchedConstraints = append(matchedConstraints, te)
+		}
+
+		if len(matchedConstraints) > 0 {
+			endPos := eType.Range().End
+			if pos.Byte-endPos.Byte == 1 {
+				endPos = pos
+			}
+			return matchedConstraints, hcl.Range{
+				Filename: eType.Range().Filename,
+				Start:    eType.Range().Start,
+				End:      endPos,
 			}
 		}
 	case *hclsyntax.TupleConsExpr:
@@ -120,18 +151,18 @@ func constraintsAtPos(expr hcl.Expression, constraints ExprConstraints, pos hcl.
 	return ExprConstraints{}, expr.Range()
 }
 
-func (d *Decoder) expressionCandidatesAtPos(constraints ExprConstraints, editRng hcl.Range) (lang.Candidates, error) {
+func (d *Decoder) expressionCandidatesAtPos(constraints ExprConstraints, outerBodyRng, prefixRng, editRng hcl.Range) (lang.Candidates, error) {
 	candidates := lang.NewCandidates()
 
 	for _, c := range constraints {
-		candidates.List = append(candidates.List, constraintToCandidates(c, editRng)...)
+		candidates.List = append(candidates.List, d.constraintToCandidates(c, outerBodyRng, prefixRng, editRng)...)
 	}
 
 	candidates.IsComplete = true
 	return candidates, nil
 }
 
-func constraintToCandidates(constraint schema.ExprConstraint, editRng hcl.Range) []lang.Candidate {
+func (d *Decoder) constraintToCandidates(constraint schema.ExprConstraint, outerBodyRng, prefixRng, editRng hcl.Range) []lang.Candidate {
 	candidates := make([]lang.Candidate, 0)
 
 	switch c := constraint.(type) {
@@ -153,6 +184,8 @@ func constraintToCandidates(constraint schema.ExprConstraint, editRng hcl.Range)
 				Range:   editRng,
 			},
 		})
+	case schema.TraversalExpr:
+		candidates = append(candidates, d.candidatesForTraversalConstraint(c, outerBodyRng, prefixRng, editRng)...)
 	case schema.TupleConsExpr:
 		candidates = append(candidates, lang.Candidate{
 			Label:       fmt.Sprintf(`[%s]`, labelForConstraints(c.AnyElem)),
@@ -164,7 +197,7 @@ func constraintToCandidates(constraint schema.ExprConstraint, editRng hcl.Range)
 				Snippet: `[ ${0} ]`,
 				Range:   editRng,
 			},
-			TriggerSuggest: len(c.AnyElem) > 0,
+			TriggerSuggest: triggerSuggestForExprConstraints(c.AnyElem),
 		})
 	case schema.ListExpr:
 		candidates = append(candidates, lang.Candidate{
@@ -177,7 +210,7 @@ func constraintToCandidates(constraint schema.ExprConstraint, editRng hcl.Range)
 				Snippet: `[ ${0} ]`,
 				Range:   editRng,
 			},
-			TriggerSuggest: len(c.Elem) > 0,
+			TriggerSuggest: triggerSuggestForExprConstraints(c.Elem),
 		})
 	case schema.SetExpr:
 		candidates = append(candidates, lang.Candidate{
@@ -190,9 +223,13 @@ func constraintToCandidates(constraint schema.ExprConstraint, editRng hcl.Range)
 				Snippet: `[ ${0} ]`,
 				Range:   editRng,
 			},
-			TriggerSuggest: len(c.Elem) > 0,
+			TriggerSuggest: triggerSuggestForExprConstraints(c.Elem),
 		})
 	case schema.TupleExpr:
+		triggerSuggest := false
+		if len(c.Elems) > 0 {
+			triggerSuggest = triggerSuggestForExprConstraints(c.Elems[0])
+		}
 		candidates = append(candidates, lang.Candidate{
 			Label:       fmt.Sprintf(`[%s]`, labelForConstraints(c.Elems[0])),
 			Detail:      c.FriendlyName(),
@@ -203,7 +240,7 @@ func constraintToCandidates(constraint schema.ExprConstraint, editRng hcl.Range)
 				Snippet: `[ ${0} ]`,
 				Range:   editRng,
 			},
-			TriggerSuggest: len(c.Elems) > 0,
+			TriggerSuggest: triggerSuggest,
 		})
 	case schema.MapExpr:
 		candidates = append(candidates, lang.Candidate{
@@ -218,7 +255,7 @@ func constraintToCandidates(constraint schema.ExprConstraint, editRng hcl.Range)
 					snippetForConstraints(1, c.Elem, true)),
 				Range: editRng,
 			},
-			TriggerSuggest: len(c.Elem) > 0,
+			TriggerSuggest: triggerSuggestForExprConstraints(c.Elem),
 		})
 	case schema.ObjectExpr:
 		candidates = append(candidates, lang.Candidate{
@@ -251,6 +288,47 @@ func constraintToCandidates(constraint schema.ExprConstraint, editRng hcl.Range)
 			})
 		}
 	}
+
+	return candidates
+}
+
+func (d *Decoder) candidatesForTraversalConstraint(tc schema.TraversalExpr, outerBodyRng, prefixRng, editRng hcl.Range) []lang.Candidate {
+	candidates := make([]lang.Candidate, 0)
+
+	if d.refReader == nil {
+		return candidates
+	}
+
+	if tc.Address != nil {
+		// no candidates if traversal itself is addressable
+		return candidates
+	}
+
+	prefix, _ := d.bytesFromRange(prefixRng)
+
+	refs := References(d.refReader())
+	refs.Walk(func(ref lang.Reference) {
+		// avoid suggesting references to block's own fields from within (for now)
+		if ref.RangePtr != nil &&
+			(outerBodyRng.ContainsPos(ref.RangePtr.Start) ||
+				posEqual(outerBodyRng.End, ref.RangePtr.End)) {
+			return
+		}
+
+		if Reference(ref).MatchesConstraint(tc) && strings.HasPrefix(ref.Addr.String(), string(prefix)) {
+			candidates = append(candidates, lang.Candidate{
+				Label:       ref.Addr.String(),
+				Detail:      ref.FriendlyName(),
+				Description: ref.Description,
+				Kind:        lang.TraversalCandidateKind,
+				TextEdit: lang.TextEdit{
+					NewText: ref.Addr.String(),
+					Snippet: ref.Addr.String(),
+					Range:   editRng,
+				},
+			})
+		}
+	})
 
 	return candidates
 }
@@ -349,6 +427,8 @@ func labelForConstraints(cons schema.ExprConstraints) string {
 			continue
 		case schema.KeywordExpr:
 			labels += c.FriendlyName()
+		case schema.TraversalExpr:
+			labels += c.FriendlyName()
 		case schema.TupleConsExpr:
 			labels += fmt.Sprintf("[%s]", labelForConstraints(c.AnyElem))
 		case schema.ListExpr:
@@ -381,8 +461,8 @@ func typeToCandidates(ofType cty.Type, editRng hcl.Range) []lang.Candidate {
 		return candidates
 	}
 
-	if ofType.IsPrimitiveType() {
-		// Nothing to complete for other primitive types
+	if ofType.IsPrimitiveType() || ofType == cty.DynamicPseudoType {
+		// Nothing to complete for these types
 		return candidates
 	}
 
@@ -465,6 +545,43 @@ func candidateKindForType(t cty.Type) lang.CandidateKind {
 	}
 
 	return lang.NilCandidateKind
+}
+
+func triggerSuggestForExprConstraints(ec schema.ExprConstraints) bool {
+	if len(ec) > 0 {
+		expr := ec[0]
+		switch et := expr.(type) {
+		case schema.LiteralTypeExpr:
+			if et.Type == cty.Bool {
+				return true
+			}
+		case schema.LiteralValue:
+			if len(ec) > 1 {
+				return true
+			}
+		case schema.KeywordExpr:
+			return true
+		case schema.TraversalExpr:
+			return true
+		case schema.TupleConsExpr:
+			return triggerSuggestForExprConstraints(et.AnyElem)
+		case schema.ListExpr:
+			return triggerSuggestForExprConstraints(et.Elem)
+		case schema.SetExpr:
+			return triggerSuggestForExprConstraints(et.Elem)
+		case schema.TupleExpr:
+			if len(et.Elems) > 0 {
+				return triggerSuggestForExprConstraints(et.Elems[0])
+			}
+		case schema.MapExpr:
+			return triggerSuggestForExprConstraints(et.Elem)
+		case schema.ObjectExpr:
+			if len(et.Attributes) > 0 {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 func snippetForExprContraints(placeholder uint, ec schema.ExprConstraints) string {

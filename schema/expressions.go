@@ -1,8 +1,11 @@
 package schema
 
 import (
+	"errors"
+	"fmt"
 	"strings"
 
+	"github.com/hashicorp/go-multierror"
 	"github.com/hashicorp/hcl-lang/lang"
 	"github.com/zclconf/go-cty/cty"
 )
@@ -21,6 +24,32 @@ func (ec ExprConstraints) FriendlyName() string {
 		return strings.Join(names, " or ")
 	}
 	return ""
+}
+
+func (ec ExprConstraints) Validate() error {
+	if len(ec) == 0 {
+		return nil
+	}
+
+	type validatable interface {
+		Validate() error
+	}
+	var errs *multierror.Error
+
+	for i, constraint := range ec {
+		if c, ok := constraint.(validatable); ok {
+			err := c.Validate()
+			if err != nil {
+				errs = multierror.Append(errs, fmt.Errorf("(%d: %T) %w", i, constraint, err))
+			}
+		}
+	}
+
+	if errs != nil && len(errs.Errors) == 1 {
+		return errs.Errors[0]
+	}
+
+	return errs.ErrorOrNil()
 }
 
 func namesContain(names []string, name string) bool {
@@ -187,6 +216,47 @@ func (ke KeywordExpr) FriendlyName() string {
 		return "keyword"
 	}
 	return ke.Name
+}
+
+type TraversalExpr struct {
+	OfScopeId lang.ScopeId
+	OfType    cty.Type
+	Name      string
+
+	// Address (if not nil) makes the expression
+	// itself addressable and provides scope
+	// for the decoded reference
+	// Only one of Address or OfScopeId/OfType can be declared
+	Address *TraversalAddrSchema
+}
+
+type TraversalAddrSchema struct {
+	ScopeId lang.ScopeId
+}
+
+func (TraversalExpr) isExprConstraintImpl() exprConstrSigil {
+	return exprConstrSigil{}
+}
+
+func (te TraversalExpr) FriendlyName() string {
+	if te.Name != "" {
+		return te.Name
+	}
+	if te.OfType != cty.NilType {
+		return te.OfType.FriendlyNameForConstraint()
+	}
+
+	return "reference"
+}
+
+func (te TraversalExpr) Validate() error {
+	if te.Address != nil && (te.OfType != cty.NilType || te.OfScopeId != "") {
+		return errors.New("cannot be have both Address and OfType/OfScopeId set")
+	}
+	if te.Address != nil && te.Address.ScopeId == "" {
+		return errors.New("Address requires non-emmpty ScopeId")
+	}
+	return nil
 }
 
 func LiteralTypeOnly(t cty.Type) ExprConstraints {

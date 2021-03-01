@@ -12,6 +12,12 @@ func (*NoSchemaError) Error() string {
 	return fmt.Sprintf("no schema available")
 }
 
+type NoReferenceFound struct{}
+
+func (*NoReferenceFound) Error() string {
+	return fmt.Sprintf("no matching reference found")
+}
+
 type ConstraintMismatch struct {
 	Expr hcl.Expression
 }

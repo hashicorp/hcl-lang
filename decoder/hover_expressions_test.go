@@ -1285,6 +1285,131 @@ _object_`),
 				if tc.expectedErr != nil && !errors.As(err, &tc.expectedErr) {
 					t.Fatalf("unexpected error: %s\nexpected: %s\n",
 						err, tc.expectedErr)
+				} else if tc.expectedErr == nil {
+					t.Fatal(err)
+				}
+			} else if tc.expectedErr != nil {
+				t.Fatalf("expected error: %s", tc.expectedErr)
+			}
+
+			if diff := cmp.Diff(tc.expectedData, data, ctydebug.CmpOptions); diff != "" {
+				t.Fatalf("hover data mismatch: %s", diff)
+			}
+		})
+	}
+}
+
+func TestDecoder_HoverAtPos_traversalExpressions(t *testing.T) {
+	testCases := []struct {
+		name         string
+		attrSchema   map[string]*schema.AttributeSchema
+		refs         lang.References
+		cfg          string
+		pos          hcl.Pos
+		expectedData *lang.HoverData
+		expectedErr  error
+	}{
+		{
+			"unknown traversal",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Expr: schema.ExprConstraints{
+						schema.TraversalExpr{OfType: cty.String},
+					},
+				},
+			},
+			lang.References{},
+			`attr = var.blah`,
+			hcl.Pos{Line: 1, Column: 10, Byte: 9},
+			nil,
+			&NoReferenceFound{},
+		},
+		{
+			"known mismatching traversal",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Expr: schema.ExprConstraints{
+						schema.TraversalExpr{OfType: cty.String},
+					},
+				},
+			},
+			lang.References{
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "blah"},
+					},
+					Type: cty.Bool,
+				},
+			},
+			`attr = var.blah`,
+			hcl.Pos{Line: 1, Column: 10, Byte: 9},
+			nil,
+			&NoReferenceFound{},
+		},
+		{
+			"known type matching traversal",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Expr: schema.ExprConstraints{
+						schema.TraversalExpr{OfType: cty.String},
+					},
+				},
+			},
+			lang.References{
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "blah"},
+					},
+					Type: cty.String,
+				},
+			},
+			`attr = var.blah`,
+			hcl.Pos{Line: 1, Column: 10, Byte: 9},
+			&lang.HoverData{
+				Content: lang.Markdown("`var.blah`\n_string_"),
+				Range: hcl.Range{
+					Filename: "test.tf",
+					Start: hcl.Pos{
+						Line:   1,
+						Column: 8,
+						Byte:   7,
+					},
+					End: hcl.Pos{
+						Line:   1,
+						Column: 16,
+						Byte:   15,
+					},
+				},
+			},
+			nil,
+		},
+	}
+
+	for i, tc := range testCases {
+		t.Run(fmt.Sprintf("%d-%s", i, tc.name), func(t *testing.T) {
+			d := NewDecoder()
+			d.SetSchema(&schema.BodySchema{
+				Attributes: tc.attrSchema,
+			})
+			d.SetReferenceReader(func() lang.References {
+				return tc.refs
+			})
+
+			f, _ := hclsyntax.ParseConfig([]byte(tc.cfg), "test.tf", hcl.InitialPos)
+			err := d.LoadFile("test.tf", f)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			data, err := d.HoverAtPos("test.tf", tc.pos)
+			if err != nil {
+				if tc.expectedErr != nil && !errors.As(err, &tc.expectedErr) {
+					t.Fatalf("unexpected error: %s\nexpected: %s\n",
+						err, tc.expectedErr)
+				} else if tc.expectedErr == nil {
+					t.Fatal(err)
 				}
 			} else if tc.expectedErr != nil {
 				t.Fatalf("expected error: %s", tc.expectedErr)

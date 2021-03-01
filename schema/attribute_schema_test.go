@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/hashicorp/hcl-lang/lang"
 	"github.com/zclconf/go-cty/cty"
 )
 
@@ -50,6 +51,112 @@ func TestAttributeSchema_Validate(t *testing.T) {
 				Expr:       LiteralTypeOnly(cty.String),
 				IsOptional: true,
 				IsComputed: true,
+			},
+			nil,
+		},
+		{
+			&AttributeSchema{
+				Expr: ExprConstraints{
+					TraversalExpr{OfType: cty.String},
+				},
+				IsOptional: true,
+			},
+			nil,
+		},
+		{
+			&AttributeSchema{
+				Expr: ExprConstraints{
+					TraversalExpr{OfScopeId: lang.ScopeId("blah")},
+				},
+				IsOptional: true,
+			},
+			nil,
+		},
+		{
+			&AttributeSchema{
+				Expr: ExprConstraints{
+					TraversalExpr{OfType: cty.Number, OfScopeId: lang.ScopeId("blah")},
+				},
+				IsOptional: true,
+			},
+			nil,
+		},
+		{
+			&AttributeSchema{
+				Expr: ExprConstraints{
+					TraversalExpr{OfType: cty.Number, Address: &TraversalAddrSchema{
+						ScopeId: lang.ScopeId("test"),
+					}},
+				},
+				IsOptional: true,
+			},
+			errors.New("(0: schema.TraversalExpr) cannot be have both Address and OfType/OfScopeId set"),
+		},
+		{
+			&AttributeSchema{
+				Expr: ExprConstraints{
+					TraversalExpr{Address: &TraversalAddrSchema{}},
+				},
+				IsOptional: true,
+			},
+			errors.New("(0: schema.TraversalExpr) Address requires non-emmpty ScopeId"),
+		},
+		{
+			&AttributeSchema{
+				Expr: ExprConstraints{
+					TraversalExpr{Address: &TraversalAddrSchema{
+						ScopeId: lang.ScopeId("blah"),
+					}},
+				},
+				IsOptional: true,
+			},
+			nil,
+		},
+		{
+			&AttributeSchema{
+				Address: &AttributeAddrSchema{
+					Steps: []AddrStep{
+						LabelStep{Index: 0},
+					},
+					AsReference: true,
+				},
+				IsOptional: true,
+			},
+			errors.New("Address[0]: LabelStep is not valid for attribute"),
+		},
+		{
+			&AttributeSchema{
+				Address: &AttributeAddrSchema{
+					Steps: []AddrStep{
+						AttrValueStep{Name: "unknown"},
+					},
+					AsReference: true,
+				},
+				IsOptional: true,
+			},
+			errors.New("Address[0]: AttrValueStep is not implemented for attribute"),
+		},
+		{
+			&AttributeSchema{
+				Address: &AttributeAddrSchema{
+					Steps: []AddrStep{
+						AttrNameStep{},
+					},
+				},
+				IsOptional: true,
+			},
+			errors.New("Address: at least one of AsData or AsReference must be set"),
+		},
+		{
+			&AttributeSchema{
+				Address: &AttributeAddrSchema{
+					Steps: []AddrStep{
+						AttrNameStep{},
+					},
+					AsReference: true,
+					AsData:      true,
+				},
+				IsOptional: true,
 			},
 			nil,
 		},

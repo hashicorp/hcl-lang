@@ -31,10 +31,19 @@ func (d *Decoder) CandidatesAtPos(filename string, pos hcl.Pos) (lang.Candidates
 		return lang.ZeroCandidates(), &NoSchemaError{}
 	}
 
-	return d.candidatesAtPos(rootBody, d.rootSchema, pos)
+	outerBodyRng := rootBody.Range()
+	// Find outer block body range to allow filtering
+	// of references pointing back to the same block
+	outerBlock := rootBody.OutermostBlockAtPos(pos)
+	if outerBlock != nil {
+		ob := outerBlock.Body.(*hclsyntax.Body)
+		outerBodyRng = ob.Range()
+	}
+
+	return d.candidatesAtPos(rootBody, outerBodyRng, d.rootSchema, pos)
 }
 
-func (d *Decoder) candidatesAtPos(body *hclsyntax.Body, bodySchema *schema.BodySchema, pos hcl.Pos) (lang.Candidates, error) {
+func (d *Decoder) candidatesAtPos(body *hclsyntax.Body, outerBodyRng hcl.Range, bodySchema *schema.BodySchema, pos hcl.Pos) (lang.Candidates, error) {
 	if bodySchema == nil {
 		return lang.ZeroCandidates(), nil
 	}
@@ -42,12 +51,12 @@ func (d *Decoder) candidatesAtPos(body *hclsyntax.Body, bodySchema *schema.BodyS
 	filename := body.Range().Filename
 
 	for _, attr := range body.Attributes {
-		if attr.Expr.Range().ContainsPos(pos) || attr.EqualsRange.End.Byte == pos.Byte {
+		if d.isPosInsideAttrExpr(attr, pos) {
 			if aSchema, ok := bodySchema.Attributes[attr.Name]; ok {
-				return d.attrValueCandidatesAtPos(attr, aSchema, pos)
+				return d.attrValueCandidatesAtPos(attr, aSchema, outerBodyRng, pos)
 			}
 			if bodySchema.AnyAttribute != nil {
-				return d.attrValueCandidatesAtPos(attr, bodySchema.AnyAttribute, pos)
+				return d.attrValueCandidatesAtPos(attr, bodySchema.AnyAttribute, outerBodyRng, pos)
 			}
 
 			return lang.ZeroCandidates(), nil
@@ -120,7 +129,7 @@ func (d *Decoder) candidatesAtPos(body *hclsyntax.Body, bodySchema *schema.BodyS
 					return lang.ZeroCandidates(), err
 				}
 
-				return d.candidatesAtPos(block.Body, mergedSchema, pos)
+				return d.candidatesAtPos(block.Body, outerBodyRng, mergedSchema, pos)
 			}
 		}
 	}
@@ -131,6 +140,38 @@ func (d *Decoder) candidatesAtPos(body *hclsyntax.Body, bodySchema *schema.BodyS
 	}
 
 	return d.bodySchemaCandidates(body, bodySchema, rng, rng), nil
+}
+
+func (d *Decoder) isPosInsideAttrExpr(attr *hclsyntax.Attribute, pos hcl.Pos) bool {
+	if attr.Expr.Range().ContainsPos(pos) {
+		return true
+	}
+
+	// edge case: near end (typically newline char)
+	if attr.Expr.Range().End.Byte == pos.Byte {
+		return true
+	}
+
+	// edge case: near the beginning (right after '=')
+	if attr.EqualsRange.End.Byte == pos.Byte {
+		return true
+	}
+
+	// edge case: end of incomplete traversal with '.' (which parser ignores)
+	endByte := attr.Expr.Range().End.Byte
+	if _, ok := attr.Expr.(*hclsyntax.ScopeTraversalExpr); ok && pos.Byte-endByte == 1 {
+		suspectedDotRng := hcl.Range{
+			Filename: attr.Expr.Range().Filename,
+			Start:    attr.Expr.Range().End,
+			End:      pos,
+		}
+		b, err := d.bytesFromRange(suspectedDotRng)
+		if err == nil && string(b) == "." {
+			return true
+		}
+	}
+
+	return false
 }
 
 func (d *Decoder) nameTokenRangeAtPos(filename string, pos hcl.Pos) (hcl.Range, error) {
