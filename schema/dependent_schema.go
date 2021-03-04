@@ -96,13 +96,13 @@ type AttributeDependent struct {
 // ExpressionValue represents static value or a reference
 // used to find a dependent body schema
 type ExpressionValue struct {
-	Static    cty.Value
-	Reference lang.Reference
+	Static  cty.Value
+	Address lang.Address
 }
 
 type exprVal struct {
-	Static    interface{} `json:"static,omitempty"`
-	Reference string      `json:"ref,omitempty"`
+	Static  interface{} `json:"static,omitempty"`
+	Address string      `json:"addr,omitempty"`
 }
 
 func (ev ExpressionValue) MarshalJSON() ([]byte, error) {
@@ -112,11 +112,11 @@ func (ev ExpressionValue) MarshalJSON() ([]byte, error) {
 		val.Static = ctyjson.SimpleJSONValue{Value: ev.Static}
 	}
 
-	v, err := ev.Reference.Marshal()
+	v, err := ev.Address.Marshal()
 	if err != nil {
 		return nil, err
 	}
-	val.Reference = string(v)
+	val.Address = string(v)
 
 	return json.Marshal(val)
 }
