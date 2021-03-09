@@ -1,11 +1,36 @@
 package schema
 
 import (
+	"strings"
+
 	"github.com/hashicorp/hcl-lang/lang"
 	"github.com/zclconf/go-cty/cty"
 )
 
 type ExprConstraints []ExprConstraint
+
+func (ec ExprConstraints) FriendlyName() string {
+	names := make([]string, 0)
+	for _, constraint := range ec {
+		if name := constraint.FriendlyName(); name != "" &&
+			!namesContain(names, name) {
+			names = append(names, name)
+		}
+	}
+	if len(names) > 0 {
+		return strings.Join(names, " or ")
+	}
+	return ""
+}
+
+func namesContain(names []string, name string) bool {
+	for _, n := range names {
+		if n == name {
+			return true
+		}
+	}
+	return false
+}
 
 type exprConstrSigil struct{}
 
@@ -71,6 +96,42 @@ func (me MapExpr) FriendlyName() string {
 		return "map"
 	}
 	return me.Name
+}
+
+type ObjectExpr struct {
+	Attributes  ObjectExprAttributes
+	Name        string
+	Description lang.MarkupContent
+}
+
+func (ObjectExpr) isExprConstraintImpl() exprConstrSigil {
+	return exprConstrSigil{}
+}
+
+func (oe ObjectExpr) FriendlyName() string {
+	if oe.Name == "" {
+		return "object"
+	}
+	return oe.Name
+}
+
+type ObjectExprAttributes map[string]ObjectAttribute
+
+func (ObjectExprAttributes) isExprConstraintImpl() exprConstrSigil {
+	return exprConstrSigil{}
+}
+
+func (oe ObjectExprAttributes) FriendlyName() string {
+	return "attributes"
+}
+
+type ObjectAttribute struct {
+	Expr        ExprConstraints
+	Description lang.MarkupContent
+}
+
+func (oa ObjectAttribute) FriendlyName() string {
+	return oa.Expr.FriendlyName()
 }
 
 type KeywordExpr struct {

@@ -56,7 +56,7 @@ func TestDecoder_CandidateAtPos_incompleteAttributes(t *testing.T) {
 		List: []lang.Candidate{
 			{
 				Label:  "attr1",
-				Detail: "Optional, number",
+				Detail: "number",
 				TextEdit: lang.TextEdit{
 					Range: hcl.Range{
 						Filename: "test.tf",

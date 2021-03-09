@@ -664,8 +664,8 @@ func TestDecoder_CandidatesAtPos_basic(t *testing.T) {
 			}): {
 				Attributes: map[string]*schema.AttributeSchema{
 					"one":   {Expr: schema.LiteralTypeOnly(cty.String), IsRequired: true},
-					"two":   {Expr: schema.LiteralTypeOnly(cty.Number)},
-					"three": {Expr: schema.LiteralTypeOnly(cty.Bool)},
+					"two":   {Expr: schema.LiteralTypeOnly(cty.Number), IsOptional: true},
+					"three": {Expr: schema.LiteralTypeOnly(cty.Bool), IsOptional: true},
 				},
 			},
 			schema.NewSchemaKey(schema.DependencyKeys{
@@ -944,7 +944,7 @@ func TestDecoder_CandidatesAtPos_AnyAttribute(t *testing.T) {
 	expectedCandidates := lang.CompleteCandidates([]lang.Candidate{
 		{
 			Label:  "name",
-			Detail: "Optional, object",
+			Detail: "object",
 			TextEdit: lang.TextEdit{
 				Range: hcl.Range{
 					Filename: "test.tf",
@@ -979,6 +979,7 @@ func TestDecoder_CandidatesAtPos_multipleTypes(t *testing.T) {
 						schema.LiteralTypeExpr{Type: cty.Set(cty.DynamicPseudoType)},
 						schema.LiteralTypeExpr{Type: cty.Map(cty.DynamicPseudoType)},
 					},
+					IsOptional: true,
 				},
 			},
 		},
@@ -1045,7 +1046,7 @@ func TestDecoder_CandidatesAtPos_incompleteAttrOrBlock(t *testing.T) {
 		Labels: resourceLabelSchema,
 		Body: &schema.BodySchema{
 			Attributes: map[string]*schema.AttributeSchema{
-				"count": {Expr: schema.LiteralTypeOnly(cty.Number)},
+				"count": {Expr: schema.LiteralTypeOnly(cty.Number), IsOptional: true},
 			},
 		},
 	}
@@ -1173,7 +1174,7 @@ func TestDecoder_CandidatesAtPos_incompleteLabel(t *testing.T) {
 		Labels: resourceLabelSchema,
 		Body: &schema.BodySchema{
 			Attributes: map[string]*schema.AttributeSchema{
-				"count": {Expr: schema.LiteralTypeOnly(cty.Number)},
+				"count": {Expr: schema.LiteralTypeOnly(cty.Number), IsOptional: true},
 			},
 		},
 		DependentBody: map[schema.SchemaKey]*schema.BodySchema{

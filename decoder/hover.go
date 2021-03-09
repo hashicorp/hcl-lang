@@ -2,6 +2,7 @@ package decoder
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 
 	"github.com/hashicorp/hcl-lang/lang"
@@ -67,7 +68,7 @@ func (d *Decoder) hoverAtPos(body *hclsyntax.Body, bodySchema *schema.BodySchema
 
 			if attr.Expr.Range().ContainsPos(pos) {
 				exprCons := ExprConstraints(aSchema.Expr)
-				content, err := hoverContentForExpr(attr.Expr, exprCons)
+				data, err := hoverDataForExpr(attr.Expr, exprCons, pos)
 				if err != nil {
 					return nil, &PositionalError{
 						Filename: filename,
@@ -75,10 +76,7 @@ func (d *Decoder) hoverAtPos(body *hclsyntax.Body, bodySchema *schema.BodySchema
 						Msg:      err.Error(),
 					}
 				}
-				return &lang.HoverData{
-					Content: lang.Markdown(content),
-					Range:   attr.Expr.Range(),
-				}, nil
+				return data, nil
 			}
 		}
 	}
@@ -212,28 +210,61 @@ func hoverContentForBlock(bType string, schema *schema.BlockSchema) lang.MarkupC
 	}
 }
 
-func hoverContentForExpr(expr hcl.Expression, constraints ExprConstraints) (string, error) {
+func hoverDataForExpr(expr hcl.Expression, constraints ExprConstraints, pos hcl.Pos) (*lang.HoverData, error) {
 	switch e := expr.(type) {
 	case *hclsyntax.ScopeTraversalExpr:
 		kw, ok := constraints.KeywordExpr()
 		if ok && len(e.Traversal) == 1 {
-			return fmt.Sprintf("`%s` _%s_", kw.Keyword, kw.FriendlyName()), nil
+			return &lang.HoverData{
+				Content: lang.Markdown(fmt.Sprintf("`%s` _%s_", kw.Keyword, kw.FriendlyName())),
+				Range:   expr.Range(),
+			}, nil
 		}
 	case *hclsyntax.TemplateExpr:
 		if e.IsStringLiteral() {
-			return hoverContentForExpr(e.Parts[0], constraints)
+			data, err := hoverDataForExpr(e.Parts[0], constraints, pos)
+			if err != nil {
+				return nil, err
+			}
+			// Account for the enclosing quotes
+			return &lang.HoverData{
+				Content: data.Content,
+				Range:   expr.Range(),
+			}, nil
 		}
 		if v, ok := stringValFromTemplateExpr(e); ok {
 			if constraints.HasLiteralTypeOf(cty.String) {
-				return hoverContentForValue(v, 0)
+				content, err := hoverContentForValue(v, 0)
+				if err != nil {
+					return nil, err
+				}
+				return &lang.HoverData{
+					Content: lang.Markdown(content),
+					Range:   expr.Range(),
+				}, nil
 			}
 			lv, ok := constraints.LiteralValueOf(v)
 			if ok {
-				return hoverContentForValue(lv.Val, 0)
+				content, err := hoverContentForValue(lv.Val, 0)
+				if err != nil {
+					return nil, err
+				}
+				return &lang.HoverData{
+					Content: lang.Markdown(content),
+					Range:   expr.Range(),
+				}, nil
 			}
 		}
 	case *hclsyntax.TemplateWrapExpr:
-		return hoverContentForExpr(e.Wrapped, constraints)
+		data, err := hoverDataForExpr(e.Wrapped, constraints, pos)
+		if err != nil {
+			return nil, err
+		}
+		// Account for the enclosing quotes
+		return &lang.HoverData{
+			Content: data.Content,
+			Range:   expr.Range(),
+		}, nil
 	case *hclsyntax.TupleConsExpr:
 		tupleCons, ok := constraints.TupleConsExpr()
 		if ok {
@@ -241,46 +272,171 @@ func hoverContentForExpr(expr hcl.Expression, constraints ExprConstraints) (stri
 			if tupleCons.Description.Value != "" {
 				content += "\n\n" + tupleCons.Description.Value
 			}
-			return content, nil
+			return &lang.HoverData{
+				Content: lang.Markdown(content),
+				Range:   expr.Range(),
+			}, nil
 		}
 
 		lt, ok := constraints.LiteralTypeOfTupleExpr()
 		if ok {
-			return hoverContentForType(lt.Type)
+			content, err := hoverContentForType(lt.Type)
+			if err != nil {
+				return nil, err
+			}
+			return &lang.HoverData{
+				Content: lang.Markdown(content),
+				Range:   expr.Range(),
+			}, nil
 		}
 		litVal, ok := constraints.LiteralValueOfTupleExpr(e)
 		if ok {
-			return hoverContentForValue(litVal.Val, 0)
+			content, err := hoverContentForValue(litVal.Val, 0)
+			if err != nil {
+				return nil, err
+			}
+			return &lang.HoverData{
+				Content: lang.Markdown(content),
+				Range:   expr.Range(),
+			}, nil
 		}
 	case *hclsyntax.ObjectConsExpr:
+		objExpr, ok := constraints.ObjectExpr()
+		if ok {
+			return hoverDataForObjectExpr(e, objExpr, pos)
+		}
 		mapExpr, ok := constraints.MapExpr()
 		if ok {
 			content := fmt.Sprintf("_%s_", mapExpr.FriendlyName())
 			if mapExpr.Description.Value != "" {
 				content += "\n\n" + mapExpr.Description.Value
 			}
-			return content, nil
+			return &lang.HoverData{
+				Content: lang.Markdown(content),
+				Range:   expr.Range(),
+			}, nil
 		}
 		lt, ok := constraints.LiteralTypeOfObjectConsExpr()
 		if ok {
-			return hoverContentForType(lt.Type)
+			content, err := hoverContentForType(lt.Type)
+			if err != nil {
+				return nil, err
+			}
+			return &lang.HoverData{
+				Content: lang.Markdown(content),
+				Range:   expr.Range(),
+			}, nil
 		}
 		litVal, ok := constraints.LiteralValueOfObjectConsExpr(e)
 		if ok {
-			return hoverContentForValue(litVal.Val, 0)
+			content, err := hoverContentForValue(litVal.Val, 0)
+			if err != nil {
+				return nil, err
+			}
+			return &lang.HoverData{
+				Content: lang.Markdown(content),
+				Range:   expr.Range(),
+			}, nil
 		}
 	case *hclsyntax.LiteralValueExpr:
 		if constraints.HasLiteralTypeOf(e.Val.Type()) {
-			return hoverContentForValue(e.Val, 0)
+			content, err := hoverContentForValue(e.Val, 0)
+			if err != nil {
+				return nil, err
+			}
+			return &lang.HoverData{
+				Content: lang.Markdown(content),
+				Range:   expr.Range(),
+			}, nil
 		}
 		lv, ok := constraints.LiteralValueOf(e.Val)
 		if ok {
-			return hoverContentForValue(lv.Val, 0)
+			content, err := hoverContentForValue(lv.Val, 0)
+			if err != nil {
+				return nil, err
+			}
+			return &lang.HoverData{
+				Content: lang.Markdown(content),
+				Range:   expr.Range(),
+			}, nil
 		}
-		return "", &ConstraintMismatch{e}
+		return nil, &ConstraintMismatch{e}
 	}
 
-	return "", fmt.Errorf("unsupported expression (%T)", expr)
+	return nil, fmt.Errorf("unsupported expression (%T)", expr)
+}
+
+func hoverDataForObjectExpr(objExpr *hclsyntax.ObjectConsExpr, oe schema.ObjectExpr, pos hcl.Pos) (*lang.HoverData, error) {
+	for _, item := range objExpr.Items {
+		key, _ := item.KeyExpr.Value(nil)
+		if !key.IsWhollyKnown() || key.Type() != cty.String {
+			continue
+		}
+		attr, ok := oe.Attributes[key.AsString()]
+		if !ok {
+			// unknown attribute
+			continue
+		}
+
+		if item.ValueExpr.Range().ContainsPos(pos) {
+			return hoverDataForExpr(item.ValueExpr, ExprConstraints(attr.Expr), pos)
+		}
+
+		itemRng := hcl.RangeBetween(item.KeyExpr.Range(), item.ValueExpr.Range())
+		if itemRng.ContainsPos(pos) {
+			content := fmt.Sprintf(`**%s** _%s_`, key.AsString(), attr.FriendlyName())
+			if attr.Description.Value != "" {
+				content += fmt.Sprintf("\n\n%s", attr.Description.Value)
+			}
+
+			return &lang.HoverData{
+				Content: lang.Markdown(content),
+				Range:   itemRng,
+			}, nil
+		}
+	}
+
+	if len(oe.Attributes) == 0 {
+		content := fmt.Sprintf("_%s_", oe.FriendlyName())
+		if oe.Description.Value != "" {
+			content += "\n\n" + oe.Description.Value
+		}
+		return &lang.HoverData{
+			Content: lang.Markdown(content),
+			Range:   objExpr.Range(),
+		}, nil
+	}
+
+	attrNames := sortedObjectExprAttrNames(oe.Attributes)
+	content := "```\n{\n"
+	for _, name := range attrNames {
+		content += fmt.Sprintf("  %s = %s\n", name, oe.Attributes[name].FriendlyName())
+	}
+	content += fmt.Sprintf("}\n```\n_%s_", oe.FriendlyName())
+	if oe.Description.Value != "" {
+		content += "\n\n" + oe.Description.Value
+	}
+	return &lang.HoverData{
+		Content: lang.Markdown(content),
+		Range:   objExpr.Range(),
+	}, nil
+}
+
+func sortedObjectExprAttrNames(attributes schema.ObjectExprAttributes) []string {
+	if len(attributes) == 0 {
+		return []string{}
+	}
+
+	constraints := attributes
+	names := make([]string, len(constraints))
+	i := 0
+	for name := range constraints {
+		names[i] = name
+		i++
+	}
+
+	sort.Strings(names)
+	return names
 }
 
 func isMultilineStringLiteral(tplExpr *hclsyntax.TemplateExpr) bool {

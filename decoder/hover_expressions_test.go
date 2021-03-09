@@ -254,6 +254,165 @@ _object_`),
 			nil,
 		},
 		{
+			"object as expression",
+			map[string]*schema.AttributeSchema{
+				"obj": {Expr: schema.ExprConstraints{
+					schema.ObjectExpr{
+						Attributes: schema.ObjectExprAttributes{
+							"source": schema.ObjectAttribute{
+								Expr: schema.LiteralTypeOnly(cty.String),
+							},
+							"bool": schema.ObjectAttribute{
+								Expr: schema.LiteralTypeOnly(cty.Bool),
+							},
+							"notbool": schema.ObjectAttribute{
+								Expr: schema.LiteralTypeOnly(cty.String),
+							},
+							"nested_map": schema.ObjectAttribute{
+								Expr: schema.LiteralTypeOnly(cty.Map(cty.String)),
+							},
+							"nested_obj": schema.ObjectAttribute{
+								Expr: schema.LiteralTypeOnly(cty.Object(map[string]cty.Type{})),
+							},
+						},
+					},
+				}},
+			},
+			`obj = {
+    source = "blah"
+    different = 42
+    bool = true
+    notbool = "test"
+}`,
+			hcl.Pos{Line: 1, Column: 3, Byte: 2},
+			&lang.HoverData{
+				Content: lang.Markdown(`**obj** _object_`),
+				Range: hcl.Range{
+					Filename: "test.tf",
+					Start: hcl.Pos{
+						Line:   1,
+						Column: 1,
+						Byte:   0,
+					},
+					End: hcl.Pos{
+						Line:   6,
+						Column: 2,
+						Byte:   85,
+					},
+				},
+			},
+			nil,
+		},
+		{
+			"object as expression - expression",
+			map[string]*schema.AttributeSchema{
+				"obj": {Expr: schema.ExprConstraints{
+					schema.ObjectExpr{
+						Attributes: schema.ObjectExprAttributes{
+							"source": schema.ObjectAttribute{
+								Expr: schema.LiteralTypeOnly(cty.String),
+							},
+							"bool": schema.ObjectAttribute{
+								Expr: schema.LiteralTypeOnly(cty.Bool),
+							},
+							"notbool": schema.ObjectAttribute{
+								Expr: schema.LiteralTypeOnly(cty.String),
+							},
+							"nested_map": schema.ObjectAttribute{
+								Expr: schema.LiteralTypeOnly(cty.Map(cty.String)),
+							},
+							"nested_obj": schema.ObjectAttribute{
+								Expr: schema.LiteralTypeOnly(cty.Object(map[string]cty.Type{})),
+							},
+						},
+					},
+				}},
+			},
+			`obj = {
+    source = "blah"
+    different = 42
+    bool = true
+    notbool = "test"
+}`,
+			hcl.Pos{Line: 2, Column: 2, Byte: 9},
+			&lang.HoverData{
+				Content: lang.Markdown("```" + `
+{
+  bool = bool
+  nested_map = map of string
+  nested_obj = object
+  notbool = string
+  source = string
+}
+` + "```" + `
+_object_`),
+				Range: hcl.Range{
+					Filename: "test.tf",
+					Start: hcl.Pos{
+						Line:   1,
+						Column: 7,
+						Byte:   6,
+					},
+					End: hcl.Pos{
+						Line:   6,
+						Column: 2,
+						Byte:   85,
+					},
+				},
+			},
+			nil,
+		},
+		{
+			"object as expression - attribute",
+			map[string]*schema.AttributeSchema{
+				"obj": {Expr: schema.ExprConstraints{
+					schema.ObjectExpr{
+						Attributes: schema.ObjectExprAttributes{
+							"source": schema.ObjectAttribute{
+								Expr: schema.LiteralTypeOnly(cty.String),
+							},
+							"bool": schema.ObjectAttribute{
+								Expr: schema.LiteralTypeOnly(cty.Bool),
+							},
+							"notbool": schema.ObjectAttribute{
+								Expr: schema.LiteralTypeOnly(cty.String),
+							},
+							"nested_map": schema.ObjectAttribute{
+								Expr: schema.LiteralTypeOnly(cty.Map(cty.String)),
+							},
+							"nested_obj": schema.ObjectAttribute{
+								Expr: schema.LiteralTypeOnly(cty.Object(map[string]cty.Type{})),
+							},
+						},
+					},
+				}},
+			},
+			`obj = {
+    source = "blah"
+    different = 42
+    bool = true
+    notbool = "test"
+}`,
+			hcl.Pos{Line: 2, Column: 8, Byte: 15},
+			&lang.HoverData{
+				Content: lang.Markdown(`**source** _string_`),
+				Range: hcl.Range{
+					Filename: "test.tf",
+					Start: hcl.Pos{
+						Line:   2,
+						Column: 5,
+						Byte:   12,
+					},
+					End: hcl.Pos{
+						Line:   2,
+						Column: 20,
+						Byte:   27,
+					},
+				},
+			},
+			nil,
+		},
+		{
 			"map as type",
 			map[string]*schema.AttributeSchema{
 				"nummap": {Expr: schema.LiteralTypeOnly(cty.Map(cty.Number))},

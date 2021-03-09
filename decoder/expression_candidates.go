@@ -56,6 +56,37 @@ func constraintsAtPos(expr hcl.Expression, constraints ExprConstraints, pos hcl.
 				Filename: eType.Range().Filename,
 			}
 		}
+	case *hclsyntax.ObjectConsExpr:
+		oe, ok := constraints.ObjectExpr()
+		if ok {
+			undeclaredAttributes := oe.Attributes
+			for _, item := range eType.Items {
+				key, _ := item.KeyExpr.Value(nil)
+				if !key.IsWhollyKnown() || key.Type() != cty.String {
+					continue
+				}
+				attr, ok := oe.Attributes[key.AsString()]
+				if !ok {
+					// unknown attribute
+					continue
+				}
+				delete(undeclaredAttributes, key.AsString())
+
+				itemRng := hcl.RangeBetween(item.KeyExpr.Range(), item.ValueExpr.Range())
+				if item.ValueExpr.Range().ContainsPos(pos) {
+					return constraintsAtPos(item.ValueExpr, ExprConstraints(attr.Expr), pos)
+				} else if itemRng.ContainsPos(pos) {
+					// middle of attribute name or equal sign
+					return ExprConstraints{}, expr.Range()
+				}
+			}
+
+			return ExprConstraints{undeclaredAttributes}, hcl.Range{
+				Start:    pos,
+				End:      pos,
+				Filename: eType.Range().Filename,
+			}
+		}
 	}
 
 	return ExprConstraints{}, expr.Range()
@@ -96,9 +127,10 @@ func constraintToCandidates(constraint schema.ExprConstraint, editRng hcl.Range)
 		})
 	case schema.TupleConsExpr:
 		candidates = append(candidates, lang.Candidate{
-			Label:  fmt.Sprintf(`[%s]`, labelForConstraints(c.AnyElem)),
-			Detail: c.Name,
-			Kind:   lang.TupleCandidateKind,
+			Label:       fmt.Sprintf(`[%s]`, labelForConstraints(c.AnyElem)),
+			Detail:      c.Name,
+			Description: c.Description,
+			Kind:        lang.TupleCandidateKind,
 			TextEdit: lang.TextEdit{
 				NewText: `[ ]`,
 				Snippet: `[ ${0} ]`,
@@ -108,9 +140,10 @@ func constraintToCandidates(constraint schema.ExprConstraint, editRng hcl.Range)
 		})
 	case schema.MapExpr:
 		candidates = append(candidates, lang.Candidate{
-			Label:  fmt.Sprintf(`{ key =%s}`, labelForConstraints(c.Elem)),
-			Detail: c.FriendlyName(),
-			Kind:   lang.MapCandidateKind,
+			Label:       fmt.Sprintf(`{ key =%s}`, labelForConstraints(c.Elem)),
+			Detail:      c.FriendlyName(),
+			Description: c.Description,
+			Kind:        lang.MapCandidateKind,
 			TextEdit: lang.TextEdit{
 				NewText: fmt.Sprintf("{\n  name = %s\n}",
 					newTextForConstraints(c.Elem, true)),
@@ -120,6 +153,35 @@ func constraintToCandidates(constraint schema.ExprConstraint, editRng hcl.Range)
 			},
 			TriggerSuggest: len(c.Elem) > 0,
 		})
+	case schema.ObjectExpr:
+		candidates = append(candidates, lang.Candidate{
+			Label:       `{ }`,
+			Detail:      c.FriendlyName(),
+			Description: c.Description,
+			Kind:        lang.ObjectCandidateKind,
+			TextEdit: lang.TextEdit{
+				NewText: "{\n  \n}",
+				Snippet: "{\n  ${1}\n}",
+				Range:   editRng,
+			},
+			TriggerSuggest: len(c.Attributes) > 0,
+		})
+	case schema.ObjectExprAttributes:
+		attrNames := sortedObjectExprAttrNames(c)
+		for _, name := range attrNames {
+			attr := c[name]
+			candidates = append(candidates, lang.Candidate{
+				Label:       name,
+				Detail:      attr.Expr.FriendlyName(),
+				Description: attr.Description,
+				Kind:        lang.AttributeCandidateKind,
+				TextEdit: lang.TextEdit{
+					NewText: fmt.Sprintf("%s = %s", name, newTextForConstraints(attr.Expr, true)),
+					Snippet: fmt.Sprintf("%s = %s", name, snippetForConstraints(1, attr.Expr, true)),
+					Range:   editRng,
+				},
+			})
+		}
 	}
 
 	return candidates
@@ -141,6 +203,8 @@ func newTextForConstraints(cons schema.ExprConstraints, isNested bool) string {
 			return fmt.Sprintf("[\n  %s\n]", newTextForConstraints(c.AnyElem, true))
 		case schema.MapExpr:
 			return fmt.Sprintf("{\n  %s\n}", newTextForConstraints(c.Elem, true))
+		case schema.ObjectExpr:
+			return "{\n  \n}"
 		}
 	}
 	return ""
@@ -162,6 +226,8 @@ func snippetForConstraints(placeholder uint, cons schema.ExprConstraints, isNest
 			return fmt.Sprintf("[\n  %s\n]", snippetForConstraints(placeholder+1, c.AnyElem, true))
 		case schema.MapExpr:
 			return fmt.Sprintf("{\n  %s\n}", snippetForConstraints(placeholder+1, c.Elem, true))
+		case schema.ObjectExpr:
+			return fmt.Sprintf("{\n  ${%d}\n}", placeholder+1)
 		}
 	}
 	return ""
@@ -319,6 +385,8 @@ func snippetForExprContraints(placeholder uint, ec schema.ExprConstraints) strin
 			return fmt.Sprintf("{\n  ${%d:name} = %s\n }",
 				placeholder,
 				snippetForExprContraints(placeholder+1, et.Elem))
+		case schema.ObjectExpr:
+			return fmt.Sprintf("{\n  ${%d}\n }", placeholder+1)
 		}
 		return ""
 	}

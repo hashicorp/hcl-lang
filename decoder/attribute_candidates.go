@@ -30,15 +30,17 @@ func detailForAttribute(attr *schema.AttributeSchema) string {
 	var detail string
 	if attr.IsRequired {
 		detail = "Required"
-	} else {
+	} else if attr.IsOptional {
 		detail = "Optional"
 	}
 
-	ec := ExprConstraints(attr.Expr)
-	names := ec.FriendlyNames()
-
-	if len(names) > 0 {
-		detail += fmt.Sprintf(", %s", strings.Join(names, " or "))
+	friendlyName := attr.Expr.FriendlyName()
+	if friendlyName != "" {
+		if detail != "" {
+			detail = strings.Join([]string{detail, friendlyName}, ", ")
+		} else {
+			detail = friendlyName
+		}
 	}
 
 	return detail

@@ -280,7 +280,11 @@ func TestDecoder_HoverAtPos_basic(t *testing.T) {
 		Body: &schema.BodySchema{
 			Attributes: map[string]*schema.AttributeSchema{
 				"num_attr": {Expr: schema.LiteralTypeOnly(cty.Number)},
-				"str_attr": {Expr: schema.LiteralTypeOnly(cty.String), Description: lang.PlainText("Special attribute")},
+				"str_attr": {
+					Expr:        schema.LiteralTypeOnly(cty.String),
+					IsOptional:  true,
+					Description: lang.PlainText("Special attribute"),
+				},
 			},
 		},
 		DependentBody: map[schema.SchemaKey]*schema.BodySchema{
