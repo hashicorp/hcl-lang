@@ -277,15 +277,15 @@ func traversalToAddress(traversal hcl.Traversal) (lang.Address, error) {
 	addr := lang.Address{}
 	for _, tr := range traversal {
 		switch t := tr.(type) {
-		case *hcl.TraverseRoot:
+		case hcl.TraverseRoot:
 			addr = append(addr, lang.RootStep{
 				Name: t.Name,
 			})
-		case *hcl.TraverseAttr:
+		case hcl.TraverseAttr:
 			addr = append(addr, lang.AttrStep{
 				Name: t.Name,
 			})
-		case *hcl.TraverseIndex:
+		case hcl.TraverseIndex:
 			addr = append(addr, lang.IndexStep{
 				Key: t.Key,
 			})
