@@ -125,6 +125,172 @@ func TestDecoder_CandidateAtPos_expressions(t *testing.T) {
 			}),
 		},
 		{
+			"object as expression",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Expr: schema.ExprConstraints{
+						schema.ObjectExpr{
+							Attributes: schema.ObjectExprAttributes{
+								"first": schema.ObjectAttribute{
+									Expr: schema.LiteralTypeOnly(cty.String),
+								},
+								"second": schema.ObjectAttribute{
+									Expr: schema.LiteralTypeOnly(cty.Number),
+								},
+							},
+						},
+					},
+				},
+			},
+			`attr = 
+`,
+			hcl.Pos{Line: 1, Column: 8, Byte: 7},
+			lang.CompleteCandidates([]lang.Candidate{
+				{
+					Label:  "{ }",
+					Detail: "object",
+					TextEdit: lang.TextEdit{
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start: hcl.Pos{
+								Line:   1,
+								Column: 8,
+								Byte:   7,
+							},
+							End: hcl.Pos{
+								Line:   1,
+								Column: 8,
+								Byte:   7,
+							},
+						},
+						NewText: "{\n  \n}",
+						Snippet: "{\n  ${1}\n}",
+					},
+					Kind:           lang.ObjectCandidateKind,
+					TriggerSuggest: true,
+				},
+			}),
+		},
+		{
+			"object as expression - attribute",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Expr: schema.ExprConstraints{
+						schema.ObjectExpr{
+							Attributes: schema.ObjectExprAttributes{
+								"first": schema.ObjectAttribute{
+									Expr: schema.LiteralTypeOnly(cty.String),
+								},
+								"second": schema.ObjectAttribute{
+									Expr: schema.LiteralTypeOnly(cty.Number),
+								},
+							},
+						},
+					},
+				},
+			},
+			`attr = {
+  
+}
+`,
+			hcl.Pos{Line: 2, Column: 3, Byte: 11},
+			lang.CompleteCandidates([]lang.Candidate{
+				{
+					Label:  "first",
+					Detail: "string",
+					TextEdit: lang.TextEdit{
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start: hcl.Pos{
+								Line:   2,
+								Column: 3,
+								Byte:   11,
+							},
+							End: hcl.Pos{
+								Line:   2,
+								Column: 3,
+								Byte:   11,
+							},
+						},
+						NewText: `first = ""`,
+						Snippet: `first = "${1:value}"`,
+					},
+					Kind: lang.AttributeCandidateKind,
+				},
+				{
+					Label:  "second",
+					Detail: "number",
+					TextEdit: lang.TextEdit{
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start: hcl.Pos{
+								Line:   2,
+								Column: 3,
+								Byte:   11,
+							},
+							End: hcl.Pos{
+								Line:   2,
+								Column: 3,
+								Byte:   11,
+							},
+						},
+						NewText: "second = 1",
+						Snippet: "second = ${1:1}",
+					},
+					Kind: lang.AttributeCandidateKind,
+				},
+			}),
+		},
+		{
+			"object as expression - attributes partially declared",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Expr: schema.ExprConstraints{
+						schema.ObjectExpr{
+							Attributes: schema.ObjectExprAttributes{
+								"first": schema.ObjectAttribute{
+									Expr: schema.LiteralTypeOnly(cty.String),
+								},
+								"second": schema.ObjectAttribute{
+									Expr: schema.LiteralTypeOnly(cty.Number),
+								},
+							},
+						},
+					},
+				},
+			},
+			`attr = {
+  first = "blah"
+  
+}
+`,
+			hcl.Pos{Line: 3, Column: 3, Byte: 28},
+			lang.CompleteCandidates([]lang.Candidate{
+				{
+					Label:  "second",
+					Detail: "number",
+					TextEdit: lang.TextEdit{
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start: hcl.Pos{
+								Line:   3,
+								Column: 3,
+								Byte:   28,
+							},
+							End: hcl.Pos{
+								Line:   3,
+								Column: 3,
+								Byte:   28,
+							},
+						},
+						NewText: "second = 1",
+						Snippet: "second = ${1:1}",
+					},
+					Kind: lang.AttributeCandidateKind,
+				},
+			}),
+		},
+		{
 			"list as value",
 			map[string]*schema.AttributeSchema{
 				"attr": {

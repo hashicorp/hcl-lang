@@ -8,26 +8,6 @@ import (
 
 type ExprConstraints schema.ExprConstraints
 
-func (ec ExprConstraints) FriendlyNames() []string {
-	names := make([]string, 0)
-	for _, constraint := range ec {
-		if name := constraint.FriendlyName(); name != "" &&
-			!namesContain(names, name) {
-			names = append(names, name)
-		}
-	}
-	return names
-}
-
-func namesContain(names []string, name string) bool {
-	for _, n := range names {
-		if n == name {
-			return true
-		}
-	}
-	return false
-}
-
 func (ec ExprConstraints) HasKeywordsOnly() bool {
 	hasKeywordExpr := false
 	for _, constraint := range ec {
@@ -56,6 +36,15 @@ func (ec ExprConstraints) MapExpr() (schema.MapExpr, bool) {
 		}
 	}
 	return schema.MapExpr{}, false
+}
+
+func (ec ExprConstraints) ObjectExpr() (schema.ObjectExpr, bool) {
+	for _, c := range ec {
+		if me, ok := c.(schema.ObjectExpr); ok {
+			return me, ok
+		}
+	}
+	return schema.ObjectExpr{}, false
 }
 
 func (ec ExprConstraints) TupleConsExpr() (schema.TupleConsExpr, bool) {

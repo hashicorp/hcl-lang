@@ -174,6 +174,29 @@ func tokensForExpression(expr hclsyntax.Expression, constraints ExprConstraints)
 			return tokensForTupleConsExpr(eType, litVal.Val.Type())
 		}
 	case *hclsyntax.ObjectConsExpr:
+		oe, ok := constraints.ObjectExpr()
+		if ok {
+			for _, item := range eType.Items {
+				key, _ := item.KeyExpr.Value(nil)
+				if !key.IsWhollyKnown() || key.Type() != cty.String {
+					continue
+				}
+				attr, ok := oe.Attributes[key.AsString()]
+				if !ok {
+					continue
+				}
+
+				tokens = append(tokens, lang.SemanticToken{
+					Type:      lang.TokenObjectKey,
+					Modifiers: []lang.SemanticTokenModifier{},
+					Range:     item.KeyExpr.Range(),
+				})
+
+				ec := ExprConstraints(attr.Expr)
+				tokens = append(tokens, tokensForExpression(item.ValueExpr, ec)...)
+			}
+			return tokens
+		}
 		me, ok := constraints.MapExpr()
 		if ok {
 			for _, item := range eType.Items {
