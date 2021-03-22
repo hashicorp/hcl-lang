@@ -34,9 +34,8 @@ func constraintsAtPos(expr hcl.Expression, constraints ExprConstraints, pos hcl.
 			}
 		}
 	case *hclsyntax.TupleConsExpr:
-		tc, ok := constraints.TupleConsExpr()
 		rng := eType.Range()
-		insideBracketsRng := hcl.Range{
+		tupleConsBody := hcl.Range{
 			Start: hcl.Pos{
 				Line:   rng.Start.Line,
 				Column: rng.Start.Column + 1,
@@ -49,8 +48,35 @@ func constraintsAtPos(expr hcl.Expression, constraints ExprConstraints, pos hcl.
 			},
 			Filename: rng.Filename,
 		}
-		if ok && len(eType.Exprs) == 0 && insideBracketsRng.ContainsPos(pos) {
+
+		tc, ok := constraints.TupleConsExpr()
+		if ok && len(eType.Exprs) == 0 && tupleConsBody.ContainsPos(pos) {
 			return ExprConstraints(tc.AnyElem), hcl.Range{
+				Start:    pos,
+				End:      pos,
+				Filename: eType.Range().Filename,
+			}
+		}
+
+		se, ok := constraints.SetExpr()
+		if ok && len(eType.Exprs) == 0 && tupleConsBody.ContainsPos(pos) {
+			return ExprConstraints(se.Elem), hcl.Range{
+				Start:    pos,
+				End:      pos,
+				Filename: eType.Range().Filename,
+			}
+		}
+		le, ok := constraints.ListExpr()
+		if ok && len(eType.Exprs) == 0 && tupleConsBody.ContainsPos(pos) {
+			return ExprConstraints(le.Elem), hcl.Range{
+				Start:    pos,
+				End:      pos,
+				Filename: eType.Range().Filename,
+			}
+		}
+		te, ok := constraints.TupleExpr()
+		if ok && len(eType.Exprs) == 0 && tupleConsBody.ContainsPos(pos) {
+			return ExprConstraints(te.Elems[0]), hcl.Range{
 				Start:    pos,
 				End:      pos,
 				Filename: eType.Range().Filename,
@@ -140,6 +166,45 @@ func constraintToCandidates(constraint schema.ExprConstraint, editRng hcl.Range)
 			},
 			TriggerSuggest: len(c.AnyElem) > 0,
 		})
+	case schema.ListExpr:
+		candidates = append(candidates, lang.Candidate{
+			Label:       fmt.Sprintf(`[%s]`, labelForConstraints(c.Elem)),
+			Detail:      c.FriendlyName(),
+			Description: c.Description,
+			Kind:        lang.ListCandidateKind,
+			TextEdit: lang.TextEdit{
+				NewText: `[ ]`,
+				Snippet: `[ ${0} ]`,
+				Range:   editRng,
+			},
+			TriggerSuggest: len(c.Elem) > 0,
+		})
+	case schema.SetExpr:
+		candidates = append(candidates, lang.Candidate{
+			Label:       fmt.Sprintf(`[%s]`, labelForConstraints(c.Elem)),
+			Detail:      c.FriendlyName(),
+			Description: c.Description,
+			Kind:        lang.SetCandidateKind,
+			TextEdit: lang.TextEdit{
+				NewText: `[ ]`,
+				Snippet: `[ ${0} ]`,
+				Range:   editRng,
+			},
+			TriggerSuggest: len(c.Elem) > 0,
+		})
+	case schema.TupleExpr:
+		candidates = append(candidates, lang.Candidate{
+			Label:       fmt.Sprintf(`[%s]`, labelForConstraints(c.Elems[0])),
+			Detail:      c.FriendlyName(),
+			Description: c.Description,
+			Kind:        lang.TupleCandidateKind,
+			TextEdit: lang.TextEdit{
+				NewText: `[ ]`,
+				Snippet: `[ ${0} ]`,
+				Range:   editRng,
+			},
+			TriggerSuggest: len(c.Elems) > 0,
+		})
 	case schema.MapExpr:
 		candidates = append(candidates, lang.Candidate{
 			Label:       fmt.Sprintf(`{ key =%s}`, labelForConstraints(c.Elem)),
@@ -173,10 +238,11 @@ func constraintToCandidates(constraint schema.ExprConstraint, editRng hcl.Range)
 		for _, name := range attrNames {
 			attr := c[name]
 			candidates = append(candidates, lang.Candidate{
-				Label:       name,
-				Detail:      attr.Expr.FriendlyName(),
-				Description: attr.Description,
-				Kind:        lang.AttributeCandidateKind,
+				Label:        name,
+				Detail:       detailForAttribute(attr),
+				IsDeprecated: attr.IsDeprecated,
+				Description:  attr.Description,
+				Kind:         lang.AttributeCandidateKind,
 				TextEdit: lang.TextEdit{
 					NewText: fmt.Sprintf("%s = %s", name, newTextForConstraints(attr.Expr, true)),
 					Snippet: fmt.Sprintf("%s = %s", name, snippetForConstraints(1, attr.Expr, true)),
@@ -203,6 +269,21 @@ func newTextForConstraints(cons schema.ExprConstraints, isNested bool) string {
 				return "[  ]"
 			}
 			return fmt.Sprintf("[\n  %s\n]", newTextForConstraints(c.AnyElem, true))
+		case schema.ListExpr:
+			if isNested {
+				return "[  ]"
+			}
+			return fmt.Sprintf("[\n  %s\n]", newTextForConstraints(c.Elem, true))
+		case schema.SetExpr:
+			if isNested {
+				return "[  ]"
+			}
+			return fmt.Sprintf("[\n  %s\n]", newTextForConstraints(c.Elem, true))
+		case schema.TupleExpr:
+			if isNested {
+				return "[  ]"
+			}
+			return fmt.Sprintf("[\n  %s\n]", newTextForConstraints(c.Elems[0], true))
 		case schema.MapExpr:
 			return fmt.Sprintf("{\n  %s\n}", newTextForConstraints(c.Elem, true))
 		case schema.ObjectExpr:
@@ -226,6 +307,21 @@ func snippetForConstraints(placeholder uint, cons schema.ExprConstraints, isNest
 				return fmt.Sprintf("[ ${%d} ]", placeholder+1)
 			}
 			return fmt.Sprintf("[\n  %s\n]", snippetForConstraints(placeholder+1, c.AnyElem, true))
+		case schema.ListExpr:
+			if isNested {
+				return fmt.Sprintf("[ ${%d} ]", placeholder+1)
+			}
+			return fmt.Sprintf("[\n  %s\n]", snippetForConstraints(placeholder+1, c.Elem, true))
+		case schema.SetExpr:
+			if isNested {
+				return fmt.Sprintf("[ ${%d} ]", placeholder+1)
+			}
+			return fmt.Sprintf("[\n  %s\n]", snippetForConstraints(placeholder+1, c.Elem, true))
+		case schema.TupleExpr:
+			if isNested {
+				return fmt.Sprintf("[ ${%d} ]", placeholder+1)
+			}
+			return fmt.Sprintf("[\n  %s\n]", snippetForConstraints(placeholder+1, c.Elems[0], true))
 		case schema.MapExpr:
 			return fmt.Sprintf("{\n  %s\n}", snippetForConstraints(placeholder+1, c.Elem, true))
 		case schema.ObjectExpr:
@@ -255,6 +351,12 @@ func labelForConstraints(cons schema.ExprConstraints) string {
 			labels += c.FriendlyName()
 		case schema.TupleConsExpr:
 			labels += fmt.Sprintf("[%s]", labelForConstraints(c.AnyElem))
+		case schema.ListExpr:
+			labels += fmt.Sprintf("[%s]", labelForConstraints(c.Elem))
+		case schema.SetExpr:
+			labels += fmt.Sprintf("[%s]", labelForConstraints(c.Elem))
+		case schema.TupleExpr:
+			labels += fmt.Sprintf("[%s]", labelForConstraints(c.Elems[0]))
 		}
 		labelsAdded++
 	}
@@ -379,6 +481,25 @@ func snippetForExprContraints(placeholder uint, ec schema.ExprConstraints) strin
 			return ""
 		case schema.TupleConsExpr:
 			ec := ExprConstraints(et.AnyElem)
+			if ec.HasKeywordsOnly() {
+				return "[ ${0} ]"
+			}
+			return "[\n  ${0}\n]"
+		case schema.ListExpr:
+			ec := ExprConstraints(et.Elem)
+			if ec.HasKeywordsOnly() {
+				return "[ ${0} ]"
+			}
+			return "[\n  ${0}\n]"
+		case schema.SetExpr:
+			ec := ExprConstraints(et.Elem)
+			if ec.HasKeywordsOnly() {
+				return "[ ${0} ]"
+			}
+			return "[\n  ${0}\n]"
+		case schema.TupleExpr:
+			// TODO: multiple constraints?
+			ec := ExprConstraints(et.Elems[0])
 			if ec.HasKeywordsOnly() {
 				return "[ ${0} ]"
 			}

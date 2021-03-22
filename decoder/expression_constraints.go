@@ -56,6 +56,33 @@ func (ec ExprConstraints) TupleConsExpr() (schema.TupleConsExpr, bool) {
 	return schema.TupleConsExpr{}, false
 }
 
+func (ec ExprConstraints) SetExpr() (schema.SetExpr, bool) {
+	for _, c := range ec {
+		if se, ok := c.(schema.SetExpr); ok {
+			return se, ok
+		}
+	}
+	return schema.SetExpr{}, false
+}
+
+func (ec ExprConstraints) ListExpr() (schema.ListExpr, bool) {
+	for _, c := range ec {
+		if le, ok := c.(schema.ListExpr); ok {
+			return le, ok
+		}
+	}
+	return schema.ListExpr{}, false
+}
+
+func (ec ExprConstraints) TupleExpr() (schema.TupleExpr, bool) {
+	for _, c := range ec {
+		if te, ok := c.(schema.TupleExpr); ok {
+			return te, ok
+		}
+	}
+	return schema.TupleExpr{}, false
+}
+
 func (ec ExprConstraints) HasLiteralTypeOf(exprType cty.Type) bool {
 	for _, c := range ec {
 		if lt, ok := c.(schema.LiteralTypeExpr); ok && lt.Type.Equals(exprType) {
