@@ -125,7 +125,7 @@ func nestedSymbolsForExpr(expr hcl.Expression) []Symbol {
 	case *hclsyntax.ObjectConsExpr:
 		for _, item := range e.Items {
 			key, _ := item.KeyExpr.Value(nil)
-			if key.IsNull() || key.Type() != cty.String {
+			if key.IsNull() || !key.IsWhollyKnown() || key.Type() != cty.String {
 				// skip items keys that can't be interpolated
 				// without further context
 				continue

@@ -146,7 +146,9 @@ func (ec ExprConstraints) LiteralValueOfObjectConsExpr(expr *hclsyntax.ObjectCon
 	exprValues := make(map[string]cty.Value)
 	for _, item := range expr.Items {
 		key, _ := item.KeyExpr.Value(nil)
-		if !key.IsWhollyKnown() || key.Type() != cty.String {
+		if key.IsNull() || !key.IsWhollyKnown() || key.Type() != cty.String {
+			// Avoid building incomplete object with keys
+			// that can't be interpolated without further context
 			return schema.LiteralValue{}, false
 		}
 
