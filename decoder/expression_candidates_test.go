@@ -291,6 +291,57 @@ func TestDecoder_CandidateAtPos_expressions(t *testing.T) {
 			}),
 		},
 		{
+			"object as expression - attribute key unknown",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Expr: schema.ExprConstraints{
+						schema.ObjectExpr{
+							Attributes: schema.ObjectExprAttributes{
+								"first": schema.ObjectAttribute{
+									Expr: schema.LiteralTypeOnly(cty.String),
+								},
+								"second": schema.ObjectAttribute{
+									Expr: schema.LiteralTypeOnly(cty.Number),
+								},
+							},
+						},
+					},
+				},
+			},
+			`attr = {
+  first = "blah"
+  var.test = "foo"
+  "${var.env}.${another}" = "prod"
+  
+}
+`,
+			hcl.Pos{Line: 5, Column: 3, Byte: 82},
+			lang.CompleteCandidates([]lang.Candidate{
+				{
+					Label:  "second",
+					Detail: "number",
+					TextEdit: lang.TextEdit{
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start: hcl.Pos{
+								Line:   5,
+								Column: 3,
+								Byte:   82,
+							},
+							End: hcl.Pos{
+								Line:   5,
+								Column: 3,
+								Byte:   82,
+							},
+						},
+						NewText: "second = 1",
+						Snippet: "second = ${1:1}",
+					},
+					Kind: lang.AttributeCandidateKind,
+				},
+			}),
+		},
+		{
 			"list as value",
 			map[string]*schema.AttributeSchema{
 				"attr": {
