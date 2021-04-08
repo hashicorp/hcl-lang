@@ -968,6 +968,211 @@ EOT
 			},
 		},
 		{
+			"list expression",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Expr: schema.ExprConstraints{
+						schema.ListExpr{
+							Elem: schema.LiteralTypeOnly(cty.String),
+						},
+					},
+				},
+			},
+			`attr = [ "one", 42, "two" ]
+`,
+			[]lang.SemanticToken{
+				{ // attr
+					Type:      lang.TokenAttrName,
+					Modifiers: []lang.SemanticTokenModifier{},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   1,
+							Column: 1,
+							Byte:   0,
+						},
+						End: hcl.Pos{
+							Line:   1,
+							Column: 5,
+							Byte:   4,
+						},
+					},
+				},
+				{ // "one"
+					Type:      lang.TokenString,
+					Modifiers: []lang.SemanticTokenModifier{},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   1,
+							Column: 10,
+							Byte:   9,
+						},
+						End: hcl.Pos{
+							Line:   1,
+							Column: 15,
+							Byte:   14,
+						},
+					},
+				},
+				{ // "two"
+					Type:      lang.TokenString,
+					Modifiers: []lang.SemanticTokenModifier{},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   1,
+							Column: 21,
+							Byte:   20,
+						},
+						End: hcl.Pos{
+							Line:   1,
+							Column: 26,
+							Byte:   25,
+						},
+					},
+				},
+			},
+		},
+		{
+			"set expression",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Expr: schema.ExprConstraints{
+						schema.SetExpr{
+							Elem: schema.LiteralTypeOnly(cty.String),
+						},
+					},
+				},
+			},
+			`attr = [ "one", 42, "two" ]
+`,
+			[]lang.SemanticToken{
+				{ // attr
+					Type:      lang.TokenAttrName,
+					Modifiers: []lang.SemanticTokenModifier{},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   1,
+							Column: 1,
+							Byte:   0,
+						},
+						End: hcl.Pos{
+							Line:   1,
+							Column: 5,
+							Byte:   4,
+						},
+					},
+				},
+				{ // "one"
+					Type:      lang.TokenString,
+					Modifiers: []lang.SemanticTokenModifier{},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   1,
+							Column: 10,
+							Byte:   9,
+						},
+						End: hcl.Pos{
+							Line:   1,
+							Column: 15,
+							Byte:   14,
+						},
+					},
+				},
+				{ // "two"
+					Type:      lang.TokenString,
+					Modifiers: []lang.SemanticTokenModifier{},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   1,
+							Column: 21,
+							Byte:   20,
+						},
+						End: hcl.Pos{
+							Line:   1,
+							Column: 26,
+							Byte:   25,
+						},
+					},
+				},
+			},
+		},
+		{
+			"tuple expression",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Expr: schema.ExprConstraints{
+						schema.TupleExpr{
+							Elems: []schema.ExprConstraints{
+								schema.LiteralTypeOnly(cty.String),
+								schema.LiteralTypeOnly(cty.Number),
+								schema.LiteralTypeOnly(cty.Bool),
+							},
+						},
+					},
+				},
+			},
+			`attr = [ "one", 42, "two" ]
+`,
+			[]lang.SemanticToken{
+				{ // attr
+					Type:      lang.TokenAttrName,
+					Modifiers: []lang.SemanticTokenModifier{},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   1,
+							Column: 1,
+							Byte:   0,
+						},
+						End: hcl.Pos{
+							Line:   1,
+							Column: 5,
+							Byte:   4,
+						},
+					},
+				},
+				{ // "one"
+					Type:      lang.TokenString,
+					Modifiers: []lang.SemanticTokenModifier{},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   1,
+							Column: 10,
+							Byte:   9,
+						},
+						End: hcl.Pos{
+							Line:   1,
+							Column: 15,
+							Byte:   14,
+						},
+					},
+				},
+				{ // 42
+					Type:      lang.TokenNumber,
+					Modifiers: []lang.SemanticTokenModifier{},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   1,
+							Column: 17,
+							Byte:   16,
+						},
+						End: hcl.Pos{
+							Line:   1,
+							Column: 19,
+							Byte:   18,
+						},
+					},
+				},
+			},
+		},
+		{
 			"tuple as list",
 			map[string]*schema.AttributeSchema{
 				"attr": {

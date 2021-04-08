@@ -131,10 +131,10 @@ func TestDecoder_CandidateAtPos_expressions(t *testing.T) {
 					Expr: schema.ExprConstraints{
 						schema.ObjectExpr{
 							Attributes: schema.ObjectExprAttributes{
-								"first": schema.ObjectAttribute{
+								"first": &schema.AttributeSchema{
 									Expr: schema.LiteralTypeOnly(cty.String),
 								},
-								"second": schema.ObjectAttribute{
+								"second": &schema.AttributeSchema{
 									Expr: schema.LiteralTypeOnly(cty.Number),
 								},
 							},
@@ -178,10 +178,10 @@ func TestDecoder_CandidateAtPos_expressions(t *testing.T) {
 					Expr: schema.ExprConstraints{
 						schema.ObjectExpr{
 							Attributes: schema.ObjectExprAttributes{
-								"first": schema.ObjectAttribute{
+								"first": &schema.AttributeSchema{
 									Expr: schema.LiteralTypeOnly(cty.String),
 								},
-								"second": schema.ObjectAttribute{
+								"second": &schema.AttributeSchema{
 									Expr: schema.LiteralTypeOnly(cty.Number),
 								},
 							},
@@ -248,10 +248,10 @@ func TestDecoder_CandidateAtPos_expressions(t *testing.T) {
 					Expr: schema.ExprConstraints{
 						schema.ObjectExpr{
 							Attributes: schema.ObjectExprAttributes{
-								"first": schema.ObjectAttribute{
+								"first": &schema.AttributeSchema{
 									Expr: schema.LiteralTypeOnly(cty.String),
 								},
-								"second": schema.ObjectAttribute{
+								"second": &schema.AttributeSchema{
 									Expr: schema.LiteralTypeOnly(cty.Number),
 								},
 							},
@@ -297,10 +297,10 @@ func TestDecoder_CandidateAtPos_expressions(t *testing.T) {
 					Expr: schema.ExprConstraints{
 						schema.ObjectExpr{
 							Attributes: schema.ObjectExprAttributes{
-								"first": schema.ObjectAttribute{
+								"first": &schema.AttributeSchema{
 									Expr: schema.LiteralTypeOnly(cty.String),
 								},
-								"second": schema.ObjectAttribute{
+								"second": &schema.AttributeSchema{
 									Expr: schema.LiteralTypeOnly(cty.Number),
 								},
 							},
@@ -759,6 +759,387 @@ func TestDecoder_CandidateAtPos_expressions(t *testing.T) {
 `,
 			hcl.Pos{Line: 1, Column: 10, Byte: 9},
 			lang.ZeroCandidates(),
+		},
+		{
+			"attribute as list expression",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Expr: schema.ExprConstraints{
+						schema.ListExpr{
+							Elem: schema.LiteralTypeOnly(cty.String),
+						},
+					},
+				},
+			},
+			`
+`,
+			hcl.Pos{Line: 1, Column: 1, Byte: 0},
+			lang.CompleteCandidates([]lang.Candidate{
+				{
+					Label:  "attr",
+					Detail: "list",
+					TextEdit: lang.TextEdit{
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
+							End:      hcl.Pos{Line: 1, Column: 1, Byte: 0},
+						},
+						NewText: "attr",
+						Snippet: "attr = [\n  ${0}\n]",
+					},
+					Kind: lang.AttributeCandidateKind,
+				},
+			}),
+		},
+		{
+			"list expression",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Expr: schema.ExprConstraints{
+						schema.ListExpr{
+							Elem: schema.LiteralTypeOnly(cty.String),
+						},
+					},
+				},
+			},
+			`attr = 
+`,
+			hcl.Pos{Line: 1, Column: 8, Byte: 7},
+			lang.CompleteCandidates([]lang.Candidate{
+				{
+					Label:  "[ string ]",
+					Detail: "list",
+					TextEdit: lang.TextEdit{
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 1, Column: 8, Byte: 7},
+							End:      hcl.Pos{Line: 1, Column: 8, Byte: 7},
+						},
+						NewText: "[ ]",
+						Snippet: "[ ${0} ]",
+					},
+					Kind:           lang.ListCandidateKind,
+					TriggerSuggest: true,
+				},
+			}),
+		},
+		{
+			"list expression inside",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Expr: schema.ExprConstraints{
+						schema.ListExpr{
+							Elem: schema.LiteralTypeOnly(cty.Bool),
+						},
+					},
+				},
+			},
+			`attr = [  ]
+`,
+			hcl.Pos{Line: 1, Column: 10, Byte: 9},
+			lang.CompleteCandidates([]lang.Candidate{
+				{
+					Label:  "true",
+					Detail: "bool",
+					TextEdit: lang.TextEdit{
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start: hcl.Pos{
+								Line:   1,
+								Column: 10,
+								Byte:   9,
+							},
+							End: hcl.Pos{
+								Line:   1,
+								Column: 10,
+								Byte:   9,
+							},
+						},
+						NewText: "true",
+						Snippet: "${1:true}",
+					},
+					Kind: lang.BoolCandidateKind,
+				},
+				{
+					Label:  "false",
+					Detail: "bool",
+					TextEdit: lang.TextEdit{
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start: hcl.Pos{
+								Line:   1,
+								Column: 10,
+								Byte:   9,
+							},
+							End: hcl.Pos{
+								Line:   1,
+								Column: 10,
+								Byte:   9,
+							},
+						},
+						NewText: "false",
+						Snippet: "${1:false}",
+					},
+					Kind: lang.BoolCandidateKind,
+				},
+			}),
+		},
+		{
+			"attribute as set expression",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Expr: schema.ExprConstraints{
+						schema.SetExpr{
+							Elem: schema.LiteralTypeOnly(cty.String),
+						},
+					},
+				},
+			},
+			`
+`,
+			hcl.Pos{Line: 1, Column: 1, Byte: 0},
+			lang.CompleteCandidates([]lang.Candidate{
+				{
+					Label:  "attr",
+					Detail: "set",
+					TextEdit: lang.TextEdit{
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
+							End:      hcl.Pos{Line: 1, Column: 1, Byte: 0},
+						},
+						NewText: "attr",
+						Snippet: "attr = [\n  ${0}\n]",
+					},
+					Kind: lang.AttributeCandidateKind,
+				},
+			}),
+		},
+		{
+			"set expression",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Expr: schema.ExprConstraints{
+						schema.SetExpr{
+							Elem: schema.LiteralTypeOnly(cty.String),
+						},
+					},
+				},
+			},
+			`attr = 
+`,
+			hcl.Pos{Line: 1, Column: 8, Byte: 7},
+			lang.CompleteCandidates([]lang.Candidate{
+				{
+					Label:  "[ string ]",
+					Detail: "set",
+					TextEdit: lang.TextEdit{
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 1, Column: 8, Byte: 7},
+							End:      hcl.Pos{Line: 1, Column: 8, Byte: 7},
+						},
+						NewText: "[ ]",
+						Snippet: "[ ${0} ]",
+					},
+					Kind:           lang.SetCandidateKind,
+					TriggerSuggest: true,
+				},
+			}),
+		},
+		{
+			"set expression inside",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Expr: schema.ExprConstraints{
+						schema.SetExpr{
+							Elem: schema.LiteralTypeOnly(cty.Bool),
+						},
+					},
+				},
+			},
+			`attr = [  ]
+`,
+			hcl.Pos{Line: 1, Column: 10, Byte: 9},
+			lang.CompleteCandidates([]lang.Candidate{
+				{
+					Label:  "true",
+					Detail: "bool",
+					TextEdit: lang.TextEdit{
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start: hcl.Pos{
+								Line:   1,
+								Column: 10,
+								Byte:   9,
+							},
+							End: hcl.Pos{
+								Line:   1,
+								Column: 10,
+								Byte:   9,
+							},
+						},
+						NewText: "true",
+						Snippet: "${1:true}",
+					},
+					Kind: lang.BoolCandidateKind,
+				},
+				{
+					Label:  "false",
+					Detail: "bool",
+					TextEdit: lang.TextEdit{
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start: hcl.Pos{
+								Line:   1,
+								Column: 10,
+								Byte:   9,
+							},
+							End: hcl.Pos{
+								Line:   1,
+								Column: 10,
+								Byte:   9,
+							},
+						},
+						NewText: "false",
+						Snippet: "${1:false}",
+					},
+					Kind: lang.BoolCandidateKind,
+				},
+			}),
+		},
+		{
+			"attribute as tuple expression",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Expr: schema.ExprConstraints{
+						schema.TupleExpr{
+							Elems: []schema.ExprConstraints{
+								schema.LiteralTypeOnly(cty.String),
+								schema.LiteralTypeOnly(cty.Number),
+							},
+						},
+					},
+				},
+			},
+			`
+`,
+			hcl.Pos{Line: 1, Column: 1, Byte: 0},
+			lang.CompleteCandidates([]lang.Candidate{
+				{
+					Label:  "attr",
+					Detail: "tuple",
+					TextEdit: lang.TextEdit{
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
+							End:      hcl.Pos{Line: 1, Column: 1, Byte: 0},
+						},
+						NewText: "attr",
+						Snippet: "attr = [\n  ${0}\n]",
+					},
+					Kind: lang.AttributeCandidateKind,
+				},
+			}),
+		},
+		{
+			"tuple expression",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Expr: schema.ExprConstraints{
+						schema.TupleExpr{
+							Elems: []schema.ExprConstraints{
+								schema.LiteralTypeOnly(cty.String),
+								schema.LiteralTypeOnly(cty.Number),
+							},
+						},
+					},
+				},
+			},
+			`attr = 
+`,
+			hcl.Pos{Line: 1, Column: 8, Byte: 7},
+			lang.CompleteCandidates([]lang.Candidate{
+				{
+					Label:  "[ string ]",
+					Detail: "tuple",
+					TextEdit: lang.TextEdit{
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 1, Column: 8, Byte: 7},
+							End:      hcl.Pos{Line: 1, Column: 8, Byte: 7},
+						},
+						NewText: "[ ]",
+						Snippet: "[ ${0} ]",
+					},
+					Kind:           lang.TupleCandidateKind,
+					TriggerSuggest: true,
+				},
+			}),
+		},
+		{
+			"tuple expression inside",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Expr: schema.ExprConstraints{
+						schema.TupleExpr{
+							Elems: []schema.ExprConstraints{
+								schema.LiteralTypeOnly(cty.Bool),
+								schema.LiteralTypeOnly(cty.Number),
+							},
+						},
+					},
+				},
+			},
+			`attr = [  ]
+`,
+			hcl.Pos{Line: 1, Column: 10, Byte: 9},
+			lang.CompleteCandidates([]lang.Candidate{
+				{
+					Label:  "true",
+					Detail: "bool",
+					TextEdit: lang.TextEdit{
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start: hcl.Pos{
+								Line:   1,
+								Column: 10,
+								Byte:   9,
+							},
+							End: hcl.Pos{
+								Line:   1,
+								Column: 10,
+								Byte:   9,
+							},
+						},
+						NewText: "true",
+						Snippet: "${1:true}",
+					},
+					Kind: lang.BoolCandidateKind,
+				},
+				{
+					Label:  "false",
+					Detail: "bool",
+					TextEdit: lang.TextEdit{
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start: hcl.Pos{
+								Line:   1,
+								Column: 10,
+								Byte:   9,
+							},
+							End: hcl.Pos{
+								Line:   1,
+								Column: 10,
+								Byte:   9,
+							},
+						},
+						NewText: "false",
+						Snippet: "${1:false}",
+					},
+					Kind: lang.BoolCandidateKind,
+				},
+			}),
 		},
 		{
 			"keyword",

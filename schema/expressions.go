@@ -64,6 +64,8 @@ func (lv LiteralValue) FriendlyName() string {
 	return lv.Val.Type().FriendlyNameForConstraint()
 }
 
+// TODO: Consider removing TupleConsExpr
+// in favour of ListExpr, SetExpr and TupleExpr
 type TupleConsExpr struct {
 	AnyElem     ExprConstraints
 	Name        string
@@ -81,10 +83,55 @@ func (tc TupleConsExpr) FriendlyName() string {
 	return tc.Name
 }
 
+type ListExpr struct {
+	Elem        ExprConstraints
+	Description lang.MarkupContent
+	MinItems    uint64
+	MaxItems    uint64
+}
+
+func (ListExpr) isExprConstraintImpl() exprConstrSigil {
+	return exprConstrSigil{}
+}
+
+func (ListExpr) FriendlyName() string {
+	return "list"
+}
+
+type SetExpr struct {
+	Elem        ExprConstraints
+	Description lang.MarkupContent
+	MinItems    uint64
+	MaxItems    uint64
+}
+
+func (SetExpr) isExprConstraintImpl() exprConstrSigil {
+	return exprConstrSigil{}
+}
+
+func (SetExpr) FriendlyName() string {
+	return "set"
+}
+
+type TupleExpr struct {
+	Elems       []ExprConstraints
+	Description lang.MarkupContent
+}
+
+func (TupleExpr) isExprConstraintImpl() exprConstrSigil {
+	return exprConstrSigil{}
+}
+
+func (le TupleExpr) FriendlyName() string {
+	return "tuple"
+}
+
 type MapExpr struct {
 	Elem        ExprConstraints
 	Name        string
 	Description lang.MarkupContent
+	MinItems    uint64
+	MaxItems    uint64
 }
 
 func (MapExpr) isExprConstraintImpl() exprConstrSigil {
@@ -115,7 +162,7 @@ func (oe ObjectExpr) FriendlyName() string {
 	return oe.Name
 }
 
-type ObjectExprAttributes map[string]ObjectAttribute
+type ObjectExprAttributes map[string]*AttributeSchema
 
 func (ObjectExprAttributes) isExprConstraintImpl() exprConstrSigil {
 	return exprConstrSigil{}
@@ -123,15 +170,6 @@ func (ObjectExprAttributes) isExprConstraintImpl() exprConstrSigil {
 
 func (oe ObjectExprAttributes) FriendlyName() string {
 	return "attributes"
-}
-
-type ObjectAttribute struct {
-	Expr        ExprConstraints
-	Description lang.MarkupContent
-}
-
-func (oa ObjectAttribute) FriendlyName() string {
-	return oa.Expr.FriendlyName()
 }
 
 type KeywordExpr struct {

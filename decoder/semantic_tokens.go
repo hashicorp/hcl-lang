@@ -159,8 +159,35 @@ func tokensForExpression(expr hclsyntax.Expression, constraints ExprConstraints)
 	case *hclsyntax.TupleConsExpr:
 		tc, ok := constraints.TupleConsExpr()
 		if ok {
+			ec := ExprConstraints(tc.AnyElem)
 			for _, expr := range eType.Exprs {
-				ec := ExprConstraints(tc.AnyElem)
+				tokens = append(tokens, tokensForExpression(expr, ec)...)
+			}
+			return tokens
+		}
+		se, ok := constraints.SetExpr()
+		if ok {
+			ec := ExprConstraints(se.Elem)
+			for _, expr := range eType.Exprs {
+				tokens = append(tokens, tokensForExpression(expr, ec)...)
+			}
+			return tokens
+		}
+		le, ok := constraints.ListExpr()
+		if ok {
+			ec := ExprConstraints(le.Elem)
+			for _, expr := range eType.Exprs {
+				tokens = append(tokens, tokensForExpression(expr, ec)...)
+			}
+			return tokens
+		}
+		te, ok := constraints.TupleExpr()
+		if ok {
+			for i, expr := range eType.Exprs {
+				if i >= len(te.Elems) {
+					break
+				}
+				ec := ExprConstraints(te.Elems[i])
 				tokens = append(tokens, tokensForExpression(expr, ec)...)
 			}
 			return tokens
@@ -169,9 +196,9 @@ func tokensForExpression(expr hclsyntax.Expression, constraints ExprConstraints)
 		if ok {
 			return tokensForTupleConsExpr(eType, lt.Type)
 		}
-		litVal, ok := constraints.LiteralValueOfTupleExpr(eType)
+		lv, ok := constraints.LiteralValueOfTupleExpr(eType)
 		if ok {
-			return tokensForTupleConsExpr(eType, litVal.Val.Type())
+			return tokensForTupleConsExpr(eType, lv.Val.Type())
 		}
 	case *hclsyntax.ObjectConsExpr:
 		oe, ok := constraints.ObjectExpr()
