@@ -452,6 +452,171 @@ resource "aws_instance" "test" {
 	}
 }
 
+func TestDecoder_Symbols_unknownExpression(t *testing.T) {
+	d := NewDecoder()
+
+	testCfg := []byte(`
+resource "aws_instance" "test" {
+  subnet_ids = [ var.test, "two-2" ]
+  configuration = {
+  	var.key = "blah"
+  	num = var.value
+    "${var.env}.${another}" = "prod"
+  	foo(var.arg) = "bar"
+  }
+  random_kw = var.value
+}
+`)
+	f, pDiags := hclsyntax.ParseConfig(testCfg, "test.tf", hcl.InitialPos)
+	if len(pDiags) > 0 {
+		t.Fatal(pDiags)
+	}
+
+	err := d.LoadFile("test.tf", f)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	symbols, err := d.SymbolsInFile("test.tf")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	expectedSymbols := []Symbol{
+		&BlockSymbol{
+			Type: "resource",
+			Labels: []string{
+				"aws_instance",
+				"test",
+			},
+			rng: hcl.Range{
+				Filename: "test.tf",
+				Start:    hcl.Pos{Line: 2, Column: 1, Byte: 1},
+				End:      hcl.Pos{Line: 11, Column: 2, Byte: 220},
+			},
+			nestedSymbols: []Symbol{
+				&AttributeSymbol{
+					AttrName: "subnet_ids",
+					ExprKind: lang.TupleConsExprKind{},
+					rng: hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   3,
+							Column: 3,
+							Byte:   36,
+						},
+						End: hcl.Pos{
+							Line:   3,
+							Column: 37,
+							Byte:   70,
+						},
+					},
+					nestedSymbols: []Symbol{
+						&ExprSymbol{
+							ExprName: "0",
+							ExprKind: lang.TraversalExprKind{},
+							rng: hcl.Range{
+								Filename: "test.tf",
+								Start: hcl.Pos{
+									Line:   3,
+									Column: 18,
+									Byte:   51,
+								},
+								End: hcl.Pos{
+									Line:   3,
+									Column: 26,
+									Byte:   59,
+								},
+							},
+							nestedSymbols: []Symbol{},
+						},
+						&ExprSymbol{
+							ExprName: "1",
+							ExprKind: lang.LiteralTypeKind{
+								Type: cty.String,
+							},
+							rng: hcl.Range{
+								Filename: "test.tf",
+								Start: hcl.Pos{
+									Line:   3,
+									Column: 28,
+									Byte:   61,
+								},
+								End: hcl.Pos{
+									Line:   3,
+									Column: 35,
+									Byte:   68,
+								},
+							},
+							nestedSymbols: []Symbol{},
+						},
+					},
+				},
+				&AttributeSymbol{
+					AttrName: "configuration",
+					ExprKind: lang.ObjectConsExprKind{},
+					rng: hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   4,
+							Column: 3,
+							Byte:   73,
+						},
+						End: hcl.Pos{
+							Line:   9,
+							Column: 4,
+							Byte:   194,
+						},
+					},
+					nestedSymbols: []Symbol{
+						&ExprSymbol{
+							ExprName: "num",
+							ExprKind: lang.TraversalExprKind{},
+							rng: hcl.Range{
+								Filename: "test.tf",
+								Start: hcl.Pos{
+									Line:   6,
+									Column: 4,
+									Byte:   114,
+								},
+								End: hcl.Pos{
+									Line:   6,
+									Column: 19,
+									Byte:   129,
+								},
+							},
+							nestedSymbols: []Symbol{},
+						},
+					},
+				},
+				&AttributeSymbol{
+					AttrName: "random_kw",
+					ExprKind: lang.TraversalExprKind{},
+					rng: hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   10,
+							Column: 3,
+							Byte:   197,
+						},
+						End: hcl.Pos{
+							Line:   10,
+							Column: 24,
+							Byte:   218,
+						},
+					},
+					nestedSymbols: []Symbol{},
+				},
+			},
+		},
+	}
+
+	diff := cmp.Diff(expectedSymbols, symbols)
+	if diff != "" {
+		t.Fatalf("unexpected symbols:\n%s", diff)
+	}
+}
+
 func TestDecoder_Symbols_query(t *testing.T) {
 	d := NewDecoder()
 

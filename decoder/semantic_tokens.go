@@ -178,7 +178,9 @@ func tokensForExpression(expr hclsyntax.Expression, constraints ExprConstraints)
 		if ok {
 			for _, item := range eType.Items {
 				key, _ := item.KeyExpr.Value(nil)
-				if !key.IsWhollyKnown() || key.Type() != cty.String {
+				if key.IsNull() || !key.IsWhollyKnown() || key.Type() != cty.String {
+					// skip items keys that can't be interpolated
+					// without further context
 					continue
 				}
 				attr, ok := oe.Attributes[key.AsString()]
@@ -299,19 +301,23 @@ func tokensForObjectConsExpr(expr *hclsyntax.ObjectConsExpr, exprType cty.Type) 
 		attrTypes := exprType.AttributeTypes()
 		for _, item := range expr.Items {
 			key, _ := item.KeyExpr.Value(nil)
-			if key.IsWhollyKnown() && key.Type() == cty.String {
-				valType, ok := attrTypes[key.AsString()]
-				if !ok {
-					// unknown attribute
-					continue
-				}
-				tokens = append(tokens, lang.SemanticToken{
-					Type:      lang.TokenObjectKey,
-					Modifiers: []lang.SemanticTokenModifier{},
-					Range:     item.KeyExpr.Range(),
-				})
-				tokens = append(tokens, tokenForTypedExpression(item.ValueExpr, valType)...)
+			if key.IsNull() || !key.IsWhollyKnown() || key.Type() != cty.String {
+				// skip items keys that can't be interpolated
+				// without further context
+				continue
 			}
+
+			valType, ok := attrTypes[key.AsString()]
+			if !ok {
+				// unknown attribute
+				continue
+			}
+			tokens = append(tokens, lang.SemanticToken{
+				Type:      lang.TokenObjectKey,
+				Modifiers: []lang.SemanticTokenModifier{},
+				Range:     item.KeyExpr.Range(),
+			})
+			tokens = append(tokens, tokenForTypedExpression(item.ValueExpr, valType)...)
 		}
 	}
 	if exprType.IsMapType() {

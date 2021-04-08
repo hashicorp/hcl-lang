@@ -360,6 +360,74 @@ EOT
 			},
 		},
 		{
+			"object as type with unknown key",
+			map[string]*schema.AttributeSchema{
+				"obj": {
+					Expr: schema.LiteralTypeOnly(cty.Object(map[string]cty.Type{
+						"knownkey": cty.Number,
+					})),
+				},
+			},
+			`obj = {
+  knownkey = 42
+  "${var.env}.${another}" = "prod"
+  var.test = "boo"
+}`,
+			[]lang.SemanticToken{
+				{ // obj
+					Type:      lang.TokenAttrName,
+					Modifiers: []lang.SemanticTokenModifier{},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   1,
+							Column: 1,
+							Byte:   0,
+						},
+						End: hcl.Pos{
+							Line:   1,
+							Column: 4,
+							Byte:   3,
+						},
+					},
+				},
+				{ // knownkey
+					Type:      lang.TokenObjectKey,
+					Modifiers: []lang.SemanticTokenModifier{},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   2,
+							Column: 3,
+							Byte:   10,
+						},
+						End: hcl.Pos{
+							Line:   2,
+							Column: 11,
+							Byte:   18,
+						},
+					},
+				},
+				{ // 42
+					Type:      lang.TokenNumber,
+					Modifiers: []lang.SemanticTokenModifier{},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   2,
+							Column: 14,
+							Byte:   21,
+						},
+						End: hcl.Pos{
+							Line:   2,
+							Column: 16,
+							Byte:   23,
+						},
+					},
+				},
+			},
+		},
+		{
 			"object as expression",
 			map[string]*schema.AttributeSchema{
 				"obj": {
@@ -377,6 +445,80 @@ EOT
 			`obj = {
   knownkey = 42
   unknownkey = "boo"
+}`,
+			[]lang.SemanticToken{
+				{ // obj
+					Type:      lang.TokenAttrName,
+					Modifiers: []lang.SemanticTokenModifier{},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   1,
+							Column: 1,
+							Byte:   0,
+						},
+						End: hcl.Pos{
+							Line:   1,
+							Column: 4,
+							Byte:   3,
+						},
+					},
+				},
+				{ // knownkey
+					Type:      lang.TokenObjectKey,
+					Modifiers: []lang.SemanticTokenModifier{},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   2,
+							Column: 3,
+							Byte:   10,
+						},
+						End: hcl.Pos{
+							Line:   2,
+							Column: 11,
+							Byte:   18,
+						},
+					},
+				},
+				{ // 42
+					Type:      lang.TokenNumber,
+					Modifiers: []lang.SemanticTokenModifier{},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   2,
+							Column: 14,
+							Byte:   21,
+						},
+						End: hcl.Pos{
+							Line:   2,
+							Column: 16,
+							Byte:   23,
+						},
+					},
+				},
+			},
+		},
+		{
+			"object as expression with unknown key",
+			map[string]*schema.AttributeSchema{
+				"obj": {
+					Expr: schema.ExprConstraints{
+						schema.ObjectExpr{
+							Attributes: schema.ObjectExprAttributes{
+								"knownkey": {
+									Expr: schema.LiteralTypeOnly(cty.Number),
+								},
+							},
+						},
+					},
+				},
+			},
+			`obj = {
+  knownkey = 42
+  var.test = 32
+  "${var.env}.${another}" = "prod"
 }`,
 			[]lang.SemanticToken{
 				{ // obj

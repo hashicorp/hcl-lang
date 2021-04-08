@@ -254,6 +254,52 @@ _object_`),
 			nil,
 		},
 		{
+			"object as type with unknown key",
+			map[string]*schema.AttributeSchema{
+				"litobj": {Expr: schema.LiteralTypeOnly(cty.Object(map[string]cty.Type{
+					"source":     cty.String,
+					"bool":       cty.Bool,
+					"notbool":    cty.String,
+					"nested_map": cty.Map(cty.String),
+					"nested_obj": cty.Object(map[string]cty.Type{}),
+				}))},
+			},
+			`litobj = {
+    "${var.src}" = "blah"
+    "${var.env}.${another}" = "prod"
+    "different" = 42
+    "bool" = true
+    "notbool" = "test"
+  }`,
+			hcl.Pos{Line: 4, Column: 12, Byte: 65},
+			&lang.HoverData{
+				Content: lang.Markdown("```" + `
+{
+  bool = bool
+  nested_map = map of string
+  nested_obj = object
+  notbool = string
+  source = string
+}
+` + "```" + `
+_object_`),
+				Range: hcl.Range{
+					Filename: "test.tf",
+					Start: hcl.Pos{
+						Line:   1,
+						Column: 10,
+						Byte:   9,
+					},
+					End: hcl.Pos{
+						Line:   7,
+						Column: 4,
+						Byte:   139,
+					},
+				},
+			},
+			nil,
+		},
+		{
 			"object as expression",
 			map[string]*schema.AttributeSchema{
 				"obj": {Expr: schema.ExprConstraints{
@@ -298,6 +344,57 @@ _object_`),
 						Line:   6,
 						Column: 2,
 						Byte:   85,
+					},
+				},
+			},
+			nil,
+		},
+		{
+			"object as expression with unknown key",
+			map[string]*schema.AttributeSchema{
+				"obj": {Expr: schema.ExprConstraints{
+					schema.ObjectExpr{
+						Attributes: schema.ObjectExprAttributes{
+							"source": schema.ObjectAttribute{
+								Expr: schema.LiteralTypeOnly(cty.String),
+							},
+							"bool": schema.ObjectAttribute{
+								Expr: schema.LiteralTypeOnly(cty.Bool),
+							},
+							"notbool": schema.ObjectAttribute{
+								Expr: schema.LiteralTypeOnly(cty.String),
+							},
+							"nested_map": schema.ObjectAttribute{
+								Expr: schema.LiteralTypeOnly(cty.Map(cty.String)),
+							},
+							"nested_obj": schema.ObjectAttribute{
+								Expr: schema.LiteralTypeOnly(cty.Object(map[string]cty.Type{})),
+							},
+						},
+					},
+				}},
+			},
+			`obj = {
+    var.src = "blah"
+    "${var.env}.${another}" = "prod"
+    different = 42
+    bool = true
+    notbool = "test"
+}`,
+			hcl.Pos{Line: 1, Column: 3, Byte: 2},
+			&lang.HoverData{
+				Content: lang.Markdown(`**obj** _object_`),
+				Range: hcl.Range{
+					Filename: "test.tf",
+					Start: hcl.Pos{
+						Line:   1,
+						Column: 1,
+						Byte:   0,
+					},
+					End: hcl.Pos{
+						Line:   7,
+						Column: 2,
+						Byte:   123,
 					},
 				},
 			},

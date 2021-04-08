@@ -369,7 +369,9 @@ func hoverDataForExpr(expr hcl.Expression, constraints ExprConstraints, pos hcl.
 func hoverDataForObjectExpr(objExpr *hclsyntax.ObjectConsExpr, oe schema.ObjectExpr, pos hcl.Pos) (*lang.HoverData, error) {
 	for _, item := range objExpr.Items {
 		key, _ := item.KeyExpr.Value(nil)
-		if !key.IsWhollyKnown() || key.Type() != cty.String {
+		if key.IsNull() || !key.IsWhollyKnown() || key.Type() != cty.String {
+			// skip items keys that can't be interpolated
+			// without further context
 			continue
 		}
 		attr, ok := oe.Attributes[key.AsString()]

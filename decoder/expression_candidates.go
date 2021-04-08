@@ -62,7 +62,9 @@ func constraintsAtPos(expr hcl.Expression, constraints ExprConstraints, pos hcl.
 			undeclaredAttributes := oe.Attributes
 			for _, item := range eType.Items {
 				key, _ := item.KeyExpr.Value(nil)
-				if !key.IsWhollyKnown() || key.Type() != cty.String {
+				if key.IsNull() || !key.IsWhollyKnown() || key.Type() != cty.String {
+					// skip items keys that can't be interpolated
+					// without further context
 					continue
 				}
 				attr, ok := oe.Attributes[key.AsString()]
