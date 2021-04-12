@@ -2,7 +2,6 @@ package decoder
 
 import (
 	"fmt"
-	"reflect"
 	"sync"
 
 	"github.com/hashicorp/hcl-lang/lang"
@@ -10,7 +9,6 @@ import (
 	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hclsyntax"
 	"github.com/mitchellh/copystructure"
-	"github.com/zclconf/go-cty/cty"
 )
 
 type Decoder struct {
@@ -162,13 +160,9 @@ func mergeBlockBodySchemas(block *hclsyntax.Block, blockSchema *schema.BlockSche
 		return blockSchema.Body, nil
 	}
 
-	// cty.Type has private fields, so we have to declare custom copier
-	copystructure.Copiers = map[reflect.Type]copystructure.CopierFunc{
-		reflect.TypeOf(cty.NilType): ctyTypeCopier,
-		reflect.TypeOf(cty.Value{}): ctyValueCopier,
-	}
-
-	schemaCopy, err := copystructure.Copy(blockSchema.Body)
+	schemaCopy, err := copystructure.Config{
+		Copiers: copiers,
+	}.Copy(blockSchema.Body)
 	if err != nil {
 		return nil, err
 	}
@@ -263,14 +257,6 @@ func dependencyKeysFromBlock(block *hclsyntax.Block, blockSchema *schema.BlockSc
 		}
 	}
 	return dk
-}
-
-func ctyTypeCopier(v interface{}) (interface{}, error) {
-	return v.(cty.Type), nil
-}
-
-func ctyValueCopier(v interface{}) (interface{}, error) {
-	return v.(cty.Value), nil
 }
 
 func traversalToAddress(traversal hcl.Traversal) (lang.Address, error) {
