@@ -14,6 +14,8 @@ func (d *Decoder) labelCandidatesFromDependentSchema(idx int, db map[schema.Sche
 	candidates := lang.NewCandidates()
 	count := 0
 
+	foundCandidateNames := make(map[string]bool, 0)
+
 	prefix, _ := d.bytesFromRange(prefixRng)
 
 	for schemaKey, bodySchema := range db {
@@ -32,6 +34,22 @@ func (d *Decoder) labelCandidatesFromDependentSchema(idx int, db map[schema.Sche
 				if len(prefix) > 0 && !strings.HasPrefix(label.Value, string(prefix)) {
 					continue
 				}
+
+				// Dependent keys may be duplicated where one
+				// key is labels-only and other one contains
+				// labels + attributes.
+				//
+				// Specifically in Terraform this applies to
+				// a resource type depending on 'provider' attribute.
+				//
+				// We do need such dependent keys elsewhere
+				// to know how to do completion within a block
+				// but this doesn't matter when completing the label itself
+				// unless/until we're also completing the dependent attributes.
+				if _, ok := foundCandidateNames[label.Value]; ok {
+					continue
+				}
+
 				candidates.List = append(candidates.List, lang.Candidate{
 					Label:        label.Value,
 					Kind:         lang.LabelCandidateKind,
@@ -41,10 +59,13 @@ func (d *Decoder) labelCandidatesFromDependentSchema(idx int, db map[schema.Sche
 						Snippet: label.Value,
 						Range:   editRng,
 					},
-					// TODO: AdditionalTextEdits (required fields if body is empty)
+					// TODO: AdditionalTextEdits:
+					// - prefill required fields if body is empty
+					// - prefill dependent attribute(s)
 					Detail:      bodySchema.Detail,
 					Description: bodySchema.Description,
 				})
+				foundCandidateNames[label.Value] = true
 			}
 		}
 	}
