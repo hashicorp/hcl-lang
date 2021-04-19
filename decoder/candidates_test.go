@@ -643,6 +643,98 @@ func TestDecoder_CandidatesAtPos_emptyLabel(t *testing.T) {
 	}
 }
 
+func TestDecoder_CandidatesAtPos_emptyLabel_duplicateDepKeys(t *testing.T) {
+	resourceLabelSchema := []*schema.LabelSchema{
+		{Name: "type", IsDepKey: true},
+		{Name: "name"},
+	}
+	resourceSchema := &schema.BlockSchema{
+		Labels: resourceLabelSchema,
+		Body: &schema.BodySchema{
+			Attributes: map[string]*schema.AttributeSchema{
+				"count": {Expr: schema.LiteralTypeOnly(cty.Number)},
+			},
+		},
+		DependentBody: map[schema.SchemaKey]*schema.BodySchema{
+			schema.NewSchemaKey(schema.DependencyKeys{
+				Labels: []schema.LabelDependent{
+					{Index: 0, Value: "azurerm_subnet"},
+				},
+			}): {
+				Attributes: map[string]*schema.AttributeSchema{
+					"one":   {Expr: schema.LiteralTypeOnly(cty.String), IsRequired: true},
+					"two":   {Expr: schema.LiteralTypeOnly(cty.Number)},
+					"three": {Expr: schema.LiteralTypeOnly(cty.Bool)},
+				},
+			},
+			schema.NewSchemaKey(schema.DependencyKeys{
+				Labels: []schema.LabelDependent{
+					{Index: 0, Value: "azurerm_subnet"},
+				},
+				Attributes: []schema.AttributeDependent{
+					{
+						Name: "provider",
+						Expr: schema.ExpressionValue{
+							Address: lang.Address{
+								lang.RootStep{Name: "azurerm"},
+							},
+						},
+					},
+				},
+			}): {
+				Attributes: map[string]*schema.AttributeSchema{
+					"one":   {Expr: schema.LiteralTypeOnly(cty.String), IsRequired: true},
+					"two":   {Expr: schema.LiteralTypeOnly(cty.Number)},
+					"three": {Expr: schema.LiteralTypeOnly(cty.Bool)},
+				},
+			},
+		},
+	}
+	bodySchema := &schema.BodySchema{
+		Blocks: map[string]*schema.BlockSchema{
+			"resource": resourceSchema,
+		},
+	}
+
+	cfg := []byte(`resource "" "" {
+}
+`)
+
+	d := NewDecoder()
+	d.SetSchema(bodySchema)
+	f, pDiags := hclsyntax.ParseConfig([]byte(cfg), "test.tf", hcl.InitialPos)
+	if len(pDiags) > 0 {
+		t.Fatal(pDiags)
+	}
+	err := d.LoadFile("test.tf", f)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	candidates, err := d.CandidatesAtPos("test.tf", hcl.Pos{Line: 1, Column: 11, Byte: 10})
+	if err != nil {
+		t.Fatal(err)
+	}
+	expectedCandidates := lang.CompleteCandidates([]lang.Candidate{
+		{
+			Label: "azurerm_subnet",
+			TextEdit: lang.TextEdit{
+				Range: hcl.Range{
+					Filename: "test.tf",
+					Start:    hcl.Pos{Line: 1, Column: 11, Byte: 10},
+					End:      hcl.Pos{Line: 1, Column: 11, Byte: 10},
+				},
+				NewText: "azurerm_subnet",
+				Snippet: "azurerm_subnet",
+			},
+			Kind: lang.LabelCandidateKind,
+		},
+	})
+	if diff := cmp.Diff(expectedCandidates, candidates); diff != "" {
+		t.Fatalf("unexpected candidates: %s", diff)
+	}
+}
+
 func TestDecoder_CandidatesAtPos_basic(t *testing.T) {
 	resourceLabelSchema := []*schema.LabelSchema{
 		{Name: "type", IsDepKey: true},
