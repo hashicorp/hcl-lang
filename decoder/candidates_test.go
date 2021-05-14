@@ -909,7 +909,8 @@ resource "random_resource" "test" {
 						NewText: "three",
 						Snippet: "three = ${1:false}",
 					},
-					Kind: lang.AttributeCandidateKind,
+					Kind:           lang.AttributeCandidateKind,
+					TriggerSuggest: true,
 				},
 				{
 					Label:  "two",
@@ -957,7 +958,8 @@ resource "random_resource" "test" {
 						NewText: "three",
 						Snippet: "three = ${1:false}",
 					},
-					Kind: lang.AttributeCandidateKind,
+					Kind:           lang.AttributeCandidateKind,
+					TriggerSuggest: true,
 				},
 				{
 					Label:  "two",
@@ -1206,31 +1208,6 @@ resource "any" "ref" {
 				},
 			}),
 		},
-		{
-			"new block or attribute inside a block",
-			`
-resource "any" "ref" {
-  co
-}
-`,
-			hcl.Pos{Line: 3, Column: 5, Byte: 28},
-			lang.CompleteCandidates([]lang.Candidate{
-				{
-					Label:  "count",
-					Detail: "Optional, number",
-					TextEdit: lang.TextEdit{
-						Range: hcl.Range{
-							Filename: "test.tf",
-							Start:    hcl.Pos{Line: 3, Column: 3, Byte: 26},
-							End:      hcl.Pos{Line: 3, Column: 5, Byte: 28},
-						},
-						NewText: "count",
-						Snippet: "count = ${1:1}",
-					},
-					Kind: lang.AttributeCandidateKind,
-				},
-			}),
-		},
 	}
 
 	for i, tc := range testCases {
@@ -1318,31 +1295,6 @@ res
 						Snippet: "resource \"${1:type}\" \"${2:name}\" {\n  ${3}\n}",
 					},
 					Kind: lang.BlockCandidateKind,
-				},
-			}),
-		},
-		{
-			"new block or attribute inside a block",
-			`
-resource "any" "ref" {
-  co
-}
-`,
-			hcl.Pos{Line: 3, Column: 5, Byte: 28},
-			lang.CompleteCandidates([]lang.Candidate{
-				{
-					Label:  "count",
-					Detail: "Optional, number",
-					TextEdit: lang.TextEdit{
-						Range: hcl.Range{
-							Filename: "test.tf",
-							Start:    hcl.Pos{Line: 3, Column: 3, Byte: 26},
-							End:      hcl.Pos{Line: 3, Column: 5, Byte: 28},
-						},
-						NewText: "count",
-						Snippet: "count = ${1:1}",
-					},
-					Kind: lang.AttributeCandidateKind,
 				},
 			}),
 		},

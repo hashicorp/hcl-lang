@@ -23,6 +23,7 @@ func attributeSchemaToCandidate(name string, attr *schema.AttributeSchema, rng h
 			Snippet: snippetForAttribute(name, attr),
 			Range:   rng,
 		},
+		TriggerSuggest: triggerSuggestForExprConstraints(attr.Expr),
 	}
 }
 

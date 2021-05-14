@@ -15,7 +15,6 @@ const (
 	BlockTypeMap
 	BlockTypeObject
 	BlockTypeSet
-	BlockTypeTuple
 )
 
 func (t BlockType) String() string {
@@ -28,8 +27,6 @@ func (t BlockType) String() string {
 		return "object"
 	case BlockTypeSet:
 		return "set"
-	case BlockTypeTuple:
-		return "tuple"
 	}
 	return ""
 }
@@ -44,8 +41,6 @@ func (t BlockType) GoString() string {
 		return "BlockTypeObject"
 	case BlockTypeSet:
 		return "BlockTypeSet"
-	case BlockTypeTuple:
-		return "BlockTypeTuple"
 	}
 	return fmt.Sprintf("BlockType(%d)", t)
 }

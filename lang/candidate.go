@@ -22,6 +22,7 @@ const (
 	SetCandidateKind
 	StringCandidateKind
 	TupleCandidateKind
+	TraversalCandidateKind
 )
 
 //go:generate stringer -type=CandidateKind -output=candidate_kind_string.go

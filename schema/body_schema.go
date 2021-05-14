@@ -48,22 +48,19 @@ func (bs *BodySchema) Validate() error {
 	for name, attr := range bs.Attributes {
 		err := attr.Validate()
 		if err != nil {
-			result = multierror.Append(result, fmt.Errorf("%s: %s", name, err))
+			result = multierror.Append(result, fmt.Errorf("%s: %w", name, err))
 		}
 	}
 
 	for bType, block := range bs.Blocks {
-		if block.Body == nil {
-			continue
-		}
-		err := block.Body.Validate()
+		err := block.Validate()
 		if err != nil {
 			if me, ok := err.(*multierror.Error); ok {
 				for _, err := range me.Errors {
-					result = multierror.Append(result, fmt.Errorf("%s: %s", bType, err))
+					result = multierror.Append(result, fmt.Errorf("%s: %w", bType, err))
 				}
 			} else {
-				result = multierror.Append(result, fmt.Errorf("%s: %s", bType, err))
+				result = multierror.Append(result, fmt.Errorf("%s: %w", bType, err))
 			}
 		}
 	}

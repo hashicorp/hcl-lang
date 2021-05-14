@@ -2,6 +2,7 @@ package decoder
 
 import (
 	"fmt"
+	"sort"
 	"sync"
 
 	"github.com/hashicorp/hcl-lang/lang"
@@ -15,6 +16,7 @@ type Decoder struct {
 	files   map[string]*hcl.File
 	filesMu *sync.RWMutex
 
+	refReader     ReferenceReader
 	rootSchema    *schema.BodySchema
 	rootSchemaMu  *sync.RWMutex
 	maxCandidates uint
@@ -27,6 +29,8 @@ type Decoder struct {
 	// utm_content parameter, e.g. documentHover or documentLink
 	useUtmContent bool
 }
+
+type ReferenceReader func() lang.References
 
 // NewDecoder creates a new Decoder
 //
@@ -49,8 +53,11 @@ func NewDecoder() *Decoder {
 func (d *Decoder) SetSchema(schema *schema.BodySchema) {
 	d.rootSchemaMu.Lock()
 	defer d.rootSchemaMu.Unlock()
-
 	d.rootSchema = schema
+}
+
+func (d *Decoder) SetReferenceReader(f ReferenceReader) {
+	d.refReader = f
 }
 
 func (d *Decoder) SetUtmSource(src string) {
@@ -94,6 +101,9 @@ func (p *Decoder) Filenames() []string {
 	for filename := range p.files {
 		files = append(files, filename)
 	}
+
+	sort.Strings(files)
+
 	return files
 }
 
@@ -276,7 +286,7 @@ func traversalToAddress(traversal hcl.Traversal) (lang.Address, error) {
 				Key: t.Key,
 			})
 		default:
-			return addr, fmt.Errorf("invalid traversal: %T", tr)
+			return addr, fmt.Errorf("invalid traversal: %#v", tr)
 		}
 	}
 	return addr, nil

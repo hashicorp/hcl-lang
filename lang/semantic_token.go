@@ -30,6 +30,7 @@ const (
 	TokenObjectKey
 	TokenMapKey
 	TokenKeyword
+	TokenTraversalStep
 )
 
 func (t SemanticTokenType) GoString() string {
