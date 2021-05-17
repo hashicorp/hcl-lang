@@ -17,3 +17,15 @@ type LabelSchema struct {
 func (*LabelSchema) isSchemaImpl() schemaImplSigil {
 	return schemaImplSigil{}
 }
+
+func (ls *LabelSchema) Copy() *LabelSchema {
+	if ls == nil {
+		return nil
+	}
+
+	return &LabelSchema{
+		Name:        ls.Name,
+		Description: ls.Description,
+		IsDepKey:    ls.IsDepKey,
+	}
+}

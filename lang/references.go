@@ -21,6 +21,38 @@ type Reference struct {
 
 type References []Reference
 
+func (refs References) Copy() References {
+	if refs == nil {
+		return nil
+	}
+
+	newRefs := make(References, len(refs))
+	for i, ref := range refs {
+		newRefs[i] = ref.Copy()
+	}
+
+	return newRefs
+}
+
+func (ref Reference) Copy() Reference {
+	return Reference{
+		Addr:             ref.Addr,
+		ScopeId:          ref.ScopeId,
+		RangePtr:         copyHclRangePtr(ref.RangePtr),
+		Type:             ref.Type, // cty.Type is immutable by design
+		Name:             ref.Name,
+		Description:      ref.Description,
+		InsideReferences: ref.InsideReferences.Copy(),
+	}
+}
+
+func copyHclRangePtr(rng *hcl.Range) *hcl.Range {
+	if rng == nil {
+		return nil
+	}
+	return rng.Ptr()
+}
+
 func (r References) Len() int {
 	return len(r)
 }
