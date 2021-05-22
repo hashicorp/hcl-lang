@@ -9,7 +9,6 @@ import (
 	"github.com/hashicorp/hcl-lang/schema"
 	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hclsyntax"
-	"github.com/mitchellh/copystructure"
 )
 
 type Decoder struct {
@@ -170,14 +169,7 @@ func mergeBlockBodySchemas(block *hclsyntax.Block, blockSchema *schema.BlockSche
 		return blockSchema.Body, nil
 	}
 
-	schemaCopy, err := copystructure.Config{
-		Copiers: copiers,
-	}.Copy(blockSchema.Body)
-	if err != nil {
-		return nil, err
-	}
-
-	mergedSchema := schemaCopy.(*schema.BodySchema)
+	mergedSchema := blockSchema.Body.Copy()
 	if mergedSchema.Attributes == nil {
 		mergedSchema.Attributes = make(map[string]*schema.AttributeSchema, 0)
 	}

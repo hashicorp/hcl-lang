@@ -74,3 +74,21 @@ func (as *AttributeSchema) Validate() error {
 
 	return as.Expr.Validate()
 }
+
+func (as *AttributeSchema) Copy() *AttributeSchema {
+	if as == nil {
+		return nil
+	}
+
+	newAs := &AttributeSchema{
+		IsRequired:   as.IsRequired,
+		IsOptional:   as.IsOptional,
+		IsDeprecated: as.IsDeprecated,
+		IsComputed:   as.IsComputed,
+		IsDepKey:     as.IsDepKey,
+		Description:  as.Description,
+		Expr:         as.Expr.Copy(),
+	}
+
+	return newAs
+}

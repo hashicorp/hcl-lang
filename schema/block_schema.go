@@ -54,22 +54,45 @@ type BlockAddrSchema struct {
 	InferDependentBody bool
 }
 
-func (as *BlockAddrSchema) Validate() error {
-	for i, step := range as.Steps {
+func (bas *BlockAddrSchema) Validate() error {
+	for i, step := range bas.Steps {
 		if _, ok := step.(AttrNameStep); ok {
 			return fmt.Errorf("Steps[%d]: AttrNameStep is not valid for attribute", i)
 		}
 	}
 
-	if as.InferBody && !as.BodyAsData {
+	if bas.InferBody && !bas.BodyAsData {
 		return errors.New("InferBody requires BodyAsData")
 	}
 
-	if as.InferDependentBody && !as.DependentBodyAsData {
+	if bas.InferDependentBody && !bas.DependentBodyAsData {
 		return errors.New("InferDependentBody requires DependentBodyAsData")
 	}
 
 	return nil
+}
+
+func (bas *BlockAddrSchema) Copy() *BlockAddrSchema {
+	if bas == nil {
+		return nil
+	}
+
+	newBas := &BlockAddrSchema{
+		FriendlyName:        bas.FriendlyName,
+		ScopeId:             bas.ScopeId,
+		AsReference:         bas.AsReference,
+		BodyAsData:          bas.BodyAsData,
+		InferBody:           bas.InferBody,
+		DependentBodyAsData: bas.DependentBodyAsData,
+		InferDependentBody:  bas.InferDependentBody,
+	}
+
+	newBas.Steps = make([]AddrStep, len(bas.Steps))
+	for i, step := range bas.Steps {
+		newBas.Steps[i] = step
+	}
+
+	return newBas
 }
 
 func (*BlockSchema) isSchemaImpl() schemaImplSigil {
@@ -98,4 +121,36 @@ func (bSchema *BlockSchema) Validate() error {
 	}
 
 	return errs.ErrorOrNil()
+}
+
+func (bs *BlockSchema) Copy() *BlockSchema {
+	if bs == nil {
+		return nil
+	}
+
+	newBs := &BlockSchema{
+		Type:         bs.Type,
+		IsDeprecated: bs.IsDeprecated,
+		MinItems:     bs.MinItems,
+		MaxItems:     bs.MaxItems,
+		Description:  bs.Description,
+		Body:         bs.Body.Copy(),
+		Address:      bs.Address.Copy(),
+	}
+
+	if bs.Labels != nil {
+		newBs.Labels = make([]*LabelSchema, len(bs.Labels))
+		for i, label := range bs.Labels {
+			newBs.Labels[i] = label.Copy()
+		}
+	}
+
+	if bs.DependentBody != nil {
+		newBs.DependentBody = make(map[SchemaKey]*BodySchema, 0)
+		for key, depSchema := range bs.DependentBody {
+			newBs.DependentBody[key] = depSchema.Copy()
+		}
+	}
+
+	return newBs
 }

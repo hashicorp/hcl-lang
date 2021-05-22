@@ -12,6 +12,19 @@ import (
 
 type ExprConstraints []ExprConstraint
 
+func (ec ExprConstraints) Copy() ExprConstraints {
+	if ec == nil {
+		return make(ExprConstraints, 0)
+	}
+
+	newEc := make(ExprConstraints, len(ec))
+	for i, c := range ec {
+		newEc[i] = c.Copy()
+	}
+
+	return newEc
+}
+
 func (ec ExprConstraints) FriendlyName() string {
 	names := make([]string, 0)
 	for _, constraint := range ec {
@@ -66,6 +79,7 @@ type exprConstrSigil struct{}
 type ExprConstraint interface {
 	isExprConstraintImpl() exprConstrSigil
 	FriendlyName() string
+	Copy() ExprConstraint
 }
 
 type LiteralTypeExpr struct {
@@ -80,6 +94,13 @@ func (lt LiteralTypeExpr) FriendlyName() string {
 	return lt.Type.FriendlyNameForConstraint()
 }
 
+func (lt LiteralTypeExpr) Copy() ExprConstraint {
+	return LiteralTypeExpr{
+		// cty.Type is immutable by design
+		Type: lt.Type,
+	}
+}
+
 type LiteralValue struct {
 	Val         cty.Value
 	Description lang.MarkupContent
@@ -91,6 +112,14 @@ func (LiteralValue) isExprConstraintImpl() exprConstrSigil {
 
 func (lv LiteralValue) FriendlyName() string {
 	return lv.Val.Type().FriendlyNameForConstraint()
+}
+
+func (lv LiteralValue) Copy() ExprConstraint {
+	return LiteralValue{
+		// cty.Value is immutable by design
+		Val:         lv.Val,
+		Description: lv.Description,
+	}
 }
 
 // TODO: Consider removing TupleConsExpr
@@ -112,6 +141,14 @@ func (tc TupleConsExpr) FriendlyName() string {
 	return tc.Name
 }
 
+func (tc TupleConsExpr) Copy() ExprConstraint {
+	return TupleConsExpr{
+		AnyElem:     tc.AnyElem.Copy(),
+		Name:        tc.Name,
+		Description: tc.Description,
+	}
+}
+
 type ListExpr struct {
 	Elem        ExprConstraints
 	Description lang.MarkupContent
@@ -125,6 +162,15 @@ func (ListExpr) isExprConstraintImpl() exprConstrSigil {
 
 func (ListExpr) FriendlyName() string {
 	return "list"
+}
+
+func (le ListExpr) Copy() ExprConstraint {
+	return ListExpr{
+		Elem:        le.Elem.Copy(),
+		Description: le.Description,
+		MinItems:    le.MinItems,
+		MaxItems:    le.MaxItems,
+	}
 }
 
 type SetExpr struct {
@@ -142,6 +188,15 @@ func (SetExpr) FriendlyName() string {
 	return "set"
 }
 
+func (se SetExpr) Copy() ExprConstraint {
+	return SetExpr{
+		Elem:        se.Elem.Copy(),
+		Description: se.Description,
+		MinItems:    se.MinItems,
+		MaxItems:    se.MaxItems,
+	}
+}
+
 type TupleExpr struct {
 	Elems       []ExprConstraints
 	Description lang.MarkupContent
@@ -153,6 +208,19 @@ func (TupleExpr) isExprConstraintImpl() exprConstrSigil {
 
 func (le TupleExpr) FriendlyName() string {
 	return "tuple"
+}
+
+func (te TupleExpr) Copy() ExprConstraint {
+	newTe := TupleExpr{
+		Description: te.Description,
+	}
+	if len(te.Elems) > 0 {
+		newTe.Elems = make([]ExprConstraints, len(te.Elems))
+		for i, elem := range te.Elems {
+			newTe.Elems[i] = elem.Copy()
+		}
+	}
+	return newTe
 }
 
 type MapExpr struct {
@@ -174,6 +242,16 @@ func (me MapExpr) FriendlyName() string {
 	return me.Name
 }
 
+func (me MapExpr) Copy() ExprConstraint {
+	return MapExpr{
+		Elem:        me.Elem.Copy(),
+		Name:        me.Name,
+		Description: me.Description,
+		MinItems:    me.MinItems,
+		MaxItems:    me.MaxItems,
+	}
+}
+
 type ObjectExpr struct {
 	Attributes  ObjectExprAttributes
 	Name        string
@@ -191,6 +269,14 @@ func (oe ObjectExpr) FriendlyName() string {
 	return oe.Name
 }
 
+func (oe ObjectExpr) Copy() ExprConstraint {
+	return ObjectExpr{
+		Attributes:  oe.Attributes.Copy().(ObjectExprAttributes),
+		Name:        oe.Name,
+		Description: oe.Description,
+	}
+}
+
 type ObjectExprAttributes map[string]*AttributeSchema
 
 func (ObjectExprAttributes) isExprConstraintImpl() exprConstrSigil {
@@ -199,6 +285,14 @@ func (ObjectExprAttributes) isExprConstraintImpl() exprConstrSigil {
 
 func (oe ObjectExprAttributes) FriendlyName() string {
 	return "attributes"
+}
+
+func (oe ObjectExprAttributes) Copy() ExprConstraint {
+	m := make(ObjectExprAttributes, 0)
+	for name, aSchema := range oe {
+		m[name] = aSchema.Copy()
+	}
+	return m
 }
 
 type KeywordExpr struct {
@@ -218,6 +312,14 @@ func (ke KeywordExpr) FriendlyName() string {
 	return ke.Name
 }
 
+func (ke KeywordExpr) Copy() ExprConstraint {
+	return KeywordExpr{
+		Keyword:     ke.Keyword,
+		Name:        ke.Name,
+		Description: ke.Description,
+	}
+}
+
 type TraversalExpr struct {
 	OfScopeId lang.ScopeId
 	OfType    cty.Type
@@ -234,6 +336,15 @@ type TraversalAddrSchema struct {
 	ScopeId lang.ScopeId
 }
 
+func (tas *TraversalAddrSchema) Copy() *TraversalAddrSchema {
+	if tas == nil {
+		return nil
+	}
+	return &TraversalAddrSchema{
+		ScopeId: tas.ScopeId,
+	}
+}
+
 func (TraversalExpr) isExprConstraintImpl() exprConstrSigil {
 	return exprConstrSigil{}
 }
@@ -247,6 +358,15 @@ func (te TraversalExpr) FriendlyName() string {
 	}
 
 	return "reference"
+}
+
+func (te TraversalExpr) Copy() ExprConstraint {
+	return TraversalExpr{
+		OfScopeId: te.OfScopeId,
+		OfType:    te.OfType,
+		Name:      te.Name,
+		Address:   te.Address.Copy(),
+	}
 }
 
 func (te TraversalExpr) Validate() error {

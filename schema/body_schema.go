@@ -67,3 +67,44 @@ func (bs *BodySchema) Validate() error {
 
 	return result.ErrorOrNil()
 }
+
+func (bs *BodySchema) Copy() *BodySchema {
+	if bs == nil {
+		return nil
+	}
+
+	newBs := &BodySchema{
+		IsDeprecated: bs.IsDeprecated,
+		Detail:       bs.Detail,
+		Description:  bs.Description,
+		AnyAttribute: bs.AnyAttribute.Copy(),
+		DocsLink:     bs.DocsLink.Copy(),
+	}
+
+	if bs.Attributes != nil {
+		newBs.Attributes = make(map[string]*AttributeSchema, len(bs.Attributes))
+		for name, attr := range bs.Attributes {
+			newBs.Attributes[name] = attr.Copy()
+		}
+	}
+
+	if bs.Blocks != nil {
+		newBs.Blocks = make(map[string]*BlockSchema, len(bs.Blocks))
+		for name, block := range bs.Blocks {
+			newBs.Blocks[name] = block.Copy()
+		}
+	}
+
+	return newBs
+}
+
+func (dl *DocsLink) Copy() *DocsLink {
+	if dl == nil {
+		return nil
+	}
+
+	return &DocsLink{
+		URL:     dl.URL,
+		Tooltip: dl.Tooltip,
+	}
+}
