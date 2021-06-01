@@ -285,6 +285,11 @@ func TestDecoder_HoverAtPos_basic(t *testing.T) {
 					IsOptional:  true,
 					Description: lang.PlainText("Special attribute"),
 				},
+				"bool_attr": {
+					Expr:        schema.LiteralTypeOnly(cty.Bool),
+					IsSensitive: true,
+					Description: lang.PlainText("Flag attribute"),
+				},
 			},
 		},
 		DependentBody: map[schema.SchemaKey]*schema.BodySchema{
@@ -314,6 +319,7 @@ func TestDecoder_HoverAtPos_basic(t *testing.T) {
 	testConfig := []byte(`myblock "sushi" "salmon" {
   str_attr = "test"
   num_attr = 4
+  bool_attr = true
 }
 `)
 	d := NewDecoder()
@@ -331,14 +337,26 @@ func TestDecoder_HoverAtPos_basic(t *testing.T) {
 		expectedData *lang.HoverData
 	}{
 		{
-			"attribute name",
+			"optional attribute name",
 			hcl.Pos{Line: 2, Column: 6, Byte: 32},
 			&lang.HoverData{
-				Content: lang.Markdown("**str_attr** _Optional, string_\n\nSpecial attribute"),
+				Content: lang.Markdown("**str_attr** _optional, string_\n\nSpecial attribute"),
 				Range: hcl.Range{
 					Filename: "test.tf",
 					Start:    hcl.Pos{Line: 2, Column: 3, Byte: 29},
 					End:      hcl.Pos{Line: 2, Column: 20, Byte: 46},
+				},
+			},
+		},
+		{
+			"sensitive attribute name",
+			hcl.Pos{Line: 4, Column: 6, Byte: 68},
+			&lang.HoverData{
+				Content: lang.Markdown("**bool_attr** _sensitive, bool_\n\nFlag attribute"),
+				Range: hcl.Range{
+					Filename: "test.tf",
+					Start:    hcl.Pos{Line: 4, Column: 3, Byte: 64},
+					End:      hcl.Pos{Line: 4, Column: 19, Byte: 80},
 				},
 			},
 		},
