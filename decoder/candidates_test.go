@@ -770,6 +770,16 @@ func TestDecoder_CandidatesAtPos_basic(t *testing.T) {
 					"five": {Expr: schema.LiteralTypeOnly(cty.DynamicPseudoType)},
 				},
 			},
+			schema.NewSchemaKey(schema.DependencyKeys{
+				Labels: []schema.LabelDependent{
+					{Index: 0, Value: "sensitive_resource"},
+				},
+			}): {
+				Attributes: map[string]*schema.AttributeSchema{
+					"six":   {Expr: schema.LiteralTypeOnly(cty.Number), IsSensitive: true},
+					"seven": {Expr: schema.LiteralTypeOnly(cty.Number), IsRequired: true, IsSensitive: true},
+				},
+			},
 		},
 	}
 
@@ -781,6 +791,10 @@ func TestDecoder_CandidatesAtPos_basic(t *testing.T) {
 
 	cfg := []byte(`resource "azurerm_subnet" "example" {
   count = 3
+}
+
+resource "sensitive_resource" "t" {
+  count = 2
 }
 
 resource "random_resource" "test" {
@@ -877,6 +891,19 @@ resource "random_resource" "test" {
 					},
 					Kind: lang.LabelCandidateKind,
 				},
+				{
+					Label: "sensitive_resource",
+					TextEdit: lang.TextEdit{
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 1, Column: 11, Byte: 10},
+							End:      hcl.Pos{Line: 1, Column: 25, Byte: 24},
+						},
+						NewText: "sensitive_resource",
+						Snippet: "sensitive_resource",
+					},
+					Kind: lang.LabelCandidateKind,
+				},
 			}),
 		},
 		{
@@ -885,7 +912,7 @@ resource "random_resource" "test" {
 			lang.CompleteCandidates([]lang.Candidate{
 				{
 					Label:  "one",
-					Detail: "Required, string",
+					Detail: "required, string",
 					TextEdit: lang.TextEdit{
 						Range: hcl.Range{
 							Filename: "test.tf",
@@ -899,7 +926,7 @@ resource "random_resource" "test" {
 				},
 				{
 					Label:  "three",
-					Detail: "Optional, bool",
+					Detail: "optional, bool",
 					TextEdit: lang.TextEdit{
 						Range: hcl.Range{
 							Filename: "test.tf",
@@ -914,7 +941,7 @@ resource "random_resource" "test" {
 				},
 				{
 					Label:  "two",
-					Detail: "Optional, number",
+					Detail: "optional, number",
 					TextEdit: lang.TextEdit{
 						Range: hcl.Range{
 							Filename: "test.tf",
@@ -934,7 +961,7 @@ resource "random_resource" "test" {
 			lang.CompleteCandidates([]lang.Candidate{
 				{
 					Label:  "one",
-					Detail: "Required, string",
+					Detail: "required, string",
 					TextEdit: lang.TextEdit{
 						Range: hcl.Range{
 							Filename: "test.tf",
@@ -948,7 +975,7 @@ resource "random_resource" "test" {
 				},
 				{
 					Label:  "three",
-					Detail: "Optional, bool",
+					Detail: "optional, bool",
 					TextEdit: lang.TextEdit{
 						Range: hcl.Range{
 							Filename: "test.tf",
@@ -963,7 +990,7 @@ resource "random_resource" "test" {
 				},
 				{
 					Label:  "two",
-					Detail: "Optional, number",
+					Detail: "optional, number",
 					TextEdit: lang.TextEdit{
 						Range: hcl.Range{
 							Filename: "test.tf",
@@ -972,6 +999,40 @@ resource "random_resource" "test" {
 						},
 						NewText: "two",
 						Snippet: "two = ${1:1}",
+					},
+					Kind: lang.AttributeCandidateKind,
+				},
+			}),
+		},
+		{
+			"second block attribute",
+			hcl.Pos{Line: 6, Column: 1, Byte: 89},
+			lang.CompleteCandidates([]lang.Candidate{
+				{
+					Label:  "seven",
+					Detail: "required, sensitive, number",
+					TextEdit: lang.TextEdit{
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 6, Column: 1, Byte: 89},
+							End:      hcl.Pos{Line: 6, Column: 1, Byte: 89},
+						},
+						NewText: "seven",
+						Snippet: "seven = ${1:1}",
+					},
+					Kind: lang.AttributeCandidateKind,
+				},
+				{
+					Label:  "six",
+					Detail: "sensitive, number",
+					TextEdit: lang.TextEdit{
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 6, Column: 1, Byte: 89},
+							End:      hcl.Pos{Line: 6, Column: 1, Byte: 89},
+						},
+						NewText: "six",
+						Snippet: "six = ${1:1}",
 					},
 					Kind: lang.AttributeCandidateKind,
 				},
@@ -1110,7 +1171,7 @@ func TestDecoder_CandidatesAtPos_multipleTypes(t *testing.T) {
 	expectedCandidates := lang.CompleteCandidates([]lang.Candidate{
 		{
 			Label:  "for_each",
-			Detail: "Optional, set of any single type or map of any single type",
+			Detail: "optional, set of any single type or map of any single type",
 			TextEdit: lang.TextEdit{
 				Range: hcl.Range{
 					Filename: "test.tf",
@@ -1194,7 +1255,7 @@ resource "any" "ref" {
 			lang.CompleteCandidates([]lang.Candidate{
 				{
 					Label:  "count",
-					Detail: "Optional, number",
+					Detail: "optional, number",
 					TextEdit: lang.TextEdit{
 						Range: hcl.Range{
 							Filename: "test.tf",
@@ -1309,7 +1370,7 @@ resource "any" "ref" {
 			lang.CompleteCandidates([]lang.Candidate{
 				{
 					Label:  "count",
-					Detail: "Optional, number",
+					Detail: "optional, number",
 					TextEdit: lang.TextEdit{
 						Range: hcl.Range{
 							Filename: "test.tf",

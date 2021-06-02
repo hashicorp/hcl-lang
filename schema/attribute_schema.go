@@ -14,6 +14,7 @@ type AttributeSchema struct {
 	IsOptional   bool
 	IsDeprecated bool
 	IsComputed   bool
+	IsSensitive  bool
 
 	Expr ExprConstraints
 
@@ -85,6 +86,7 @@ func (as *AttributeSchema) Copy() *AttributeSchema {
 		IsOptional:   as.IsOptional,
 		IsDeprecated: as.IsDeprecated,
 		IsComputed:   as.IsComputed,
+		IsSensitive:  as.IsSensitive,
 		IsDepKey:     as.IsDepKey,
 		Description:  as.Description,
 		Expr:         as.Expr.Copy(),

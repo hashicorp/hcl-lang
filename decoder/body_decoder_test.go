@@ -127,7 +127,7 @@ func TestDecoder_CandidateAtPos_computedAttributes(t *testing.T) {
 		List: []lang.Candidate{
 			{
 				Label:  "attr2",
-				Detail: "Optional, number",
+				Detail: "optional, number",
 				TextEdit: lang.TextEdit{
 					Range: hcl.Range{
 						Filename: "test.tf",

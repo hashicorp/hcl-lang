@@ -160,6 +160,16 @@ func TestAttributeSchema_Validate(t *testing.T) {
 			},
 			nil,
 		},
+		{
+			&AttributeSchema{
+				Expr: ExprConstraints{
+					TraversalExpr{OfType: cty.Number, OfScopeId: lang.ScopeId("blah")},
+				},
+				IsRequired:  true,
+				IsSensitive: true,
+			},
+			nil,
+		},
 	}
 
 	for i, tc := range testCases {

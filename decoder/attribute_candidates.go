@@ -28,23 +28,24 @@ func attributeSchemaToCandidate(name string, attr *schema.AttributeSchema, rng h
 }
 
 func detailForAttribute(attr *schema.AttributeSchema) string {
-	var detail string
+	details := []string{}
+
 	if attr.IsRequired {
-		detail = "Required"
+		details = append(details, "required")
 	} else if attr.IsOptional {
-		detail = "Optional"
+		details = append(details, "optional")
+	}
+
+	if attr.IsSensitive {
+		details = append(details, "sensitive")
 	}
 
 	friendlyName := attr.Expr.FriendlyName()
 	if friendlyName != "" {
-		if detail != "" {
-			detail = strings.Join([]string{detail, friendlyName}, ", ")
-		} else {
-			detail = friendlyName
-		}
+		details = append(details, friendlyName)
 	}
 
-	return detail
+	return strings.Join(details[:], ", ")
 }
 
 func snippetForAttribute(name string, attr *schema.AttributeSchema) string {
