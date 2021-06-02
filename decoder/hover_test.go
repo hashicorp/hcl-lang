@@ -392,3 +392,141 @@ func TestDecoder_HoverAtPos_basic(t *testing.T) {
 		})
 	}
 }
+
+func TestDecoder_HoverAtPos_URL(t *testing.T) {
+	resourceLabelSchema := []*schema.LabelSchema{
+		{Name: "type", IsDepKey: true},
+		{Name: "name"},
+	}
+	blockSchema := &schema.BlockSchema{
+		Labels:      resourceLabelSchema,
+		Description: lang.Markdown("My special block"),
+		Body: &schema.BodySchema{
+			Attributes: map[string]*schema.AttributeSchema{
+				"any_attr": {Expr: schema.LiteralTypeOnly(cty.Number)},
+			},
+		},
+		DependentBody: map[schema.SchemaKey]*schema.BodySchema{
+			schema.NewSchemaKey(schema.DependencyKeys{
+				Labels: []schema.LabelDependent{
+					{Index: 0, Value: "sushi"},
+				},
+			}): {
+				Detail:      "rice, fish etc.",
+				HoverURL:    "https://en.wikipedia.org/wiki/Sushi",
+				Description: lang.Markdown("Sushi, the Rolls-Rice of Japanese cuisine"),
+			},
+			schema.NewSchemaKey(schema.DependencyKeys{
+				Labels: []schema.LabelDependent{
+					{Index: 0, Value: "ramen"},
+				},
+			}): {
+				Detail: "noodles, broth etc.",
+				DocsLink: &schema.DocsLink{
+					URL:     "https://en.wikipedia.org/wiki/Ramen",
+					Tooltip: "Ramen docs",
+				},
+				Description: lang.Markdown("Ramen, a Japanese noodle soup"),
+			},
+		},
+	}
+	bodySchema := &schema.BodySchema{
+		Blocks: map[string]*schema.BlockSchema{
+			"myblock": blockSchema,
+		},
+	}
+
+	testCases := []struct {
+		name         string
+		cfg          string
+		pos          hcl.Pos
+		expectedData *lang.HoverData
+	}{
+		{
+			"",
+			`myblock "sushi" "salmon" {
+  any_attr = 42
+}
+`,
+			hcl.Pos{
+				Line:   1,
+				Column: 12,
+				Byte:   11,
+			},
+			&lang.HoverData{
+				Content: lang.MarkupContent{
+					Value: "`sushi`" + ` rice, fish etc.
+
+Sushi, the Rolls-Rice of Japanese cuisine
+
+[` + "`sushi`" + ` on en.wikipedia.org](https://en.wikipedia.org/wiki/Sushi)`,
+					Kind: lang.MarkdownKind,
+				},
+				Range: hcl.Range{
+					Filename: "test.tf",
+					Start: hcl.Pos{
+						Line:   1,
+						Column: 9,
+						Byte:   8,
+					},
+					End: hcl.Pos{
+						Line:   1,
+						Column: 16,
+						Byte:   15,
+					},
+				},
+			},
+		},
+		{
+			"",
+			`myblock "ramen" "tonkotsu" {
+  any_attr = 42
+}
+`,
+			hcl.Pos{
+				Line:   1,
+				Column: 12,
+				Byte:   13,
+			},
+			&lang.HoverData{
+				Content: lang.MarkupContent{
+					Value: "`ramen` noodles, broth etc.\n\nRamen, a Japanese noodle soup",
+					Kind:  lang.MarkdownKind,
+				},
+				Range: hcl.Range{
+					Filename: "test.tf",
+					Start: hcl.Pos{
+						Line:   1,
+						Column: 9,
+						Byte:   8,
+					},
+					End: hcl.Pos{
+						Line:   1,
+						Column: 16,
+						Byte:   15,
+					},
+				},
+			},
+		},
+	}
+	for i, tc := range testCases {
+		t.Run(fmt.Sprintf("%d-%s", i, tc.name), func(t *testing.T) {
+			d := NewDecoder()
+			d.SetSchema(bodySchema)
+
+			f, _ := hclsyntax.ParseConfig([]byte(tc.cfg), "test.tf", hcl.InitialPos)
+			err := d.LoadFile("test.tf", f)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			data, err := d.HoverAtPos("test.tf", tc.pos)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if diff := cmp.Diff(tc.expectedData, data, ctydebug.CmpOptions); diff != "" {
+				t.Fatalf("hover data mismatch: %s", diff)
+			}
+		})
+	}
+}
