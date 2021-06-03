@@ -418,8 +418,9 @@ func TestDecoder_HoverAtPos_URL(t *testing.T) {
 	}
 	blockSchema := &schema.BlockSchema{
 		Labels:      resourceLabelSchema,
-		Description: lang.Markdown("My special block"),
+		Description: lang.Markdown("My food block"),
 		Body: &schema.BodySchema{
+			HoverURL: "https://en.wikipedia.org/wiki/Food",
 			Attributes: map[string]*schema.AttributeSchema{
 				"any_attr": {Expr: schema.LiteralTypeOnly(cty.Number)},
 			},
@@ -522,6 +523,41 @@ Sushi, the Rolls-Rice of Japanese cuisine
 						Line:   1,
 						Column: 16,
 						Byte:   15,
+					},
+				},
+			},
+		},
+		{
+			"",
+			`myblock "ramen" "tonkotsu" {
+  any_attr = 42
+}
+`,
+			hcl.Pos{
+				Line:   1,
+				Column: 2,
+				Byte:   1,
+			},
+			&lang.HoverData{
+				Content: lang.MarkupContent{
+					Value: `**myblock** _Block_
+
+My food block
+
+[` + "`myblock`" + ` on en.wikipedia.org](https://en.wikipedia.org/wiki/Food)`,
+					Kind: lang.MarkdownKind,
+				},
+				Range: hcl.Range{
+					Filename: "test.tf",
+					Start: hcl.Pos{
+						Line:   1,
+						Column: 1,
+						Byte:   0,
+					},
+					End: hcl.Pos{
+						Line:   1,
+						Column: 8,
+						Byte:   7,
 					},
 				},
 			},

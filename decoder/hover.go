@@ -94,7 +94,7 @@ func (d *Decoder) hoverAtPos(body *hclsyntax.Body, bodySchema *schema.BodySchema
 
 			if block.TypeRange.ContainsPos(pos) {
 				return &lang.HoverData{
-					Content: hoverContentForBlock(block.Type, bSchema),
+					Content: d.hoverContentForBlock(block.Type, bSchema),
 					Range:   block.TypeRange,
 				}, nil
 			}
@@ -198,11 +198,20 @@ func hoverContentForAttribute(name string, schema *schema.AttributeSchema) lang.
 	}
 }
 
-func hoverContentForBlock(bType string, schema *schema.BlockSchema) lang.MarkupContent {
+func (d *Decoder) hoverContentForBlock(bType string, schema *schema.BlockSchema) lang.MarkupContent {
 	value := fmt.Sprintf("**%s** _%s_", bType, detailForBlock(schema))
 	if schema.Description.Value != "" {
 		value += fmt.Sprintf("\n\n%s", schema.Description.Value)
 	}
+
+	if schema.Body.HoverURL != "" {
+		u, err := d.docsURL(schema.Body.HoverURL, "documentHover")
+		if err == nil {
+			value += fmt.Sprintf("\n\n[`%s` on %s](%s)",
+				bType, u.Hostname(), u.String())
+		}
+	}
+
 	return lang.MarkupContent{
 		Kind:  lang.MarkdownKind,
 		Value: value,
