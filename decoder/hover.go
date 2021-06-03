@@ -163,9 +163,8 @@ func (d *Decoder) hoverContentForLabel(i int, block *hclsyntax.Block, bSchema *s
 				content += "\n\n" + labelSchema.Description.Value
 			}
 
-			if bs.DocsLink != nil {
-				link := bs.DocsLink
-				u, err := d.docsURL(link.URL, "documentHover")
+			if bs.HoverURL != "" {
+				u, err := d.docsURL(bs.HoverURL, "documentHover")
 				if err == nil {
 					content += fmt.Sprintf("\n\n[`%s` on %s](%s)",
 						value, u.Hostname(), u.String())

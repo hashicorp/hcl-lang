@@ -17,7 +17,14 @@ type BodySchema struct {
 	Detail       string
 	Description  lang.MarkupContent
 
+	// DocsLink represents a link to docs that will be exposed
+	// as part of LinksInFile()
 	DocsLink *DocsLink
+
+	// HoverURL represents a URL that will be appended to the end
+	// of hover data in HoverAtPos(). This can differ from DocsLink,
+	// but often will match.
+	HoverURL string
 
 	// TODO: Functions
 }
@@ -78,6 +85,7 @@ func (bs *BodySchema) Copy() *BodySchema {
 		Detail:       bs.Detail,
 		Description:  bs.Description,
 		AnyAttribute: bs.AnyAttribute.Copy(),
+		HoverURL:     bs.HoverURL,
 		DocsLink:     bs.DocsLink.Copy(),
 	}
 
