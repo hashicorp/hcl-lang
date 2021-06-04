@@ -11,9 +11,15 @@ import (
 // AttributeSchema describes schema for a block
 // e.g. "resource" or "provider" in Terraform
 type BlockSchema struct {
-	Labels        []*LabelSchema
-	Type          BlockType
-	Body          *BodySchema
+	Labels []*LabelSchema
+	Type   BlockType
+
+	// Body represents the body within block
+	// such as attributes and nested blocks
+	Body *BodySchema
+
+	// DependentBody represents any "dynamic parts" of the body
+	// depending on SchemaKey (labels or attributes)
 	DependentBody map[SchemaKey]*BodySchema
 
 	Description  lang.MarkupContent

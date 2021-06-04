@@ -16,6 +16,8 @@ type AttributeSchema struct {
 	IsComputed   bool
 	IsSensitive  bool
 
+	// Expr represents expression constraints e.g. what types of
+	// expressions are expected for the attribute
 	Expr ExprConstraints
 
 	// IsDepKey describes whether to use this attribute (and its value)
