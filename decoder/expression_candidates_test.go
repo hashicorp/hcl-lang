@@ -1281,6 +1281,166 @@ func TestDecoder_CandidateAtPos_expressions(t *testing.T) {
 			hcl.Pos{Line: 1, Column: 8, Byte: 7},
 			lang.ZeroCandidates(),
 		},
+		{
+			"type declaration",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Expr: schema.ExprConstraints{
+						schema.TypeDeclarationExpr{},
+					},
+				},
+			},
+			`attr = 
+`,
+			hcl.Pos{Line: 1, Column: 8, Byte: 7},
+			lang.CompleteCandidates([]lang.Candidate{
+				{
+					Label:  "bool",
+					Detail: "bool",
+					TextEdit: lang.TextEdit{
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start: hcl.Pos{
+								Line:   1,
+								Column: 8,
+								Byte:   7,
+							},
+							End: hcl.Pos{
+								Line:   1,
+								Column: 8,
+								Byte:   7,
+							},
+						}, NewText: "bool", Snippet: "bool"},
+					Kind: lang.AttributeCandidateKind,
+				},
+				{
+					Label:  "number",
+					Detail: "number",
+					TextEdit: lang.TextEdit{Range: hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   1,
+							Column: 8,
+							Byte:   7,
+						},
+						End: hcl.Pos{
+							Line:   1,
+							Column: 8,
+							Byte:   7,
+						},
+					}, NewText: "number", Snippet: "number"},
+					Kind: lang.AttributeCandidateKind,
+				},
+				{
+					Label:  "string",
+					Detail: "string",
+					TextEdit: lang.TextEdit{Range: hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   1,
+							Column: 8,
+							Byte:   7,
+						},
+						End: hcl.Pos{
+							Line:   1,
+							Column: 8,
+							Byte:   7,
+						},
+					}, NewText: "string", Snippet: "string"},
+					Kind: lang.AttributeCandidateKind,
+				},
+				{
+					Label:  "list()",
+					Detail: "list()",
+					TextEdit: lang.TextEdit{Range: hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   1,
+							Column: 8,
+							Byte:   7,
+						},
+						End: hcl.Pos{
+							Line:   1,
+							Column: 8,
+							Byte:   7,
+						},
+					}, NewText: "list()", Snippet: "list(${0})"},
+					Kind: lang.AttributeCandidateKind,
+				},
+				{
+					Label:  "set()",
+					Detail: "set()",
+					TextEdit: lang.TextEdit{Range: hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   1,
+							Column: 8,
+							Byte:   7,
+						},
+						End: hcl.Pos{
+							Line:   1,
+							Column: 8,
+							Byte:   7,
+						},
+					}, NewText: "set()", Snippet: "set(${0})"},
+					Kind: lang.AttributeCandidateKind,
+				},
+				{
+					Label:  "tuple()",
+					Detail: "tuple()",
+					TextEdit: lang.TextEdit{Range: hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   1,
+							Column: 8,
+							Byte:   7,
+						},
+						End: hcl.Pos{
+							Line:   1,
+							Column: 8,
+							Byte:   7,
+						},
+					}, NewText: "tuple()", Snippet: "tuple(${0})"},
+					Kind: lang.AttributeCandidateKind,
+				},
+				{
+					Label:  "map()",
+					Detail: "map()",
+					TextEdit: lang.TextEdit{Range: hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   1,
+							Column: 8,
+							Byte:   7,
+						},
+						End: hcl.Pos{
+							Line:   1,
+							Column: 8,
+							Byte:   7,
+						},
+					}, NewText: "map()", Snippet: "map(${0})"},
+					Kind: lang.AttributeCandidateKind,
+				},
+				{
+					Label:  "object({})",
+					Detail: "object({})",
+					TextEdit: lang.TextEdit{Range: hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   1,
+							Column: 8,
+							Byte:   7,
+						},
+						End: hcl.Pos{
+							Line:   1,
+							Column: 8,
+							Byte:   7,
+						},
+					}, NewText: "object({})", Snippet: "object({\n ${1:name} = ${2}\n})"},
+					Kind: lang.AttributeCandidateKind,
+				},
+			}),
+		},
 	}
 
 	for i, tc := range testCases {

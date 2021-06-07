@@ -19,11 +19,13 @@ func _() {
 	_ = x[TokenMapKey-8]
 	_ = x[TokenKeyword-9]
 	_ = x[TokenTraversalStep-10]
+	_ = x[TokenTypeCapsule-11]
+	_ = x[TokenTypePrimitive-12]
 }
 
-const _SemanticTokenType_name = "TokenNilTokenAttrNameTokenBlockTypeTokenBlockLabelTokenBoolTokenStringTokenNumberTokenObjectKeyTokenMapKeyTokenKeywordTokenTraversalStep"
+const _SemanticTokenType_name = "TokenNilTokenAttrNameTokenBlockTypeTokenBlockLabelTokenBoolTokenStringTokenNumberTokenObjectKeyTokenMapKeyTokenKeywordTokenTraversalStepTokenTypeCapsuleTokenTypePrimitive"
 
-var _SemanticTokenType_index = [...]uint8{0, 8, 21, 35, 50, 59, 70, 81, 95, 106, 118, 136}
+var _SemanticTokenType_index = [...]uint8{0, 8, 21, 35, 50, 59, 70, 81, 95, 106, 118, 136, 152, 170}
 
 func (i SemanticTokenType) String() string {
 	if i >= SemanticTokenType(len(_SemanticTokenType_index)-1) {

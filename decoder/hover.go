@@ -246,6 +246,22 @@ func (d *Decoder) hoverDataForExpr(expr hcl.Expression, constraints ExprConstrai
 				Range:   expr.Range(),
 			}, nil
 		}
+
+		_, ok = constraints.TypeDeclarationExpr()
+		if ok {
+			return &lang.HoverData{
+				Content: lang.Markdown("Type declaration"),
+				Range:   expr.Range(),
+			}, nil
+		}
+	case *hclsyntax.FunctionCallExpr:
+		_, ok := constraints.TypeDeclarationExpr()
+		if ok {
+			return &lang.HoverData{
+				Content: lang.Markdown("Type declaration"),
+				Range:   expr.Range(),
+			}, nil
+		}
 	case *hclsyntax.TemplateExpr:
 		if e.IsStringLiteral() {
 			data, err := d.hoverDataForExpr(e.Parts[0], constraints, nestingLvl, pos)
