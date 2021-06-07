@@ -96,6 +96,172 @@ func TestDecoder_CandidatesAtPos_unknownBlock(t *testing.T) {
 	}
 }
 
+func TestDecoder_CandidatesAtPos_nilBodySchema(t *testing.T) {
+	testCases := []struct {
+		name               string
+		rootSchema         *schema.BodySchema
+		config             string
+		pos                hcl.Pos
+		expectedCandidates lang.Candidates
+	}{
+		{
+			"nil static body",
+			&schema.BodySchema{
+				Blocks: map[string]*schema.BlockSchema{
+					"resource": {
+						Labels: []*schema.LabelSchema{
+							{Name: "type"},
+							{Name: "name"},
+						},
+						Body: nil,
+					},
+				},
+			},
+			`resource "label1" {
+  count = 1
+
+}
+`,
+			hcl.Pos{
+				Line:   3,
+				Column: 1,
+				Byte:   32,
+			},
+			lang.ZeroCandidates(),
+		},
+		{
+			"nil static body with dependent body",
+			&schema.BodySchema{
+				Blocks: map[string]*schema.BlockSchema{
+					"resource": {
+						Labels: []*schema.LabelSchema{
+							{Name: "type", IsDepKey: true},
+							{Name: "name"},
+						},
+						Body: nil,
+						DependentBody: map[schema.SchemaKey]*schema.BodySchema{
+							schema.NewSchemaKey(schema.DependencyKeys{
+								Labels: []schema.LabelDependent{
+									{Index: 0, Value: "label1"},
+								},
+							}): {
+								Attributes: map[string]*schema.AttributeSchema{
+									"one":   {Expr: schema.LiteralTypeOnly(cty.String)},
+									"two":   {Expr: schema.LiteralTypeOnly(cty.Number)},
+									"three": {Expr: schema.LiteralTypeOnly(cty.Bool)},
+								},
+							},
+						},
+					},
+				},
+			},
+			`resource "label1" {
+  count = 1
+
+}
+`,
+			hcl.Pos{
+				Line:   3,
+				Column: 1,
+				Byte:   32,
+			},
+			lang.CompleteCandidates([]lang.Candidate{
+				{
+					Label:  "one",
+					Detail: "string",
+					TextEdit: lang.TextEdit{
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start: hcl.Pos{
+								Line:   3,
+								Column: 1,
+								Byte:   32,
+							},
+							End: hcl.Pos{
+								Line:   3,
+								Column: 1,
+								Byte:   32,
+							},
+						},
+						NewText: "one",
+						Snippet: `one = "${1:value}"`,
+					},
+					Kind: lang.AttributeCandidateKind,
+				},
+				{
+					Label:  "three",
+					Detail: "bool",
+					TextEdit: lang.TextEdit{
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start: hcl.Pos{
+								Line:   3,
+								Column: 1,
+								Byte:   32,
+							},
+							End: hcl.Pos{
+								Line:   3,
+								Column: 1,
+								Byte:   32,
+							},
+						},
+						NewText: "three",
+						Snippet: "three = ${1:false}",
+					},
+					Kind:           lang.AttributeCandidateKind,
+					TriggerSuggest: true,
+				},
+				{
+					Label:  "two",
+					Detail: "number",
+					TextEdit: lang.TextEdit{
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start: hcl.Pos{
+								Line:   3,
+								Column: 1,
+								Byte:   32,
+							},
+							End: hcl.Pos{
+								Line:   3,
+								Column: 1,
+								Byte:   32,
+							},
+						},
+						NewText: "two",
+						Snippet: "two = ${1:1}",
+					},
+					Kind: lang.AttributeCandidateKind,
+				},
+			}),
+		},
+	}
+
+	for i, tc := range testCases {
+		t.Run(fmt.Sprintf("%d-%s", i, tc.name), func(t *testing.T) {
+			d := NewDecoder()
+			d.SetSchema(tc.rootSchema)
+			f, pDiags := hclsyntax.ParseConfig([]byte(tc.config), "test.tf", hcl.InitialPos)
+			if len(pDiags) > 0 {
+				t.Fatal(pDiags)
+			}
+			err := d.LoadFile("test.tf", f)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			candidates, err := d.CandidatesAtPos("test.tf", tc.pos)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			if diff := cmp.Diff(tc.expectedCandidates, candidates); diff != "" {
+				t.Fatalf("unexpected candidates: %s", diff)
+			}
+		})
+	}
+}
+
 func TestDecoder_CandidatesAtPos_prefixNearEOF(t *testing.T) {
 	resourceLabelSchema := []*schema.LabelSchema{
 		{Name: "type"},
