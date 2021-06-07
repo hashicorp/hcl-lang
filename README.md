@@ -109,7 +109,7 @@ resource "aws_instance" "ref_name" {
 }
 ```
 
-Such schema can be represented using the `DependentSchema` field
+Such schema can be represented using the `DependentBody` field
 of `BlockSchema`, for example:
 
 ```go
@@ -143,9 +143,31 @@ var resourceBlockSchema = &schema.BlockSchema{
 }
 ```
 
+#### Nested `DependentBody`
+
+It is discouraged from declaring `DependentBody` as part of another ("parent")
+`DependentBody` due to complexity (reduced readability of code).
+
+This complex scenario is however supported and is used e.g. in Terraform
+for `terraform_remote_state` `data` block, where `config` attribute
+is dependent on `backend` value, which itself is dependent on the value
+of the 1st block label.
+
+```hcl
+data "terraform_remote_state" "name" {
+  backend = "local"
+
+  config = {
+    workspace_dir = "value"
+  }
+}
+```
+
+Such nested bodies have to declare full schema key, including labels.
+
 #### Populating Dependent Body Schemas
 
-It is expected for `DependentSchema` to be populated
+It is expected for `DependentBody` to be populated
 based on the needs and capabilities of a particular tool.
 
 For example in Terraform, dependent schemas come from providers (plugins)
@@ -156,9 +178,9 @@ or from the provider binaries (via gRPC protocol).
 `hcl-lang` does _not_ care _how_ any part of the schema is obtained or _where from_.
 
 It expects `SetSchema` to be called either with full schema
-(including fully populated `DependentSchema`), or `SetSchema` to be called
+(including fully populated `DependentBody`), or `SetSchema` to be called
 repeatedly as more schema is known. The functionality will adapt to the amount
-of schema provided (e.g. label completion isn't available without `DependentSchema`).
+of schema provided (e.g. label completion isn't available without `DependentBody`).
 
 This means that the same configuration may need to be parsed and some minimal
 form of schema used for the first time, before the _full_ schema is assembled

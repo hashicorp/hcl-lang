@@ -116,8 +116,7 @@ func (d *Decoder) tokensForBody(body *hclsyntax.Body, bodySchema *schema.BodySch
 			tokens = append(tokens, d.tokensForBody(block.Body, blockSchema.Body, false)...)
 		}
 
-		dk := dependencyKeysFromBlock(block, blockSchema)
-		depSchema, ok := blockSchema.DependentBodySchema(dk)
+		depSchema, _, ok := NewBlockSchema(blockSchema).DependentBodySchema(block)
 		if ok {
 			tokens = append(tokens, d.tokensForBody(block.Body, depSchema, true)...)
 		}

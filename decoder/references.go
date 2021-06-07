@@ -28,7 +28,7 @@ func (ref Reference) MatchesConstraint(te schema.TraversalExpr) bool {
 }
 
 func (ref Reference) AddrMatchesTraversal(t hcl.Traversal) bool {
-	addr, err := traversalToAddress(t)
+	addr, err := lang.TraversalToAddress(t)
 	if err != nil {
 		return false
 	}
@@ -222,8 +222,7 @@ func decodeReferencesForBody(body *hclsyntax.Body, bodySchema *schema.BodySchema
 				}
 			}
 
-			dk := dependencyKeysFromBlock(block, bSchema)
-			depSchema, ok := bSchema.DependentBodySchema(dk)
+			depSchema, _, ok := NewBlockSchema(bSchema).DependentBodySchema(block)
 			if ok {
 				fullSchema := depSchema
 				if bSchema.Address.BodyAsData {
@@ -336,7 +335,7 @@ func referencesForExpr(expr hcl.Expression, ec ExprConstraints) lang.References 
 			return lang.References{}
 		}
 
-		addr, err := traversalToAddress(e.AsTraversal())
+		addr, err := lang.TraversalToAddress(e.AsTraversal())
 		if err != nil {
 			return lang.References{}
 		}

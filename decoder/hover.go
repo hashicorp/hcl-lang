@@ -148,8 +148,7 @@ func (d *Decoder) hoverContentForLabel(i int, block *hclsyntax.Block, bSchema *s
 	labelSchema := bSchema.Labels[i]
 
 	if labelSchema.IsDepKey {
-		dk := dependencyKeysFromBlock(block, bSchema)
-		bs, ok := bSchema.DependentBodySchema(dk)
+		bs, _, ok := NewBlockSchema(bSchema).DependentBodySchema(block)
 		if ok {
 			content := fmt.Sprintf("`%s`", value)
 			if bs.Detail != "" {

@@ -78,7 +78,7 @@ func TestTraversalToAddress(t *testing.T) {
 				t.Fatal(diags)
 			}
 
-			addr, err := traversalToAddress(traversal)
+			addr, err := lang.TraversalToAddress(traversal)
 			if err != nil {
 				t.Fatal(err)
 			}

@@ -10,19 +10,6 @@ import (
 	ctyjson "github.com/zclconf/go-cty/cty/json"
 )
 
-// DependentBodySchema finds relevant BodySchema based on given DependencyKeys
-// such as a label or an attribute (or combination of both).
-func (bs *BlockSchema) DependentBodySchema(dks DependencyKeys) (*BodySchema, bool) {
-	b, err := dks.MarshalJSON()
-	if err != nil {
-		return nil, false
-	}
-
-	key := SchemaKey(string(b))
-	schema, ok := bs.DependentBody[key]
-	return schema, ok
-}
-
 // DependencyKeys represent values of labels or attributes
 // on which BodySchema depends on.
 //
