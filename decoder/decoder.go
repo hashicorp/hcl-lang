@@ -169,7 +169,10 @@ func mergeBlockBodySchemas(block *hclsyntax.Block, blockSchema *schema.BlockSche
 		return blockSchema.Body, nil
 	}
 
-	mergedSchema := blockSchema.Body.Copy()
+	mergedSchema := &schema.BodySchema{}
+	if blockSchema.Body != nil {
+		mergedSchema = blockSchema.Body.Copy()
+	}
 	if mergedSchema.Attributes == nil {
 		mergedSchema.Attributes = make(map[string]*schema.AttributeSchema, 0)
 	}

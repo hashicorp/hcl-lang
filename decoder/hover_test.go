@@ -50,6 +50,187 @@ func TestDecoder_HoverAtPos_emptyBody(t *testing.T) {
 	}
 }
 
+func TestDecoder_HoverAtPos_nilBodySchema(t *testing.T) {
+	testCases := []struct {
+		name         string
+		rootSchema   *schema.BodySchema
+		config       string
+		pos          hcl.Pos
+		expectedData *lang.HoverData
+	}{
+		{
+			"nil static body on type",
+			&schema.BodySchema{
+				Blocks: map[string]*schema.BlockSchema{
+					"resource": {
+						Labels: []*schema.LabelSchema{
+							{Name: "type"},
+							{Name: "name"},
+						},
+						Body: nil,
+					},
+				},
+			},
+			`resource "label1" {
+  count = 1
+
+}
+`,
+			hcl.Pos{
+				Line:   1,
+				Column: 2,
+				Byte:   1,
+			},
+			&lang.HoverData{
+				Content: lang.Markdown("**resource** _Block_"),
+				Range: hcl.Range{
+					Filename: "test.tf",
+					Start: hcl.Pos{
+						Line:   1,
+						Column: 1,
+						Byte:   0,
+					},
+					End: hcl.Pos{
+						Line:   1,
+						Column: 9,
+						Byte:   8,
+					},
+				},
+			},
+		},
+		{
+			"nil static body with dependent body on label",
+			&schema.BodySchema{
+				Blocks: map[string]*schema.BlockSchema{
+					"resource": {
+						Labels: []*schema.LabelSchema{
+							{Name: "type", IsDepKey: true},
+							{Name: "name"},
+						},
+						Body: nil,
+						DependentBody: map[schema.SchemaKey]*schema.BodySchema{
+							schema.NewSchemaKey(schema.DependencyKeys{
+								Labels: []schema.LabelDependent{
+									{Index: 0, Value: "label1"},
+								},
+							}): {
+								Attributes: map[string]*schema.AttributeSchema{
+									"one":   {Expr: schema.LiteralTypeOnly(cty.String)},
+									"two":   {Expr: schema.LiteralTypeOnly(cty.Number)},
+									"three": {Expr: schema.LiteralTypeOnly(cty.Bool)},
+								},
+							},
+						},
+					},
+				},
+			},
+			`resource "label1" {
+  count = 1
+  one = "test"
+}
+`,
+			hcl.Pos{
+				Line:   1,
+				Column: 13,
+				Byte:   12,
+			},
+			&lang.HoverData{
+				Content: lang.Markdown("`label1` type"),
+				Range: hcl.Range{
+					Filename: "test.tf",
+					Start: hcl.Pos{
+						Line:   1,
+						Column: 10,
+						Byte:   9,
+					},
+					End: hcl.Pos{
+						Line:   1,
+						Column: 18,
+						Byte:   17,
+					},
+				},
+			},
+		},
+		{
+			"nil static body with dependent body on attribute",
+			&schema.BodySchema{
+				Blocks: map[string]*schema.BlockSchema{
+					"resource": {
+						Labels: []*schema.LabelSchema{
+							{Name: "type", IsDepKey: true},
+							{Name: "name"},
+						},
+						Body: nil,
+						DependentBody: map[schema.SchemaKey]*schema.BodySchema{
+							schema.NewSchemaKey(schema.DependencyKeys{
+								Labels: []schema.LabelDependent{
+									{Index: 0, Value: "label1"},
+								},
+							}): {
+								Attributes: map[string]*schema.AttributeSchema{
+									"one":   {Expr: schema.LiteralTypeOnly(cty.String)},
+									"two":   {Expr: schema.LiteralTypeOnly(cty.Number)},
+									"three": {Expr: schema.LiteralTypeOnly(cty.Bool)},
+								},
+							},
+						},
+					},
+				},
+			},
+			`resource "label1" {
+  count = 1
+  one = "test"
+}
+`,
+			hcl.Pos{
+				Line:   3,
+				Column: 4,
+				Byte:   35,
+			},
+			&lang.HoverData{
+				Content: lang.Markdown("**one** _string_"),
+				Range: hcl.Range{
+					Filename: "test.tf",
+					Start: hcl.Pos{
+						Line:   3,
+						Column: 3,
+						Byte:   34,
+					},
+					End: hcl.Pos{
+						Line:   3,
+						Column: 15,
+						Byte:   46,
+					},
+				},
+			},
+		},
+	}
+
+	for i, tc := range testCases {
+		t.Run(fmt.Sprintf("%d-%s", i, tc.name), func(t *testing.T) {
+			d := NewDecoder()
+			d.SetSchema(tc.rootSchema)
+			f, pDiags := hclsyntax.ParseConfig([]byte(tc.config), "test.tf", hcl.InitialPos)
+			if len(pDiags) > 0 {
+				t.Fatal(pDiags)
+			}
+			err := d.LoadFile("test.tf", f)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			data, err := d.HoverAtPos("test.tf", tc.pos)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			if diff := cmp.Diff(tc.expectedData, data); diff != "" {
+				t.Fatalf("unexpected data: %s", diff)
+			}
+		})
+	}
+}
+
 func TestDecoder_HoverAtPos_unknownAttribute(t *testing.T) {
 	resourceLabelSchema := []*schema.LabelSchema{
 		{Name: "type"},
