@@ -204,7 +204,7 @@ func (d *Decoder) hoverContentForBlock(bType string, schema *schema.BlockSchema)
 		value += fmt.Sprintf("\n\n%s", schema.Description.Value)
 	}
 
-	if schema.Body.HoverURL != "" {
+	if schema.Body != nil && schema.Body.HoverURL != "" {
 		u, err := d.docsURL(schema.Body.HoverURL, "documentHover")
 		if err == nil {
 			value += fmt.Sprintf("\n\n[`%s` on %s](%s)",
