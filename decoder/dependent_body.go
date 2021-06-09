@@ -15,7 +15,7 @@ func NewBlockSchema(bs *schema.BlockSchema) blockSchema {
 	return blockSchema{BlockSchema: bs}
 }
 
-// DependentBodySchema finds relevant BodySchema based on given DependencyKeys
+// DependentBodySchema finds relevant BodySchema based on dependency keys
 // such as a label or an attribute (or combination of both).
 func (bs blockSchema) DependentBodySchema(block *hclsyntax.Block) (*schema.BodySchema, schema.DependencyKeys, bool) {
 	dks := dependencyKeysFromBlock(block, bs)
@@ -35,12 +35,12 @@ func (bs blockSchema) DependentBodySchema(block *hclsyntax.Block) (*schema.BodyS
 		}
 
 		if hasDepKeys && !bs.seenNestedDepKeys {
-			mergedBlockSchema := blockSchema{
-				BlockSchema:       bs.Copy(),
-				seenNestedDepKeys: true,
-			}
+			mergedBlockSchema := NewBlockSchema(bs.Copy())
+			mergedBlockSchema.seenNestedDepKeys = true
 			mergedBlockSchema.Body = depBodySchema
-			return mergedBlockSchema.DependentBodySchema(block)
+			if depBodySchema, dks, ok := mergedBlockSchema.DependentBodySchema(block); ok {
+				return depBodySchema, dks, ok
+			}
 		}
 	}
 

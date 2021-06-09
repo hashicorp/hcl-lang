@@ -191,6 +191,80 @@ func TestBodySchema_DependentBodySchema_dependentAttr(t *testing.T) {
 	}
 }
 
+func TestBodySchema_DependentBodySchema_missingDependentAttr(t *testing.T) {
+	firstDepBody := &schema.BodySchema{
+		Attributes: map[string]*schema.AttributeSchema{
+			"backend": {
+				Expr:     schema.LiteralTypeOnly(cty.String),
+				IsDepKey: true,
+			},
+		},
+	}
+	secondDepBody := &schema.BodySchema{
+		Attributes: map[string]*schema.AttributeSchema{
+			"extra": {Expr: schema.LiteralTypeOnly(cty.Number)},
+			"backend": {
+				Expr:     schema.LiteralTypeOnly(cty.String),
+				IsDepKey: true,
+			},
+		},
+	}
+	bSchema := &schema.BlockSchema{
+		Labels: []*schema.LabelSchema{
+			{
+				Name:     "type",
+				IsDepKey: true,
+			},
+			{
+				Name: "name",
+			},
+		},
+		Body: &schema.BodySchema{
+			Attributes: map[string]*schema.AttributeSchema{
+				"alias": {
+					Expr: schema.LiteralTypeOnly(cty.String),
+				},
+			},
+		},
+		DependentBody: map[schema.SchemaKey]*schema.BodySchema{
+			schema.NewSchemaKey(schema.DependencyKeys{
+				Labels: []schema.LabelDependent{
+					{Index: 0, Value: "remote_state"},
+				},
+			}): firstDepBody,
+			schema.NewSchemaKey(schema.DependencyKeys{
+				Labels: []schema.LabelDependent{
+					{Index: 0, Value: "remote_state"},
+				},
+				Attributes: []schema.AttributeDependent{
+					{
+						Name: "backend",
+						Expr: schema.ExpressionValue{Static: cty.StringVal("special")},
+					},
+				},
+			}): secondDepBody,
+		},
+	}
+
+	bodySchema, _, ok := NewBlockSchema(bSchema).DependentBodySchema(&hclsyntax.Block{
+		Labels: []string{"remote_state"},
+		Body: &hclsyntax.Body{
+			Attributes: hclsyntax.Attributes{
+				"backend": &hclsyntax.Attribute{
+					Name: "backend",
+					Expr: &hclsyntax.LiteralValueExpr{},
+				},
+			},
+		},
+	})
+	if !ok {
+		t.Fatal("expected to find first body schema for missing keys")
+	}
+	if diff := cmp.Diff(firstDepBody, bodySchema, ctydebug.CmpOptions); diff != "" {
+		t.Fatalf("mismatching body schema: %s", diff)
+	}
+}
+
 func TestBodySchema_DependentBodySchema_attributes(t *testing.T) {
 	testCases := []struct {
 		name           string
