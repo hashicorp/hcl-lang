@@ -608,6 +608,65 @@ func TestDecoder_CandidateAtPos_expressions(t *testing.T) {
 			}),
 		},
 		{
+			"deprecated string value",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Expr: schema.ExprConstraints{
+						schema.LiteralValue{Val: cty.StringVal("first")},
+						schema.LiteralValue{Val: cty.StringVal("second"), IsDeprecated: true},
+					},
+				},
+			},
+			`attr = 
+`,
+			hcl.Pos{Line: 1, Column: 8, Byte: 7},
+			lang.CompleteCandidates([]lang.Candidate{
+				{
+					Label:  "first",
+					Detail: "string",
+					TextEdit: lang.TextEdit{
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start: hcl.Pos{
+								Line:   1,
+								Column: 8,
+								Byte:   7,
+							},
+							End: hcl.Pos{
+								Line:   1,
+								Column: 8,
+								Byte:   7,
+							},
+						},
+						NewText: `"first"`,
+						Snippet: `"${1:first}"`},
+					Kind: lang.StringCandidateKind,
+				},
+				{
+					Label:        "second",
+					Detail:       "string",
+					IsDeprecated: true,
+					TextEdit: lang.TextEdit{
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start: hcl.Pos{
+								Line:   1,
+								Column: 8,
+								Byte:   7,
+							},
+							End: hcl.Pos{
+								Line:   1,
+								Column: 8,
+								Byte:   7,
+							},
+						},
+						NewText: `"second"`,
+						Snippet: `"${1:second}"`},
+					Kind: lang.StringCandidateKind,
+				},
+			}),
+		},
+		{
 			"tuple constant expression",
 			map[string]*schema.AttributeSchema{
 				"attr": {

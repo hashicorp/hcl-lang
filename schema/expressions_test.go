@@ -13,4 +13,5 @@ var (
 	_ ExprConstraint = TraversalExpr{}
 	_ ExprConstraint = TupleConsExpr{}
 	_ ExprConstraint = TupleExpr{}
+	_ ExprConstraint = TypeDeclarationExpr{}
 )
