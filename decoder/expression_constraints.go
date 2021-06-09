@@ -219,3 +219,12 @@ func (ec ExprConstraints) LiteralValueOfObjectConsExpr(expr *hclsyntax.ObjectCon
 
 	return schema.LiteralValue{}, false
 }
+
+func (ec ExprConstraints) TypeDeclarationExpr() (schema.TypeDeclarationExpr, bool) {
+	for _, c := range ec {
+		if td, ok := c.(schema.TypeDeclarationExpr); ok {
+			return td, ok
+		}
+	}
+	return schema.TypeDeclarationExpr{}, false
+}

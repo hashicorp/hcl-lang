@@ -384,3 +384,17 @@ func LiteralTypeOnly(t cty.Type) ExprConstraints {
 		LiteralTypeExpr{Type: t},
 	}
 }
+
+type TypeDeclarationExpr struct{}
+
+func (TypeDeclarationExpr) isExprConstraintImpl() exprConstrSigil {
+	return exprConstrSigil{}
+}
+
+func (td TypeDeclarationExpr) FriendlyName() string {
+	return "type"
+}
+
+func (td TypeDeclarationExpr) Copy() ExprConstraint {
+	return TypeDeclarationExpr{}
+}

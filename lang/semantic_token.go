@@ -31,6 +31,8 @@ const (
 	TokenMapKey
 	TokenKeyword
 	TokenTraversalStep
+	TokenTypeCapsule
+	TokenTypePrimitive
 )
 
 func (t SemanticTokenType) GoString() string {

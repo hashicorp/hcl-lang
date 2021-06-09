@@ -765,3 +765,103 @@ My food block
 		})
 	}
 }
+
+func TestDecoder_HoverAtPos_typeDeclaration(t *testing.T) {
+	resourceLabelSchema := []*schema.LabelSchema{
+		{Name: "name", IsDepKey: true},
+	}
+	blockSchema := &schema.BlockSchema{
+		Labels:      resourceLabelSchema,
+		Description: lang.Markdown("My special block"),
+		Body: &schema.BodySchema{
+			Attributes: map[string]*schema.AttributeSchema{
+				"type": {
+					Expr:        schema.ExprConstraints{schema.TypeDeclarationExpr{}},
+					IsOptional:  true,
+					Description: lang.PlainText("Special attribute"),
+				},
+			},
+		},
+	}
+	bodySchema := &schema.BodySchema{
+		Blocks: map[string]*schema.BlockSchema{
+			"myblock": blockSchema,
+		},
+	}
+
+	d := NewDecoder()
+	d.SetSchema(bodySchema)
+
+	testCases := []struct {
+		name         string
+		cfg          string
+		expectedData *lang.HoverData
+	}{
+		{
+			"primitive type",
+			`myblock "sushi" {
+  type = string
+}
+`,
+			&lang.HoverData{
+				Content: lang.Markdown("Type declaration"),
+				Range: hcl.Range{
+					Filename: "test.tf",
+					Start:    hcl.Pos{Line: 2, Column: 10, Byte: 27},
+					End:      hcl.Pos{Line: 2, Column: 16, Byte: 33},
+				},
+			},
+		},
+		{
+			"capsule type",
+			`myblock "sushi" {
+  type = list(string)
+}
+`,
+			&lang.HoverData{
+				Content: lang.Markdown("Type declaration"),
+				Range: hcl.Range{
+					Filename: "test.tf",
+					Start:    hcl.Pos{Line: 2, Column: 10, Byte: 27},
+					End:      hcl.Pos{Line: 2, Column: 22, Byte: 39},
+				},
+			},
+		},
+		{
+			"object type",
+			`myblock "sushi" {
+  type = object({
+	  vegan = bool
+  })
+}
+`,
+			&lang.HoverData{
+				Content: lang.Markdown("Type declaration"),
+				Range: hcl.Range{
+					Filename: "test.tf",
+					Start:    hcl.Pos{Line: 2, Column: 10, Byte: 27},
+					End:      hcl.Pos{Line: 4, Column: 5, Byte: 56},
+				},
+			},
+		},
+	}
+
+	for i, tc := range testCases {
+		t.Run(fmt.Sprintf("%d-%s", i, tc.name), func(t *testing.T) {
+			testConfig := []byte(tc.cfg)
+			f, _ := hclsyntax.ParseConfig(testConfig, "test.tf", hcl.InitialPos)
+			err := d.LoadFile("test.tf", f)
+			if err != nil {
+				t.Fatal(err)
+			}
+			pos := hcl.Pos{Line: 2, Column: 6, Byte: 32}
+			data, err := d.HoverAtPos("test.tf", pos)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if diff := cmp.Diff(tc.expectedData, data, ctydebug.CmpOptions); diff != "" {
+				t.Fatalf("hover data mismatch: %s", diff)
+			}
+		})
+	}
+}

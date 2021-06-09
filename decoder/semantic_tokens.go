@@ -218,6 +218,28 @@ func (d *Decoder) tokensForExpression(expr hclsyntax.Expression, constraints Exp
 
 			}
 		}
+		_, ok = constraints.TypeDeclarationExpr()
+		if ok {
+			tokens = append(tokens, lang.SemanticToken{
+				Type:      lang.TokenTypePrimitive,
+				Modifiers: []lang.SemanticTokenModifier{},
+				Range:     expr.Range(),
+			})
+		}
+	case *hclsyntax.FunctionCallExpr:
+		_, ok := constraints.TypeDeclarationExpr()
+		if ok {
+			tokens = append(tokens, lang.SemanticToken{
+				Type:      lang.TokenTypeCapsule,
+				Modifiers: []lang.SemanticTokenModifier{},
+				Range:     eType.NameRange,
+			})
+			for _, arg := range eType.Args {
+				tokens = append(tokens, d.tokensForExpression(arg, constraints)...)
+			}
+			return tokens
+		}
+
 	case *hclsyntax.TemplateExpr:
 		// complex templates are not supported yet
 		if !eType.IsStringLiteral() && !isMultilineStringLiteral(eType) {
@@ -323,6 +345,10 @@ func (d *Decoder) tokensForExpression(expr hclsyntax.Expression, constraints Exp
 		if ok {
 			return tokensForObjectConsExpr(eType, litVal.Val.Type())
 		}
+		_, ok = constraints.TypeDeclarationExpr()
+		if ok {
+			return d.tokensForObjectConsTypeDeclarationExpr(eType, constraints)
+		}
 	case *hclsyntax.LiteralValueExpr:
 		valType := eType.Val.Type()
 		if constraints.HasLiteralTypeOf(valType) {
@@ -331,6 +357,27 @@ func (d *Decoder) tokensForExpression(expr hclsyntax.Expression, constraints Exp
 		if constraints.HasLiteralValueOf(eType.Val) {
 			return tokenForTypedExpression(eType, valType)
 		}
+	}
+	return tokens
+}
+
+func (d *Decoder) tokensForObjectConsTypeDeclarationExpr(expr *hclsyntax.ObjectConsExpr, constraints ExprConstraints) []lang.SemanticToken {
+	tokens := make([]lang.SemanticToken, 0)
+	for _, item := range expr.Items {
+		key, _ := item.KeyExpr.Value(nil)
+		if key.IsNull() || !key.IsWhollyKnown() || key.Type() != cty.String {
+			// skip items keys that can't be interpolated
+			// without further context
+			continue
+		}
+
+		tokens = append(tokens, lang.SemanticToken{
+			Type:      lang.TokenAttrName,
+			Modifiers: []lang.SemanticTokenModifier{},
+			Range:     item.KeyExpr.Range(),
+		})
+
+		tokens = append(tokens, d.tokensForExpression(item.ValueExpr, constraints)...)
 	}
 	return tokens
 }

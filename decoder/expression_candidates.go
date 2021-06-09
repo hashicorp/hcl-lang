@@ -287,6 +287,28 @@ func (d *Decoder) constraintToCandidates(constraint schema.ExprConstraint, outer
 				},
 			})
 		}
+	case schema.TypeDeclarationExpr:
+		for _, t := range []string{
+			"bool",
+			"number",
+			"string",
+			"list()",
+			"set()",
+			"tuple()",
+			"map()",
+			"object({})",
+		} {
+			candidates = append(candidates, lang.Candidate{
+				Label:  t,
+				Detail: t,
+				Kind:   lang.AttributeCandidateKind,
+				TextEdit: lang.TextEdit{
+					NewText: t,
+					Snippet: snippetForTypeDeclaration(t),
+					Range:   editRng,
+				},
+			})
+		}
 	}
 
 	return candidates
@@ -369,6 +391,23 @@ func newTextForConstraints(cons schema.ExprConstraints, isNested bool) string {
 		}
 	}
 	return ""
+}
+
+func snippetForTypeDeclaration(td string) string {
+	switch td {
+	case "list()":
+		return "list(${0})"
+	case "set()":
+		return "set(${0})"
+	case "tuple()":
+		return "tuple(${0})"
+	case "map()":
+		return "map(${0})"
+	case "object({})":
+		return "object({\n ${1:name} = ${2}\n})"
+	default:
+		return td
+	}
 }
 
 func snippetForConstraints(placeholder uint, cons schema.ExprConstraints, isNested bool) string {
