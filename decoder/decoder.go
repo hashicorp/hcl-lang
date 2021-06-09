@@ -180,9 +180,7 @@ func mergeBlockBodySchemas(block *hclsyntax.Block, blockSchema *schema.BlockSche
 		mergedSchema.Blocks = make(map[string]*schema.BlockSchema, 0)
 	}
 
-	dk := dependencyKeysFromBlock(block, blockSchema)
-
-	depSchema, ok := blockSchema.DependentBodySchema(dk)
+	depSchema, _, ok := NewBlockSchema(blockSchema).DependentBodySchema(block)
 	if ok {
 		for name, attr := range depSchema.Attributes {
 			if _, exists := mergedSchema.Attributes[name]; !exists {
@@ -203,88 +201,6 @@ func mergeBlockBodySchemas(block *hclsyntax.Block, blockSchema *schema.BlockSche
 	}
 
 	return mergedSchema, nil
-}
-
-func dependencyKeysFromBlock(block *hclsyntax.Block, blockSchema *schema.BlockSchema) schema.DependencyKeys {
-	dk := schema.DependencyKeys{
-		Labels:     []schema.LabelDependent{},
-		Attributes: []schema.AttributeDependent{},
-	}
-	for i, labelSchema := range blockSchema.Labels {
-		if labelSchema.IsDepKey {
-			dk.Labels = append(dk.Labels, schema.LabelDependent{
-				Index: i,
-				Value: block.Labels[i],
-			})
-		}
-	}
-
-	if blockSchema.Body == nil {
-		return dk
-	}
-
-	for name, attrSchema := range blockSchema.Body.Attributes {
-		if attrSchema.IsDepKey {
-			attr, ok := block.Body.Attributes[name]
-			if !ok {
-				// dependent attribute not present
-				continue
-			}
-
-			st, ok := attr.Expr.(*hclsyntax.ScopeTraversalExpr)
-			if ok {
-				addr, err := traversalToAddress(st.AsTraversal())
-				if err != nil {
-					// skip unparsable traversal
-					continue
-				}
-				dk.Attributes = append(dk.Attributes, schema.AttributeDependent{
-					Name: name,
-					Expr: schema.ExpressionValue{
-						Address: addr,
-					},
-				})
-				continue
-			}
-
-			value, diags := attr.Expr.Value(nil)
-			if len(diags) > 0 && value.IsNull() {
-				// skip attribute if we can't get the value
-				continue
-			}
-
-			dk.Attributes = append(dk.Attributes, schema.AttributeDependent{
-				Name: name,
-				Expr: schema.ExpressionValue{
-					Static: value,
-				},
-			})
-		}
-	}
-	return dk
-}
-
-func traversalToAddress(traversal hcl.Traversal) (lang.Address, error) {
-	addr := lang.Address{}
-	for _, tr := range traversal {
-		switch t := tr.(type) {
-		case hcl.TraverseRoot:
-			addr = append(addr, lang.RootStep{
-				Name: t.Name,
-			})
-		case hcl.TraverseAttr:
-			addr = append(addr, lang.AttrStep{
-				Name: t.Name,
-			})
-		case hcl.TraverseIndex:
-			addr = append(addr, lang.IndexStep{
-				Key: t.Key,
-			})
-		default:
-			return addr, fmt.Errorf("invalid traversal: %#v", tr)
-		}
-	}
-	return addr, nil
 }
 
 func stringPos(pos hcl.Pos) string {

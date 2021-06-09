@@ -45,8 +45,7 @@ func (d *Decoder) linksInBody(body *hclsyntax.Body, bodySchema *schema.BodySchem
 
 		// Currently only block bodies have links associated
 		if block.Body != nil {
-			dk := dependencyKeysFromBlock(block, blockSchema)
-			depSchema, ok := blockSchema.DependentBodySchema(dk)
+			depSchema, dk, ok := NewBlockSchema(blockSchema).DependentBodySchema(block)
 			if ok && depSchema.DocsLink != nil {
 				for _, labelDep := range dk.Labels {
 					link := depSchema.DocsLink
