@@ -169,7 +169,7 @@ func (d *Decoder) constraintToCandidates(constraint schema.ExprConstraint, outer
 	case schema.LiteralTypeExpr:
 		candidates = append(candidates, typeToCandidates(c.Type, editRng)...)
 	case schema.LiteralValue:
-		if c, ok := valueToCandidate(c.Val, c.Description, editRng); ok {
+		if c, ok := valueToCandidate(c.Val, c.Description, c.IsDeprecated, editRng); ok {
 			candidates = append(candidates, c)
 		}
 	case schema.KeywordExpr:
@@ -491,10 +491,10 @@ func typeToCandidates(ofType cty.Type, editRng hcl.Range) []lang.Candidate {
 	// See https://github.com/microsoft/language-server-protocol/issues/92
 
 	if ofType == cty.Bool {
-		if c, ok := valueToCandidate(cty.True, lang.MarkupContent{}, editRng); ok {
+		if c, ok := valueToCandidate(cty.True, lang.MarkupContent{}, false, editRng); ok {
 			candidates = append(candidates, c)
 		}
-		if c, ok := valueToCandidate(cty.False, lang.MarkupContent{}, editRng); ok {
+		if c, ok := valueToCandidate(cty.False, lang.MarkupContent{}, false, editRng); ok {
 			candidates = append(candidates, c)
 		}
 		return candidates
@@ -519,7 +519,7 @@ func typeToCandidates(ofType cty.Type, editRng hcl.Range) []lang.Candidate {
 	return candidates
 }
 
-func valueToCandidate(val cty.Value, desc lang.MarkupContent, editRng hcl.Range) (lang.Candidate, bool) {
+func valueToCandidate(val cty.Value, desc lang.MarkupContent, isDeprecated bool, editRng hcl.Range) (lang.Candidate, bool) {
 	if !val.IsWhollyKnown() {
 		// Avoid unknown values
 		return lang.Candidate{}, false
@@ -545,10 +545,11 @@ func valueToCandidate(val cty.Value, desc lang.MarkupContent, editRng hcl.Range)
 	}
 
 	return lang.Candidate{
-		Label:       labelForLiteralValue(val, false),
-		Detail:      detail,
-		Description: desc,
-		Kind:        candidateKindForType(val.Type()),
+		Label:        labelForLiteralValue(val, false),
+		Detail:       detail,
+		Description:  desc,
+		IsDeprecated: isDeprecated,
+		Kind:         candidateKindForType(val.Type()),
 		TextEdit: lang.TextEdit{
 			NewText: newTextForLiteralValue(val),
 			Snippet: snippetForLiteralValue(1, val),

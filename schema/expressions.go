@@ -102,8 +102,9 @@ func (lt LiteralTypeExpr) Copy() ExprConstraint {
 }
 
 type LiteralValue struct {
-	Val         cty.Value
-	Description lang.MarkupContent
+	Val          cty.Value
+	IsDeprecated bool
+	Description  lang.MarkupContent
 }
 
 func (LiteralValue) isExprConstraintImpl() exprConstrSigil {
@@ -117,8 +118,9 @@ func (lv LiteralValue) FriendlyName() string {
 func (lv LiteralValue) Copy() ExprConstraint {
 	return LiteralValue{
 		// cty.Value is immutable by design
-		Val:         lv.Val,
-		Description: lv.Description,
+		Val:          lv.Val,
+		IsDeprecated: lv.IsDeprecated,
+		Description:  lv.Description,
 	}
 }
 
