@@ -471,6 +471,13 @@ func TestDecoder_HoverAtPos_basic(t *testing.T) {
 					IsSensitive: true,
 					Description: lang.PlainText("Flag attribute"),
 				},
+				"object_attr": {
+					Expr: schema.LiteralTypeOnly(cty.ObjectWithOptionalAttrs(map[string]cty.Type{
+						"opt_attr": cty.Bool,
+						"req_attr": cty.Number,
+					}, []string{"opt_attr"})),
+					Description: lang.PlainText("Order attribute"),
+				},
 			},
 		},
 		DependentBody: map[schema.SchemaKey]*schema.BodySchema{
@@ -501,6 +508,10 @@ func TestDecoder_HoverAtPos_basic(t *testing.T) {
   str_attr = "test"
   num_attr = 4
   bool_attr = true
+  object_attr = {
+	  opt_attr = false
+	  req_attr = 5
+  }
 }
 `)
 	d := NewDecoder()
@@ -574,6 +585,18 @@ func TestDecoder_HoverAtPos_basic(t *testing.T) {
 					Filename: "test.tf",
 					Start:    hcl.Pos{Line: 1, Column: 17, Byte: 16},
 					End:      hcl.Pos{Line: 1, Column: 25, Byte: 24},
+				},
+			},
+		},
+		{
+			"optional in object",
+			hcl.Pos{Line: 6, Column: 10, Byte: 105},
+			&lang.HoverData{
+				Content: lang.Markdown("```\n{\n  opt_attr = optional, bool\n  req_attr = number\n}\n```\n_object_"),
+				Range: hcl.Range{
+					Filename: "test.tf",
+					Start:    hcl.Pos{Line: 5, Column: 17, Byte: 97},
+					End:      hcl.Pos{Line: 8, Column: 4, Byte: 138},
 				},
 			},
 		},

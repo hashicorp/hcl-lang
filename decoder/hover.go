@@ -776,6 +776,10 @@ func hoverContentForType(attrType cty.Type, nestingLvl int) (string, error) {
 				valData = data
 			}
 
+			if attrType.AttributeOptional(name) {
+				valData = fmt.Sprintf("optional, %s", valData)
+			}
+
 			value += fmt.Sprintf("%s%s = %s\n", insideNesting, name, valData)
 		}
 		endBraceNesting := strings.Repeat("  ", nestingLvl)
