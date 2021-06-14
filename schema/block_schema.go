@@ -44,20 +44,41 @@ type BlockAddrSchema struct {
 	// is addressable as cty.Object or cty.List(cty.Object),
 	// cty.Set(cty.Object) etc. depending on block type
 	BodyAsData bool
+
 	// InferBody defines whether (static) Body's
 	// blocks and attributes are also walked
 	// and their addresses inferred as data
 	InferBody bool
+
+	// AsTypeOf makes the block addressable based on type
+	// of an attribute
+	AsTypeOf *BlockAsTypeOf
 
 	// DependentBodyAsData defines whether the data in
 	// the dependent block body is addressable as cty.Object
 	// or cty.List(cty.Object), cty.Set(cty.Object) etc.
 	// depending on block type
 	DependentBodyAsData bool
+
 	// InferDependentBody defines whether DependentBody's
 	// blocks and attributes are also walked
 	// and their addresses inferred as data
 	InferDependentBody bool
+}
+
+type BlockAsTypeOf struct {
+	// AttributeExpr defines whether the block
+	// is addressable as a particular type declared
+	// directly as expression of the attribute
+	AttributeExpr string
+
+	// AttributeValue defines whether the block
+	// is addressable as a type of the attribute value.
+	//
+	// This will be used as a fallback if AttributeExpr
+	// is also defined, or when the attribute defined there
+	// is of cty.DynamicPseudoType.
+	AttributeValue string
 }
 
 func (bas *BlockAddrSchema) Validate() error {
@@ -87,6 +108,7 @@ func (bas *BlockAddrSchema) Copy() *BlockAddrSchema {
 		FriendlyName:        bas.FriendlyName,
 		ScopeId:             bas.ScopeId,
 		AsReference:         bas.AsReference,
+		AsTypeOf:            bas.AsTypeOf.Copy(),
 		BodyAsData:          bas.BodyAsData,
 		InferBody:           bas.InferBody,
 		DependentBodyAsData: bas.DependentBodyAsData,
@@ -99,6 +121,17 @@ func (bas *BlockAddrSchema) Copy() *BlockAddrSchema {
 	}
 
 	return newBas
+}
+
+func (bato *BlockAsTypeOf) Copy() *BlockAsTypeOf {
+	if bato == nil {
+		return nil
+	}
+
+	return &BlockAsTypeOf{
+		AttributeExpr:  bato.AttributeExpr,
+		AttributeValue: bato.AttributeValue,
+	}
 }
 
 func (*BlockSchema) isSchemaImpl() schemaImplSigil {

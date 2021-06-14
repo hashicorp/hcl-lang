@@ -6,8 +6,10 @@ import (
 	"github.com/hashicorp/hcl-lang/lang"
 	"github.com/hashicorp/hcl-lang/schema"
 	"github.com/hashicorp/hcl/v2"
+	"github.com/hashicorp/hcl/v2/ext/typeexpr"
 	"github.com/hashicorp/hcl/v2/hclsyntax"
 	"github.com/zclconf/go-cty/cty"
+	"github.com/zclconf/go-cty/cty/convert"
 )
 
 type Reference lang.Reference
@@ -142,21 +144,26 @@ func decodeReferencesForBody(body *hclsyntax.Body, bodySchema *schema.BodySchema
 				refs = append(refs, ref)
 			}
 
-			if attrSchema.Address.AsData {
+			if attrSchema.Address.AsExprType {
 				t, ok := exprConstraintToDataType(attrSchema.Expr)
-				if !ok {
-					// impossible to create a data reference if we don't know the type
-					continue
-				}
+				if ok {
+					if t == cty.DynamicPseudoType && attr.Expr != nil {
+						// attempt to make the type more specific
+						exprVal, diags := attr.Expr.Value(nil)
+						if !diags.HasErrors() {
+							t = exprVal.Type()
+						}
+					}
 
-				ref := lang.Reference{
-					Addr:     attrAddr,
-					Type:     t,
-					ScopeId:  attrSchema.Address.ScopeId,
-					RangePtr: attr.SrcRange.Ptr(),
-					Name:     attrSchema.Address.FriendlyName,
+					ref := lang.Reference{
+						Addr:     attrAddr,
+						Type:     t,
+						ScopeId:  attrSchema.Address.ScopeId,
+						RangePtr: attr.SrcRange.Ptr(),
+						Name:     attrSchema.Address.FriendlyName,
+					}
+					refs = append(refs, ref)
 				}
-				refs = append(refs, ref)
 			}
 		}
 
@@ -188,6 +195,10 @@ func decodeReferencesForBody(body *hclsyntax.Body, bodySchema *schema.BodySchema
 				Name:     bSchema.Address.FriendlyName,
 			}
 			refs = append(refs, ref)
+		}
+
+		if bSchema.Address.AsTypeOf != nil {
+			refs = append(refs, referenceAsTypeOf(block, bSchema, addr)...)
 		}
 
 		var bodyRef lang.Reference
@@ -246,12 +257,80 @@ func decodeReferencesForBody(body *hclsyntax.Body, bodySchema *schema.BodySchema
 				}
 			}
 		}
+
 		sort.Sort(bodyRef.InsideReferences)
 	}
 
 	sort.Sort(refs)
 
 	return refs
+}
+
+func referenceAsTypeOf(block *hclsyntax.Block, bSchema *schema.BlockSchema, addr lang.Address) lang.References {
+	ref := lang.Reference{
+		Addr:     addr,
+		ScopeId:  bSchema.Address.ScopeId,
+		RangePtr: block.Range().Ptr(),
+		Type:     cty.DynamicPseudoType,
+	}
+
+	if bSchema.Body != nil {
+		ref.Description = bSchema.Body.Description
+	}
+
+	attrs, diags := block.Body.JustAttributes()
+	if diags.HasErrors() {
+		return lang.References{ref}
+	}
+
+	if bSchema.Address.AsTypeOf.AttributeExpr != "" {
+		typeDecl, ok := asTypeOfAttrExpr(attrs, bSchema)
+		if !ok && bSchema.Address.AsTypeOf.AttributeValue == "" {
+			// nothing to fall back to, exit early
+			return lang.References{ref}
+		}
+		ref.Type = typeDecl
+	}
+
+	if bSchema.Address.AsTypeOf.AttributeValue != "" {
+		attr, ok := attrs[bSchema.Address.AsTypeOf.AttributeValue]
+		if !ok {
+			return lang.References{ref}
+		}
+		value, diags := attr.Expr.Value(nil)
+		if diags.HasErrors() {
+			return lang.References{ref}
+		}
+		val, err := convert.Convert(value, ref.Type)
+		if err != nil {
+			// type does not comply with type constraint
+			return lang.References{ref}
+		}
+		ref.Type = val.Type()
+	}
+
+	return lang.References{ref}
+}
+
+func asTypeOfAttrExpr(attrs hcl.Attributes, bSchema *schema.BlockSchema) (cty.Type, bool) {
+	attrName := bSchema.Address.AsTypeOf.AttributeExpr
+	attr, ok := attrs[attrName]
+	if !ok {
+		return cty.DynamicPseudoType, false
+	}
+
+	ec := ExprConstraints(bSchema.Body.Attributes[attrName].Expr)
+	_, ok = ec.TypeDeclarationExpr()
+	if !ok {
+		return cty.DynamicPseudoType, false
+	}
+
+	typeDecl, diags := typeexpr.TypeConstraint(attr.Expr)
+	if diags.HasErrors() {
+		return cty.DynamicPseudoType, false
+	}
+
+	return typeDecl, true
 }
 
 func exprConstraintToDataType(expr schema.ExprConstraints) (cty.Type, bool) {
