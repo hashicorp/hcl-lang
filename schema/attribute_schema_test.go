@@ -145,7 +145,7 @@ func TestAttributeSchema_Validate(t *testing.T) {
 				},
 				IsOptional: true,
 			},
-			errors.New("Address: at least one of AsData or AsReference must be set"),
+			errors.New("Address: at least one of AsExprType or AsReference must be set"),
 		},
 		{
 			&AttributeSchema{
@@ -154,7 +154,7 @@ func TestAttributeSchema_Validate(t *testing.T) {
 						AttrNameStep{},
 					},
 					AsReference: true,
-					AsData:      true,
+					AsExprType:  true,
 				},
 				IsOptional: true,
 			},

@@ -153,7 +153,7 @@ func TestDecodeReferences_basic(t *testing.T) {
 			},
 		},
 		{
-			"root attribute as data",
+			"root attribute as string type",
 			&schema.BodySchema{
 				Attributes: map[string]*schema.AttributeSchema{
 					"testattr": {
@@ -162,7 +162,7 @@ func TestDecodeReferences_basic(t *testing.T) {
 								schema.StaticStep{Name: "special"},
 								schema.AttrNameStep{},
 							},
-							AsData: true,
+							AsExprType: true,
 						},
 						IsOptional: true,
 						Expr:       schema.LiteralTypeOnly(cty.String),
@@ -193,6 +193,68 @@ func TestDecodeReferences_basic(t *testing.T) {
 					},
 				},
 			},
+		},
+		{
+			"root attribute as any type",
+			&schema.BodySchema{
+				Attributes: map[string]*schema.AttributeSchema{
+					"testattr": {
+						Address: &schema.AttributeAddrSchema{
+							Steps: []schema.AddrStep{
+								schema.StaticStep{Name: "special"},
+								schema.AttrNameStep{},
+							},
+							AsExprType: true,
+						},
+						IsOptional: true,
+						Expr:       schema.LiteralTypeOnly(cty.DynamicPseudoType),
+					},
+				},
+			},
+			`testattr = "example"
+`,
+			lang.References{
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "special"},
+						lang.AttrStep{Name: "testattr"},
+					},
+					Type: cty.String,
+					RangePtr: &hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   1,
+							Column: 1,
+							Byte:   0,
+						},
+						End: hcl.Pos{
+							Line:   1,
+							Column: 21,
+							Byte:   20,
+						},
+					},
+				},
+			},
+		},
+		{
+			"root attribute with undeclared type",
+			&schema.BodySchema{
+				Attributes: map[string]*schema.AttributeSchema{
+					"testattr": {
+						Address: &schema.AttributeAddrSchema{
+							Steps: []schema.AddrStep{
+								schema.StaticStep{Name: "special"},
+								schema.AttrNameStep{},
+							},
+							AsExprType: true,
+						},
+						IsOptional: true,
+					},
+				},
+			},
+			`testattr = "example"
+`,
+			lang.References{},
 		},
 		{
 			"block with mismatching steps",
@@ -1682,6 +1744,354 @@ provider "test" {
 							Line:   3,
 							Column: 2,
 							Byte:   37,
+						},
+					},
+				},
+			},
+		},
+		{
+			"block as data type per attribute - undeclared",
+			&schema.BodySchema{
+				Blocks: map[string]*schema.BlockSchema{
+					"variable": {
+						Labels: []*schema.LabelSchema{
+							{Name: "name"},
+						},
+						Address: &schema.BlockAddrSchema{
+							Steps: []schema.AddrStep{
+								schema.LabelStep{Index: 0},
+							},
+							AsTypeOf: &schema.BlockAsTypeOf{},
+						},
+						Type: schema.BlockTypeObject,
+						Body: &schema.BodySchema{
+							Attributes: map[string]*schema.AttributeSchema{},
+						},
+					},
+				},
+			},
+			`variable "test" {
+}
+`,
+			lang.References{
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "test"},
+					},
+					Type: cty.DynamicPseudoType,
+					RangePtr: &hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   1,
+							Column: 1,
+							Byte:   0,
+						},
+						End: hcl.Pos{
+							Line:   2,
+							Column: 2,
+							Byte:   19,
+						},
+					},
+				},
+			},
+		},
+		{
+			"block as data type per attribute - type only",
+			&schema.BodySchema{
+				Blocks: map[string]*schema.BlockSchema{
+					"variable": {
+						Labels: []*schema.LabelSchema{
+							{Name: "name"},
+						},
+						Address: &schema.BlockAddrSchema{
+							Steps: []schema.AddrStep{
+								schema.LabelStep{Index: 0},
+							},
+							AsTypeOf: &schema.BlockAsTypeOf{
+								AttributeExpr: "type",
+							},
+						},
+						Type: schema.BlockTypeObject,
+						Body: &schema.BodySchema{
+							Attributes: map[string]*schema.AttributeSchema{
+								"type": {
+									IsOptional: true,
+									Expr: schema.ExprConstraints{
+										schema.TypeDeclarationExpr{},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			`variable "test" {
+  type = map(string)
+}
+`,
+			lang.References{
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "test"},
+					},
+					Type: cty.Map(cty.String),
+					RangePtr: &hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   1,
+							Column: 1,
+							Byte:   0,
+						},
+						End: hcl.Pos{
+							Line:   3,
+							Column: 2,
+							Byte:   40,
+						},
+					},
+				},
+			},
+		},
+		{
+			"block as data type per attribute - default string",
+			&schema.BodySchema{
+				Blocks: map[string]*schema.BlockSchema{
+					"variable": {
+						Labels: []*schema.LabelSchema{
+							{Name: "name"},
+						},
+						Address: &schema.BlockAddrSchema{
+							Steps: []schema.AddrStep{
+								schema.LabelStep{Index: 0},
+							},
+							AsTypeOf: &schema.BlockAsTypeOf{
+								AttributeValue: "default",
+							},
+						},
+						Type: schema.BlockTypeObject,
+						Body: &schema.BodySchema{
+							Attributes: map[string]*schema.AttributeSchema{
+								"type": {
+									IsOptional: true,
+									Expr: schema.ExprConstraints{
+										schema.TypeDeclarationExpr{},
+									},
+								},
+								"default": {
+									IsOptional: true,
+									Expr:       schema.LiteralTypeOnly(cty.DynamicPseudoType),
+								},
+							},
+						},
+					},
+				},
+			},
+			`variable "test" {
+  default = "something"
+}
+`,
+			lang.References{
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "test"},
+					},
+					Type: cty.String,
+					RangePtr: &hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   1,
+							Column: 1,
+							Byte:   0,
+						},
+						End: hcl.Pos{
+							Line:   3,
+							Column: 2,
+							Byte:   43,
+						},
+					},
+				},
+			},
+		},
+		{
+			"block as data type per attribute - default tuple constant",
+			&schema.BodySchema{
+				Blocks: map[string]*schema.BlockSchema{
+					"variable": {
+						Labels: []*schema.LabelSchema{
+							{Name: "name"},
+						},
+						Address: &schema.BlockAddrSchema{
+							Steps: []schema.AddrStep{
+								schema.LabelStep{Index: 0},
+							},
+							AsTypeOf: &schema.BlockAsTypeOf{
+								AttributeExpr:  "type",
+								AttributeValue: "default",
+							},
+						},
+						Type: schema.BlockTypeObject,
+						Body: &schema.BodySchema{
+							Attributes: map[string]*schema.AttributeSchema{
+								"type": {
+									IsOptional: true,
+									Expr: schema.ExprConstraints{
+										schema.TypeDeclarationExpr{},
+									},
+								},
+								"default": {
+									IsOptional: true,
+									Expr:       schema.LiteralTypeOnly(cty.DynamicPseudoType),
+								},
+							},
+						},
+					},
+				},
+			},
+			`variable "test" {
+  default = ["something"]
+}
+`,
+			lang.References{
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "test"},
+					},
+					Type: cty.Tuple([]cty.Type{cty.String}),
+					RangePtr: &hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   1,
+							Column: 1,
+							Byte:   0,
+						},
+						End: hcl.Pos{
+							Line:   3,
+							Column: 2,
+							Byte:   45,
+						},
+					},
+				},
+			},
+		},
+		{
+			"block as data type per attribute - default list of any",
+			&schema.BodySchema{
+				Blocks: map[string]*schema.BlockSchema{
+					"variable": {
+						Labels: []*schema.LabelSchema{
+							{Name: "name"},
+						},
+						Address: &schema.BlockAddrSchema{
+							Steps: []schema.AddrStep{
+								schema.LabelStep{Index: 0},
+							},
+							AsTypeOf: &schema.BlockAsTypeOf{
+								AttributeExpr:  "type",
+								AttributeValue: "default",
+							},
+						},
+						Type: schema.BlockTypeObject,
+						Body: &schema.BodySchema{
+							Attributes: map[string]*schema.AttributeSchema{
+								"type": {
+									IsOptional: true,
+									Expr: schema.ExprConstraints{
+										schema.TypeDeclarationExpr{},
+									},
+								},
+								"default": {
+									IsOptional: true,
+									Expr:       schema.LiteralTypeOnly(cty.DynamicPseudoType),
+								},
+							},
+						},
+					},
+				},
+			},
+			`variable "test" {
+  type = list(any)
+  default = [
+    "one"
+  ]
+}
+`,
+			lang.References{
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "test"},
+					},
+					Type: cty.List(cty.String),
+					RangePtr: &hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   1,
+							Column: 1,
+							Byte:   0,
+						},
+						End: hcl.Pos{
+							Line:   6,
+							Column: 2,
+							Byte:   66,
+						},
+					},
+				},
+			},
+		},
+		{
+			"block as data type per attribute - both type and default",
+			&schema.BodySchema{
+				Blocks: map[string]*schema.BlockSchema{
+					"variable": {
+						Labels: []*schema.LabelSchema{
+							{Name: "name"},
+						},
+						Address: &schema.BlockAddrSchema{
+							Steps: []schema.AddrStep{
+								schema.LabelStep{Index: 0},
+							},
+							AsTypeOf: &schema.BlockAsTypeOf{
+								AttributeValue: "default",
+							},
+						},
+						Type: schema.BlockTypeObject,
+						Body: &schema.BodySchema{
+							Attributes: map[string]*schema.AttributeSchema{
+								"type": {
+									IsOptional: true,
+									Expr: schema.ExprConstraints{
+										schema.TypeDeclarationExpr{},
+									},
+								},
+								"default": {
+									IsOptional: true,
+									Expr:       schema.LiteralTypeOnly(cty.DynamicPseudoType),
+								},
+							},
+						},
+					},
+				},
+			},
+			`variable "test" {
+  type = any
+  default = "something"
+}
+`,
+			lang.References{
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "test"},
+					},
+					Type: cty.String,
+					RangePtr: &hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   1,
+							Column: 1,
+							Byte:   0,
+						},
+						End: hcl.Pos{
+							Line:   4,
+							Column: 2,
+							Byte:   56,
 						},
 					},
 				},

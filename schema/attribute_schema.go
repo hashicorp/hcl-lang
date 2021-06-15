@@ -33,10 +33,13 @@ type AttributeAddrSchema struct {
 	FriendlyName string
 	ScopeId      lang.ScopeId
 
-	// AsData defines whether the value of the attribute
-	// is addressable as a matching literal type
-	// included in Expr
-	AsData bool
+	// AsExprType defines whether the value of the attribute
+	// is addressable as a matching literal type constraint included
+	// in attribute Expr.
+	//
+	// cty.DynamicPseudoType (also known as "any type") will create
+	// reference of the real type if value is present else cty.DynamicPseudoType.
+	AsExprType bool
 
 	// AsReference defines whether the attribute
 	// is addressable as a type-less reference
@@ -61,8 +64,8 @@ func (as *AttributeSchema) Validate() error {
 	}
 
 	if as.Address != nil {
-		if !as.Address.AsData && !as.Address.AsReference {
-			return fmt.Errorf("Address: at least one of AsData or AsReference must be set")
+		if !as.Address.AsExprType && !as.Address.AsReference {
+			return fmt.Errorf("Address: at least one of AsExprType or AsReference must be set")
 		}
 
 		for i, step := range as.Address.Steps {
@@ -92,7 +95,28 @@ func (as *AttributeSchema) Copy() *AttributeSchema {
 		IsDepKey:     as.IsDepKey,
 		Description:  as.Description,
 		Expr:         as.Expr.Copy(),
+		Address:      as.Address.Copy(),
 	}
 
 	return newAs
+}
+
+func (aas *AttributeAddrSchema) Copy() *AttributeAddrSchema {
+	if aas == nil {
+		return nil
+	}
+
+	newAas := &AttributeAddrSchema{
+		FriendlyName: aas.FriendlyName,
+		ScopeId:      aas.ScopeId,
+		AsExprType:   aas.AsExprType,
+		AsReference:  aas.AsReference,
+	}
+
+	newAas.Steps = make([]AddrStep, len(aas.Steps))
+	for i, step := range aas.Steps {
+		newAas.Steps[i] = step
+	}
+
+	return newAas
 }
