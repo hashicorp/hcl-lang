@@ -135,7 +135,7 @@ func TestDecoder_CandidatesAtPos_nilBodySchema(t *testing.T) {
 				Blocks: map[string]*schema.BlockSchema{
 					"resource": {
 						Labels: []*schema.LabelSchema{
-							{Name: "type", IsDepKey: true},
+							{Name: "type", IsDepKey: true, Completable: true},
 							{Name: "name"},
 						},
 						Body: nil,
@@ -495,7 +495,7 @@ func TestDecoder_CandidatesAtPos_rightHandSideInString(t *testing.T) {
 func TestDecoder_CandidatesAtPos_endOfLabel(t *testing.T) {
 	blockSchema := &schema.BlockSchema{
 		Labels: []*schema.LabelSchema{
-			{Name: "type"},
+			{Name: "type", Completable: true},
 		},
 		DependentBody: map[schema.SchemaKey]*schema.BodySchema{
 			schema.NewSchemaKey(schema.DependencyKeys{
@@ -595,9 +595,58 @@ func TestDecoder_CandidatesAtPos_endOfLabel(t *testing.T) {
 	}
 }
 
+func TestDecoder_CandidatesAtPos_nonCompletableLabel(t *testing.T) {
+	blockSchema := &schema.BlockSchema{
+		Labels: []*schema.LabelSchema{
+			{Name: "type", IsDepKey: true},
+		},
+		DependentBody: map[schema.SchemaKey]*schema.BodySchema{
+			schema.NewSchemaKey(schema.DependencyKeys{
+				Labels: []schema.LabelDependent{
+					{Index: 0, Value: "myfirst"},
+				},
+			}): {},
+			schema.NewSchemaKey(schema.DependencyKeys{
+				Labels: []schema.LabelDependent{
+					{Index: 0, Value: "mysecond"},
+				},
+			}): {},
+		},
+	}
+	bodySchema := &schema.BodySchema{
+		Blocks: map[string]*schema.BlockSchema{
+			"myblock": blockSchema,
+		},
+	}
+	testConfig := []byte(`myblock "" {
+}
+`)
+
+	d := NewDecoder()
+	d.SetSchema(bodySchema)
+	f, _ := hclsyntax.ParseConfig(testConfig, "test.tf", hcl.InitialPos)
+	err := d.LoadFile("test.tf", f)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	candidates, err := d.CandidatesAtPos("test.tf", hcl.Pos{
+		Line:   1,
+		Column: 10,
+		Byte:   9,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	expectedCandidates := lang.ZeroCandidates()
+	if diff := cmp.Diff(expectedCandidates, candidates); diff != "" {
+		t.Fatalf("unexpected candidates: %s", diff)
+	}
+}
+
 func TestDecoder_CandidatesAtPos_zeroByteContent(t *testing.T) {
 	resourceLabelSchema := []*schema.LabelSchema{
-		{Name: "type", IsDepKey: true},
+		{Name: "type", IsDepKey: true, Completable: true},
 		{Name: "name"},
 	}
 	resourceSchema := &schema.BlockSchema{
@@ -653,7 +702,7 @@ func TestDecoder_CandidatesAtPos_zeroByteContent(t *testing.T) {
 
 func TestDecoder_CandidatesAtPos_endOfFilePos(t *testing.T) {
 	resourceLabelSchema := []*schema.LabelSchema{
-		{Name: "type", IsDepKey: true},
+		{Name: "type", IsDepKey: true, Completable: true},
 		{Name: "name"},
 	}
 	resourceSchema := &schema.BlockSchema{
@@ -717,7 +766,7 @@ func TestDecoder_CandidatesAtPos_endOfFilePos(t *testing.T) {
 
 func TestDecoder_CandidatesAtPos_emptyLabel(t *testing.T) {
 	resourceLabelSchema := []*schema.LabelSchema{
-		{Name: "type", IsDepKey: true},
+		{Name: "type", IsDepKey: true, Completable: true},
 		{Name: "name"},
 	}
 	resourceSchema := &schema.BlockSchema{
@@ -811,7 +860,7 @@ func TestDecoder_CandidatesAtPos_emptyLabel(t *testing.T) {
 
 func TestDecoder_CandidatesAtPos_emptyLabel_duplicateDepKeys(t *testing.T) {
 	resourceLabelSchema := []*schema.LabelSchema{
-		{Name: "type", IsDepKey: true},
+		{Name: "type", IsDepKey: true, Completable: true},
 		{Name: "name"},
 	}
 	resourceSchema := &schema.BlockSchema{
@@ -903,7 +952,7 @@ func TestDecoder_CandidatesAtPos_emptyLabel_duplicateDepKeys(t *testing.T) {
 
 func TestDecoder_CandidatesAtPos_basic(t *testing.T) {
 	resourceLabelSchema := []*schema.LabelSchema{
-		{Name: "type", IsDepKey: true},
+		{Name: "type", IsDepKey: true, Completable: true},
 		{Name: "name"},
 	}
 
@@ -1287,7 +1336,7 @@ func TestDecoder_CandidatesAtPos_AnyAttribute(t *testing.T) {
 
 func TestDecoder_CandidatesAtPos_multipleTypes(t *testing.T) {
 	resourceLabelSchema := []*schema.LabelSchema{
-		{Name: "type", IsDepKey: true},
+		{Name: "type", IsDepKey: true, Completable: true},
 		{Name: "name"},
 	}
 
