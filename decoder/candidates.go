@@ -111,6 +111,12 @@ func (d *Decoder) candidatesAtPos(body *hclsyntax.Body, outerBodyRng hcl.Range, 
 					}
 					prefixRng.End = pos
 
+					labelSchema := bSchema.Labels[i]
+
+					if !labelSchema.Completable {
+						return lang.ZeroCandidates(), nil
+					}
+
 					return d.labelCandidatesFromDependentSchema(i, bSchema.DependentBody, prefixRng, rng)
 				}
 			}

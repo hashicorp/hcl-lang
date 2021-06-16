@@ -12,6 +12,11 @@ type LabelSchema struct {
 	// IsDepKey describes whether to use this label as key
 	// when looking up dependent schema
 	IsDepKey bool
+
+	// In cases where label's IsDepKey=true any DependentKey label values
+	// within Blocks's DependentBody can be used for completion
+	// This enables such behaviour.
+	Completable bool
 }
 
 func (*LabelSchema) isSchemaImpl() schemaImplSigil {
@@ -25,6 +30,7 @@ func (ls *LabelSchema) Copy() *LabelSchema {
 
 	return &LabelSchema{
 		Name:        ls.Name,
+		Completable: ls.Completable,
 		Description: ls.Description,
 		IsDepKey:    ls.IsDepKey,
 	}
