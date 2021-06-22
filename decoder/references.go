@@ -2,6 +2,7 @@ package decoder
 
 import (
 	"sort"
+	"strings"
 
 	"github.com/hashicorp/hcl-lang/lang"
 	"github.com/hashicorp/hcl-lang/schema"
@@ -43,20 +44,51 @@ type References lang.References
 
 type RefWalkFunc func(lang.Reference)
 
-func (refs References) Walk(f RefWalkFunc) {
+func (refs References) DeepWalk(f RefWalkFunc) {
 	for _, ref := range refs {
 		f(ref)
 		if len(ref.InsideReferences) > 0 {
 			irefs := References(ref.InsideReferences)
-			irefs.Walk(f)
+			irefs.DeepWalk(f)
 		}
 	}
+}
+
+type RefMatchWalkFunc func(lang.Reference, bool)
+
+func (refs References) MatchWalk(te schema.TraversalExpr, prefix string, f RefMatchWalkFunc) {
+	for _, ref := range refs {
+		if strings.HasPrefix(ref.Addr.String(), string(prefix)) {
+			nestedMatches := References(ref.InsideReferences).ContainsMatch(te, prefix)
+			if Reference(ref).MatchesConstraint(te) || nestedMatches {
+				f(ref, nestedMatches)
+				continue
+			}
+		}
+
+		References(ref.InsideReferences).MatchWalk(te, prefix, f)
+	}
+}
+
+func (refs References) ContainsMatch(te schema.TraversalExpr, prefix string) bool {
+	for _, ref := range refs {
+		if strings.HasPrefix(ref.Addr.String(), string(prefix)) &&
+			Reference(ref).MatchesConstraint(te) {
+			return true
+		}
+		if len(ref.InsideReferences) > 0 {
+			if match := References(ref.InsideReferences).ContainsMatch(te, prefix); match {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 func (refs References) FirstTraversalMatch(expr hcl.Traversal, tSchema schema.TraversalExpr) (lang.Reference, error) {
 	var matchingReference *lang.Reference
 
-	refs.Walk(func(r lang.Reference) {
+	refs.DeepWalk(func(r lang.Reference) {
 		ref := Reference(r)
 		if ref.AddrMatchesTraversal(expr) && ref.MatchesConstraint(tSchema) {
 			matchingReference = &r
@@ -132,43 +164,7 @@ func decodeReferencesForBody(body *hclsyntax.Body, bodySchema *schema.BodySchema
 			attrSchema = bodySchema.AnyAttribute
 		}
 
-		attrAddr, ok := resolveAttributeAddress(attr, attrSchema.Address)
-		if ok {
-			if attrSchema.Address.AsReference {
-				ref := lang.Reference{
-					Addr:     attrAddr,
-					ScopeId:  attrSchema.Address.ScopeId,
-					RangePtr: attr.SrcRange.Ptr(),
-					Name:     attrSchema.Address.FriendlyName,
-				}
-				refs = append(refs, ref)
-			}
-
-			if attrSchema.Address.AsExprType {
-				t, ok := exprConstraintToDataType(attrSchema.Expr)
-				if ok {
-					if t == cty.DynamicPseudoType && attr.Expr != nil {
-						// attempt to make the type more specific
-						exprVal, diags := attr.Expr.Value(nil)
-						if !diags.HasErrors() {
-							t = exprVal.Type()
-						}
-					}
-
-					ref := lang.Reference{
-						Addr:     attrAddr,
-						Type:     t,
-						ScopeId:  attrSchema.Address.ScopeId,
-						RangePtr: attr.SrcRange.Ptr(),
-						Name:     attrSchema.Address.FriendlyName,
-					}
-					refs = append(refs, ref)
-				}
-			}
-		}
-
-		ec := ExprConstraints(attrSchema.Expr)
-		refs = append(refs, referencesForExpr(attr.Expr, ec)...)
+		refs = append(refs, decodeReferencesForAttribute(attr, attrSchema)...)
 	}
 
 	for _, block := range body.Blocks {
@@ -262,6 +258,151 @@ func decodeReferencesForBody(body *hclsyntax.Body, bodySchema *schema.BodySchema
 	}
 
 	sort.Sort(refs)
+
+	return refs
+}
+
+func decodeReferencesForAttribute(attr *hclsyntax.Attribute, attrSchema *schema.AttributeSchema) lang.References {
+	refs := make(lang.References, 0)
+
+	attrAddr, ok := resolveAttributeAddress(attr, attrSchema.Address)
+	if ok {
+		if attrSchema.Address.AsReference {
+			ref := lang.Reference{
+				Addr:     attrAddr,
+				ScopeId:  attrSchema.Address.ScopeId,
+				RangePtr: attr.SrcRange.Ptr(),
+				Name:     attrSchema.Address.FriendlyName,
+			}
+			refs = append(refs, ref)
+		}
+
+		if attrSchema.Address.AsExprType {
+			t, ok := exprConstraintToDataType(attrSchema.Expr)
+			if ok {
+				if t == cty.DynamicPseudoType && attr.Expr != nil {
+					// attempt to make the type more specific
+					exprVal, diags := attr.Expr.Value(nil)
+					if !diags.HasErrors() {
+						t = exprVal.Type()
+					}
+				}
+
+				scopeId := attrSchema.Address.ScopeId
+
+				ref := lang.Reference{
+					Addr:     attrAddr,
+					Type:     t,
+					ScopeId:  scopeId,
+					RangePtr: attr.SrcRange.Ptr(),
+					Name:     attrSchema.Address.FriendlyName,
+				}
+
+				if attr.Expr != nil && !t.IsPrimitiveType() {
+					ref.InsideReferences = make(lang.References, 0)
+					ref.InsideReferences = append(ref.InsideReferences, decodeReferencesForComplexTypeExpr(attrAddr, attr.Expr, t, scopeId)...)
+				}
+
+				refs = append(refs, ref)
+			}
+		}
+	}
+
+	ec := ExprConstraints(attrSchema.Expr)
+	refs = append(refs, referencesForExpr(attr.Expr, ec)...)
+	return refs
+}
+
+func decodeReferencesForComplexTypeExpr(addr lang.Address, expr hclsyntax.Expression, t cty.Type, scopeId lang.ScopeId) lang.References {
+	refs := make(lang.References, 0)
+
+	if expr == nil {
+		return refs
+	}
+
+	switch e := expr.(type) {
+	case *hclsyntax.TupleConsExpr:
+		if t.IsListType() {
+			for i, item := range e.Exprs {
+				elemAddr := append(addr, lang.IndexStep{Key: cty.NumberIntVal(int64(i))})
+				elemType := t.ElementType()
+
+				ref := lang.Reference{
+					Addr:     elemAddr,
+					Type:     elemType,
+					ScopeId:  scopeId,
+					RangePtr: item.Range().Ptr(),
+				}
+				if !elemType.IsPrimitiveType() {
+					ref.InsideReferences = make(lang.References, 0)
+					ref.InsideReferences = append(refs, decodeReferencesForComplexTypeExpr(elemAddr, item, elemType, scopeId)...)
+				}
+
+				refs = append(refs, ref)
+			}
+		}
+	case *hclsyntax.ObjectConsExpr:
+		if t.IsObjectType() {
+			for _, item := range e.Items {
+				key, _ := item.KeyExpr.Value(nil)
+				if key.IsNull() || !key.IsWhollyKnown() || key.Type() != cty.String {
+					// skip items keys that can't be interpolated
+					// without further context
+					continue
+				}
+				attrType, ok := t.AttributeTypes()[key.AsString()]
+				if !ok {
+					continue
+				}
+				attrAddr := append(addr, lang.AttrStep{Name: key.AsString()})
+				rng := hcl.RangeBetween(item.KeyExpr.Range(), item.ValueExpr.Range())
+
+				ref := lang.Reference{
+					Addr:     attrAddr,
+					Type:     attrType,
+					ScopeId:  scopeId,
+					RangePtr: rng.Ptr(),
+				}
+				if !attrType.IsPrimitiveType() {
+					ref.InsideReferences = make(lang.References, 0)
+					ref.InsideReferences = append(refs, decodeReferencesForComplexTypeExpr(attrAddr, item.ValueExpr, attrType, scopeId)...)
+				}
+
+				refs = append(refs, ref)
+			}
+		}
+		if t.IsMapType() {
+			for _, item := range e.Items {
+				key, _ := item.KeyExpr.Value(nil)
+				if key.IsNull() || !key.IsWhollyKnown() || key.Type() != cty.String {
+					// skip items keys that can't be interpolated
+					// without further context
+					continue
+				}
+				elemTypePtr := t.MapElementType()
+				if elemTypePtr == nil {
+					continue
+				}
+				elemType := *elemTypePtr
+
+				elemAddr := append(addr, lang.IndexStep{Key: key})
+				rng := hcl.RangeBetween(item.KeyExpr.Range(), item.ValueExpr.Range())
+
+				ref := lang.Reference{
+					Addr:     elemAddr,
+					Type:     elemType,
+					ScopeId:  scopeId,
+					RangePtr: rng.Ptr(),
+				}
+				if !elemType.IsPrimitiveType() {
+					ref.InsideReferences = make(lang.References, 0)
+					ref.InsideReferences = append(refs, decodeReferencesForComplexTypeExpr(elemAddr, item.ValueExpr, elemType, scopeId)...)
+				}
+
+				refs = append(refs, ref)
+			}
+		}
+	}
 
 	return refs
 }
@@ -524,10 +665,17 @@ func collectInferredReferencesForBody(addr lang.Address, scopeId lang.ScopeId, b
 			RangePtr:    body.EndRange.Ptr(),
 		}
 
+		var attrExpr hclsyntax.Expression
 		if body != nil {
 			if attr, ok := body.Attributes[name]; ok {
 				ref.RangePtr = attr.Range().Ptr()
+				attrExpr = attr.Expr
 			}
+		}
+
+		if attrExpr != nil && !attrType.IsPrimitiveType() {
+			ref.InsideReferences = make(lang.References, 0)
+			ref.InsideReferences = append(ref.InsideReferences, decodeReferencesForComplexTypeExpr(attrAddr, attrExpr, attrType, scopeId)...)
 		}
 
 		refs = append(refs, ref)
