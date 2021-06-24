@@ -237,6 +237,144 @@ func TestDecodeReferences_basic(t *testing.T) {
 			},
 		},
 		{
+			"root attribute as object type",
+			&schema.BodySchema{
+				Attributes: map[string]*schema.AttributeSchema{
+					"testattr": {
+						Address: &schema.AttributeAddrSchema{
+							Steps: []schema.AddrStep{
+								schema.StaticStep{Name: "special"},
+								schema.AttrNameStep{},
+							},
+							AsExprType: true,
+						},
+						IsOptional: true,
+						Expr: schema.LiteralTypeOnly(cty.Object(map[string]cty.Type{
+							"nestedattr": cty.String,
+						})),
+					},
+				},
+			},
+			`testattr = {
+	nestedattr = "test"
+}
+`,
+			lang.References{
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "special"},
+						lang.AttrStep{Name: "testattr"},
+					},
+					Type: cty.Object(map[string]cty.Type{
+						"nestedattr": cty.String,
+					}),
+					RangePtr: &hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   1,
+							Column: 1,
+							Byte:   0,
+						},
+						End: hcl.Pos{
+							Line:   3,
+							Column: 2,
+							Byte:   35,
+						},
+					},
+					InsideReferences: lang.References{
+						{
+							Addr: lang.Address{
+								lang.RootStep{Name: "special"},
+								lang.AttrStep{Name: "testattr"},
+								lang.AttrStep{Name: "nestedattr"},
+							},
+							Type: cty.String,
+							RangePtr: &hcl.Range{
+								Filename: "test.tf",
+								Start: hcl.Pos{
+									Line:   2,
+									Column: 2,
+									Byte:   14,
+								},
+								End: hcl.Pos{
+									Line:   2,
+									Column: 21,
+									Byte:   33,
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			"root attribute as map type",
+			&schema.BodySchema{
+				Attributes: map[string]*schema.AttributeSchema{
+					"testattr": {
+						Address: &schema.AttributeAddrSchema{
+							Steps: []schema.AddrStep{
+								schema.StaticStep{Name: "special"},
+								schema.AttrNameStep{},
+							},
+							AsExprType: true,
+						},
+						IsOptional: true,
+						Expr:       schema.LiteralTypeOnly(cty.Map(cty.String)),
+					},
+				},
+			},
+			`testattr = {
+	nestedattr = "test"
+}
+`,
+			lang.References{
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "special"},
+						lang.AttrStep{Name: "testattr"},
+					},
+					Type: cty.Map(cty.String),
+					RangePtr: &hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   1,
+							Column: 1,
+							Byte:   0,
+						},
+						End: hcl.Pos{
+							Line:   3,
+							Column: 2,
+							Byte:   35,
+						},
+					},
+					InsideReferences: lang.References{
+						{
+							Addr: lang.Address{
+								lang.RootStep{Name: "special"},
+								lang.AttrStep{Name: "testattr"},
+								lang.IndexStep{Key: cty.StringVal("nestedattr")},
+							},
+							Type: cty.String,
+							RangePtr: &hcl.Range{
+								Filename: "test.tf",
+								Start: hcl.Pos{
+									Line:   2,
+									Column: 2,
+									Byte:   14,
+								},
+								End: hcl.Pos{
+									Line:   2,
+									Column: 21,
+									Byte:   33,
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
 			"root attribute with undeclared type",
 			&schema.BodySchema{
 				Attributes: map[string]*schema.AttributeSchema{
@@ -715,6 +853,12 @@ listener "https" {
 									},
 									IsOptional: true,
 								},
+								"obj_attr": {
+									Expr: schema.LiteralTypeOnly(cty.Object(map[string]cty.Type{
+										"nestedattr": cty.String,
+									})),
+									IsOptional: true,
+								},
 							},
 						},
 					},
@@ -724,10 +868,13 @@ listener "https" {
   attr = 42
   name = "hello world"
   map_attr = {
-		one = "hello"
-		two = "world"
-	}
-	list_attr = [ "one", "two" ]
+    one = "hello"
+    two = "world"
+  }
+  list_attr = [ "one", "two" ]
+  obj_attr = {
+    nestedattr = "foo"
+  }
 }
 `,
 			lang.References{
@@ -740,6 +887,9 @@ listener "https" {
 						"name":      cty.String,
 						"map_attr":  cty.Map(cty.String),
 						"list_attr": cty.List(cty.String),
+						"obj_attr": cty.Object(map[string]cty.Type{
+							"nestedattr": cty.String,
+						}),
 					}),
 					RangePtr: &hcl.Range{
 						Filename: "test.tf",
@@ -749,9 +899,9 @@ listener "https" {
 							Byte:   0,
 						},
 						End: hcl.Pos{
-							Line:   9,
+							Line:   12,
 							Column: 2,
-							Byte:   133,
+							Byte:   181,
 						},
 					},
 					InsideReferences: lang.References{
@@ -785,13 +935,57 @@ listener "https" {
 								Filename: "test.tf",
 								Start: hcl.Pos{
 									Line:   8,
-									Column: 2,
-									Byte:   103,
+									Column: 3,
+									Byte:   109,
 								},
 								End: hcl.Pos{
 									Line:   8,
-									Column: 30,
-									Byte:   131,
+									Column: 31,
+									Byte:   137,
+								},
+							},
+							InsideReferences: lang.References{
+								{
+									Addr: lang.Address{
+										lang.RootStep{Name: "aws"},
+										lang.AttrStep{Name: "list_attr"},
+										lang.IndexStep{Key: cty.NumberIntVal(0)},
+									},
+									Type: cty.String,
+									RangePtr: &hcl.Range{
+										Filename: "test.tf",
+										Start: hcl.Pos{
+											Line:   8,
+											Column: 17,
+											Byte:   123,
+										},
+										End: hcl.Pos{
+											Line:   8,
+											Column: 22,
+											Byte:   128,
+										},
+									},
+								},
+								{
+									Addr: lang.Address{
+										lang.RootStep{Name: "aws"},
+										lang.AttrStep{Name: "list_attr"},
+										lang.IndexStep{Key: cty.NumberIntVal(1)},
+									},
+									Type: cty.String,
+									RangePtr: &hcl.Range{
+										Filename: "test.tf",
+										Start: hcl.Pos{
+											Line:   8,
+											Column: 24,
+											Byte:   130,
+										},
+										End: hcl.Pos{
+											Line:   8,
+											Column: 29,
+											Byte:   135,
+										},
+									},
 								},
 							},
 						},
@@ -810,8 +1004,52 @@ listener "https" {
 								},
 								End: hcl.Pos{
 									Line:   7,
-									Column: 3,
-									Byte:   101,
+									Column: 4,
+									Byte:   106,
+								},
+							},
+							InsideReferences: lang.References{
+								{
+									Addr: lang.Address{
+										lang.RootStep{Name: "aws"},
+										lang.AttrStep{Name: "map_attr"},
+										lang.IndexStep{Key: cty.StringVal("one")},
+									},
+									Type: cty.String,
+									RangePtr: &hcl.Range{
+										Filename: "test.tf",
+										Start: hcl.Pos{
+											Line:   5,
+											Column: 5,
+											Byte:   71,
+										},
+										End: hcl.Pos{
+											Line:   5,
+											Column: 18,
+											Byte:   84,
+										},
+									},
+								},
+								{
+									Addr: lang.Address{
+										lang.RootStep{Name: "aws"},
+										lang.AttrStep{Name: "map_attr"},
+										lang.IndexStep{Key: cty.StringVal("two")},
+									},
+									Type: cty.String,
+									RangePtr: &hcl.Range{
+										Filename: "test.tf",
+										Start: hcl.Pos{
+											Line:   6,
+											Column: 5,
+											Byte:   89,
+										},
+										End: hcl.Pos{
+											Line:   6,
+											Column: 18,
+											Byte:   102,
+										},
+									},
 								},
 							},
 						},
@@ -835,6 +1073,51 @@ listener "https" {
 								},
 							},
 						},
+						{
+							Addr: lang.Address{
+								lang.RootStep{Name: "aws"},
+								lang.AttrStep{Name: "obj_attr"},
+							},
+							Type: cty.Object(map[string]cty.Type{
+								"nestedattr": cty.String,
+							}),
+							RangePtr: &hcl.Range{
+								Filename: "test.tf",
+								Start: hcl.Pos{
+									Line:   9,
+									Column: 3,
+									Byte:   140,
+								},
+								End: hcl.Pos{
+									Line:   11,
+									Column: 4,
+									Byte:   179,
+								},
+							},
+							InsideReferences: lang.References{
+								{
+									Addr: lang.Address{
+										lang.RootStep{Name: "aws"},
+										lang.AttrStep{Name: "obj_attr"},
+										lang.AttrStep{Name: "nestedattr"},
+									},
+									Type: cty.String,
+									RangePtr: &hcl.Range{
+										Filename: "test.tf",
+										Start: hcl.Pos{
+											Line:   10,
+											Column: 5,
+											Byte:   157,
+										},
+										End: hcl.Pos{
+											Line:   10,
+											Column: 23,
+											Byte:   175,
+										},
+									},
+								},
+							},
+						},
 					},
 				},
 			},
@@ -852,7 +1135,6 @@ listener "https" {
 								schema.LabelStep{Index: 0},
 							},
 							DependentBodyAsData: true,
-							// InferDependentBody:  true,
 						},
 						Type: schema.BlockTypeObject,
 						DependentBody: map[schema.SchemaKey]*schema.BodySchema{
@@ -870,6 +1152,20 @@ listener "https" {
 										Expr:       schema.LiteralTypeOnly(cty.String),
 										IsOptional: true,
 									},
+									"attr_list": {
+										Expr:       schema.LiteralTypeOnly(cty.List(cty.String)),
+										IsOptional: true,
+									},
+									"attr_map": {
+										Expr:       schema.LiteralTypeOnly(cty.Map(cty.String)),
+										IsOptional: true,
+									},
+									"obj": {
+										Expr: schema.LiteralTypeOnly(cty.Object(map[string]cty.Type{
+											"nestedattr": cty.String,
+										})),
+										IsOptional: true,
+									},
 								},
 							},
 						},
@@ -879,10 +1175,24 @@ listener "https" {
 			`provider "aws" {
   attr = 42
   name = "hello world"
+  attr_list = ["one", "two"]
+  attr_map = {
+    foo = "bar"
+  }
+  obj = {
+    nestedattr = "test"
+  }
 }
 provider "test" {
   attr = 42
   name = "hello world"
+  attr_list = ["one", "two"]
+  attr_map = {
+    foo = "bar"
+  }
+  obj = {
+    nestedattr = "test"
+  }
 }
 `,
 			lang.References{
@@ -891,8 +1201,13 @@ provider "test" {
 						lang.RootStep{Name: "aws"},
 					},
 					Type: cty.Object(map[string]cty.Type{
-						"attr": cty.Number,
-						"name": cty.String,
+						"attr":      cty.Number,
+						"name":      cty.String,
+						"attr_list": cty.List(cty.String),
+						"attr_map":  cty.Map(cty.String),
+						"obj": cty.Object(map[string]cty.Type{
+							"nestedattr": cty.String,
+						}),
 					}),
 					RangePtr: &hcl.Range{
 						Filename: "test.tf",
@@ -902,9 +1217,9 @@ provider "test" {
 							Byte:   0,
 						},
 						End: hcl.Pos{
-							Line:   4,
+							Line:   11,
 							Column: 2,
-							Byte:   53,
+							Byte:   155,
 						},
 					},
 				},
@@ -941,6 +1256,20 @@ provider "test" {
 										Expr:       schema.LiteralTypeOnly(cty.String),
 										IsOptional: true,
 									},
+									"attr_list": {
+										Expr:       schema.LiteralTypeOnly(cty.List(cty.String)),
+										IsOptional: true,
+									},
+									"attr_map": {
+										Expr:       schema.LiteralTypeOnly(cty.Map(cty.String)),
+										IsOptional: true,
+									},
+									"obj": {
+										Expr: schema.LiteralTypeOnly(cty.Object(map[string]cty.Type{
+											"nestedattr": cty.String,
+										})),
+										IsOptional: true,
+									},
 								},
 							},
 						},
@@ -950,10 +1279,24 @@ provider "test" {
 			`provider "aws" {
   attr = 42
   name = "hello world"
+  attr_list = ["one", "two"]
+  attr_map = {
+    foo = "bar"
+  }
+  obj = {
+    nestedattr = "test"
+  }
 }
 provider "test" {
   attr = 42
   name = "hello world"
+  attr_list = ["one", "two"]
+  attr_map = {
+    foo = "bar"
+  }
+  obj = {
+    nestedattr = "test"
+  }
 }
 `,
 			lang.References{
@@ -962,8 +1305,13 @@ provider "test" {
 						lang.RootStep{Name: "aws"},
 					},
 					Type: cty.Object(map[string]cty.Type{
-						"attr": cty.Number,
-						"name": cty.String,
+						"attr":      cty.Number,
+						"name":      cty.String,
+						"attr_list": cty.List(cty.String),
+						"attr_map":  cty.Map(cty.String),
+						"obj": cty.Object(map[string]cty.Type{
+							"nestedattr": cty.String,
+						}),
 					}),
 					RangePtr: &hcl.Range{
 						Filename: "test.tf",
@@ -973,9 +1321,9 @@ provider "test" {
 							Byte:   0,
 						},
 						End: hcl.Pos{
-							Line:   4,
+							Line:   11,
 							Column: 2,
-							Byte:   53,
+							Byte:   155,
 						},
 					},
 					InsideReferences: lang.References{
@@ -1002,6 +1350,113 @@ provider "test" {
 						{
 							Addr: lang.Address{
 								lang.RootStep{Name: "aws"},
+								lang.AttrStep{Name: "attr_list"},
+							},
+							Type: cty.List(cty.String),
+							RangePtr: &hcl.Range{
+								Filename: "test.tf",
+								Start: hcl.Pos{
+									Line:   4,
+									Column: 3,
+									Byte:   54,
+								},
+								End: hcl.Pos{
+									Line:   4,
+									Column: 29,
+									Byte:   80,
+								},
+							},
+							InsideReferences: lang.References{
+								{
+									Addr: lang.Address{
+										lang.RootStep{Name: "aws"},
+										lang.AttrStep{Name: "attr_list"},
+										lang.IndexStep{Key: cty.NumberIntVal(0)},
+									},
+									Type: cty.String,
+									RangePtr: &hcl.Range{
+										Filename: "test.tf",
+										Start: hcl.Pos{
+											Line:   4,
+											Column: 16,
+											Byte:   67,
+										},
+										End: hcl.Pos{
+											Line:   4,
+											Column: 21,
+											Byte:   72,
+										},
+									},
+								},
+								{
+									Addr: lang.Address{
+										lang.RootStep{Name: "aws"},
+										lang.AttrStep{Name: "attr_list"},
+										lang.IndexStep{Key: cty.NumberIntVal(1)},
+									},
+									Type: cty.String,
+									RangePtr: &hcl.Range{
+										Filename: "test.tf",
+										Start: hcl.Pos{
+											Line:   4,
+											Column: 23,
+											Byte:   74,
+										},
+										End: hcl.Pos{
+											Line:   4,
+											Column: 28,
+											Byte:   79,
+										},
+									},
+								},
+							},
+						},
+						{
+							Addr: lang.Address{
+								lang.RootStep{Name: "aws"},
+								lang.AttrStep{Name: "attr_map"},
+							},
+							Type: cty.Map(cty.String),
+							RangePtr: &hcl.Range{
+								Filename: "test.tf",
+								Start: hcl.Pos{
+									Line:   5,
+									Column: 3,
+									Byte:   83,
+								},
+								End: hcl.Pos{
+									Line:   7,
+									Column: 4,
+									Byte:   115,
+								},
+							},
+							InsideReferences: lang.References{
+								{
+									Addr: lang.Address{
+										lang.RootStep{Name: "aws"},
+										lang.AttrStep{Name: "attr_map"},
+										lang.IndexStep{Key: cty.StringVal("foo")},
+									},
+									Type: cty.String,
+									RangePtr: &hcl.Range{
+										Filename: "test.tf",
+										Start: hcl.Pos{
+											Line:   6,
+											Column: 5,
+											Byte:   100,
+										},
+										End: hcl.Pos{
+											Line:   6,
+											Column: 16,
+											Byte:   111,
+										},
+									},
+								},
+							},
+						},
+						{
+							Addr: lang.Address{
+								lang.RootStep{Name: "aws"},
 								lang.AttrStep{Name: "name"},
 							},
 							Type: cty.String,
@@ -1016,6 +1471,51 @@ provider "test" {
 									Line:   3,
 									Column: 23,
 									Byte:   51,
+								},
+							},
+						},
+						{
+							Addr: lang.Address{
+								lang.RootStep{Name: "aws"},
+								lang.AttrStep{Name: "obj"},
+							},
+							Type: cty.Object(map[string]cty.Type{
+								"nestedattr": cty.String,
+							}),
+							RangePtr: &hcl.Range{
+								Filename: "test.tf",
+								Start: hcl.Pos{
+									Line:   8,
+									Column: 3,
+									Byte:   118,
+								},
+								End: hcl.Pos{
+									Line:   10,
+									Column: 4,
+									Byte:   153,
+								},
+							},
+							InsideReferences: lang.References{
+								{
+									Addr: lang.Address{
+										lang.RootStep{Name: "aws"},
+										lang.AttrStep{Name: "obj"},
+										lang.AttrStep{Name: "nestedattr"},
+									},
+									Type: cty.String,
+									RangePtr: &hcl.Range{
+										Filename: "test.tf",
+										Start: hcl.Pos{
+											Line:   9,
+											Column: 5,
+											Byte:   130,
+										},
+										End: hcl.Pos{
+											Line:   9,
+											Column: 24,
+											Byte:   149,
+										},
+									},
 								},
 							},
 						},

@@ -1924,8 +1924,8 @@ another_block "meh" {
 			hcl.Pos{Line: 6, Column: 9, Byte: 70},
 			lang.CompleteCandidates([]lang.Candidate{
 				{
-					Label:  "custom.test.greeting",
-					Detail: "string",
+					Label:  "custom.test",
+					Detail: "object",
 					TextEdit: lang.TextEdit{
 						Range: hcl.Range{
 							Filename: "test.tf",
@@ -1940,10 +1940,11 @@ another_block "meh" {
 								Byte:   70,
 							},
 						},
-						NewText: `custom.test.greeting`,
-						Snippet: `custom.test.greeting`,
+						NewText: `custom.test.`,
+						Snippet: `custom.test.`,
 					},
-					Kind: lang.TraversalCandidateKind,
+					Kind:           lang.TraversalCandidateKind,
+					TriggerSuggest: true,
 				},
 			}),
 		},
@@ -2074,6 +2075,352 @@ another_block "meh" {
 						},
 						NewText: "var.first",
 						Snippet: "var.first",
+					},
+					Kind: lang.TraversalCandidateKind,
+				},
+				{
+					Label:  "var.second",
+					Detail: "string",
+					TextEdit: lang.TextEdit{
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start: hcl.Pos{
+								Line:   1,
+								Column: 8,
+								Byte:   7,
+							},
+							End: hcl.Pos{
+								Line:   1,
+								Column: 12,
+								Byte:   11,
+							},
+						},
+						NewText: "var.second",
+						Snippet: "var.second",
+					},
+					Kind: lang.TraversalCandidateKind,
+				},
+			}),
+		},
+		{
+			"step-based completion - top level",
+			&schema.BodySchema{
+				Attributes: map[string]*schema.AttributeSchema{
+					"attr": {
+						Expr: schema.ExprConstraints{
+							schema.TraversalExpr{OfType: cty.String},
+						},
+					},
+				},
+			},
+			lang.References{
+				lang.Reference{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "first"},
+					},
+					Type: cty.Object(map[string]cty.Type{
+						"nested": cty.String,
+					}),
+					InsideReferences: lang.References{
+						{
+							Addr: lang.Address{
+								lang.RootStep{Name: "var"},
+								lang.AttrStep{Name: "first"},
+								lang.AttrStep{Name: "nested"},
+							},
+							Type: cty.String,
+						},
+					},
+				},
+				lang.Reference{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "second"},
+					},
+					Type: cty.String,
+				},
+			},
+			`attr = var.
+`,
+			hcl.Pos{Line: 1, Column: 12, Byte: 11},
+			lang.CompleteCandidates([]lang.Candidate{
+				{
+					Label:  "var.first",
+					Detail: "object",
+					TextEdit: lang.TextEdit{
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start: hcl.Pos{
+								Line:   1,
+								Column: 8,
+								Byte:   7,
+							},
+							End: hcl.Pos{
+								Line:   1,
+								Column: 12,
+								Byte:   11,
+							},
+						},
+						NewText: "var.first.",
+						Snippet: "var.first.",
+					},
+					Kind:           lang.TraversalCandidateKind,
+					TriggerSuggest: true,
+				},
+				{
+					Label:  "var.second",
+					Detail: "string",
+					TextEdit: lang.TextEdit{
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start: hcl.Pos{
+								Line:   1,
+								Column: 8,
+								Byte:   7,
+							},
+							End: hcl.Pos{
+								Line:   1,
+								Column: 12,
+								Byte:   11,
+							},
+						},
+						NewText: "var.second",
+						Snippet: "var.second",
+					},
+					Kind: lang.TraversalCandidateKind,
+				},
+			}),
+		},
+		{
+			"step-based completion - inside object",
+			&schema.BodySchema{
+				Attributes: map[string]*schema.AttributeSchema{
+					"attr": {
+						Expr: schema.ExprConstraints{
+							schema.TraversalExpr{OfType: cty.String},
+						},
+					},
+				},
+			},
+			lang.References{
+				lang.Reference{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "first"},
+					},
+					Type: cty.Object(map[string]cty.Type{
+						"nested": cty.String,
+					}),
+					InsideReferences: lang.References{
+						{
+							Addr: lang.Address{
+								lang.RootStep{Name: "var"},
+								lang.AttrStep{Name: "first"},
+								lang.AttrStep{Name: "nested"},
+							},
+							Type: cty.String,
+						},
+					},
+				},
+				lang.Reference{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "second"},
+					},
+					Type: cty.String,
+				},
+			},
+			`attr = var.first.
+`,
+			hcl.Pos{Line: 1, Column: 18, Byte: 17},
+			lang.CompleteCandidates([]lang.Candidate{
+				{
+					Label:  "var.first.nested",
+					Detail: "string",
+					TextEdit: lang.TextEdit{
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start: hcl.Pos{
+								Line:   1,
+								Column: 8,
+								Byte:   7,
+							},
+							End: hcl.Pos{
+								Line:   1,
+								Column: 18,
+								Byte:   17,
+							},
+						},
+						NewText: "var.first.nested",
+						Snippet: "var.first.nested",
+					},
+					Kind: lang.TraversalCandidateKind,
+				},
+			}),
+		},
+		{
+			"step-based completion - inside list",
+			&schema.BodySchema{
+				Attributes: map[string]*schema.AttributeSchema{
+					"attr": {
+						Expr: schema.ExprConstraints{
+							schema.TraversalExpr{OfType: cty.String},
+						},
+					},
+				},
+			},
+			lang.References{
+				lang.Reference{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "first"},
+					},
+					Type: cty.List(cty.Object(map[string]cty.Type{
+						"nested": cty.String,
+					})),
+					InsideReferences: lang.References{
+						{
+							Addr: lang.Address{
+								lang.RootStep{Name: "var"},
+								lang.AttrStep{Name: "first"},
+								lang.IndexStep{Key: cty.NumberIntVal(0)},
+							},
+							Type: cty.Object(map[string]cty.Type{
+								"nested": cty.String,
+							}),
+							InsideReferences: lang.References{
+								{
+									Addr: lang.Address{
+										lang.RootStep{Name: "var"},
+										lang.AttrStep{Name: "first"},
+										lang.IndexStep{Key: cty.NumberIntVal(0)},
+										lang.AttrStep{Name: "nested"},
+									},
+									Type: cty.String,
+								},
+							},
+						},
+					},
+				},
+				lang.Reference{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "second"},
+					},
+					Type: cty.String,
+				},
+			},
+			`attr = var.
+`,
+			hcl.Pos{Line: 1, Column: 12, Byte: 11},
+			lang.CompleteCandidates([]lang.Candidate{
+				{
+					Label:  "var.first",
+					Detail: "list of object",
+					TextEdit: lang.TextEdit{
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start: hcl.Pos{
+								Line:   1,
+								Column: 8,
+								Byte:   7,
+							},
+							End: hcl.Pos{
+								Line:   1,
+								Column: 12,
+								Byte:   11,
+							},
+						},
+						NewText: "var.first[",
+						Snippet: "var.first[${1:0}]",
+					},
+					Kind: lang.TraversalCandidateKind,
+				},
+				{
+					Label:  "var.second",
+					Detail: "string",
+					TextEdit: lang.TextEdit{
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start: hcl.Pos{
+								Line:   1,
+								Column: 8,
+								Byte:   7,
+							},
+							End: hcl.Pos{
+								Line:   1,
+								Column: 12,
+								Byte:   11,
+							},
+						},
+						NewText: "var.second",
+						Snippet: "var.second",
+					},
+					Kind: lang.TraversalCandidateKind,
+				},
+			}),
+		},
+		{
+			"step-based completion - inside map",
+			&schema.BodySchema{
+				Attributes: map[string]*schema.AttributeSchema{
+					"attr": {
+						Expr: schema.ExprConstraints{
+							schema.TraversalExpr{OfType: cty.String},
+						},
+					},
+				},
+			},
+			lang.References{
+				lang.Reference{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "first"},
+					},
+					Type: cty.Map(cty.String),
+					InsideReferences: lang.References{
+						{
+							Addr: lang.Address{
+								lang.RootStep{Name: "var"},
+								lang.AttrStep{Name: "first"},
+								lang.IndexStep{Key: cty.StringVal("foo")},
+							},
+							Type: cty.String,
+						},
+					},
+				},
+				lang.Reference{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "second"},
+					},
+					Type: cty.String,
+				},
+			},
+			`attr = var.
+`,
+			hcl.Pos{Line: 1, Column: 12, Byte: 11},
+			lang.CompleteCandidates([]lang.Candidate{
+				{
+					Label:  "var.first",
+					Detail: "map of string",
+					TextEdit: lang.TextEdit{
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start: hcl.Pos{
+								Line:   1,
+								Column: 8,
+								Byte:   7,
+							},
+							End: hcl.Pos{
+								Line:   1,
+								Column: 12,
+								Byte:   11,
+							},
+						},
+						NewText: "var.first[",
+						Snippet: `var.first["${1:key}"]`,
 					},
 					Kind: lang.TraversalCandidateKind,
 				},
