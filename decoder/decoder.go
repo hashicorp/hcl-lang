@@ -15,10 +15,10 @@ type Decoder struct {
 	files   map[string]*hcl.File
 	filesMu *sync.RWMutex
 
-	refReader     ReferenceReader
-	rootSchema    *schema.BodySchema
-	rootSchemaMu  *sync.RWMutex
-	maxCandidates uint
+	refTargetReader ReferenceTargetReader
+	rootSchema      *schema.BodySchema
+	rootSchemaMu    *sync.RWMutex
+	maxCandidates   uint
 
 	// UTM parameters for docs URLs
 	// utm_source parameter, typically language server identification
@@ -29,7 +29,7 @@ type Decoder struct {
 	useUtmContent bool
 }
 
-type ReferenceReader func() lang.References
+type ReferenceTargetReader func() lang.ReferenceTargets
 
 // NewDecoder creates a new Decoder
 //
@@ -55,8 +55,8 @@ func (d *Decoder) SetSchema(schema *schema.BodySchema) {
 	d.rootSchema = schema
 }
 
-func (d *Decoder) SetReferenceReader(f ReferenceReader) {
-	d.refReader = f
+func (d *Decoder) SetReferenceTargetReader(f ReferenceTargetReader) {
+	d.refTargetReader = f
 }
 
 func (d *Decoder) SetUtmSource(src string) {

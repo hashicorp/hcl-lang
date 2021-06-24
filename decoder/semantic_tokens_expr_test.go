@@ -1403,7 +1403,7 @@ func TestDecoder_SemanticTokensInFile_traversalExpression(t *testing.T) {
 	testCases := []struct {
 		name           string
 		attrSchema     map[string]*schema.AttributeSchema
-		refs           lang.References
+		refs           lang.ReferenceTargets
 		cfg            string
 		expectedTokens []lang.SemanticToken
 	}{
@@ -1416,7 +1416,7 @@ func TestDecoder_SemanticTokensInFile_traversalExpression(t *testing.T) {
 					},
 				},
 			},
-			lang.References{},
+			lang.ReferenceTargets{},
 			`attr = var.blah
 `,
 			[]lang.SemanticToken{
@@ -1448,8 +1448,8 @@ func TestDecoder_SemanticTokensInFile_traversalExpression(t *testing.T) {
 					},
 				},
 			},
-			lang.References{
-				lang.Reference{
+			lang.ReferenceTargets{
+				lang.ReferenceTarget{
 					Addr: lang.Address{
 						lang.RootStep{Name: "var"},
 						lang.AttrStep{Name: "blah"},
@@ -1488,8 +1488,8 @@ func TestDecoder_SemanticTokensInFile_traversalExpression(t *testing.T) {
 					},
 				},
 			},
-			lang.References{
-				lang.Reference{
+			lang.ReferenceTargets{
+				lang.ReferenceTarget{
 					Addr: lang.Address{
 						lang.RootStep{Name: "var"},
 						lang.AttrStep{Name: "blah"},
@@ -1561,7 +1561,7 @@ func TestDecoder_SemanticTokensInFile_traversalExpression(t *testing.T) {
 			d.SetSchema(&schema.BodySchema{
 				Attributes: tc.attrSchema,
 			})
-			d.SetReferenceReader(func() lang.References {
+			d.SetReferenceTargetReader(func() lang.ReferenceTargets {
 				return tc.refs
 			})
 

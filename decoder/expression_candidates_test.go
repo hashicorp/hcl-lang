@@ -1531,7 +1531,7 @@ func TestDecoder_CandidateAtPos_traversalExpressions(t *testing.T) {
 	testCases := []struct {
 		testName           string
 		bodySchema         *schema.BodySchema
-		builtinRefs        lang.References
+		builtinRefs        lang.ReferenceTargets
 		cfg                string
 		pos                hcl.Pos
 		expectedCandidates lang.Candidates
@@ -1547,7 +1547,7 @@ func TestDecoder_CandidateAtPos_traversalExpressions(t *testing.T) {
 					},
 				},
 			},
-			lang.References{},
+			lang.ReferenceTargets{},
 			`attr = 
 `,
 			hcl.Pos{Line: 1, Column: 8, Byte: 7},
@@ -1565,15 +1565,15 @@ func TestDecoder_CandidateAtPos_traversalExpressions(t *testing.T) {
 					},
 				},
 			},
-			lang.References{
-				lang.Reference{
+			lang.ReferenceTargets{
+				lang.ReferenceTarget{
 					Addr: lang.Address{
 						lang.RootStep{Name: "var"},
 						lang.RootStep{Name: "first"},
 					},
 					Type: cty.Bool,
 				},
-				lang.Reference{
+				lang.ReferenceTarget{
 					Addr: lang.Address{
 						lang.RootStep{Name: "var"},
 						lang.RootStep{Name: "second"},
@@ -1597,15 +1597,15 @@ func TestDecoder_CandidateAtPos_traversalExpressions(t *testing.T) {
 					},
 				},
 			},
-			lang.References{
-				lang.Reference{
+			lang.ReferenceTargets{
+				lang.ReferenceTarget{
 					Addr: lang.Address{
 						lang.RootStep{Name: "var"},
 						lang.AttrStep{Name: "first"},
 					},
 					Type: cty.Bool,
 				},
-				lang.Reference{
+				lang.ReferenceTarget{
 					Addr: lang.Address{
 						lang.RootStep{Name: "var"},
 						lang.AttrStep{Name: "second"},
@@ -1652,15 +1652,15 @@ func TestDecoder_CandidateAtPos_traversalExpressions(t *testing.T) {
 					},
 				},
 			},
-			lang.References{
-				lang.Reference{
+			lang.ReferenceTargets{
+				lang.ReferenceTarget{
 					Addr: lang.Address{
 						lang.RootStep{Name: "var"},
 						lang.AttrStep{Name: "first"},
 					},
 					Type: cty.Bool,
 				},
-				lang.Reference{
+				lang.ReferenceTarget{
 					Addr: lang.Address{
 						lang.RootStep{Name: "var"},
 						lang.AttrStep{Name: "second"},
@@ -1729,15 +1729,15 @@ func TestDecoder_CandidateAtPos_traversalExpressions(t *testing.T) {
 					},
 				},
 			},
-			lang.References{
-				lang.Reference{
+			lang.ReferenceTargets{
+				lang.ReferenceTarget{
 					Addr: lang.Address{
 						lang.RootStep{Name: "var"},
 						lang.AttrStep{Name: "first"},
 					},
 					ScopeId: lang.ScopeId("test"),
 				},
-				lang.Reference{
+				lang.ReferenceTarget{
 					Addr: lang.Address{
 						lang.RootStep{Name: "var"},
 						lang.AttrStep{Name: "second"},
@@ -1789,22 +1789,22 @@ func TestDecoder_CandidateAtPos_traversalExpressions(t *testing.T) {
 					},
 				},
 			},
-			lang.References{
-				lang.Reference{
+			lang.ReferenceTargets{
+				lang.ReferenceTarget{
 					Addr: lang.Address{
 						lang.RootStep{Name: "var"},
 						lang.AttrStep{Name: "zero"},
 					},
 					Type: cty.Number,
 				},
-				lang.Reference{
+				lang.ReferenceTarget{
 					Addr: lang.Address{
 						lang.RootStep{Name: "var"},
 						lang.AttrStep{Name: "first"},
 					},
 					ScopeId: lang.ScopeId("blah"),
 				},
-				lang.Reference{
+				lang.ReferenceTarget{
 					Addr: lang.Address{
 						lang.RootStep{Name: "var"},
 						lang.AttrStep{Name: "second"},
@@ -1837,22 +1837,22 @@ func TestDecoder_CandidateAtPos_traversalExpressions(t *testing.T) {
 					},
 				},
 			},
-			lang.References{
-				lang.Reference{
+			lang.ReferenceTargets{
+				lang.ReferenceTarget{
 					Addr: lang.Address{
 						lang.RootStep{Name: "var"},
 						lang.AttrStep{Name: "zero"},
 					},
 					Type: cty.Number,
 				},
-				lang.Reference{
+				lang.ReferenceTarget{
 					Addr: lang.Address{
 						lang.RootStep{Name: "var"},
 						lang.AttrStep{Name: "first"},
 					},
 					ScopeId: lang.ScopeId("blah"),
 				},
-				lang.Reference{
+				lang.ReferenceTarget{
 					Addr: lang.Address{
 						lang.RootStep{Name: "var"},
 						lang.AttrStep{Name: "second"},
@@ -1912,7 +1912,7 @@ func TestDecoder_CandidateAtPos_traversalExpressions(t *testing.T) {
 					},
 				},
 			},
-			lang.References{},
+			lang.ReferenceTargets{},
 			`custom "test" {
   greeting = "hello"
 }
@@ -1959,15 +1959,15 @@ another_block "meh" {
 					},
 				},
 			},
-			lang.References{
-				lang.Reference{
+			lang.ReferenceTargets{
+				lang.ReferenceTarget{
 					Addr: lang.Address{
 						lang.RootStep{Name: "var"},
 						lang.AttrStep{Name: "first"},
 					},
 					Type: cty.String,
 				},
-				lang.Reference{
+				lang.ReferenceTarget{
 					Addr: lang.Address{
 						lang.RootStep{Name: "var"},
 						lang.AttrStep{Name: "second"},
@@ -2036,15 +2036,15 @@ another_block "meh" {
 					},
 				},
 			},
-			lang.References{
-				lang.Reference{
+			lang.ReferenceTargets{
+				lang.ReferenceTarget{
 					Addr: lang.Address{
 						lang.RootStep{Name: "var"},
 						lang.AttrStep{Name: "first"},
 					},
 					Type: cty.String,
 				},
-				lang.Reference{
+				lang.ReferenceTarget{
 					Addr: lang.Address{
 						lang.RootStep{Name: "var"},
 						lang.AttrStep{Name: "second"},
@@ -2113,8 +2113,8 @@ another_block "meh" {
 					},
 				},
 			},
-			lang.References{
-				lang.Reference{
+			lang.ReferenceTargets{
+				lang.ReferenceTarget{
 					Addr: lang.Address{
 						lang.RootStep{Name: "var"},
 						lang.AttrStep{Name: "first"},
@@ -2122,7 +2122,7 @@ another_block "meh" {
 					Type: cty.Object(map[string]cty.Type{
 						"nested": cty.String,
 					}),
-					InsideReferences: lang.References{
+					NestedTargets: lang.ReferenceTargets{
 						{
 							Addr: lang.Address{
 								lang.RootStep{Name: "var"},
@@ -2133,7 +2133,7 @@ another_block "meh" {
 						},
 					},
 				},
-				lang.Reference{
+				lang.ReferenceTarget{
 					Addr: lang.Address{
 						lang.RootStep{Name: "var"},
 						lang.AttrStep{Name: "second"},
@@ -2203,8 +2203,8 @@ another_block "meh" {
 					},
 				},
 			},
-			lang.References{
-				lang.Reference{
+			lang.ReferenceTargets{
+				lang.ReferenceTarget{
 					Addr: lang.Address{
 						lang.RootStep{Name: "var"},
 						lang.AttrStep{Name: "first"},
@@ -2212,7 +2212,7 @@ another_block "meh" {
 					Type: cty.Object(map[string]cty.Type{
 						"nested": cty.String,
 					}),
-					InsideReferences: lang.References{
+					NestedTargets: lang.ReferenceTargets{
 						{
 							Addr: lang.Address{
 								lang.RootStep{Name: "var"},
@@ -2223,7 +2223,7 @@ another_block "meh" {
 						},
 					},
 				},
-				lang.Reference{
+				lang.ReferenceTarget{
 					Addr: lang.Address{
 						lang.RootStep{Name: "var"},
 						lang.AttrStep{Name: "second"},
@@ -2270,8 +2270,8 @@ another_block "meh" {
 					},
 				},
 			},
-			lang.References{
-				lang.Reference{
+			lang.ReferenceTargets{
+				lang.ReferenceTarget{
 					Addr: lang.Address{
 						lang.RootStep{Name: "var"},
 						lang.AttrStep{Name: "first"},
@@ -2279,7 +2279,7 @@ another_block "meh" {
 					Type: cty.List(cty.Object(map[string]cty.Type{
 						"nested": cty.String,
 					})),
-					InsideReferences: lang.References{
+					NestedTargets: lang.ReferenceTargets{
 						{
 							Addr: lang.Address{
 								lang.RootStep{Name: "var"},
@@ -2289,7 +2289,7 @@ another_block "meh" {
 							Type: cty.Object(map[string]cty.Type{
 								"nested": cty.String,
 							}),
-							InsideReferences: lang.References{
+							NestedTargets: lang.ReferenceTargets{
 								{
 									Addr: lang.Address{
 										lang.RootStep{Name: "var"},
@@ -2303,7 +2303,7 @@ another_block "meh" {
 						},
 					},
 				},
-				lang.Reference{
+				lang.ReferenceTarget{
 					Addr: lang.Address{
 						lang.RootStep{Name: "var"},
 						lang.AttrStep{Name: "second"},
@@ -2372,14 +2372,14 @@ another_block "meh" {
 					},
 				},
 			},
-			lang.References{
-				lang.Reference{
+			lang.ReferenceTargets{
+				lang.ReferenceTarget{
 					Addr: lang.Address{
 						lang.RootStep{Name: "var"},
 						lang.AttrStep{Name: "first"},
 					},
 					Type: cty.Map(cty.String),
-					InsideReferences: lang.References{
+					NestedTargets: lang.ReferenceTargets{
 						{
 							Addr: lang.Address{
 								lang.RootStep{Name: "var"},
@@ -2390,7 +2390,7 @@ another_block "meh" {
 						},
 					},
 				},
-				lang.Reference{
+				lang.ReferenceTarget{
 					Addr: lang.Address{
 						lang.RootStep{Name: "var"},
 						lang.AttrStep{Name: "second"},
@@ -2454,9 +2454,9 @@ another_block "meh" {
 		t.Run(fmt.Sprintf("%d-%s", i, tc.testName), func(t *testing.T) {
 			d := NewDecoder()
 			d.SetSchema(tc.bodySchema)
-			d.SetReferenceReader(func() lang.References {
+			d.SetReferenceTargetReader(func() lang.ReferenceTargets {
 				bRefs := tc.builtinRefs
-				refs, _ := d.DecodeReferences()
+				refs, _ := d.CollectReferenceTargets()
 				refs = append(refs, bRefs...)
 				return refs
 			})

@@ -317,7 +317,7 @@ func (d *Decoder) constraintToCandidates(constraint schema.ExprConstraint, outer
 func (d *Decoder) candidatesForTraversalConstraint(tc schema.TraversalExpr, outerBodyRng, prefixRng, editRng hcl.Range) []lang.Candidate {
 	candidates := make([]lang.Candidate, 0)
 
-	if d.refReader == nil {
+	if d.refTargetReader == nil {
 		return candidates
 	}
 
@@ -328,9 +328,9 @@ func (d *Decoder) candidatesForTraversalConstraint(tc schema.TraversalExpr, oute
 
 	prefix, _ := d.bytesFromRange(prefixRng)
 
-	refs := References(d.refReader())
+	refs := ReferenceTargets(d.refTargetReader())
 
-	refs.MatchWalk(tc, string(prefix), func(ref lang.Reference, hasNestedMatches bool) {
+	refs.MatchWalk(tc, string(prefix), func(ref lang.ReferenceTarget, hasNestedMatches bool) {
 		// avoid suggesting references to block's own fields from within (for now)
 		if ref.RangePtr != nil &&
 			(outerBodyRng.ContainsPos(ref.RangePtr.Start) ||
@@ -338,7 +338,7 @@ func (d *Decoder) candidatesForTraversalConstraint(tc schema.TraversalExpr, oute
 			return
 		}
 
-		textEdit, triggerSuggest := textEditForReference(ref, editRng, hasNestedMatches)
+		textEdit, triggerSuggest := textEditForReferenceTarget(ref, editRng, hasNestedMatches)
 
 		candidates = append(candidates, lang.Candidate{
 			Label:          ref.Addr.String(),
@@ -353,7 +353,7 @@ func (d *Decoder) candidatesForTraversalConstraint(tc schema.TraversalExpr, oute
 	return candidates
 }
 
-func textEditForReference(ref lang.Reference, editRng hcl.Range, hasNestedMatches bool) (lang.TextEdit, bool) {
+func textEditForReferenceTarget(ref lang.ReferenceTarget, editRng hcl.Range, hasNestedMatches bool) (lang.TextEdit, bool) {
 	te := lang.TextEdit{
 		NewText: ref.Addr.String(),
 		Snippet: ref.Addr.String(),
