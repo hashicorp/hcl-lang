@@ -330,12 +330,12 @@ func (d *Decoder) candidatesForTraversalConstraint(tc schema.TraversalExpr, oute
 
 	refs := ReferenceTargets(d.refTargetReader())
 
-	refs.MatchWalk(tc, string(prefix), func(ref lang.ReferenceTarget) {
+	refs.MatchWalk(tc, string(prefix), func(ref lang.ReferenceTarget) error {
 		// avoid suggesting references to block's own fields from within (for now)
 		if ref.RangePtr != nil &&
 			(outerBodyRng.ContainsPos(ref.RangePtr.Start) ||
 				posEqual(outerBodyRng.End, ref.RangePtr.End)) {
-			return
+			return nil
 		}
 
 		candidates = append(candidates, lang.Candidate{
@@ -349,6 +349,7 @@ func (d *Decoder) candidatesForTraversalConstraint(tc schema.TraversalExpr, oute
 				Range:   editRng,
 			},
 		})
+		return nil
 	})
 
 	return candidates
