@@ -1812,14 +1812,14 @@ provider "test" {
 							RangePtr: &hcl.Range{
 								Filename: "test.tf",
 								Start: hcl.Pos{
-									Line:   11,
-									Column: 2,
-									Byte:   138,
+									Line:   3,
+									Column: 3,
+									Byte:   32,
 								},
 								End: hcl.Pos{
-									Line:   11,
-									Column: 2,
-									Byte:   138,
+									Line:   10,
+									Column: 4,
+									Byte:   136,
 								},
 							},
 							Type: cty.List(cty.Object(map[string]cty.Type{
@@ -1833,45 +1833,488 @@ provider "test" {
 										lang.AttrStep{Name: "aws"},
 										lang.AttrStep{Name: "listblock"},
 										lang.IndexStep{Key: cty.NumberIntVal(0)},
-										lang.AttrStep{Name: "port"},
 									},
 									RangePtr: &hcl.Range{
 										Filename: "test.tf",
 										Start: hcl.Pos{
-											Line:   4,
-											Column: 5,
-											Byte:   48,
+											Line:   3,
+											Column: 3,
+											Byte:   32,
 										},
 										End: hcl.Pos{
-											Line:   4,
-											Column: 14,
-											Byte:   57,
+											Line:   10,
+											Column: 4,
+											Byte:   136,
 										},
 									},
-									Type: cty.Number,
+									Type: cty.Object(map[string]cty.Type{
+										"port":     cty.Number,
+										"protocol": cty.String,
+									}),
+									InsideReferences: lang.References{
+										{
+											Addr: lang.Address{
+												lang.RootStep{Name: "root"},
+												lang.AttrStep{Name: "aws"},
+												lang.AttrStep{Name: "listblock"},
+												lang.IndexStep{Key: cty.NumberIntVal(0)},
+												lang.AttrStep{Name: "port"},
+											},
+											RangePtr: &hcl.Range{
+												Filename: "test.tf",
+												Start: hcl.Pos{
+													Line:   4,
+													Column: 5,
+													Byte:   48,
+												},
+												End: hcl.Pos{
+													Line:   4,
+													Column: 14,
+													Byte:   57,
+												},
+											},
+											Type: cty.Number,
+										},
+										{
+											Addr: lang.Address{
+												lang.RootStep{Name: "root"},
+												lang.AttrStep{Name: "aws"},
+												lang.AttrStep{Name: "listblock"},
+												lang.IndexStep{Key: cty.NumberIntVal(0)},
+												lang.AttrStep{Name: "protocol"},
+											},
+											RangePtr: &hcl.Range{
+												Filename: "test.tf",
+												Start: hcl.Pos{
+													Line:   5,
+													Column: 5,
+													Byte:   62,
+												},
+												End: hcl.Pos{
+													Line:   5,
+													Column: 21,
+													Byte:   78,
+												},
+											},
+											Type: cty.String,
+										},
+									},
 								},
+								{
+									Addr: lang.Address{
+										lang.RootStep{Name: "root"},
+										lang.AttrStep{Name: "aws"},
+										lang.AttrStep{Name: "listblock"},
+										lang.IndexStep{Key: cty.NumberIntVal(1)},
+									},
+									RangePtr: &hcl.Range{
+										Filename: "test.tf",
+										Start: hcl.Pos{
+											Line:   7,
+											Column: 3,
+											Byte:   85,
+										},
+										End: hcl.Pos{
+											Line:   10,
+											Column: 4,
+											Byte:   136,
+										},
+									},
+									Type: cty.Object(map[string]cty.Type{
+										"port":     cty.Number,
+										"protocol": cty.String,
+									}),
+									InsideReferences: lang.References{
+										{
+											Addr: lang.Address{
+												lang.RootStep{Name: "root"},
+												lang.AttrStep{Name: "aws"},
+												lang.AttrStep{Name: "listblock"},
+												lang.IndexStep{Key: cty.NumberIntVal(1)},
+												lang.AttrStep{Name: "port"},
+											},
+											RangePtr: &hcl.Range{
+												Filename: "test.tf",
+												Start: hcl.Pos{
+													Line:   8,
+													Column: 5,
+													Byte:   101,
+												},
+												End: hcl.Pos{
+													Line:   8,
+													Column: 15,
+													Byte:   111,
+												},
+											},
+											Type: cty.Number,
+										},
+										{
+											Addr: lang.Address{
+												lang.RootStep{Name: "root"},
+												lang.AttrStep{Name: "aws"},
+												lang.AttrStep{Name: "listblock"},
+												lang.IndexStep{Key: cty.NumberIntVal(1)},
+												lang.AttrStep{Name: "protocol"},
+											},
+											RangePtr: &hcl.Range{
+												Filename: "test.tf",
+												Start: hcl.Pos{
+													Line:   9,
+													Column: 5,
+													Byte:   116,
+												},
+												End: hcl.Pos{
+													Line:   9,
+													Column: 21,
+													Byte:   132,
+												},
+											},
+											Type: cty.String,
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			"nested set block with inferred body data",
+			&schema.BodySchema{
+				Blocks: map[string]*schema.BlockSchema{
+					"rootblock": {
+						Labels: []*schema.LabelSchema{
+							{Name: "name", IsDepKey: true},
+						},
+						Address: &schema.BlockAddrSchema{
+							Steps: []schema.AddrStep{
+								schema.StaticStep{Name: "root"},
+								schema.LabelStep{Index: 0},
+							},
+							BodyAsData: true,
+							InferBody:  true,
+						},
+						Type: schema.BlockTypeObject,
+						Body: &schema.BodySchema{
+							Blocks: map[string]*schema.BlockSchema{
+								"setblock": {
+									Type: schema.BlockTypeSet,
+									Body: &schema.BodySchema{
+										Attributes: map[string]*schema.AttributeSchema{
+											"protocol": {
+												Expr:       schema.LiteralTypeOnly(cty.String),
+												IsOptional: true,
+											},
+											"port": {
+												Expr:       schema.LiteralTypeOnly(cty.Number),
+												IsOptional: true,
+											},
+										},
+									},
+								},
+							},
+							Attributes: map[string]*schema.AttributeSchema{
+								"attr": {
+									Expr:       schema.LiteralTypeOnly(cty.Number),
+									IsOptional: true,
+								},
+							},
+						},
+					},
+				},
+			},
+			`rootblock "aws" {
+  attr = 42
+  setblock {
+    port = 80
+    protocol = "tcp"
+  }
+  setblock {
+    port = 443
+    protocol = "tcp"
+  }
+}
+`,
+			lang.References{
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "root"},
+						lang.AttrStep{Name: "aws"},
+					},
+					RangePtr: &hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   1,
+							Column: 1,
+							Byte:   0,
+						},
+						End: hcl.Pos{
+							Line:   11,
+							Column: 2,
+							Byte:   136,
+						},
+					},
+					Type: cty.Object(map[string]cty.Type{
+						"attr": cty.Number,
+						"setblock": cty.Set(cty.Object(map[string]cty.Type{
+							"port":     cty.Number,
+							"protocol": cty.String,
+						})),
+					}),
+					InsideReferences: lang.References{
+						{
+							Addr: lang.Address{
+								lang.RootStep{Name: "root"},
+								lang.AttrStep{Name: "aws"},
+								lang.AttrStep{Name: "attr"},
+							},
+							RangePtr: &hcl.Range{
+								Filename: "test.tf",
+								Start: hcl.Pos{
+									Line:   2,
+									Column: 3,
+									Byte:   20,
+								},
+								End: hcl.Pos{
+									Line:   2,
+									Column: 12,
+									Byte:   29,
+								},
+							},
+							Type: cty.Number,
+						},
+						{
+							Addr: lang.Address{
+								lang.RootStep{Name: "root"},
+								lang.AttrStep{Name: "aws"},
+								lang.AttrStep{Name: "setblock"},
+							},
+							RangePtr: &hcl.Range{
+								Filename: "test.tf",
+								Start: hcl.Pos{
+									Line:   3,
+									Column: 3,
+									Byte:   32,
+								},
+								End: hcl.Pos{
+									Line:   10,
+									Column: 4,
+									Byte:   134,
+								},
+							},
+							Type: cty.Set(cty.Object(map[string]cty.Type{
+								"port":     cty.Number,
+								"protocol": cty.String,
+							})),
+						},
+					},
+				},
+			},
+		},
+		{
+			"separated nested list blocks with inferred body data",
+			// This is to verify that Range (correctly) points to the 1st block
+			// when block instances are non-consecutive
+			&schema.BodySchema{
+				Blocks: map[string]*schema.BlockSchema{
+					"rootblock": {
+						Labels: []*schema.LabelSchema{
+							{Name: "name", IsDepKey: true},
+						},
+						Address: &schema.BlockAddrSchema{
+							Steps: []schema.AddrStep{
+								schema.StaticStep{Name: "root"},
+								schema.LabelStep{Index: 0},
+							},
+							BodyAsData: true,
+							InferBody:  true,
+						},
+						Type: schema.BlockTypeObject,
+						Body: &schema.BodySchema{
+							Blocks: map[string]*schema.BlockSchema{
+								"listblock": {
+									Type: schema.BlockTypeList,
+									Body: &schema.BodySchema{
+										Attributes: map[string]*schema.AttributeSchema{
+											"protocol": {
+												Expr:       schema.LiteralTypeOnly(cty.String),
+												IsOptional: true,
+											},
+											"port": {
+												Expr:       schema.LiteralTypeOnly(cty.Number),
+												IsOptional: true,
+											},
+										},
+									},
+								},
+							},
+							Attributes: map[string]*schema.AttributeSchema{
+								"attr": {
+									Expr:       schema.LiteralTypeOnly(cty.Number),
+									IsOptional: true,
+								},
+							},
+						},
+					},
+				},
+			},
+			`rootblock "aws" {
+  listblock {
+    port = 80
+    protocol = "tcp"
+  }
+  attr = 42
+  listblock {
+    port = 443
+    protocol = "tcp"
+  }
+}
+`,
+			lang.References{
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "root"},
+						lang.AttrStep{Name: "aws"},
+					},
+					RangePtr: &hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   1,
+							Column: 1,
+							Byte:   0,
+						},
+						End: hcl.Pos{
+							Line:   11,
+							Column: 2,
+							Byte:   138,
+						},
+					},
+					Type: cty.Object(map[string]cty.Type{
+						"attr": cty.Number,
+						"listblock": cty.List(cty.Object(map[string]cty.Type{
+							"port":     cty.Number,
+							"protocol": cty.String,
+						})),
+					}),
+					InsideReferences: lang.References{
+						{
+							Addr: lang.Address{
+								lang.RootStep{Name: "root"},
+								lang.AttrStep{Name: "aws"},
+								lang.AttrStep{Name: "attr"},
+							},
+							RangePtr: &hcl.Range{
+								Filename: "test.tf",
+								Start: hcl.Pos{
+									Line:   6,
+									Column: 3,
+									Byte:   73,
+								},
+								End: hcl.Pos{
+									Line:   6,
+									Column: 12,
+									Byte:   82,
+								},
+							},
+							Type: cty.Number,
+						},
+						{
+							Addr: lang.Address{
+								lang.RootStep{Name: "root"},
+								lang.AttrStep{Name: "aws"},
+								lang.AttrStep{Name: "listblock"},
+							},
+							RangePtr: &hcl.Range{
+								Filename: "test.tf",
+								Start: hcl.Pos{
+									Line:   2,
+									Column: 3,
+									Byte:   20,
+								},
+								End: hcl.Pos{
+									Line:   5,
+									Column: 4,
+									Byte:   70,
+								},
+							},
+							Type: cty.List(cty.Object(map[string]cty.Type{
+								"port":     cty.Number,
+								"protocol": cty.String,
+							})),
+							InsideReferences: lang.References{
 								{
 									Addr: lang.Address{
 										lang.RootStep{Name: "root"},
 										lang.AttrStep{Name: "aws"},
 										lang.AttrStep{Name: "listblock"},
 										lang.IndexStep{Key: cty.NumberIntVal(0)},
-										lang.AttrStep{Name: "protocol"},
 									},
 									RangePtr: &hcl.Range{
 										Filename: "test.tf",
 										Start: hcl.Pos{
-											Line:   5,
-											Column: 5,
-											Byte:   62,
+											Line:   2,
+											Column: 3,
+											Byte:   20,
 										},
 										End: hcl.Pos{
 											Line:   5,
-											Column: 21,
-											Byte:   78,
+											Column: 4,
+											Byte:   70,
 										},
 									},
-									Type: cty.String,
+									Type: cty.Object(map[string]cty.Type{
+										"port":     cty.Number,
+										"protocol": cty.String,
+									}),
+									InsideReferences: lang.References{
+										{
+											Addr: lang.Address{
+												lang.RootStep{Name: "root"},
+												lang.AttrStep{Name: "aws"},
+												lang.AttrStep{Name: "listblock"},
+												lang.IndexStep{Key: cty.NumberIntVal(0)},
+												lang.AttrStep{Name: "port"},
+											},
+											RangePtr: &hcl.Range{
+												Filename: "test.tf",
+												Start: hcl.Pos{
+													Line:   3,
+													Column: 5,
+													Byte:   36,
+												},
+												End: hcl.Pos{
+													Line:   3,
+													Column: 14,
+													Byte:   45,
+												},
+											},
+											Type: cty.Number,
+										},
+										{
+											Addr: lang.Address{
+												lang.RootStep{Name: "root"},
+												lang.AttrStep{Name: "aws"},
+												lang.AttrStep{Name: "listblock"},
+												lang.IndexStep{Key: cty.NumberIntVal(0)},
+												lang.AttrStep{Name: "protocol"},
+											},
+											RangePtr: &hcl.Range{
+												Filename: "test.tf",
+												Start: hcl.Pos{
+													Line:   4,
+													Column: 5,
+													Byte:   50,
+												},
+												End: hcl.Pos{
+													Line:   4,
+													Column: 21,
+													Byte:   66,
+												},
+											},
+											Type: cty.String,
+										},
+									},
 								},
 								{
 									Addr: lang.Address{
@@ -1879,45 +2322,72 @@ provider "test" {
 										lang.AttrStep{Name: "aws"},
 										lang.AttrStep{Name: "listblock"},
 										lang.IndexStep{Key: cty.NumberIntVal(1)},
-										lang.AttrStep{Name: "port"},
 									},
 									RangePtr: &hcl.Range{
 										Filename: "test.tf",
 										Start: hcl.Pos{
-											Line:   8,
-											Column: 5,
-											Byte:   101,
+											Line:   7,
+											Column: 3,
+											Byte:   85,
 										},
 										End: hcl.Pos{
-											Line:   8,
-											Column: 15,
-											Byte:   111,
+											Line:   10,
+											Column: 4,
+											Byte:   136,
 										},
 									},
-									Type: cty.Number,
-								},
-								{
-									Addr: lang.Address{
-										lang.RootStep{Name: "root"},
-										lang.AttrStep{Name: "aws"},
-										lang.AttrStep{Name: "listblock"},
-										lang.IndexStep{Key: cty.NumberIntVal(1)},
-										lang.AttrStep{Name: "protocol"},
-									},
-									RangePtr: &hcl.Range{
-										Filename: "test.tf",
-										Start: hcl.Pos{
-											Line:   9,
-											Column: 5,
-											Byte:   116,
+									Type: cty.Object(map[string]cty.Type{
+										"port":     cty.Number,
+										"protocol": cty.String,
+									}),
+									InsideReferences: lang.References{
+										{
+											Addr: lang.Address{
+												lang.RootStep{Name: "root"},
+												lang.AttrStep{Name: "aws"},
+												lang.AttrStep{Name: "listblock"},
+												lang.IndexStep{Key: cty.NumberIntVal(1)},
+												lang.AttrStep{Name: "port"},
+											},
+											RangePtr: &hcl.Range{
+												Filename: "test.tf",
+												Start: hcl.Pos{
+													Line:   8,
+													Column: 5,
+													Byte:   101,
+												},
+												End: hcl.Pos{
+													Line:   8,
+													Column: 15,
+													Byte:   111,
+												},
+											},
+											Type: cty.Number,
 										},
-										End: hcl.Pos{
-											Line:   9,
-											Column: 21,
-											Byte:   132,
+										{
+											Addr: lang.Address{
+												lang.RootStep{Name: "root"},
+												lang.AttrStep{Name: "aws"},
+												lang.AttrStep{Name: "listblock"},
+												lang.IndexStep{Key: cty.NumberIntVal(1)},
+												lang.AttrStep{Name: "protocol"},
+											},
+											RangePtr: &hcl.Range{
+												Filename: "test.tf",
+												Start: hcl.Pos{
+													Line:   9,
+													Column: 5,
+													Byte:   116,
+												},
+												End: hcl.Pos{
+													Line:   9,
+													Column: 21,
+													Byte:   132,
+												},
+											},
+											Type: cty.String,
 										},
 									},
-									Type: cty.String,
 								},
 							},
 						},
@@ -2041,14 +2511,14 @@ provider "test" {
 							RangePtr: &hcl.Range{
 								Filename: "test.tf",
 								Start: hcl.Pos{
-									Line:   10,
-									Column: 2,
-									Byte:   134,
+									Line:   3,
+									Column: 3,
+									Byte:   36,
 								},
 								End: hcl.Pos{
-									Line:   10,
-									Column: 2,
-									Byte:   134,
+									Line:   9,
+									Column: 4,
+									Byte:   132,
 								},
 							},
 							Type: cty.Map(cty.Object(map[string]cty.Type{
@@ -2062,83 +2532,17 @@ provider "test" {
 										lang.AttrStep{Name: "aws"},
 										lang.AttrStep{Name: "listener"},
 										lang.IndexStep{Key: cty.StringVal("http")},
-										lang.AttrStep{Name: "port"},
 									},
+									Type: cty.Object(map[string]cty.Type{
+										"port":     cty.Number,
+										"protocol": cty.String,
+									}),
 									RangePtr: &hcl.Range{
 										Filename: "test.tf",
 										Start: hcl.Pos{
-											Line:   4,
-											Column: 5,
-											Byte:   58,
-										},
-										End: hcl.Pos{
-											Line:   4,
-											Column: 14,
-											Byte:   67,
-										},
-									},
-									Type: cty.Number,
-								},
-								{
-									Addr: lang.Address{
-										lang.RootStep{Name: "lb"},
-										lang.AttrStep{Name: "aws"},
-										lang.AttrStep{Name: "listener"},
-										lang.IndexStep{Key: cty.StringVal("http")},
-										lang.AttrStep{Name: "protocol"},
-									},
-									RangePtr: &hcl.Range{
-										Filename: "test.tf",
-										Start: hcl.Pos{
-											Line:   5,
-											Column: 5,
-											Byte:   72,
-										},
-										End: hcl.Pos{
-											Line:   5,
-											Column: 21,
-											Byte:   88,
-										},
-									},
-									Type: cty.String,
-								},
-								{
-									Addr: lang.Address{
-										lang.RootStep{Name: "lb"},
-										lang.AttrStep{Name: "aws"},
-										lang.AttrStep{Name: "listener"},
-										lang.IndexStep{Key: cty.StringVal("https")},
-										lang.AttrStep{Name: "port"},
-									},
-									RangePtr: &hcl.Range{
-										Filename: "test.tf",
-										Start: hcl.Pos{
-											Line:   8,
-											Column: 5,
-											Byte:   118,
-										},
-										End: hcl.Pos{
-											Line:   8,
-											Column: 15,
-											Byte:   128,
-										},
-									},
-									Type: cty.Number,
-								},
-								{
-									Addr: lang.Address{
-										lang.RootStep{Name: "lb"},
-										lang.AttrStep{Name: "aws"},
-										lang.AttrStep{Name: "listener"},
-										lang.IndexStep{Key: cty.StringVal("https")},
-										lang.AttrStep{Name: "protocol"},
-									},
-									RangePtr: &hcl.Range{
-										Filename: "test.tf",
-										Start: hcl.Pos{
-											Line:   9,
-											Column: 4,
-											Byte:   132,
+											Line:   3,
+											Column: 3,
+											Byte:   36,
 										},
 										End: hcl.Pos{
 											Line:   9,
@@ -2146,7 +2550,127 @@ provider "test" {
 											Byte:   132,
 										},
 									},
-									Type: cty.String,
+									InsideReferences: lang.References{
+										{
+											Addr: lang.Address{
+												lang.RootStep{Name: "lb"},
+												lang.AttrStep{Name: "aws"},
+												lang.AttrStep{Name: "listener"},
+												lang.IndexStep{Key: cty.StringVal("http")},
+												lang.AttrStep{Name: "port"},
+											},
+											RangePtr: &hcl.Range{
+												Filename: "test.tf",
+												Start: hcl.Pos{
+													Line:   4,
+													Column: 5,
+													Byte:   58,
+												},
+												End: hcl.Pos{
+													Line:   4,
+													Column: 14,
+													Byte:   67,
+												},
+											},
+											Type: cty.Number,
+										},
+										{
+											Addr: lang.Address{
+												lang.RootStep{Name: "lb"},
+												lang.AttrStep{Name: "aws"},
+												lang.AttrStep{Name: "listener"},
+												lang.IndexStep{Key: cty.StringVal("http")},
+												lang.AttrStep{Name: "protocol"},
+											},
+											RangePtr: &hcl.Range{
+												Filename: "test.tf",
+												Start: hcl.Pos{
+													Line:   5,
+													Column: 5,
+													Byte:   72,
+												},
+												End: hcl.Pos{
+													Line:   5,
+													Column: 21,
+													Byte:   88,
+												},
+											},
+											Type: cty.String,
+										},
+									},
+								},
+								{
+									Addr: lang.Address{
+										lang.RootStep{Name: "lb"},
+										lang.AttrStep{Name: "aws"},
+										lang.AttrStep{Name: "listener"},
+										lang.IndexStep{Key: cty.StringVal("https")},
+									},
+									Type: cty.Object(map[string]cty.Type{
+										"port":     cty.Number,
+										"protocol": cty.String,
+									}),
+									RangePtr: &hcl.Range{
+										Filename: "test.tf",
+										Start: hcl.Pos{
+											Line:   7,
+											Column: 3,
+											Byte:   95,
+										},
+										End: hcl.Pos{
+											Line:   9,
+											Column: 4,
+											Byte:   132,
+										},
+									},
+									InsideReferences: lang.References{
+										{
+											Addr: lang.Address{
+												lang.RootStep{Name: "lb"},
+												lang.AttrStep{Name: "aws"},
+												lang.AttrStep{Name: "listener"},
+												lang.IndexStep{Key: cty.StringVal("https")},
+												lang.AttrStep{Name: "port"},
+											},
+											RangePtr: &hcl.Range{
+												Filename: "test.tf",
+												Start: hcl.Pos{
+													Line:   8,
+													Column: 5,
+													Byte:   118,
+												},
+												End: hcl.Pos{
+													Line:   8,
+													Column: 15,
+													Byte:   128,
+												},
+											},
+											Type: cty.Number,
+										},
+										{
+											Addr: lang.Address{
+												lang.RootStep{Name: "lb"},
+												lang.AttrStep{Name: "aws"},
+												lang.AttrStep{Name: "listener"},
+												lang.IndexStep{Key: cty.StringVal("https")},
+												lang.AttrStep{Name: "protocol"},
+											},
+											RangePtr: &hcl.Range{
+												Filename: "test.tf",
+												Start: hcl.Pos{
+													Line:   9,
+													Column: 4,
+													Byte:   132,
+												},
+												End: hcl.Pos{
+													Line:   9,
+													Column: 4,
+													Byte:   132,
+												},
+											},
+											Type: cty.String,
+										},
+									},
 								},
 							},
 						},
