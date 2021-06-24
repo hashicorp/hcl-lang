@@ -596,13 +596,13 @@ func stringValFromTemplateExpr(tplExpr *hclsyntax.TemplateExpr) (cty.Value, bool
 }
 
 func (d *Decoder) hoverContentForTraversalExpr(expr hcl.Traversal, te schema.TraversalExpr) (string, error) {
-	if d.refReader == nil {
-		return "", &NoReferenceFound{}
+	if d.refTargetReader == nil {
+		return "", &NoRefTargetFound{}
 	}
 
-	refs := References(d.refReader())
+	refs := ReferenceTargets(d.refTargetReader())
 
-	ref, err := refs.FirstTraversalMatch(expr, te)
+	ref, err := refs.FirstMatch(expr, te)
 	if err != nil {
 		return "", err
 	}
@@ -610,7 +610,7 @@ func (d *Decoder) hoverContentForTraversalExpr(expr hcl.Traversal, te schema.Tra
 	return hoverContentForReference(ref)
 }
 
-func hoverContentForReference(ref lang.Reference) (string, error) {
+func hoverContentForReference(ref lang.ReferenceTarget) (string, error) {
 	content := fmt.Sprintf("`%s`", ref.Addr.String())
 
 	var friendlyName string

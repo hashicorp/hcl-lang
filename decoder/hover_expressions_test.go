@@ -1303,7 +1303,7 @@ func TestDecoder_HoverAtPos_traversalExpressions(t *testing.T) {
 	testCases := []struct {
 		name         string
 		attrSchema   map[string]*schema.AttributeSchema
-		refs         lang.References
+		refs         lang.ReferenceTargets
 		cfg          string
 		pos          hcl.Pos
 		expectedData *lang.HoverData
@@ -1318,11 +1318,11 @@ func TestDecoder_HoverAtPos_traversalExpressions(t *testing.T) {
 					},
 				},
 			},
-			lang.References{},
+			lang.ReferenceTargets{},
 			`attr = var.blah`,
 			hcl.Pos{Line: 1, Column: 10, Byte: 9},
 			nil,
-			&NoReferenceFound{},
+			&NoRefTargetFound{},
 		},
 		{
 			"known mismatching traversal",
@@ -1333,7 +1333,7 @@ func TestDecoder_HoverAtPos_traversalExpressions(t *testing.T) {
 					},
 				},
 			},
-			lang.References{
+			lang.ReferenceTargets{
 				{
 					Addr: lang.Address{
 						lang.RootStep{Name: "var"},
@@ -1345,7 +1345,7 @@ func TestDecoder_HoverAtPos_traversalExpressions(t *testing.T) {
 			`attr = var.blah`,
 			hcl.Pos{Line: 1, Column: 10, Byte: 9},
 			nil,
-			&NoReferenceFound{},
+			&NoRefTargetFound{},
 		},
 		{
 			"known type matching traversal",
@@ -1356,7 +1356,7 @@ func TestDecoder_HoverAtPos_traversalExpressions(t *testing.T) {
 					},
 				},
 			},
-			lang.References{
+			lang.ReferenceTargets{
 				{
 					Addr: lang.Address{
 						lang.RootStep{Name: "var"},
@@ -1393,7 +1393,7 @@ func TestDecoder_HoverAtPos_traversalExpressions(t *testing.T) {
 			d.SetSchema(&schema.BodySchema{
 				Attributes: tc.attrSchema,
 			})
-			d.SetReferenceReader(func() lang.References {
+			d.SetReferenceTargetReader(func() lang.ReferenceTargets {
 				return tc.refs
 			})
 
