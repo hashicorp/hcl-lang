@@ -1,6 +1,7 @@
 package decoder
 
 import (
+	"bytes"
 	"sort"
 	"strings"
 
@@ -141,13 +142,13 @@ func (d *Decoder) DecodeReferences() (lang.References, error) {
 			continue
 		}
 
-		refs = append(refs, decodeReferencesForBody(body, d.rootSchema)...)
+		refs = append(refs, d.decodeReferencesForBody(body, d.rootSchema)...)
 	}
 
 	return refs, nil
 }
 
-func decodeReferencesForBody(body *hclsyntax.Body, bodySchema *schema.BodySchema) lang.References {
+func (d *Decoder) decodeReferencesForBody(body *hclsyntax.Body, bodySchema *schema.BodySchema) lang.References {
 	refs := make(lang.References, 0)
 
 	if bodySchema == nil {
@@ -174,7 +175,7 @@ func decodeReferencesForBody(body *hclsyntax.Body, bodySchema *schema.BodySchema
 			continue
 		}
 
-		iRefs := decodeReferencesForBody(block.Body, bSchema.Body)
+		iRefs := d.decodeReferencesForBody(block.Body, bSchema.Body)
 		refs = append(refs, iRefs...)
 
 		addr, ok := resolveBlockAddress(block, bSchema.Address)
@@ -212,7 +213,7 @@ func decodeReferencesForBody(body *hclsyntax.Body, bodySchema *schema.BodySchema
 
 			if bSchema.Address.InferBody && bSchema.Body != nil {
 				bodyRef.InsideReferences = append(bodyRef.InsideReferences,
-					collectInferredReferencesForBody(addr, bSchema.Address.ScopeId, block.Body, bSchema.Body)...)
+					d.collectInferredReferencesForBody(addr, bSchema.Address.ScopeId, block.Body, bSchema.Body)...)
 			}
 
 			bodyRef.Type = bodyToDataType(bSchema.Type, bSchema.Body)
@@ -245,7 +246,7 @@ func decodeReferencesForBody(body *hclsyntax.Body, bodySchema *schema.BodySchema
 
 				if bSchema.Address.InferDependentBody && len(bSchema.DependentBody) > 0 {
 					bodyRef.InsideReferences = append(bodyRef.InsideReferences,
-						collectInferredReferencesForBody(addr, bSchema.Address.ScopeId, block.Body, fullSchema)...)
+						d.collectInferredReferencesForBody(addr, bSchema.Address.ScopeId, block.Body, fullSchema)...)
 				}
 
 				if !bSchema.Address.BodyAsData {
@@ -543,7 +544,7 @@ func referencesForExpr(expr hcl.Expression, ec ExprConstraints) lang.References 
 	refs := make(lang.References, 0)
 
 	switch e := expr.(type) {
-	// TODO: Support all expression types
+	// TODO: Support all expression types (list/set/map literals)
 	case *hclsyntax.ScopeTraversalExpr:
 		te, ok := ec.TraversalExpr()
 		if !ok {
@@ -643,7 +644,7 @@ func bodySchemaAsAttrTypes(bodySchema *schema.BodySchema) map[string]cty.Type {
 	return attrTypes
 }
 
-func collectInferredReferencesForBody(addr lang.Address, scopeId lang.ScopeId, body *hclsyntax.Body, bodySchema *schema.BodySchema) lang.References {
+func (d *Decoder) collectInferredReferencesForBody(addr lang.Address, scopeId lang.ScopeId, body *hclsyntax.Body, bodySchema *schema.BodySchema) lang.References {
 	refs := make(lang.References, 0)
 
 	for name, aSchema := range bodySchema.Attributes {
@@ -681,60 +682,256 @@ func collectInferredReferencesForBody(addr lang.Address, scopeId lang.ScopeId, b
 		refs = append(refs, ref)
 	}
 
-	for name, bSchema := range bodySchema.Blocks {
-		blockAddr := make(lang.Address, len(addr))
-		copy(blockAddr, addr)
-		blockAddr = append(blockAddr, lang.AttrStep{Name: name})
+	objectBlocks := make(map[string]*hclsyntax.Block, 0)
+	listBlocks := make(map[string][]*hclsyntax.Block, 0)
+	setBlocks := make(map[string][]*hclsyntax.Block, 0)
+	mapBlocks := make(map[string][]*hclsyntax.Block, 0)
 
-		ref := lang.Reference{
-			Addr:        blockAddr,
-			ScopeId:     scopeId,
-			Type:        bodyToDataType(bSchema.Type, bSchema.Body),
-			Description: bSchema.Description,
-			RangePtr:    body.EndRange.Ptr(),
+	for _, block := range body.Blocks {
+		bSchema, ok := bodySchema.Blocks[block.Type]
+		if !ok {
+			// skip unknown block
+			continue
 		}
 
-		if body != nil {
-			for i, block := range body.Blocks {
-				if name == block.Type {
-					switch bSchema.Type {
-					case schema.BlockTypeObject:
-						ref.RangePtr = block.Range().Ptr()
-						insideRefs := collectInferredReferencesForBody(blockAddr, scopeId, block.Body, bSchema.Body)
-						ref.InsideReferences = append(ref.InsideReferences, insideRefs...)
-						break
-					case schema.BlockTypeList:
-						elemAddr := make(lang.Address, len(blockAddr))
-						copy(elemAddr, blockAddr)
-						elemAddr = append(elemAddr, lang.IndexStep{
-							Key: cty.NumberIntVal(int64(i)),
-						})
-						insideRefs := collectInferredReferencesForBody(elemAddr, scopeId, block.Body, bSchema.Body)
-						ref.InsideReferences = append(ref.InsideReferences, insideRefs...)
+		switch bSchema.Type {
+		case schema.BlockTypeObject:
+			_, ok := objectBlocks[block.Type]
+			if ok {
+				// objects are expected to be singletons
+				continue
+			}
+			objectBlocks[block.Type] = block
+		case schema.BlockTypeList:
+			if bSchema.MaxItems > 0 && uint64(len(listBlocks[block.Type])) >= bSchema.MaxItems {
+				// skip item if limit was reached
+				continue
+			}
 
-					case schema.BlockTypeMap:
-						if len(block.Labels) != 1 {
-							// this should never happen
-							continue
-						}
-						elemAddr := make(lang.Address, len(blockAddr))
-						copy(elemAddr, blockAddr)
-						elemAddr = append(elemAddr, lang.IndexStep{
-							Key: cty.StringVal(block.Labels[0]),
-						})
-						insideRefs := collectInferredReferencesForBody(elemAddr, scopeId, block.Body, bSchema.Body)
-						ref.InsideReferences = append(ref.InsideReferences, insideRefs...)
-					}
+			_, ok := listBlocks[block.Type]
+			if !ok {
+				listBlocks[block.Type] = make([]*hclsyntax.Block, 0)
+			}
+			listBlocks[block.Type] = append(listBlocks[block.Type], block)
+		case schema.BlockTypeSet:
+			if bSchema.MaxItems > 0 && uint64(len(setBlocks[block.Type])) >= bSchema.MaxItems {
+				// skip item if limit was reached
+				continue
+			}
+
+			_, ok := setBlocks[block.Type]
+			if !ok {
+				setBlocks[block.Type] = make([]*hclsyntax.Block, 0)
+			}
+			setBlocks[block.Type] = append(setBlocks[block.Type], block)
+		case schema.BlockTypeMap:
+			if len(block.Labels) != 1 {
+				// this should never happen
+				continue
+			}
+			if bSchema.MaxItems > 0 && uint64(len(listBlocks[block.Type])) >= bSchema.MaxItems {
+				// skip item if limit was reached
+				continue
+			}
+
+			_, ok := mapBlocks[block.Type]
+			if !ok {
+				mapBlocks[block.Type] = make([]*hclsyntax.Block, 0)
+			}
+			mapBlocks[block.Type] = append(mapBlocks[block.Type], block)
+		}
+	}
+
+	for blockType, block := range objectBlocks {
+		bSchema, ok := bodySchema.Blocks[blockType]
+		if !ok {
+			// skip unknown block
+			continue
+		}
+
+		blockAddr := make(lang.Address, len(addr))
+		copy(blockAddr, addr)
+		blockAddr = append(blockAddr, lang.AttrStep{Name: blockType})
+
+		blockRef := lang.Reference{
+			Addr:        blockAddr,
+			ScopeId:     scopeId,
+			Type:        cty.Object(bodySchemaAsAttrTypes(bSchema.Body)),
+			Description: bSchema.Description,
+			RangePtr:    block.Range().Ptr(),
+			InsideReferences: d.collectInferredReferencesForBody(
+				blockAddr, scopeId, block.Body, bSchema.Body),
+		}
+		sort.Sort(blockRef.InsideReferences)
+		refs = append(refs, blockRef)
+	}
+
+	for blockType, blocks := range listBlocks {
+		bSchema, ok := bodySchema.Blocks[blockType]
+		if !ok {
+			// skip unknown block
+			continue
+		}
+
+		blockAddr := make(lang.Address, len(addr))
+		copy(blockAddr, addr)
+		blockAddr = append(blockAddr, lang.AttrStep{Name: blockType})
+
+		blockRef := lang.Reference{
+			Addr:        blockAddr,
+			ScopeId:     scopeId,
+			Type:        cty.List(cty.Object(bodySchemaAsAttrTypes(bSchema.Body))),
+			Description: bSchema.Description,
+			RangePtr:    body.MissingItemRange().Ptr(),
+		}
+
+		for i, block := range blocks {
+			elemAddr := make(lang.Address, len(blockAddr))
+			copy(elemAddr, blockAddr)
+			elemAddr = append(elemAddr, lang.IndexStep{
+				Key: cty.NumberIntVal(int64(i)),
+			})
+
+			elemRef := lang.Reference{
+				Addr:        elemAddr,
+				ScopeId:     scopeId,
+				Type:        cty.Object(bodySchemaAsAttrTypes(bSchema.Body)),
+				Description: bSchema.Description,
+				RangePtr:    block.Range().Ptr(),
+				InsideReferences: d.collectInferredReferencesForBody(
+					elemAddr, scopeId, block.Body, bSchema.Body),
+			}
+			sort.Sort(elemRef.InsideReferences)
+			blockRef.InsideReferences = append(blockRef.InsideReferences, elemRef)
+
+			if i == 0 {
+				blockRef.RangePtr = elemRef.RangePtr
+			} else {
+				// try to expand the range of the "parent" (list) reference
+				// if the individual blocks follow each other
+				betweenBlocks, err := d.bytesInRange(hcl.Range{
+					Filename: blockRef.RangePtr.Filename,
+					Start:    blockRef.RangePtr.End,
+					End:      elemRef.RangePtr.Start,
+				})
+				if err == nil && len(bytes.TrimSpace(betweenBlocks)) == 0 {
+					blockRef.RangePtr.End = elemRef.RangePtr.End
 				}
 			}
 		}
 
-		sort.Sort(ref.InsideReferences)
+		sort.Sort(blockRef.InsideReferences)
+		refs = append(refs, blockRef)
+	}
 
-		refs = append(refs, ref)
+	for blockType, blocks := range setBlocks {
+		bSchema, ok := bodySchema.Blocks[blockType]
+		if !ok {
+			// skip unknown block
+			continue
+		}
+
+		blockAddr := make(lang.Address, len(addr))
+		copy(blockAddr, addr)
+		blockAddr = append(blockAddr, lang.AttrStep{Name: blockType})
+
+		blockRef := lang.Reference{
+			Addr:        blockAddr,
+			ScopeId:     scopeId,
+			Type:        cty.Set(cty.Object(bodySchemaAsAttrTypes(bSchema.Body))),
+			Description: bSchema.Description,
+			RangePtr:    body.MissingItemRange().Ptr(),
+		}
+
+		for i, block := range blocks {
+			if i == 0 {
+				blockRef.RangePtr = block.Range().Ptr()
+			} else {
+				// try to expand the range of the "parent" (set) reference
+				// if the individual blocks follow each other
+				betweenBlocks, err := d.bytesInRange(hcl.Range{
+					Filename: blockRef.RangePtr.Filename,
+					Start:    blockRef.RangePtr.End,
+					End:      block.Range().Start,
+				})
+				if err == nil && len(bytes.TrimSpace(betweenBlocks)) == 0 {
+					blockRef.RangePtr.End = block.Range().End
+				}
+			}
+		}
+
+		refs = append(refs, blockRef)
+	}
+
+	for blockType, blocks := range mapBlocks {
+		bSchema, ok := bodySchema.Blocks[blockType]
+		if !ok {
+			// skip unknown block
+			continue
+		}
+
+		blockAddr := make(lang.Address, len(addr))
+		copy(blockAddr, addr)
+		blockAddr = append(blockAddr, lang.AttrStep{Name: blockType})
+
+		blockRef := lang.Reference{
+			Addr:        blockAddr,
+			ScopeId:     scopeId,
+			Type:        cty.Map(cty.Object(bodySchemaAsAttrTypes(bSchema.Body))),
+			Description: bSchema.Description,
+			RangePtr:    body.MissingItemRange().Ptr(),
+		}
+
+		for i, block := range blocks {
+			elemAddr := make(lang.Address, len(blockAddr))
+			copy(elemAddr, blockAddr)
+			elemAddr = append(elemAddr, lang.IndexStep{
+				Key: cty.StringVal(block.Labels[0]),
+			})
+
+			refType := cty.Object(bodySchemaAsAttrTypes(bSchema.Body))
+
+			elemRef := lang.Reference{
+				Addr:        elemAddr,
+				ScopeId:     scopeId,
+				Type:        refType,
+				Description: bSchema.Description,
+				RangePtr:    block.Range().Ptr(),
+				InsideReferences: d.collectInferredReferencesForBody(
+					elemAddr, scopeId, block.Body, bSchema.Body),
+			}
+			sort.Sort(elemRef.InsideReferences)
+			blockRef.InsideReferences = append(blockRef.InsideReferences, elemRef)
+
+			if i == 0 {
+				blockRef.RangePtr = elemRef.RangePtr
+			} else {
+				// try to expand the range of the "parent" (map) reference
+				// if the individual blocks follow each other
+				betweenBlocks, err := d.bytesInRange(hcl.Range{
+					Filename: blockRef.RangePtr.Filename,
+					Start:    blockRef.RangePtr.End,
+					End:      elemRef.RangePtr.Start,
+				})
+				if err == nil && len(bytes.TrimSpace(betweenBlocks)) == 0 {
+					blockRef.RangePtr.End = elemRef.RangePtr.End
+				}
+			}
+		}
+
+		sort.Sort(blockRef.InsideReferences)
+		refs = append(refs, blockRef)
 	}
 
 	return refs
+}
+
+func (d *Decoder) bytesInRange(rng hcl.Range) ([]byte, error) {
+	f, err := d.fileByName(rng.Filename)
+	if err != nil {
+		return nil, err
+	}
+	return rng.SliceBytes(f.Bytes), nil
 }
 
 func bodyToDataType(blockType schema.BlockType, body *schema.BodySchema) cty.Type {

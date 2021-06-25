@@ -371,7 +371,7 @@ func textEditForReference(ref lang.Reference, editRng hcl.Range, hasNestedMatche
 	}
 
 	// TODO: Refactor to provide known indicies and map keys
-	// when we support nested expressions
+	// more cleanly when we support nested expressions
 	// https://github.com/hashicorp/terraform-ls/issues/496
 
 	if ref.Type.IsListType() {
