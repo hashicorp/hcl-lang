@@ -317,7 +317,7 @@ func (d *Decoder) constraintToCandidates(constraint schema.ExprConstraint, outer
 func (d *Decoder) candidatesForTraversalConstraint(tc schema.TraversalExpr, outerBodyRng, prefixRng, editRng hcl.Range) []lang.Candidate {
 	candidates := make([]lang.Candidate, 0)
 
-	if d.refReader == nil {
+	if d.refTargetReader == nil {
 		return candidates
 	}
 
@@ -328,9 +328,9 @@ func (d *Decoder) candidatesForTraversalConstraint(tc schema.TraversalExpr, oute
 
 	prefix, _ := d.bytesFromRange(prefixRng)
 
-	refs := References(d.refReader())
+	refs := ReferenceTargets(d.refTargetReader())
 
-	refs.MatchWalk(tc, string(prefix), func(ref lang.Reference) {
+	refs.MatchWalk(tc, string(prefix), func(ref lang.ReferenceTarget) {
 		// avoid suggesting references to block's own fields from within (for now)
 		if ref.RangePtr != nil &&
 			(outerBodyRng.ContainsPos(ref.RangePtr.Start) ||

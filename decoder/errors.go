@@ -12,10 +12,10 @@ func (*NoSchemaError) Error() string {
 	return fmt.Sprintf("no schema available")
 }
 
-type NoReferenceFound struct{}
+type NoRefTargetFound struct{}
 
-func (*NoReferenceFound) Error() string {
-	return fmt.Sprintf("no matching reference found")
+func (*NoRefTargetFound) Error() string {
+	return fmt.Sprintf("no reference target found")
 }
 
 type ConstraintMismatch struct {

@@ -14,9 +14,9 @@ import (
 	"github.com/zclconf/go-cty/cty/convert"
 )
 
-type Reference lang.Reference
+type ReferenceTarget lang.ReferenceTarget
 
-func (ref Reference) MatchesConstraint(te schema.TraversalExpr) bool {
+func (ref ReferenceTarget) MatchesConstraint(te schema.TraversalExpr) bool {
 	if te.OfScopeId != "" && te.OfScopeId != ref.ScopeId {
 		return false
 	}
@@ -31,7 +31,7 @@ func (ref Reference) MatchesConstraint(te schema.TraversalExpr) bool {
 	return conformsToType || (te.OfType == cty.NilType && ref.Type == cty.NilType)
 }
 
-func (ref Reference) AddrMatchesTraversal(t hcl.Traversal) bool {
+func (ref ReferenceTarget) AddrMatchesTraversal(t hcl.Traversal) bool {
 	addr, err := lang.TraversalToAddress(t)
 	if err != nil {
 		return false
@@ -41,44 +41,42 @@ func (ref Reference) AddrMatchesTraversal(t hcl.Traversal) bool {
 	return rAddr.Equals(Address(addr))
 }
 
-type References lang.References
+type ReferenceTargets lang.ReferenceTargets
 
-type RefWalkFunc func(lang.Reference)
+type RefWalkFunc func(lang.ReferenceTarget)
 
-func (refs References) DeepWalk(f RefWalkFunc) {
+func (refs ReferenceTargets) DeepWalk(f RefWalkFunc) {
 	for _, ref := range refs {
 		f(ref)
-		if len(ref.InsideReferences) > 0 {
-			irefs := References(ref.InsideReferences)
+		if len(ref.NestedTargets) > 0 {
+			irefs := ReferenceTargets(ref.NestedTargets)
 			irefs.DeepWalk(f)
 		}
 	}
 }
 
-type RefMatchWalkFunc func(lang.Reference, bool)
-
-func (refs References) MatchWalk(te schema.TraversalExpr, prefix string, f RefWalkFunc) {
+func (refs ReferenceTargets) MatchWalk(te schema.TraversalExpr, prefix string, f RefWalkFunc) {
 	for _, ref := range refs {
 		if strings.HasPrefix(ref.Addr.String(), string(prefix)) {
-			nestedMatches := References(ref.InsideReferences).ContainsMatch(te, prefix)
-			if Reference(ref).MatchesConstraint(te) || nestedMatches {
+			nestedMatches := ReferenceTargets(ref.NestedTargets).ContainsMatch(te, prefix)
+			if ReferenceTarget(ref).MatchesConstraint(te) || nestedMatches {
 				f(ref)
 				continue
 			}
 		}
 
-		References(ref.InsideReferences).MatchWalk(te, prefix, f)
+		ReferenceTargets(ref.NestedTargets).MatchWalk(te, prefix, f)
 	}
 }
 
-func (refs References) ContainsMatch(te schema.TraversalExpr, prefix string) bool {
+func (refs ReferenceTargets) ContainsMatch(te schema.TraversalExpr, prefix string) bool {
 	for _, ref := range refs {
 		if strings.HasPrefix(ref.Addr.String(), string(prefix)) &&
-			Reference(ref).MatchesConstraint(te) {
+			ReferenceTarget(ref).MatchesConstraint(te) {
 			return true
 		}
-		if len(ref.InsideReferences) > 0 {
-			if match := References(ref.InsideReferences).ContainsMatch(te, prefix); match {
+		if len(ref.NestedTargets) > 0 {
+			if match := ReferenceTargets(ref.NestedTargets).ContainsMatch(te, prefix); match {
 				return true
 			}
 		}
@@ -86,11 +84,11 @@ func (refs References) ContainsMatch(te schema.TraversalExpr, prefix string) boo
 	return false
 }
 
-func (refs References) FirstTraversalMatch(expr hcl.Traversal, tSchema schema.TraversalExpr) (lang.Reference, error) {
-	var matchingReference *lang.Reference
+func (refs ReferenceTargets) FirstMatch(expr hcl.Traversal, tSchema schema.TraversalExpr) (lang.ReferenceTarget, error) {
+	var matchingReference *lang.ReferenceTarget
 
-	refs.DeepWalk(func(r lang.Reference) {
-		ref := Reference(r)
+	refs.DeepWalk(func(r lang.ReferenceTarget) {
+		ref := ReferenceTarget(r)
 		if ref.AddrMatchesTraversal(expr) && ref.MatchesConstraint(tSchema) {
 			matchingReference = &r
 			return
@@ -98,7 +96,7 @@ func (refs References) FirstTraversalMatch(expr hcl.Traversal, tSchema schema.Tr
 	})
 
 	if matchingReference == nil {
-		return lang.Reference{}, &NoReferenceFound{}
+		return lang.ReferenceTarget{}, &NoRefTargetFound{}
 	}
 
 	return *matchingReference, nil
@@ -119,15 +117,15 @@ func (a Address) Equals(addr Address) bool {
 	return true
 }
 
-func (d *Decoder) DecodeReferences() (lang.References, error) {
+func (d *Decoder) CollectReferenceTargets() (lang.ReferenceTargets, error) {
 	d.rootSchemaMu.RLock()
 	defer d.rootSchemaMu.RUnlock()
 	if d.rootSchema == nil {
-		// unable to collect references without schema
+		// unable to collect reference targets without schema
 		return nil, &NoSchemaError{}
 	}
 
-	refs := make(lang.References, 0)
+	refs := make(lang.ReferenceTargets, 0)
 	files := d.Filenames()
 	for _, filename := range files {
 		f, err := d.fileByName(filename)
@@ -142,17 +140,17 @@ func (d *Decoder) DecodeReferences() (lang.References, error) {
 			continue
 		}
 
-		refs = append(refs, d.decodeReferencesForBody(body, d.rootSchema)...)
+		refs = append(refs, d.decodeReferenceTargetsForBody(body, d.rootSchema)...)
 	}
 
 	return refs, nil
 }
 
-func (d *Decoder) decodeReferencesForBody(body *hclsyntax.Body, bodySchema *schema.BodySchema) lang.References {
-	refs := make(lang.References, 0)
+func (d *Decoder) decodeReferenceTargetsForBody(body *hclsyntax.Body, bodySchema *schema.BodySchema) lang.ReferenceTargets {
+	refs := make(lang.ReferenceTargets, 0)
 
 	if bodySchema == nil {
-		return lang.References{}
+		return lang.ReferenceTargets{}
 	}
 
 	for _, attr := range body.Attributes {
@@ -165,7 +163,7 @@ func (d *Decoder) decodeReferencesForBody(body *hclsyntax.Body, bodySchema *sche
 			attrSchema = bodySchema.AnyAttribute
 		}
 
-		refs = append(refs, decodeReferencesForAttribute(attr, attrSchema)...)
+		refs = append(refs, decodeReferenceTargetsForAttribute(attr, attrSchema)...)
 	}
 
 	for _, block := range body.Blocks {
@@ -175,7 +173,7 @@ func (d *Decoder) decodeReferencesForBody(body *hclsyntax.Body, bodySchema *sche
 			continue
 		}
 
-		iRefs := d.decodeReferencesForBody(block.Body, bSchema.Body)
+		iRefs := d.decodeReferenceTargetsForBody(block.Body, bSchema.Body)
 		refs = append(refs, iRefs...)
 
 		addr, ok := resolveBlockAddress(block, bSchema.Address)
@@ -185,7 +183,7 @@ func (d *Decoder) decodeReferencesForBody(body *hclsyntax.Body, bodySchema *sche
 		}
 
 		if bSchema.Address.AsReference {
-			ref := lang.Reference{
+			ref := lang.ReferenceTarget{
 				Addr:     addr,
 				ScopeId:  bSchema.Address.ScopeId,
 				RangePtr: block.Range().Ptr(),
@@ -198,10 +196,10 @@ func (d *Decoder) decodeReferencesForBody(body *hclsyntax.Body, bodySchema *sche
 			refs = append(refs, referenceAsTypeOf(block, bSchema, addr)...)
 		}
 
-		var bodyRef lang.Reference
+		var bodyRef lang.ReferenceTarget
 
 		if bSchema.Address.BodyAsData {
-			bodyRef = lang.Reference{
+			bodyRef = lang.ReferenceTarget{
 				Addr:     addr,
 				ScopeId:  bSchema.Address.ScopeId,
 				RangePtr: block.Range().Ptr(),
@@ -212,8 +210,8 @@ func (d *Decoder) decodeReferencesForBody(body *hclsyntax.Body, bodySchema *sche
 			}
 
 			if bSchema.Address.InferBody && bSchema.Body != nil {
-				bodyRef.InsideReferences = append(bodyRef.InsideReferences,
-					d.collectInferredReferencesForBody(addr, bSchema.Address.ScopeId, block.Body, bSchema.Body)...)
+				bodyRef.NestedTargets = append(bodyRef.NestedTargets,
+					d.collectInferredReferenceTargetsForBody(addr, bSchema.Address.ScopeId, block.Body, bSchema.Body)...)
 			}
 
 			bodyRef.Type = bodyToDataType(bSchema.Type, bSchema.Body)
@@ -223,7 +221,7 @@ func (d *Decoder) decodeReferencesForBody(body *hclsyntax.Body, bodySchema *sche
 
 		if bSchema.Address.DependentBodyAsData {
 			if !bSchema.Address.BodyAsData {
-				bodyRef = lang.Reference{
+				bodyRef = lang.ReferenceTarget{
 					Addr:     addr,
 					ScopeId:  bSchema.Address.ScopeId,
 					RangePtr: block.Range().Ptr(),
@@ -238,15 +236,15 @@ func (d *Decoder) decodeReferencesForBody(body *hclsyntax.Body, bodySchema *sche
 					if err != nil {
 						continue
 					}
-					bodyRef.InsideReferences = make(lang.References, 0)
+					bodyRef.NestedTargets = make(lang.ReferenceTargets, 0)
 					fullSchema = mergedSchema
 				}
 
 				bodyRef.Type = bodyToDataType(bSchema.Type, fullSchema)
 
 				if bSchema.Address.InferDependentBody && len(bSchema.DependentBody) > 0 {
-					bodyRef.InsideReferences = append(bodyRef.InsideReferences,
-						d.collectInferredReferencesForBody(addr, bSchema.Address.ScopeId, block.Body, fullSchema)...)
+					bodyRef.NestedTargets = append(bodyRef.NestedTargets,
+						d.collectInferredReferenceTargetsForBody(addr, bSchema.Address.ScopeId, block.Body, fullSchema)...)
 				}
 
 				if !bSchema.Address.BodyAsData {
@@ -255,7 +253,7 @@ func (d *Decoder) decodeReferencesForBody(body *hclsyntax.Body, bodySchema *sche
 			}
 		}
 
-		sort.Sort(bodyRef.InsideReferences)
+		sort.Sort(bodyRef.NestedTargets)
 	}
 
 	sort.Sort(refs)
@@ -263,13 +261,13 @@ func (d *Decoder) decodeReferencesForBody(body *hclsyntax.Body, bodySchema *sche
 	return refs
 }
 
-func decodeReferencesForAttribute(attr *hclsyntax.Attribute, attrSchema *schema.AttributeSchema) lang.References {
-	refs := make(lang.References, 0)
+func decodeReferenceTargetsForAttribute(attr *hclsyntax.Attribute, attrSchema *schema.AttributeSchema) lang.ReferenceTargets {
+	refs := make(lang.ReferenceTargets, 0)
 
 	attrAddr, ok := resolveAttributeAddress(attr, attrSchema.Address)
 	if ok {
 		if attrSchema.Address.AsReference {
-			ref := lang.Reference{
+			ref := lang.ReferenceTarget{
 				Addr:     attrAddr,
 				ScopeId:  attrSchema.Address.ScopeId,
 				RangePtr: attr.SrcRange.Ptr(),
@@ -291,7 +289,7 @@ func decodeReferencesForAttribute(attr *hclsyntax.Attribute, attrSchema *schema.
 
 				scopeId := attrSchema.Address.ScopeId
 
-				ref := lang.Reference{
+				ref := lang.ReferenceTarget{
 					Addr:     attrAddr,
 					Type:     t,
 					ScopeId:  scopeId,
@@ -300,8 +298,8 @@ func decodeReferencesForAttribute(attr *hclsyntax.Attribute, attrSchema *schema.
 				}
 
 				if attr.Expr != nil && !t.IsPrimitiveType() {
-					ref.InsideReferences = make(lang.References, 0)
-					ref.InsideReferences = append(ref.InsideReferences, decodeReferencesForComplexTypeExpr(attrAddr, attr.Expr, t, scopeId)...)
+					ref.NestedTargets = make(lang.ReferenceTargets, 0)
+					ref.NestedTargets = append(ref.NestedTargets, decodeReferenceTargetsForComplexTypeExpr(attrAddr, attr.Expr, t, scopeId)...)
 				}
 
 				refs = append(refs, ref)
@@ -314,8 +312,8 @@ func decodeReferencesForAttribute(attr *hclsyntax.Attribute, attrSchema *schema.
 	return refs
 }
 
-func decodeReferencesForComplexTypeExpr(addr lang.Address, expr hclsyntax.Expression, t cty.Type, scopeId lang.ScopeId) lang.References {
-	refs := make(lang.References, 0)
+func decodeReferenceTargetsForComplexTypeExpr(addr lang.Address, expr hclsyntax.Expression, t cty.Type, scopeId lang.ScopeId) lang.ReferenceTargets {
+	refs := make(lang.ReferenceTargets, 0)
 
 	if expr == nil {
 		return refs
@@ -328,15 +326,15 @@ func decodeReferencesForComplexTypeExpr(addr lang.Address, expr hclsyntax.Expres
 				elemAddr := append(addr, lang.IndexStep{Key: cty.NumberIntVal(int64(i))})
 				elemType := t.ElementType()
 
-				ref := lang.Reference{
+				ref := lang.ReferenceTarget{
 					Addr:     elemAddr,
 					Type:     elemType,
 					ScopeId:  scopeId,
 					RangePtr: item.Range().Ptr(),
 				}
 				if !elemType.IsPrimitiveType() {
-					ref.InsideReferences = make(lang.References, 0)
-					ref.InsideReferences = append(refs, decodeReferencesForComplexTypeExpr(elemAddr, item, elemType, scopeId)...)
+					ref.NestedTargets = make(lang.ReferenceTargets, 0)
+					ref.NestedTargets = append(refs, decodeReferenceTargetsForComplexTypeExpr(elemAddr, item, elemType, scopeId)...)
 				}
 
 				refs = append(refs, ref)
@@ -358,15 +356,15 @@ func decodeReferencesForComplexTypeExpr(addr lang.Address, expr hclsyntax.Expres
 				attrAddr := append(addr, lang.AttrStep{Name: key.AsString()})
 				rng := hcl.RangeBetween(item.KeyExpr.Range(), item.ValueExpr.Range())
 
-				ref := lang.Reference{
+				ref := lang.ReferenceTarget{
 					Addr:     attrAddr,
 					Type:     attrType,
 					ScopeId:  scopeId,
 					RangePtr: rng.Ptr(),
 				}
 				if !attrType.IsPrimitiveType() {
-					ref.InsideReferences = make(lang.References, 0)
-					ref.InsideReferences = append(refs, decodeReferencesForComplexTypeExpr(attrAddr, item.ValueExpr, attrType, scopeId)...)
+					ref.NestedTargets = make(lang.ReferenceTargets, 0)
+					ref.NestedTargets = append(refs, decodeReferenceTargetsForComplexTypeExpr(attrAddr, item.ValueExpr, attrType, scopeId)...)
 				}
 
 				refs = append(refs, ref)
@@ -389,15 +387,15 @@ func decodeReferencesForComplexTypeExpr(addr lang.Address, expr hclsyntax.Expres
 				elemAddr := append(addr, lang.IndexStep{Key: key})
 				rng := hcl.RangeBetween(item.KeyExpr.Range(), item.ValueExpr.Range())
 
-				ref := lang.Reference{
+				ref := lang.ReferenceTarget{
 					Addr:     elemAddr,
 					Type:     elemType,
 					ScopeId:  scopeId,
 					RangePtr: rng.Ptr(),
 				}
 				if !elemType.IsPrimitiveType() {
-					ref.InsideReferences = make(lang.References, 0)
-					ref.InsideReferences = append(refs, decodeReferencesForComplexTypeExpr(elemAddr, item.ValueExpr, elemType, scopeId)...)
+					ref.NestedTargets = make(lang.ReferenceTargets, 0)
+					ref.NestedTargets = append(refs, decodeReferenceTargetsForComplexTypeExpr(elemAddr, item.ValueExpr, elemType, scopeId)...)
 				}
 
 				refs = append(refs, ref)
@@ -408,8 +406,8 @@ func decodeReferencesForComplexTypeExpr(addr lang.Address, expr hclsyntax.Expres
 	return refs
 }
 
-func referenceAsTypeOf(block *hclsyntax.Block, bSchema *schema.BlockSchema, addr lang.Address) lang.References {
-	ref := lang.Reference{
+func referenceAsTypeOf(block *hclsyntax.Block, bSchema *schema.BlockSchema, addr lang.Address) lang.ReferenceTargets {
+	ref := lang.ReferenceTarget{
 		Addr:     addr,
 		ScopeId:  bSchema.Address.ScopeId,
 		RangePtr: block.Range().Ptr(),
@@ -422,14 +420,14 @@ func referenceAsTypeOf(block *hclsyntax.Block, bSchema *schema.BlockSchema, addr
 
 	attrs, diags := block.Body.JustAttributes()
 	if diags.HasErrors() {
-		return lang.References{ref}
+		return lang.ReferenceTargets{ref}
 	}
 
 	if bSchema.Address.AsTypeOf.AttributeExpr != "" {
 		typeDecl, ok := asTypeOfAttrExpr(attrs, bSchema)
 		if !ok && bSchema.Address.AsTypeOf.AttributeValue == "" {
 			// nothing to fall back to, exit early
-			return lang.References{ref}
+			return lang.ReferenceTargets{ref}
 		}
 		ref.Type = typeDecl
 	}
@@ -437,21 +435,21 @@ func referenceAsTypeOf(block *hclsyntax.Block, bSchema *schema.BlockSchema, addr
 	if bSchema.Address.AsTypeOf.AttributeValue != "" {
 		attr, ok := attrs[bSchema.Address.AsTypeOf.AttributeValue]
 		if !ok {
-			return lang.References{ref}
+			return lang.ReferenceTargets{ref}
 		}
 		value, diags := attr.Expr.Value(nil)
 		if diags.HasErrors() {
-			return lang.References{ref}
+			return lang.ReferenceTargets{ref}
 		}
 		val, err := convert.Convert(value, ref.Type)
 		if err != nil {
 			// type does not comply with type constraint
-			return lang.References{ref}
+			return lang.ReferenceTargets{ref}
 		}
 		ref.Type = val.Type()
 	}
 
-	return lang.References{ref}
+	return lang.ReferenceTargets{ref}
 }
 
 func asTypeOfAttrExpr(attrs hcl.Attributes, bSchema *schema.BlockSchema) (cty.Type, bool) {
@@ -540,8 +538,8 @@ func exprConstraintToDataType(expr schema.ExprConstraints) (cty.Type, bool) {
 	return cty.NilType, false
 }
 
-func referencesForExpr(expr hcl.Expression, ec ExprConstraints) lang.References {
-	refs := make(lang.References, 0)
+func referencesForExpr(expr hcl.Expression, ec ExprConstraints) lang.ReferenceTargets {
+	refs := make(lang.ReferenceTargets, 0)
 
 	switch e := expr.(type) {
 	// TODO: Support all expression types (list/set/map literals)
@@ -549,18 +547,18 @@ func referencesForExpr(expr hcl.Expression, ec ExprConstraints) lang.References 
 		te, ok := ec.TraversalExpr()
 		if !ok {
 			// unknown traversal
-			return lang.References{}
+			return lang.ReferenceTargets{}
 		}
 		if te.Address == nil {
 			// traversal not addressable
-			return lang.References{}
+			return lang.ReferenceTargets{}
 		}
 
 		addr, err := lang.TraversalToAddress(e.AsTraversal())
 		if err != nil {
-			return lang.References{}
+			return lang.ReferenceTargets{}
 		}
-		refs = append(refs, lang.Reference{
+		refs = append(refs, lang.ReferenceTarget{
 			Addr:     addr,
 			ScopeId:  te.Address.ScopeId,
 			RangePtr: e.SrcRange.Ptr(),
@@ -644,8 +642,8 @@ func bodySchemaAsAttrTypes(bodySchema *schema.BodySchema) map[string]cty.Type {
 	return attrTypes
 }
 
-func (d *Decoder) collectInferredReferencesForBody(addr lang.Address, scopeId lang.ScopeId, body *hclsyntax.Body, bodySchema *schema.BodySchema) lang.References {
-	refs := make(lang.References, 0)
+func (d *Decoder) collectInferredReferenceTargetsForBody(addr lang.Address, scopeId lang.ScopeId, body *hclsyntax.Body, bodySchema *schema.BodySchema) lang.ReferenceTargets {
+	refs := make(lang.ReferenceTargets, 0)
 
 	for name, aSchema := range bodySchema.Attributes {
 		attrType, ok := exprConstraintToDataType(aSchema.Expr)
@@ -658,7 +656,7 @@ func (d *Decoder) collectInferredReferencesForBody(addr lang.Address, scopeId la
 		copy(attrAddr, addr)
 		attrAddr = append(attrAddr, lang.AttrStep{Name: name})
 
-		ref := lang.Reference{
+		ref := lang.ReferenceTarget{
 			Addr:        attrAddr,
 			ScopeId:     scopeId,
 			Type:        attrType,
@@ -675,8 +673,8 @@ func (d *Decoder) collectInferredReferencesForBody(addr lang.Address, scopeId la
 		}
 
 		if attrExpr != nil && !attrType.IsPrimitiveType() {
-			ref.InsideReferences = make(lang.References, 0)
-			ref.InsideReferences = append(ref.InsideReferences, decodeReferencesForComplexTypeExpr(attrAddr, attrExpr, attrType, scopeId)...)
+			ref.NestedTargets = make(lang.ReferenceTargets, 0)
+			ref.NestedTargets = append(ref.NestedTargets, decodeReferenceTargetsForComplexTypeExpr(attrAddr, attrExpr, attrType, scopeId)...)
 		}
 
 		refs = append(refs, ref)
@@ -753,16 +751,16 @@ func (d *Decoder) collectInferredReferencesForBody(addr lang.Address, scopeId la
 		copy(blockAddr, addr)
 		blockAddr = append(blockAddr, lang.AttrStep{Name: blockType})
 
-		blockRef := lang.Reference{
+		blockRef := lang.ReferenceTarget{
 			Addr:        blockAddr,
 			ScopeId:     scopeId,
 			Type:        cty.Object(bodySchemaAsAttrTypes(bSchema.Body)),
 			Description: bSchema.Description,
 			RangePtr:    block.Range().Ptr(),
-			InsideReferences: d.collectInferredReferencesForBody(
+			NestedTargets: d.collectInferredReferenceTargetsForBody(
 				blockAddr, scopeId, block.Body, bSchema.Body),
 		}
-		sort.Sort(blockRef.InsideReferences)
+		sort.Sort(blockRef.NestedTargets)
 		refs = append(refs, blockRef)
 	}
 
@@ -777,7 +775,7 @@ func (d *Decoder) collectInferredReferencesForBody(addr lang.Address, scopeId la
 		copy(blockAddr, addr)
 		blockAddr = append(blockAddr, lang.AttrStep{Name: blockType})
 
-		blockRef := lang.Reference{
+		blockRef := lang.ReferenceTarget{
 			Addr:        blockAddr,
 			ScopeId:     scopeId,
 			Type:        cty.List(cty.Object(bodySchemaAsAttrTypes(bSchema.Body))),
@@ -792,17 +790,17 @@ func (d *Decoder) collectInferredReferencesForBody(addr lang.Address, scopeId la
 				Key: cty.NumberIntVal(int64(i)),
 			})
 
-			elemRef := lang.Reference{
+			elemRef := lang.ReferenceTarget{
 				Addr:        elemAddr,
 				ScopeId:     scopeId,
 				Type:        cty.Object(bodySchemaAsAttrTypes(bSchema.Body)),
 				Description: bSchema.Description,
 				RangePtr:    block.Range().Ptr(),
-				InsideReferences: d.collectInferredReferencesForBody(
+				NestedTargets: d.collectInferredReferenceTargetsForBody(
 					elemAddr, scopeId, block.Body, bSchema.Body),
 			}
-			sort.Sort(elemRef.InsideReferences)
-			blockRef.InsideReferences = append(blockRef.InsideReferences, elemRef)
+			sort.Sort(elemRef.NestedTargets)
+			blockRef.NestedTargets = append(blockRef.NestedTargets, elemRef)
 
 			if i == 0 {
 				blockRef.RangePtr = elemRef.RangePtr
@@ -820,7 +818,7 @@ func (d *Decoder) collectInferredReferencesForBody(addr lang.Address, scopeId la
 			}
 		}
 
-		sort.Sort(blockRef.InsideReferences)
+		sort.Sort(blockRef.NestedTargets)
 		refs = append(refs, blockRef)
 	}
 
@@ -835,7 +833,7 @@ func (d *Decoder) collectInferredReferencesForBody(addr lang.Address, scopeId la
 		copy(blockAddr, addr)
 		blockAddr = append(blockAddr, lang.AttrStep{Name: blockType})
 
-		blockRef := lang.Reference{
+		blockRef := lang.ReferenceTarget{
 			Addr:        blockAddr,
 			ScopeId:     scopeId,
 			Type:        cty.Set(cty.Object(bodySchemaAsAttrTypes(bSchema.Body))),
@@ -874,7 +872,7 @@ func (d *Decoder) collectInferredReferencesForBody(addr lang.Address, scopeId la
 		copy(blockAddr, addr)
 		blockAddr = append(blockAddr, lang.AttrStep{Name: blockType})
 
-		blockRef := lang.Reference{
+		blockRef := lang.ReferenceTarget{
 			Addr:        blockAddr,
 			ScopeId:     scopeId,
 			Type:        cty.Map(cty.Object(bodySchemaAsAttrTypes(bSchema.Body))),
@@ -891,17 +889,17 @@ func (d *Decoder) collectInferredReferencesForBody(addr lang.Address, scopeId la
 
 			refType := cty.Object(bodySchemaAsAttrTypes(bSchema.Body))
 
-			elemRef := lang.Reference{
+			elemRef := lang.ReferenceTarget{
 				Addr:        elemAddr,
 				ScopeId:     scopeId,
 				Type:        refType,
 				Description: bSchema.Description,
 				RangePtr:    block.Range().Ptr(),
-				InsideReferences: d.collectInferredReferencesForBody(
+				NestedTargets: d.collectInferredReferenceTargetsForBody(
 					elemAddr, scopeId, block.Body, bSchema.Body),
 			}
-			sort.Sort(elemRef.InsideReferences)
-			blockRef.InsideReferences = append(blockRef.InsideReferences, elemRef)
+			sort.Sort(elemRef.NestedTargets)
+			blockRef.NestedTargets = append(blockRef.NestedTargets, elemRef)
 
 			if i == 0 {
 				blockRef.RangePtr = elemRef.RangePtr
@@ -919,7 +917,7 @@ func (d *Decoder) collectInferredReferencesForBody(addr lang.Address, scopeId la
 			}
 		}
 
-		sort.Sort(blockRef.InsideReferences)
+		sort.Sort(blockRef.NestedTargets)
 		refs = append(refs, blockRef)
 	}
 
