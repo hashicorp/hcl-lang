@@ -57,12 +57,12 @@ func (refs References) DeepWalk(f RefWalkFunc) {
 
 type RefMatchWalkFunc func(lang.Reference, bool)
 
-func (refs References) MatchWalk(te schema.TraversalExpr, prefix string, f RefMatchWalkFunc) {
+func (refs References) MatchWalk(te schema.TraversalExpr, prefix string, f RefWalkFunc) {
 	for _, ref := range refs {
 		if strings.HasPrefix(ref.Addr.String(), string(prefix)) {
 			nestedMatches := References(ref.InsideReferences).ContainsMatch(te, prefix)
 			if Reference(ref).MatchesConstraint(te) || nestedMatches {
-				f(ref, nestedMatches)
+				f(ref)
 				continue
 			}
 		}

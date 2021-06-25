@@ -330,7 +330,7 @@ func (d *Decoder) candidatesForTraversalConstraint(tc schema.TraversalExpr, oute
 
 	refs := References(d.refReader())
 
-	refs.MatchWalk(tc, string(prefix), func(ref lang.Reference, hasNestedMatches bool) {
+	refs.MatchWalk(tc, string(prefix), func(ref lang.Reference) {
 		// avoid suggesting references to block's own fields from within (for now)
 		if ref.RangePtr != nil &&
 			(outerBodyRng.ContainsPos(ref.RangePtr.Start) ||
@@ -338,55 +338,20 @@ func (d *Decoder) candidatesForTraversalConstraint(tc schema.TraversalExpr, oute
 			return
 		}
 
-		textEdit, triggerSuggest := textEditForReference(ref, editRng, hasNestedMatches)
-
 		candidates = append(candidates, lang.Candidate{
-			Label:          ref.Addr.String(),
-			Detail:         ref.FriendlyName(),
-			Description:    ref.Description,
-			Kind:           lang.TraversalCandidateKind,
-			TextEdit:       textEdit,
-			TriggerSuggest: triggerSuggest,
+			Label:       ref.Addr.String(),
+			Detail:      ref.FriendlyName(),
+			Description: ref.Description,
+			Kind:        lang.TraversalCandidateKind,
+			TextEdit: lang.TextEdit{
+				NewText: ref.Addr.String(),
+				Snippet: ref.Addr.String(),
+				Range:   editRng,
+			},
 		})
 	})
 
 	return candidates
-}
-
-func textEditForReference(ref lang.Reference, editRng hcl.Range, hasNestedMatches bool) (lang.TextEdit, bool) {
-	te := lang.TextEdit{
-		NewText: ref.Addr.String(),
-		Snippet: ref.Addr.String(),
-		Range:   editRng,
-	}
-
-	if !hasNestedMatches {
-		return te, false
-	}
-
-	if ref.Type.IsObjectType() {
-		te.NewText = fmt.Sprintf("%s.", ref.Addr.String())
-		te.Snippet = fmt.Sprintf("%s.", ref.Addr.String())
-		return te, true
-	}
-
-	// TODO: Refactor to provide known indicies and map keys
-	// more cleanly when we support nested expressions
-	// https://github.com/hashicorp/terraform-ls/issues/496
-
-	if ref.Type.IsListType() {
-		te.NewText = fmt.Sprintf("%s[", ref.Addr.String())
-		te.Snippet = fmt.Sprintf("%s[${1:0}]", ref.Addr.String())
-		return te, false
-	}
-
-	if ref.Type.IsMapType() {
-		te.NewText = fmt.Sprintf("%s[", ref.Addr.String())
-		te.Snippet = fmt.Sprintf(`%s["${1:key}"]`, ref.Addr.String())
-		return te, false
-	}
-
-	return te, false
 }
 
 func newTextForConstraints(cons schema.ExprConstraints, isNested bool) string {
