@@ -3145,3 +3145,103 @@ provider "test" {
 		})
 	}
 }
+
+func TestReferenceTargetForOrigin(t *testing.T) {
+	testCases := []struct {
+		name              string
+		refTargets        lang.ReferenceTargets
+		refOrigin         lang.ReferenceOrigin
+		expectedRefTarget *lang.ReferenceTarget
+	}{
+		{
+			"no targets",
+			lang.ReferenceTargets{},
+			lang.ReferenceOrigin{
+				Addr: lang.Address{
+					lang.RootStep{Name: "var"},
+					lang.AttrStep{Name: "test"},
+				},
+			},
+			nil,
+		},
+		{
+			"single match",
+			lang.ReferenceTargets{
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "test"},
+					},
+				},
+			},
+			lang.ReferenceOrigin{
+				Addr: lang.Address{
+					lang.RootStep{Name: "var"},
+					lang.AttrStep{Name: "test"},
+				},
+			},
+			&lang.ReferenceTarget{
+				Addr: lang.Address{
+					lang.RootStep{Name: "var"},
+					lang.AttrStep{Name: "test"},
+				},
+			},
+		},
+		{
+			"first of two matches",
+			lang.ReferenceTargets{
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "data"},
+						lang.AttrStep{Name: "foo"},
+					},
+					Type: cty.Bool,
+				},
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "test"},
+					},
+					Type: cty.Bool,
+				},
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "test"},
+					},
+					ScopeId: lang.ScopeId("variable"),
+				},
+			},
+			lang.ReferenceOrigin{
+				Addr: lang.Address{
+					lang.RootStep{Name: "var"},
+					lang.AttrStep{Name: "test"},
+				},
+			},
+			&lang.ReferenceTarget{
+				Addr: lang.Address{
+					lang.RootStep{Name: "var"},
+					lang.AttrStep{Name: "test"},
+				},
+				Type: cty.Bool,
+			},
+		},
+	}
+	for i, tc := range testCases {
+		t.Run(fmt.Sprintf("%d-%s", i, tc.name), func(t *testing.T) {
+			d := NewDecoder()
+			d.SetReferenceTargetReader(func() lang.ReferenceTargets {
+				return tc.refTargets
+			})
+
+			refTarget, err := d.ReferenceTargetForOrigin(tc.refOrigin)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			if diff := cmp.Diff(tc.expectedRefTarget, refTarget, ctydebug.CmpOptions); diff != "" {
+				t.Fatalf("mismatch of reference target: %s", diff)
+			}
+		})
+	}
+}
