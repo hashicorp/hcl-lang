@@ -24,6 +24,7 @@ func (d *Decoder) ReferenceTargetForOrigin(refOrigin lang.ReferenceOrigin) (*lan
 
 	allTargets := ReferenceTargets(d.refTargetReader())
 
+	// TODO: reflect target type
 	ref, err := allTargets.FirstAddrMatch(refOrigin.Addr)
 	if err != nil {
 		if _, ok := err.(*NoRefTargetFound); ok {
@@ -33,6 +34,28 @@ func (d *Decoder) ReferenceTargetForOrigin(refOrigin lang.ReferenceOrigin) (*lan
 	}
 
 	return &ref, nil
+}
+
+func (d *Decoder) OutermostReferenceTargetAtPos(file string, pos hcl.Pos) (*lang.ReferenceTarget, error) {
+	if d.refTargetReader == nil {
+		return nil, nil
+	}
+
+	allTargets := ReferenceTargets(d.refTargetReader())
+
+	for _, target := range allTargets {
+		if target.RangePtr == nil {
+			continue
+		}
+		if target.RangePtr.Filename != file {
+			continue
+		}
+		if target.RangePtr.ContainsPos(pos) {
+			return &target, nil
+		}
+	}
+
+	return nil, nil
 }
 
 type ReferenceTarget lang.ReferenceTarget
@@ -64,11 +87,11 @@ func (ref ReferenceTarget) AddrMatchesTraversal(t hcl.Traversal) bool {
 
 type ReferenceTargets lang.ReferenceTargets
 
-type RefWalkFunc func(lang.ReferenceTarget) error
+type RefTargetWalkFunc func(lang.ReferenceTarget) error
 
 var StopWalking error = errors.New("stop walking")
 
-func (refs ReferenceTargets) DeepWalk(f RefWalkFunc) {
+func (refs ReferenceTargets) DeepWalk(f RefTargetWalkFunc) {
 	for _, ref := range refs {
 		err := f(ref)
 		if err == StopWalking {
@@ -82,7 +105,7 @@ func (refs ReferenceTargets) DeepWalk(f RefWalkFunc) {
 	}
 }
 
-func (refs ReferenceTargets) MatchWalk(te schema.TraversalExpr, prefix string, f RefWalkFunc) {
+func (refs ReferenceTargets) MatchWalk(te schema.TraversalExpr, prefix string, f RefTargetWalkFunc) {
 	for _, ref := range refs {
 		if strings.HasPrefix(ref.Addr.String(), string(prefix)) {
 			nestedMatches := ReferenceTargets(ref.NestedTargets).ContainsMatch(te, prefix)
@@ -113,6 +136,8 @@ func (refs ReferenceTargets) ContainsMatch(te schema.TraversalExpr, prefix strin
 
 func (refs ReferenceTargets) FirstMatch(expr hcl.Traversal, tSchema schema.TraversalExpr) (lang.ReferenceTarget, error) {
 	var matchingReference *lang.ReferenceTarget
+
+	// TODO: reflect target type
 
 	refs.DeepWalk(func(r lang.ReferenceTarget) error {
 		ref := ReferenceTarget(r)

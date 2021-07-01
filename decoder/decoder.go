@@ -16,6 +16,7 @@ type Decoder struct {
 	filesMu *sync.RWMutex
 
 	refTargetReader ReferenceTargetReader
+	refOriginReader ReferenceOriginReader
 	rootSchema      *schema.BodySchema
 	rootSchemaMu    *sync.RWMutex
 	maxCandidates   uint
@@ -30,6 +31,7 @@ type Decoder struct {
 }
 
 type ReferenceTargetReader func() lang.ReferenceTargets
+type ReferenceOriginReader func() lang.ReferenceOrigins
 
 // NewDecoder creates a new Decoder
 //
@@ -57,6 +59,10 @@ func (d *Decoder) SetSchema(schema *schema.BodySchema) {
 
 func (d *Decoder) SetReferenceTargetReader(f ReferenceTargetReader) {
 	d.refTargetReader = f
+}
+
+func (d *Decoder) SetReferenceOriginReader(f ReferenceOriginReader) {
+	d.refOriginReader = f
 }
 
 func (d *Decoder) SetUtmSource(src string) {
