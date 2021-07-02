@@ -380,7 +380,7 @@ func decodeReferenceTargetsForComplexTypeExpr(addr lang.Address, expr hclsyntax.
 				}
 				if !elemType.IsPrimitiveType() {
 					ref.NestedTargets = make(lang.ReferenceTargets, 0)
-					ref.NestedTargets = append(refs, decodeReferenceTargetsForComplexTypeExpr(elemAddr, item, elemType, scopeId)...)
+					ref.NestedTargets = append(ref.NestedTargets, decodeReferenceTargetsForComplexTypeExpr(elemAddr, item, elemType, scopeId)...)
 				}
 
 				refs = append(refs, ref)
@@ -410,7 +410,7 @@ func decodeReferenceTargetsForComplexTypeExpr(addr lang.Address, expr hclsyntax.
 				}
 				if !attrType.IsPrimitiveType() {
 					ref.NestedTargets = make(lang.ReferenceTargets, 0)
-					ref.NestedTargets = append(refs, decodeReferenceTargetsForComplexTypeExpr(attrAddr, item.ValueExpr, attrType, scopeId)...)
+					ref.NestedTargets = append(ref.NestedTargets, decodeReferenceTargetsForComplexTypeExpr(attrAddr, item.ValueExpr, attrType, scopeId)...)
 				}
 
 				refs = append(refs, ref)
@@ -441,7 +441,7 @@ func decodeReferenceTargetsForComplexTypeExpr(addr lang.Address, expr hclsyntax.
 				}
 				if !elemType.IsPrimitiveType() {
 					ref.NestedTargets = make(lang.ReferenceTargets, 0)
-					ref.NestedTargets = append(refs, decodeReferenceTargetsForComplexTypeExpr(elemAddr, item.ValueExpr, elemType, scopeId)...)
+					ref.NestedTargets = append(ref.NestedTargets, decodeReferenceTargetsForComplexTypeExpr(elemAddr, item.ValueExpr, elemType, scopeId)...)
 				}
 
 				refs = append(refs, ref)

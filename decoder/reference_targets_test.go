@@ -3121,6 +3121,283 @@ provider "test" {
 				},
 			},
 		},
+		{
+			// repro case for https://github.com/hashicorp/terraform-ls/issues/573
+			"nested complex objects",
+			&schema.BodySchema{
+				Blocks: map[string]*schema.BlockSchema{
+					"locals": {
+						Body: &schema.BodySchema{
+							AnyAttribute: &schema.AttributeSchema{
+								Address: &schema.AttributeAddrSchema{
+									Steps: []schema.AddrStep{
+										schema.StaticStep{Name: "local"},
+										schema.AttrNameStep{},
+									},
+									ScopeId:    lang.ScopeId("local"),
+									AsExprType: true,
+								},
+								Expr: schema.ExprConstraints{
+									schema.TraversalExpr{OfType: cty.DynamicPseudoType},
+									schema.LiteralTypeExpr{Type: cty.DynamicPseudoType},
+								},
+							},
+						},
+					},
+				},
+			},
+			`locals {
+  top_obj = {
+    first = {
+      attr = "val"
+    }
+    second = {
+      attr = "val"
+    }
+    third = {
+      attr = "val"
+    }
+    fourth = {
+      attr = "val"
+    }
+  }
+}
+`,
+			lang.ReferenceTargets{
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "local"},
+						lang.AttrStep{Name: "top_obj"},
+					},
+					Type: cty.Object(map[string]cty.Type{
+						"first": cty.Object(map[string]cty.Type{
+							"attr": cty.String,
+						}),
+						"second": cty.Object(map[string]cty.Type{
+							"attr": cty.String,
+						}),
+						"third": cty.Object(map[string]cty.Type{
+							"attr": cty.String,
+						}),
+						"fourth": cty.Object(map[string]cty.Type{
+							"attr": cty.String,
+						}),
+					}),
+					ScopeId: lang.ScopeId("local"),
+					RangePtr: &hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   2,
+							Column: 3,
+							Byte:   11,
+						},
+						End: hcl.Pos{
+							Line:   15,
+							Column: 4,
+							Byte:   184,
+						},
+					},
+					NestedTargets: lang.ReferenceTargets{
+						{
+							Addr: lang.Address{
+								lang.RootStep{Name: "local"},
+								lang.AttrStep{Name: "top_obj"},
+								lang.AttrStep{Name: "first"},
+							},
+							Type: cty.Object(map[string]cty.Type{
+								"attr": cty.String,
+							}),
+							ScopeId: lang.ScopeId("local"),
+							RangePtr: &hcl.Range{
+								Filename: "test.tf",
+								Start: hcl.Pos{
+									Line:   3,
+									Column: 5,
+									Byte:   27,
+								},
+								End: hcl.Pos{
+									Line:   5,
+									Column: 6,
+									Byte:   61,
+								},
+							},
+							NestedTargets: lang.ReferenceTargets{
+								{
+									Addr: lang.Address{
+										lang.RootStep{Name: "local"},
+										lang.AttrStep{Name: "top_obj"},
+										lang.AttrStep{Name: "first"},
+										lang.AttrStep{Name: "attr"},
+									},
+									Type:    cty.String,
+									ScopeId: lang.ScopeId("local"),
+									RangePtr: &hcl.Range{
+										Filename: "test.tf",
+										Start: hcl.Pos{
+											Line:   4,
+											Column: 7,
+											Byte:   43,
+										},
+										End: hcl.Pos{
+											Line:   4,
+											Column: 19,
+											Byte:   55,
+										},
+									},
+								},
+							},
+						},
+						{
+							Addr: lang.Address{
+								lang.RootStep{Name: "local"},
+								lang.AttrStep{Name: "top_obj"},
+								lang.AttrStep{Name: "second"},
+							},
+							Type: cty.Object(map[string]cty.Type{
+								"attr": cty.String,
+							}),
+							ScopeId: lang.ScopeId("local"),
+							RangePtr: &hcl.Range{
+								Filename: "test.tf",
+								Start: hcl.Pos{
+									Line:   6,
+									Column: 5,
+									Byte:   66,
+								},
+								End: hcl.Pos{
+									Line:   8,
+									Column: 6,
+									Byte:   101,
+								},
+							},
+							NestedTargets: lang.ReferenceTargets{
+								{
+									Addr: lang.Address{
+										lang.RootStep{Name: "local"},
+										lang.AttrStep{Name: "top_obj"},
+										lang.AttrStep{Name: "second"},
+										lang.AttrStep{Name: "attr"},
+									},
+									Type:    cty.String,
+									ScopeId: lang.ScopeId("local"),
+									RangePtr: &hcl.Range{
+										Filename: "test.tf",
+										Start: hcl.Pos{
+											Line:   7,
+											Column: 7,
+											Byte:   83,
+										},
+										End: hcl.Pos{
+											Line:   7,
+											Column: 19,
+											Byte:   95,
+										},
+									},
+								},
+							},
+						},
+						{
+							Addr: lang.Address{
+								lang.RootStep{Name: "local"},
+								lang.AttrStep{Name: "top_obj"},
+								lang.AttrStep{Name: "third"},
+							},
+							Type: cty.Object(map[string]cty.Type{
+								"attr": cty.String,
+							}),
+							ScopeId: lang.ScopeId("local"),
+							RangePtr: &hcl.Range{
+								Filename: "test.tf",
+								Start: hcl.Pos{
+									Line:   9,
+									Column: 5,
+									Byte:   106,
+								},
+								End: hcl.Pos{
+									Line:   11,
+									Column: 6,
+									Byte:   140,
+								},
+							},
+							NestedTargets: lang.ReferenceTargets{
+								{
+									Addr: lang.Address{
+										lang.RootStep{Name: "local"},
+										lang.AttrStep{Name: "top_obj"},
+										lang.AttrStep{Name: "third"},
+										lang.AttrStep{Name: "attr"},
+									},
+									Type:    cty.String,
+									ScopeId: lang.ScopeId("local"),
+									RangePtr: &hcl.Range{
+										Filename: "test.tf",
+										Start: hcl.Pos{
+											Line:   10,
+											Column: 7,
+											Byte:   122,
+										},
+										End: hcl.Pos{
+											Line:   10,
+											Column: 19,
+											Byte:   134,
+										},
+									},
+								},
+							},
+						},
+						{
+							Addr: lang.Address{
+								lang.RootStep{Name: "local"},
+								lang.AttrStep{Name: "top_obj"},
+								lang.AttrStep{Name: "fourth"},
+							},
+							Type: cty.Object(map[string]cty.Type{
+								"attr": cty.String,
+							}),
+							ScopeId: lang.ScopeId("local"),
+							RangePtr: &hcl.Range{
+								Filename: "test.tf",
+								Start: hcl.Pos{
+									Line:   12,
+									Column: 5,
+									Byte:   145,
+								},
+								End: hcl.Pos{
+									Line:   14,
+									Column: 6,
+									Byte:   180,
+								},
+							},
+							NestedTargets: lang.ReferenceTargets{
+								{
+									Addr: lang.Address{
+										lang.RootStep{Name: "local"},
+										lang.AttrStep{Name: "top_obj"},
+										lang.AttrStep{Name: "fourth"},
+										lang.AttrStep{Name: "attr"},
+									},
+									Type:    cty.String,
+									ScopeId: lang.ScopeId("local"),
+									RangePtr: &hcl.Range{
+										Filename: "test.tf",
+										Start: hcl.Pos{
+											Line:   13,
+											Column: 7,
+											Byte:   162,
+										},
+										End: hcl.Pos{
+											Line:   13,
+											Column: 19,
+											Byte:   174,
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
 	}
 
 	for i, tc := range testCases {
