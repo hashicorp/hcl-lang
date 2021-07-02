@@ -369,7 +369,7 @@ func decodeReferenceTargetsForComplexTypeExpr(addr lang.Address, expr hclsyntax.
 	case *hclsyntax.TupleConsExpr:
 		if t.IsListType() {
 			for i, item := range e.Exprs {
-				elemAddr := append(addr, lang.IndexStep{Key: cty.NumberIntVal(int64(i))})
+				elemAddr := append(addr.Copy(), lang.IndexStep{Key: cty.NumberIntVal(int64(i))})
 				elemType := t.ElementType()
 
 				ref := lang.ReferenceTarget{
@@ -380,7 +380,7 @@ func decodeReferenceTargetsForComplexTypeExpr(addr lang.Address, expr hclsyntax.
 				}
 				if !elemType.IsPrimitiveType() {
 					ref.NestedTargets = make(lang.ReferenceTargets, 0)
-					ref.NestedTargets = append(refs, decodeReferenceTargetsForComplexTypeExpr(elemAddr, item, elemType, scopeId)...)
+					ref.NestedTargets = append(ref.NestedTargets, decodeReferenceTargetsForComplexTypeExpr(elemAddr, item, elemType, scopeId)...)
 				}
 
 				refs = append(refs, ref)
@@ -399,7 +399,7 @@ func decodeReferenceTargetsForComplexTypeExpr(addr lang.Address, expr hclsyntax.
 				if !ok {
 					continue
 				}
-				attrAddr := append(addr, lang.AttrStep{Name: key.AsString()})
+				attrAddr := append(addr.Copy(), lang.AttrStep{Name: key.AsString()})
 				rng := hcl.RangeBetween(item.KeyExpr.Range(), item.ValueExpr.Range())
 
 				ref := lang.ReferenceTarget{
@@ -410,7 +410,7 @@ func decodeReferenceTargetsForComplexTypeExpr(addr lang.Address, expr hclsyntax.
 				}
 				if !attrType.IsPrimitiveType() {
 					ref.NestedTargets = make(lang.ReferenceTargets, 0)
-					ref.NestedTargets = append(refs, decodeReferenceTargetsForComplexTypeExpr(attrAddr, item.ValueExpr, attrType, scopeId)...)
+					ref.NestedTargets = append(ref.NestedTargets, decodeReferenceTargetsForComplexTypeExpr(attrAddr, item.ValueExpr, attrType, scopeId)...)
 				}
 
 				refs = append(refs, ref)
@@ -430,7 +430,7 @@ func decodeReferenceTargetsForComplexTypeExpr(addr lang.Address, expr hclsyntax.
 				}
 				elemType := *elemTypePtr
 
-				elemAddr := append(addr, lang.IndexStep{Key: key})
+				elemAddr := append(addr.Copy(), lang.IndexStep{Key: key})
 				rng := hcl.RangeBetween(item.KeyExpr.Range(), item.ValueExpr.Range())
 
 				ref := lang.ReferenceTarget{
@@ -441,7 +441,7 @@ func decodeReferenceTargetsForComplexTypeExpr(addr lang.Address, expr hclsyntax.
 				}
 				if !elemType.IsPrimitiveType() {
 					ref.NestedTargets = make(lang.ReferenceTargets, 0)
-					ref.NestedTargets = append(refs, decodeReferenceTargetsForComplexTypeExpr(elemAddr, item.ValueExpr, elemType, scopeId)...)
+					ref.NestedTargets = append(ref.NestedTargets, decodeReferenceTargetsForComplexTypeExpr(elemAddr, item.ValueExpr, elemType, scopeId)...)
 				}
 
 				refs = append(refs, ref)
@@ -698,9 +698,7 @@ func (d *Decoder) collectInferredReferenceTargetsForBody(addr lang.Address, scop
 			continue
 		}
 
-		attrAddr := make(lang.Address, len(addr))
-		copy(attrAddr, addr)
-		attrAddr = append(attrAddr, lang.AttrStep{Name: name})
+		attrAddr := append(addr.Copy(), lang.AttrStep{Name: name})
 
 		ref := lang.ReferenceTarget{
 			Addr:        attrAddr,

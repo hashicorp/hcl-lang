@@ -20,12 +20,18 @@ func (a Address) Marshal() ([]byte, error) {
 	return []byte(a.String()), nil
 }
 
-func (r Address) String() string {
+func (a Address) String() string {
 	addr := ""
-	for _, s := range r {
+	for _, s := range a {
 		addr += s.String()
 	}
 	return addr
+}
+
+func (a Address) Copy() Address {
+	addrCopy := make(Address, len(a))
+	copy(addrCopy, a)
+	return addrCopy
 }
 
 type RootStep struct {
