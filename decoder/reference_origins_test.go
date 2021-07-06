@@ -520,6 +520,57 @@ func TestReferenceOriginsTargeting(t *testing.T) {
 			},
 			lang.ReferenceOrigins{},
 		},
+		{
+			"match of nested target - two matches",
+			lang.ReferenceOrigins{
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "foo"},
+					},
+				},
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "test"},
+					},
+				},
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "test"},
+						lang.AttrStep{Name: "second"},
+					},
+				},
+			},
+			lang.ReferenceTarget{
+				Addr: lang.Address{
+					lang.RootStep{Name: "test"},
+				},
+				Type: cty.Object(map[string]cty.Type{
+					"second": cty.String,
+				}),
+				NestedTargets: lang.ReferenceTargets{
+					{
+						Addr: lang.Address{
+							lang.RootStep{Name: "test"},
+							lang.AttrStep{Name: "second"},
+						},
+						Type: cty.String,
+					},
+				},
+			},
+			lang.ReferenceOrigins{
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "test"},
+					},
+				},
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "test"},
+						lang.AttrStep{Name: "second"},
+					},
+				},
+			},
+		},
 	}
 	for i, tc := range testCases {
 		t.Run(fmt.Sprintf("%d-%s", i, tc.name), func(t *testing.T) {
