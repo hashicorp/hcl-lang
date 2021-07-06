@@ -137,10 +137,10 @@ func (ro ReferenceOrigins) Targeting(refTarget lang.ReferenceTarget) lang.Refere
 		if Address(refOrigin.Addr).Equals(Address(refTarget.Address())) {
 			origins = append(origins, refOrigin)
 		}
+	}
 
-		for _, iTarget := range refTarget.NestedTargets {
-			origins = append(origins, ro.Targeting(iTarget)...)
-		}
+	for _, iTarget := range refTarget.NestedTargets {
+		origins = append(origins, ro.Targeting(iTarget)...)
 	}
 
 	return origins
