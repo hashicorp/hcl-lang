@@ -1385,6 +1385,83 @@ func TestDecoder_HoverAtPos_traversalExpressions(t *testing.T) {
 			},
 			nil,
 		},
+		{
+			"loosely matching traversal pointing to unknown type",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Expr: schema.ExprConstraints{
+						schema.TraversalExpr{OfType: cty.String},
+					},
+				},
+			},
+			lang.ReferenceTargets{
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "foo"},
+					},
+					Type: cty.DynamicPseudoType,
+				},
+			},
+			`attr = var.foo.bar`,
+			hcl.Pos{Line: 1, Column: 10, Byte: 9},
+			&lang.HoverData{
+				Content: lang.Markdown("`var.foo`\n_dynamic_"),
+				Range: hcl.Range{
+					Filename: "test.tf",
+					Start: hcl.Pos{
+						Line:   1,
+						Column: 8,
+						Byte:   7,
+					},
+					End: hcl.Pos{
+						Line:   1,
+						Column: 19,
+						Byte:   18,
+					},
+				},
+			},
+			nil,
+		},
+		{
+			"scope ID matching traversal",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Expr: schema.ExprConstraints{
+						schema.TraversalExpr{OfScopeId: lang.ScopeId("foo")},
+					},
+				},
+			},
+			lang.ReferenceTargets{
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "foo"},
+					},
+					ScopeId: lang.ScopeId("foo"),
+					Name:    "special",
+				},
+			},
+			`attr = var.foo`,
+			hcl.Pos{Line: 1, Column: 10, Byte: 9},
+			&lang.HoverData{
+				Content: lang.Markdown("`var.foo` special"),
+				Range: hcl.Range{
+					Filename: "test.tf",
+					Start: hcl.Pos{
+						Line:   1,
+						Column: 8,
+						Byte:   7,
+					},
+					End: hcl.Pos{
+						Line:   1,
+						Column: 15,
+						Byte:   14,
+					},
+				},
+			},
+			nil,
+		},
 	}
 
 	for i, tc := range testCases {

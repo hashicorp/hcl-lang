@@ -4,6 +4,7 @@ import (
 	"sort"
 
 	"github.com/hashicorp/hcl-lang/lang"
+	"github.com/hashicorp/hcl-lang/schema"
 	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hclsyntax"
 )
@@ -36,6 +37,14 @@ func (d *Decoder) ReferenceOriginsTargeting(refTarget lang.ReferenceTarget) (lan
 
 func (d *Decoder) CollectReferenceOrigins() (lang.ReferenceOrigins, error) {
 	refOrigins := make(lang.ReferenceOrigins, 0)
+
+	d.rootSchemaMu.RLock()
+	defer d.rootSchemaMu.RUnlock()
+
+	if d.rootSchema == nil {
+		return refOrigins, &NoSchemaError{}
+	}
+
 	files := d.Filenames()
 	for _, filename := range files {
 		f, err := d.fileByName(filename)
@@ -50,7 +59,7 @@ func (d *Decoder) CollectReferenceOrigins() (lang.ReferenceOrigins, error) {
 			continue
 		}
 
-		refOrigins = append(refOrigins, d.referenceOriginsInBody(body)...)
+		refOrigins = append(refOrigins, d.referenceOriginsInBody(body, d.rootSchema)...)
 	}
 
 	sort.SliceStable(refOrigins, func(i, j int) bool {
@@ -61,24 +70,45 @@ func (d *Decoder) CollectReferenceOrigins() (lang.ReferenceOrigins, error) {
 	return refOrigins, nil
 }
 
-func (d *Decoder) referenceOriginsInBody(body *hclsyntax.Body) lang.ReferenceOrigins {
+func (d *Decoder) referenceOriginsInBody(body *hclsyntax.Body, bodySchema *schema.BodySchema) lang.ReferenceOrigins {
 	origins := make(lang.ReferenceOrigins, 0)
+
+	if bodySchema == nil {
+		return origins
+	}
+
 	for _, attr := range body.Attributes {
+		aSchema, ok := bodySchema.Attributes[attr.Name]
+		if !ok {
+			if bodySchema.AnyAttribute == nil {
+				// skip unknown attribute
+				continue
+			}
+			aSchema = bodySchema.AnyAttribute
+		}
+
+		te, ok := ExprConstraints(aSchema.Expr).TraversalExpr()
+		if !ok {
+			continue
+		}
 		for _, traversal := range attr.Expr.Variables() {
-			addr, err := lang.TraversalToAddress(traversal)
+			origin, err := TraversalToReferenceOrigin(traversal, te)
 			if err != nil {
 				continue
 			}
-			origins = append(origins, lang.ReferenceOrigin{
-				Addr:  addr,
-				Range: traversal.SourceRange(),
-			})
+
+			origins = append(origins, origin)
 		}
 	}
 
 	for _, block := range body.Blocks {
 		if block.Body != nil {
-			origins = append(origins, d.referenceOriginsInBody(block.Body)...)
+			bSchema, ok := bodySchema.Blocks[block.Type]
+			if !ok {
+				// skip unknown blocks
+				continue
+			}
+			origins = append(origins, d.referenceOriginsInBody(block.Body, bSchema.Body)...)
 		}
 	}
 
@@ -129,12 +159,10 @@ type ReferenceOrigins lang.ReferenceOrigins
 func (ro ReferenceOrigins) Targeting(refTarget lang.ReferenceTarget) lang.ReferenceOrigins {
 	origins := make(lang.ReferenceOrigins, 0)
 
-	// The O(n^2) here is not ideal but it should
-	// be fine given expected data size
+	target := ReferenceTarget(refTarget)
 
 	for _, refOrigin := range ro {
-		// TODO: reflect refTarget.Type in comparing
-		if Address(refOrigin.Addr).Equals(Address(refTarget.Address())) {
+		if target.IsTargetableBy(refOrigin) {
 			origins = append(origins, refOrigin)
 		}
 	}
@@ -144,4 +172,18 @@ func (ro ReferenceOrigins) Targeting(refTarget lang.ReferenceTarget) lang.Refere
 	}
 
 	return origins
+}
+
+func TraversalToReferenceOrigin(traversal hcl.Traversal, te schema.TraversalExpr) (lang.ReferenceOrigin, error) {
+	addr, err := lang.TraversalToAddress(traversal)
+	if err != nil {
+		return lang.ReferenceOrigin{}, err
+	}
+
+	return lang.ReferenceOrigin{
+		Addr:      addr,
+		Range:     traversal.SourceRange(),
+		OfScopeId: te.OfScopeId,
+		OfType:    te.OfType,
+	}, nil
 }

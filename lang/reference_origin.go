@@ -1,10 +1,16 @@
 package lang
 
-import "github.com/hashicorp/hcl/v2"
+import (
+	"github.com/hashicorp/hcl/v2"
+	"github.com/zclconf/go-cty/cty"
+)
 
 type ReferenceOrigin struct {
 	Addr  Address
 	Range hcl.Range
+
+	OfScopeId ScopeId
+	OfType    cty.Type
 }
 
 type ReferenceOrigins []ReferenceOrigin
@@ -24,7 +30,9 @@ func (ro ReferenceOrigins) Copy() ReferenceOrigins {
 
 func (ro ReferenceOrigin) Copy() ReferenceOrigin {
 	return ReferenceOrigin{
-		Addr:  ro.Addr,
-		Range: ro.Range,
+		Addr:      ro.Addr,
+		Range:     ro.Range,
+		OfScopeId: ro.OfScopeId,
+		OfType:    ro.OfType,
 	}
 }
