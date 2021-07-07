@@ -58,6 +58,48 @@ func (d *Decoder) OutermostReferenceTargetAtPos(file string, pos hcl.Pos) (*lang
 	return nil, nil
 }
 
+func (d *Decoder) InnermostReferenceTargetAtPos(file string, pos hcl.Pos) (*lang.ReferenceTarget, error) {
+	if d.refTargetReader == nil {
+		return nil, nil
+	}
+
+	target, _ := d.innermostReferenceTargetAtPos(d.refTargetReader(), file, pos)
+
+	return target, nil
+}
+
+func (d *Decoder) innermostReferenceTargetAtPos(targets lang.ReferenceTargets, file string, pos hcl.Pos) (*lang.ReferenceTarget, bool) {
+	allTargets := ReferenceTargets(targets)
+
+	matchingTargets := make(lang.ReferenceTargets, 0)
+
+	for _, target := range allTargets {
+		if target.RangePtr == nil {
+			continue
+		}
+		if target.RangePtr.Filename != file {
+			continue
+		}
+		if target.RangePtr.ContainsPos(pos) {
+			matchingTargets = append(matchingTargets, target)
+		}
+	}
+
+	var innermostTarget *lang.ReferenceTarget
+
+	for _, target := range matchingTargets {
+		nestedTarget, ok := d.innermostReferenceTargetAtPos(target.NestedTargets, file, pos)
+		if ok {
+			innermostTarget = nestedTarget
+			continue
+		}
+
+		innermostTarget = &target
+	}
+
+	return innermostTarget, innermostTarget != nil
+}
+
 type ReferenceTarget lang.ReferenceTarget
 
 func (ref ReferenceTarget) MatchesConstraint(te schema.TraversalExpr) bool {
