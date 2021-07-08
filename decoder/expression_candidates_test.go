@@ -1278,6 +1278,56 @@ func TestDecoder_CandidateAtPos_expressions(t *testing.T) {
 			}),
 		},
 		{
+			"map expr inside object expr",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Expr: schema.ExprConstraints{
+						schema.ObjectExpr{
+							Attributes: schema.ObjectExprAttributes{
+								"mymap": &schema.AttributeSchema{
+									Expr: schema.ExprConstraints{
+										schema.MapExpr{
+											Elem: schema.LiteralTypeOnly(cty.String),
+											Name: "map of something",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			`attr = {
+
+}
+`,
+			hcl.Pos{Line: 2, Column: 1, Byte: 9},
+			lang.CompleteCandidates([]lang.Candidate{
+				{
+					Label:  "{ key = string }",
+					Detail: "map of something",
+					TextEdit: lang.TextEdit{
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start: hcl.Pos{
+								Line:   1,
+								Column: 8,
+								Byte:   7,
+							},
+							End: hcl.Pos{
+								Line:   1,
+								Column: 8,
+								Byte:   7,
+							},
+						},
+						NewText: "{\n  name = \"\"\n}",
+						Snippet: "{\n  ${1:name} = \"${1:value}\"\n}",
+					},
+					Kind: lang.MapCandidateKind,
+				},
+			}),
+		},
+		{
 			"map expression of tuple expr",
 			map[string]*schema.AttributeSchema{
 				"attr": {
