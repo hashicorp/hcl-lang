@@ -1553,6 +1553,298 @@ func TestDecoder_SemanticTokensInFile_traversalExpression(t *testing.T) {
 				},
 			},
 		},
+		{
+			"known scope matching traversal",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Expr: schema.ExprConstraints{
+						schema.TraversalExpr{OfScopeId: lang.ScopeId("foo")},
+					},
+				},
+			},
+			lang.ReferenceTargets{
+				lang.ReferenceTarget{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "blah"},
+					},
+					ScopeId: lang.ScopeId("foo"),
+				},
+			},
+			`attr = var.blah
+`,
+			[]lang.SemanticToken{
+				{ // attr
+					Type:      lang.TokenAttrName,
+					Modifiers: []lang.SemanticTokenModifier{},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   1,
+							Column: 1,
+							Byte:   0,
+						},
+						End: hcl.Pos{
+							Line:   1,
+							Column: 5,
+							Byte:   4,
+						},
+					},
+				},
+				{ // var
+					Type:      lang.TokenTraversalStep,
+					Modifiers: []lang.SemanticTokenModifier{},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   1,
+							Column: 8,
+							Byte:   7,
+						},
+						End: hcl.Pos{
+							Line:   1,
+							Column: 11,
+							Byte:   10,
+						},
+					},
+				},
+				{ // blah
+					Type:      lang.TokenTraversalStep,
+					Modifiers: []lang.SemanticTokenModifier{},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   1,
+							Column: 12,
+							Byte:   11,
+						},
+						End: hcl.Pos{
+							Line:   1,
+							Column: 16,
+							Byte:   15,
+						},
+					},
+				},
+			},
+		},
+		{
+			"matching traversal with indexes",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Expr: schema.ExprConstraints{
+						schema.TraversalExpr{},
+					},
+				},
+			},
+			lang.ReferenceTargets{
+				lang.ReferenceTarget{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "foo"},
+						lang.IndexStep{Key: cty.StringVal("test")},
+						lang.AttrStep{Name: "bar"},
+						lang.IndexStep{Key: cty.NumberIntVal(4)},
+					},
+				},
+			},
+			`attr = var.foo["test"].bar[4]
+`,
+			[]lang.SemanticToken{
+				{ // attr
+					Type:      lang.TokenAttrName,
+					Modifiers: []lang.SemanticTokenModifier{},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   1,
+							Column: 1,
+							Byte:   0,
+						},
+						End: hcl.Pos{
+							Line:   1,
+							Column: 5,
+							Byte:   4,
+						},
+					},
+				},
+				{ // var
+					Type:      lang.TokenTraversalStep,
+					Modifiers: []lang.SemanticTokenModifier{},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   1,
+							Column: 8,
+							Byte:   7,
+						},
+						End: hcl.Pos{
+							Line:   1,
+							Column: 11,
+							Byte:   10,
+						},
+					},
+				},
+				{ // foo
+					Type:      lang.TokenTraversalStep,
+					Modifiers: []lang.SemanticTokenModifier{},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   1,
+							Column: 12,
+							Byte:   11,
+						},
+						End: hcl.Pos{
+							Line:   1,
+							Column: 15,
+							Byte:   14,
+						},
+					},
+				},
+				{ // "test"
+					Type:      lang.TokenMapKey,
+					Modifiers: []lang.SemanticTokenModifier{},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   1,
+							Column: 16,
+							Byte:   15,
+						},
+						End: hcl.Pos{
+							Line:   1,
+							Column: 22,
+							Byte:   21,
+						},
+					},
+				},
+				{ // bar
+					Type:      lang.TokenTraversalStep,
+					Modifiers: []lang.SemanticTokenModifier{},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   1,
+							Column: 24,
+							Byte:   23,
+						},
+						End: hcl.Pos{
+							Line:   1,
+							Column: 27,
+							Byte:   26,
+						},
+					},
+				},
+				{ // 4
+					Type:      lang.TokenNumber,
+					Modifiers: []lang.SemanticTokenModifier{},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   1,
+							Column: 28,
+							Byte:   27,
+						},
+						End: hcl.Pos{
+							Line:   1,
+							Column: 29,
+							Byte:   28,
+						},
+					},
+				},
+			},
+		},
+		{
+			"loosely matching traversal of unknown type",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Expr: schema.ExprConstraints{
+						schema.TraversalExpr{OfType: cty.String},
+					},
+				},
+			},
+			lang.ReferenceTargets{
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "foo"},
+					},
+					Type: cty.DynamicPseudoType,
+				},
+			},
+			`attr = var.foo.bar
+`,
+			[]lang.SemanticToken{
+				{ // attr
+					Type:      lang.TokenAttrName,
+					Modifiers: []lang.SemanticTokenModifier{},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   1,
+							Column: 1,
+							Byte:   0,
+						},
+						End: hcl.Pos{
+							Line:   1,
+							Column: 5,
+							Byte:   4,
+						},
+					},
+				},
+				{ // var
+					Type:      lang.TokenTraversalStep,
+					Modifiers: []lang.SemanticTokenModifier{},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   1,
+							Column: 8,
+							Byte:   7,
+						},
+						End: hcl.Pos{
+							Line:   1,
+							Column: 11,
+							Byte:   10,
+						},
+					},
+				},
+				{ // foo
+					Type:      lang.TokenTraversalStep,
+					Modifiers: []lang.SemanticTokenModifier{},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   1,
+							Column: 12,
+							Byte:   11,
+						},
+						End: hcl.Pos{
+							Line:   1,
+							Column: 15,
+							Byte:   14,
+						},
+					},
+				},
+				{ // bar
+					Type:      lang.TokenTraversalStep,
+					Modifiers: []lang.SemanticTokenModifier{},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   1,
+							Column: 16,
+							Byte:   15,
+						},
+						End: hcl.Pos{
+							Line:   1,
+							Column: 19,
+							Byte:   18,
+						},
+					},
+				},
+			},
+		},
 	}
 
 	for i, tc := range testCases {

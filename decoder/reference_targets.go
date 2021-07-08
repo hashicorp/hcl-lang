@@ -24,8 +24,7 @@ func (d *Decoder) ReferenceTargetForOrigin(refOrigin lang.ReferenceOrigin) (*lan
 
 	allTargets := ReferenceTargets(d.refTargetReader())
 
-	// TODO: reflect target type
-	ref, err := allTargets.FirstAddrMatch(refOrigin.Addr)
+	ref, err := allTargets.FirstTargetableBy(refOrigin)
 	if err != nil {
 		if _, ok := err.(*NoRefTargetFound); ok {
 			return nil, nil
@@ -103,28 +102,42 @@ func (d *Decoder) innermostReferenceTargetAtPos(targets lang.ReferenceTargets, f
 type ReferenceTarget lang.ReferenceTarget
 
 func (ref ReferenceTarget) MatchesConstraint(te schema.TraversalExpr) bool {
-	if te.OfScopeId != "" && te.OfScopeId != ref.ScopeId {
-		return false
-	}
+	return ref.MatchesScopeId(te.OfScopeId) && ref.ConformsToType(te.OfType)
+}
 
+func (ref ReferenceTarget) MatchesScopeId(scopeId lang.ScopeId) bool {
+	return scopeId == "" || ref.ScopeId == scopeId
+}
+
+func (ref ReferenceTarget) ConformsToType(typ cty.Type) bool {
 	conformsToType := false
-	if te.OfType != cty.NilType && ref.Type != cty.NilType {
-		if errs := ref.Type.TestConformance(te.OfType); len(errs) == 0 {
+	if typ != cty.NilType && ref.Type != cty.NilType {
+		if errs := ref.Type.TestConformance(typ); len(errs) == 0 {
 			conformsToType = true
 		}
 	}
 
-	return conformsToType || (te.OfType == cty.NilType && ref.Type == cty.NilType)
+	return conformsToType || (typ == cty.NilType && ref.Type == cty.NilType)
 }
 
-func (ref ReferenceTarget) AddrMatchesTraversal(t hcl.Traversal) bool {
-	addr, err := lang.TraversalToAddress(t)
-	if err != nil {
+func (target ReferenceTarget) IsTargetableBy(origin lang.ReferenceOrigin) bool {
+	if len(target.Addr) > len(origin.Addr) {
 		return false
 	}
 
-	rAddr := Address(ref.Addr)
-	return rAddr.Equals(Address(addr))
+	if !target.MatchesScopeId(origin.OfScopeId) {
+		return false
+	}
+
+	originAddr := Address(origin.Addr)
+
+	if target.Type == cty.DynamicPseudoType {
+		originAddr = Address(origin.Addr).FirstSteps(uint(len(target.Addr)))
+	} else if origin.OfType != cty.NilType && !target.ConformsToType(origin.OfType) {
+		return false
+	}
+
+	return Address(target.Addr).Equals(originAddr)
 }
 
 type ReferenceTargets lang.ReferenceTargets
@@ -176,32 +189,11 @@ func (refs ReferenceTargets) ContainsMatch(te schema.TraversalExpr, prefix strin
 	return false
 }
 
-func (refs ReferenceTargets) FirstMatch(expr hcl.Traversal, tSchema schema.TraversalExpr) (lang.ReferenceTarget, error) {
-	var matchingReference *lang.ReferenceTarget
-
-	// TODO: reflect target type
-
-	refs.DeepWalk(func(r lang.ReferenceTarget) error {
-		ref := ReferenceTarget(r)
-		if ref.AddrMatchesTraversal(expr) && ref.MatchesConstraint(tSchema) {
-			matchingReference = &r
-			return StopWalking
-		}
-		return nil
-	})
-
-	if matchingReference == nil {
-		return lang.ReferenceTarget{}, &NoRefTargetFound{}
-	}
-
-	return *matchingReference, nil
-}
-
-func (refs ReferenceTargets) FirstAddrMatch(addr lang.Address) (lang.ReferenceTarget, error) {
+func (refs ReferenceTargets) FirstTargetableBy(origin lang.ReferenceOrigin) (lang.ReferenceTarget, error) {
 	var matchingReference *lang.ReferenceTarget
 
 	refs.DeepWalk(func(ref lang.ReferenceTarget) error {
-		if Address(ref.Address()).Equals(Address(addr)) {
+		if ReferenceTarget(ref).IsTargetableBy(origin) {
 			matchingReference = &ref
 			return StopWalking
 		}
@@ -228,6 +220,10 @@ func (a Address) Equals(addr Address) bool {
 	}
 
 	return true
+}
+
+func (a Address) FirstSteps(steps uint) Address {
+	return a[0:steps]
 }
 
 func (d *Decoder) CollectReferenceTargets() (lang.ReferenceTargets, error) {

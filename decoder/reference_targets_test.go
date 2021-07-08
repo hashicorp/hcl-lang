@@ -3494,6 +3494,7 @@ func TestReferenceTargetForOrigin(t *testing.T) {
 					lang.RootStep{Name: "var"},
 					lang.AttrStep{Name: "test"},
 				},
+				OfType: cty.Bool,
 			},
 			&lang.ReferenceTarget{
 				Addr: lang.Address{
@@ -3501,6 +3502,85 @@ func TestReferenceTargetForOrigin(t *testing.T) {
 					lang.AttrStep{Name: "test"},
 				},
 				Type: cty.Bool,
+			},
+		},
+		{
+			"match of unknown type",
+			lang.ReferenceTargets{
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "data"},
+						lang.AttrStep{Name: "foo"},
+					},
+					Type: cty.Bool,
+				},
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "foo"},
+					},
+					Type: cty.DynamicPseudoType,
+				},
+			},
+			lang.ReferenceOrigin{
+				Addr: lang.Address{
+					lang.RootStep{Name: "var"},
+					lang.AttrStep{Name: "foo"},
+					lang.AttrStep{Name: "bar"},
+				},
+			},
+			&lang.ReferenceTarget{
+				Addr: lang.Address{
+					lang.RootStep{Name: "var"},
+					lang.AttrStep{Name: "foo"},
+				},
+				Type: cty.DynamicPseudoType,
+			},
+		},
+		{
+			"match of nested target",
+			lang.ReferenceTargets{
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "data"},
+						lang.AttrStep{Name: "foo"},
+					},
+					Type: cty.Bool,
+				},
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "foo"},
+					},
+					Type: cty.Object(map[string]cty.Type{
+						"bar": cty.String,
+					}),
+					NestedTargets: lang.ReferenceTargets{
+						{
+							Addr: lang.Address{
+								lang.RootStep{Name: "var"},
+								lang.AttrStep{Name: "foo"},
+								lang.AttrStep{Name: "bar"},
+							},
+							Type: cty.String,
+						},
+					},
+				},
+			},
+			lang.ReferenceOrigin{
+				Addr: lang.Address{
+					lang.RootStep{Name: "var"},
+					lang.AttrStep{Name: "foo"},
+					lang.AttrStep{Name: "bar"},
+				},
+			},
+			&lang.ReferenceTarget{
+				Addr: lang.Address{
+					lang.RootStep{Name: "var"},
+					lang.AttrStep{Name: "foo"},
+					lang.AttrStep{Name: "bar"},
+				},
+				Type: cty.String,
 			},
 		},
 	}

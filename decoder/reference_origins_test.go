@@ -6,6 +6,7 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/hashicorp/hcl-lang/lang"
+	"github.com/hashicorp/hcl-lang/schema"
 	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hclsyntax"
 	"github.com/zclconf/go-cty-debug/ctydebug"
@@ -213,16 +214,33 @@ func TestReferenceOriginAtPos(t *testing.T) {
 func TestCollectReferenceOrigins(t *testing.T) {
 	testCases := []struct {
 		name            string
+		schema          *schema.BodySchema
 		cfg             string
 		expectedOrigins lang.ReferenceOrigins
 	}{
 		{
 			"no origins",
+			&schema.BodySchema{
+				Attributes: map[string]*schema.AttributeSchema{
+					"attribute": {
+						Expr: schema.LiteralTypeOnly(cty.String),
+					},
+				},
+			},
 			`attribute = "foo-bar"`,
 			lang.ReferenceOrigins{},
 		},
 		{
 			"root attribute single step",
+			&schema.BodySchema{
+				Attributes: map[string]*schema.AttributeSchema{
+					"attr": {
+						Expr: schema.ExprConstraints{
+							schema.TraversalExpr{},
+						},
+					},
+				},
+			},
 			`attr = onestep`,
 			lang.ReferenceOrigins{
 				{
@@ -247,6 +265,25 @@ func TestCollectReferenceOrigins(t *testing.T) {
 		},
 		{
 			"multiple root attributes single step",
+			&schema.BodySchema{
+				Attributes: map[string]*schema.AttributeSchema{
+					"attr1": {
+						Expr: schema.ExprConstraints{
+							schema.TraversalExpr{},
+						},
+					},
+					"attr2": {
+						Expr: schema.ExprConstraints{
+							schema.TraversalExpr{},
+						},
+					},
+					"attr3": {
+						Expr: schema.ExprConstraints{
+							schema.TraversalExpr{},
+						},
+					},
+				},
+			},
 			`attr1 = onestep
 attr2 = anotherstep
 attr3 = onestep`,
@@ -309,6 +346,15 @@ attr3 = onestep`,
 		},
 		{
 			"root attribute multiple origins",
+			&schema.BodySchema{
+				Attributes: map[string]*schema.AttributeSchema{
+					"attr1": {
+						Expr: schema.ExprConstraints{
+							schema.TraversalExpr{},
+						},
+					},
+				},
+			},
 			`attr1 = "${onestep}-${onestep}-${another.foo.bar}"`,
 			lang.ReferenceOrigins{
 				{
@@ -371,6 +417,15 @@ attr3 = onestep`,
 		},
 		{
 			"root attribute multi-step",
+			&schema.BodySchema{
+				Attributes: map[string]*schema.AttributeSchema{
+					"attr": {
+						Expr: schema.ExprConstraints{
+							schema.TraversalExpr{},
+						},
+					},
+				},
+			},
 			`attr = one.two["key"].attr[0]`,
 			lang.ReferenceOrigins{
 				{
@@ -399,6 +454,61 @@ attr3 = onestep`,
 		},
 		{
 			"attribute in block",
+			&schema.BodySchema{
+				Blocks: map[string]*schema.BlockSchema{
+					"myblock": {
+						Body: &schema.BodySchema{
+							Attributes: map[string]*schema.AttributeSchema{
+								"attr": {
+									Expr: schema.ExprConstraints{
+										schema.TraversalExpr{},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			`myblock {
+  attr = onestep
+}
+`,
+			lang.ReferenceOrigins{
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "onestep"},
+					},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   2,
+							Column: 10,
+							Byte:   19,
+						},
+						End: hcl.Pos{
+							Line:   2,
+							Column: 17,
+							Byte:   26,
+						},
+					},
+				},
+			},
+		},
+		{
+			"any attribute in block",
+			&schema.BodySchema{
+				Blocks: map[string]*schema.BlockSchema{
+					"myblock": {
+						Body: &schema.BodySchema{
+							AnyAttribute: &schema.AttributeSchema{
+								Expr: schema.ExprConstraints{
+									schema.TraversalExpr{},
+								},
+							},
+						},
+					},
+				},
+			},
 			`myblock {
   attr = onestep
 }
@@ -428,6 +538,7 @@ attr3 = onestep`,
 	for i, tc := range testCases {
 		t.Run(fmt.Sprintf("%d-%s", i, tc.name), func(t *testing.T) {
 			d := NewDecoder()
+			d.SetSchema(tc.schema)
 
 			f, _ := hclsyntax.ParseConfig([]byte(tc.cfg), "test.tf", hcl.InitialPos)
 			err := d.LoadFile("test.tf", f)
@@ -478,6 +589,7 @@ func TestReferenceOriginsTargeting(t *testing.T) {
 						lang.RootStep{Name: "test"},
 						lang.AttrStep{Name: "secondstep"},
 					},
+					OfType: cty.String,
 				},
 			},
 			lang.ReferenceTarget{
@@ -493,6 +605,7 @@ func TestReferenceOriginsTargeting(t *testing.T) {
 						lang.RootStep{Name: "test"},
 						lang.AttrStep{Name: "secondstep"},
 					},
+					OfType: cty.String,
 				},
 			},
 		},
@@ -532,12 +645,14 @@ func TestReferenceOriginsTargeting(t *testing.T) {
 					Addr: lang.Address{
 						lang.RootStep{Name: "test"},
 					},
+					OfType: cty.DynamicPseudoType,
 				},
 				{
 					Addr: lang.Address{
 						lang.RootStep{Name: "test"},
 						lang.AttrStep{Name: "second"},
 					},
+					OfType: cty.String,
 				},
 			},
 			lang.ReferenceTarget{
@@ -556,6 +671,48 @@ func TestReferenceOriginsTargeting(t *testing.T) {
 						Type: cty.String,
 					},
 				},
+			},
+			lang.ReferenceOrigins{
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "test"},
+					},
+					OfType: cty.DynamicPseudoType,
+				},
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "test"},
+						lang.AttrStep{Name: "second"},
+					},
+					OfType: cty.String,
+				},
+			},
+		},
+		{
+			"loose match of target of unknown type",
+			lang.ReferenceOrigins{
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "foo"},
+					},
+				},
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "test"},
+					},
+				},
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "test"},
+						lang.AttrStep{Name: "second"},
+					},
+				},
+			},
+			lang.ReferenceTarget{
+				Addr: lang.Address{
+					lang.RootStep{Name: "test"},
+				},
+				Type: cty.DynamicPseudoType,
 			},
 			lang.ReferenceOrigins{
 				{

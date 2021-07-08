@@ -595,22 +595,27 @@ func stringValFromTemplateExpr(tplExpr *hclsyntax.TemplateExpr) (cty.Value, bool
 	return cty.StringVal(value), true
 }
 
-func (d *Decoder) hoverContentForTraversalExpr(expr hcl.Traversal, te schema.TraversalExpr) (string, error) {
+func (d *Decoder) hoverContentForTraversalExpr(traversal hcl.Traversal, te schema.TraversalExpr) (string, error) {
 	if d.refTargetReader == nil {
 		return "", &NoRefTargetFound{}
 	}
 
-	refs := ReferenceTargets(d.refTargetReader())
+	allTargets := ReferenceTargets(d.refTargetReader())
 
-	ref, err := refs.FirstMatch(expr, te)
+	origin, err := TraversalToReferenceOrigin(traversal, te)
+	if err != nil {
+		return "", nil
+	}
+
+	ref, err := allTargets.FirstTargetableBy(origin)
 	if err != nil {
 		return "", err
 	}
 
-	return hoverContentForReference(ref)
+	return hoverContentForReferenceTarget(ref)
 }
 
-func hoverContentForReference(ref lang.ReferenceTarget) (string, error) {
+func hoverContentForReferenceTarget(ref lang.ReferenceTarget) (string, error) {
 	content := fmt.Sprintf("`%s`", ref.Addr.String())
 
 	var friendlyName string
@@ -749,7 +754,7 @@ func hoverContentForValue(val cty.Value, nestingLvl int) (string, error) {
 }
 
 func hoverContentForType(attrType cty.Type, nestingLvl int) (string, error) {
-	if attrType.IsPrimitiveType() {
+	if attrType.IsPrimitiveType() || attrType == cty.DynamicPseudoType {
 		if nestingLvl > 0 {
 			return attrType.FriendlyName(), nil
 		}
