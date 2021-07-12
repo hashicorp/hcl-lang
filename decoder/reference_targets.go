@@ -35,6 +35,28 @@ func (d *Decoder) ReferenceTargetForOrigin(refOrigin lang.ReferenceOrigin) (*lan
 	return &ref, nil
 }
 
+func (d *Decoder) ReferenceTargetsInFile(file string, depth int) (lang.ReferenceTargets, error) {
+	if d.refTargetReader == nil {
+		return nil, nil
+	}
+
+	allTargets := ReferenceTargets(d.refTargetReader())
+
+	targets := make(lang.ReferenceTargets, 0)
+
+	allTargets.DeepWalk(func(target lang.ReferenceTarget) error {
+		if target.RangePtr == nil {
+			return nil
+		}
+		if target.RangePtr.Filename == file {
+			targets = append(targets, target)
+		}
+		return nil
+	}, depth)
+
+	return targets, nil
+}
+
 func (d *Decoder) OutermostReferenceTargetAtPos(file string, pos hcl.Pos) (*lang.ReferenceTarget, error) {
 	if d.refTargetReader == nil {
 		return nil, nil
@@ -146,16 +168,35 @@ type RefTargetWalkFunc func(lang.ReferenceTarget) error
 
 var StopWalking error = errors.New("stop walking")
 
-func (refs ReferenceTargets) DeepWalk(f RefTargetWalkFunc) {
-	for _, ref := range refs {
-		err := f(ref)
+var InfiniteDepth = -1
+
+func (refs ReferenceTargets) DeepWalk(f RefTargetWalkFunc, depth int) {
+	w := refTargetDeepWalker{
+		WalkFunc: f,
+		Depth:    depth,
+	}
+	w.Walk(refs)
+}
+
+type refTargetDeepWalker struct {
+	WalkFunc RefTargetWalkFunc
+	Depth    int
+
+	currentDepth int
+}
+
+func (w refTargetDeepWalker) Walk(refTargets ReferenceTargets) {
+	for _, ref := range refTargets {
+		err := w.WalkFunc(ref)
 		if err == StopWalking {
 			return
 		}
 
-		if len(ref.NestedTargets) > 0 {
+		if len(ref.NestedTargets) > 0 && (w.Depth == InfiniteDepth || w.Depth > w.currentDepth) {
 			irefs := ReferenceTargets(ref.NestedTargets)
-			irefs.DeepWalk(f)
+			w.currentDepth++
+			w.Walk(irefs)
+			w.currentDepth--
 		}
 	}
 }
@@ -198,7 +239,7 @@ func (refs ReferenceTargets) FirstTargetableBy(origin lang.ReferenceOrigin) (lan
 			return StopWalking
 		}
 		return nil
-	})
+	}, InfiniteDepth)
 
 	if matchingReference == nil {
 		return lang.ReferenceTarget{}, &NoRefTargetFound{}
