@@ -35,6 +35,33 @@ func (d *Decoder) ReferenceTargetForOrigin(refOrigin lang.ReferenceOrigin) (*lan
 	return &ref, nil
 }
 
+func (d *Decoder) ReferenceTargetsInFile(file string) (lang.ReferenceTargets, error) {
+	if d.refTargetReader == nil {
+		return nil, nil
+	}
+
+	allTargets := ReferenceTargets(d.refTargetReader())
+
+	targets := make(lang.ReferenceTargets, 0)
+
+	// It is practically impossible for nested targets to be placed
+	// in a separate file from their parent target, so we save
+	// some cycles here by limiting walk just to the top level.
+	depth := 0
+
+	allTargets.DeepWalk(func(target lang.ReferenceTarget) error {
+		if target.RangePtr == nil {
+			return nil
+		}
+		if target.RangePtr.Filename == file {
+			targets = append(targets, target)
+		}
+		return nil
+	}, depth)
+
+	return targets, nil
+}
+
 func (d *Decoder) OutermostReferenceTargetAtPos(file string, pos hcl.Pos) (*lang.ReferenceTarget, error) {
 	if d.refTargetReader == nil {
 		return nil, nil
@@ -146,16 +173,35 @@ type RefTargetWalkFunc func(lang.ReferenceTarget) error
 
 var StopWalking error = errors.New("stop walking")
 
-func (refs ReferenceTargets) DeepWalk(f RefTargetWalkFunc) {
-	for _, ref := range refs {
-		err := f(ref)
+const InfiniteDepth = -1
+
+func (refs ReferenceTargets) DeepWalk(f RefTargetWalkFunc, depth int) {
+	w := refTargetDeepWalker{
+		WalkFunc: f,
+		Depth:    depth,
+	}
+	w.Walk(refs)
+}
+
+type refTargetDeepWalker struct {
+	WalkFunc RefTargetWalkFunc
+	Depth    int
+
+	currentDepth int
+}
+
+func (w refTargetDeepWalker) Walk(refTargets ReferenceTargets) {
+	for _, ref := range refTargets {
+		err := w.WalkFunc(ref)
 		if err == StopWalking {
 			return
 		}
 
-		if len(ref.NestedTargets) > 0 {
+		if len(ref.NestedTargets) > 0 && (w.Depth == InfiniteDepth || w.Depth > w.currentDepth) {
 			irefs := ReferenceTargets(ref.NestedTargets)
-			irefs.DeepWalk(f)
+			w.currentDepth++
+			w.Walk(irefs)
+			w.currentDepth--
 		}
 	}
 }
@@ -198,7 +244,7 @@ func (refs ReferenceTargets) FirstTargetableBy(origin lang.ReferenceOrigin) (lan
 			return StopWalking
 		}
 		return nil
-	})
+	}, InfiniteDepth)
 
 	if matchingReference == nil {
 		return lang.ReferenceTarget{}, &NoRefTargetFound{}
@@ -295,10 +341,11 @@ func (d *Decoder) decodeReferenceTargetsForBody(body *hclsyntax.Body, bodySchema
 
 		if bSchema.Address.AsReference {
 			ref := lang.ReferenceTarget{
-				Addr:     addr,
-				ScopeId:  bSchema.Address.ScopeId,
-				RangePtr: block.Range().Ptr(),
-				Name:     bSchema.Address.FriendlyName,
+				Addr:        addr,
+				ScopeId:     bSchema.Address.ScopeId,
+				DefRangePtr: block.DefRange().Ptr(),
+				RangePtr:    block.Range().Ptr(),
+				Name:        bSchema.Address.FriendlyName,
 			}
 			refs = append(refs, ref)
 		}
@@ -311,9 +358,10 @@ func (d *Decoder) decodeReferenceTargetsForBody(body *hclsyntax.Body, bodySchema
 
 		if bSchema.Address.BodyAsData {
 			bodyRef = lang.ReferenceTarget{
-				Addr:     addr,
-				ScopeId:  bSchema.Address.ScopeId,
-				RangePtr: block.Range().Ptr(),
+				Addr:        addr,
+				ScopeId:     bSchema.Address.ScopeId,
+				DefRangePtr: block.DefRange().Ptr(),
+				RangePtr:    block.Range().Ptr(),
 			}
 
 			if bSchema.Body != nil {
@@ -333,9 +381,10 @@ func (d *Decoder) decodeReferenceTargetsForBody(body *hclsyntax.Body, bodySchema
 		if bSchema.Address.DependentBodyAsData {
 			if !bSchema.Address.BodyAsData {
 				bodyRef = lang.ReferenceTarget{
-					Addr:     addr,
-					ScopeId:  bSchema.Address.ScopeId,
-					RangePtr: block.Range().Ptr(),
+					Addr:        addr,
+					ScopeId:     bSchema.Address.ScopeId,
+					DefRangePtr: block.DefRange().Ptr(),
+					RangePtr:    block.Range().Ptr(),
 				}
 			}
 
@@ -379,10 +428,11 @@ func decodeReferenceTargetsForAttribute(attr *hclsyntax.Attribute, attrSchema *s
 	if ok {
 		if attrSchema.Address.AsReference {
 			ref := lang.ReferenceTarget{
-				Addr:     attrAddr,
-				ScopeId:  attrSchema.Address.ScopeId,
-				RangePtr: attr.SrcRange.Ptr(),
-				Name:     attrSchema.Address.FriendlyName,
+				Addr:        attrAddr,
+				ScopeId:     attrSchema.Address.ScopeId,
+				DefRangePtr: &attr.NameRange,
+				RangePtr:    attr.SrcRange.Ptr(),
+				Name:        attrSchema.Address.FriendlyName,
 			}
 			refs = append(refs, ref)
 		}
@@ -401,11 +451,12 @@ func decodeReferenceTargetsForAttribute(attr *hclsyntax.Attribute, attrSchema *s
 				scopeId := attrSchema.Address.ScopeId
 
 				ref := lang.ReferenceTarget{
-					Addr:     attrAddr,
-					Type:     t,
-					ScopeId:  scopeId,
-					RangePtr: attr.SrcRange.Ptr(),
-					Name:     attrSchema.Address.FriendlyName,
+					Addr:        attrAddr,
+					Type:        t,
+					ScopeId:     scopeId,
+					DefRangePtr: attr.NameRange.Ptr(),
+					RangePtr:    attr.SrcRange.Ptr(),
+					Name:        attrSchema.Address.FriendlyName,
 				}
 
 				if attr.Expr != nil && !t.IsPrimitiveType() {
@@ -468,10 +519,11 @@ func decodeReferenceTargetsForComplexTypeExpr(addr lang.Address, expr hclsyntax.
 				rng := hcl.RangeBetween(item.KeyExpr.Range(), item.ValueExpr.Range())
 
 				ref := lang.ReferenceTarget{
-					Addr:     attrAddr,
-					Type:     attrType,
-					ScopeId:  scopeId,
-					RangePtr: rng.Ptr(),
+					Addr:        attrAddr,
+					Type:        attrType,
+					ScopeId:     scopeId,
+					DefRangePtr: item.KeyExpr.Range().Ptr(),
+					RangePtr:    rng.Ptr(),
 				}
 				if !attrType.IsPrimitiveType() {
 					ref.NestedTargets = make(lang.ReferenceTargets, 0)
@@ -499,10 +551,11 @@ func decodeReferenceTargetsForComplexTypeExpr(addr lang.Address, expr hclsyntax.
 				rng := hcl.RangeBetween(item.KeyExpr.Range(), item.ValueExpr.Range())
 
 				ref := lang.ReferenceTarget{
-					Addr:     elemAddr,
-					Type:     elemType,
-					ScopeId:  scopeId,
-					RangePtr: rng.Ptr(),
+					Addr:        elemAddr,
+					Type:        elemType,
+					ScopeId:     scopeId,
+					DefRangePtr: item.KeyExpr.Range().Ptr(),
+					RangePtr:    rng.Ptr(),
 				}
 				if !elemType.IsPrimitiveType() {
 					ref.NestedTargets = make(lang.ReferenceTargets, 0)
@@ -519,10 +572,11 @@ func decodeReferenceTargetsForComplexTypeExpr(addr lang.Address, expr hclsyntax.
 
 func referenceAsTypeOf(block *hclsyntax.Block, bSchema *schema.BlockSchema, addr lang.Address) lang.ReferenceTargets {
 	ref := lang.ReferenceTarget{
-		Addr:     addr,
-		ScopeId:  bSchema.Address.ScopeId,
-		RangePtr: block.Range().Ptr(),
-		Type:     cty.DynamicPseudoType,
+		Addr:        addr,
+		ScopeId:     bSchema.Address.ScopeId,
+		DefRangePtr: block.DefRange().Ptr(),
+		RangePtr:    block.Range().Ptr(),
+		Type:        cty.DynamicPseudoType,
 	}
 
 	if bSchema.Body != nil {
@@ -777,6 +831,7 @@ func (d *Decoder) collectInferredReferenceTargetsForBody(addr lang.Address, scop
 		if body != nil {
 			if attr, ok := body.Attributes[name]; ok {
 				ref.RangePtr = attr.Range().Ptr()
+				ref.DefRangePtr = attr.NameRange.Ptr()
 				attrExpr = attr.Expr
 			}
 		}
@@ -865,6 +920,7 @@ func (d *Decoder) collectInferredReferenceTargetsForBody(addr lang.Address, scop
 			ScopeId:     scopeId,
 			Type:        cty.Object(bodySchemaAsAttrTypes(bSchema.Body)),
 			Description: bSchema.Description,
+			DefRangePtr: block.DefRange().Ptr(),
 			RangePtr:    block.Range().Ptr(),
 			NestedTargets: d.collectInferredReferenceTargetsForBody(
 				blockAddr, scopeId, block.Body, bSchema.Body),
@@ -904,6 +960,7 @@ func (d *Decoder) collectInferredReferenceTargetsForBody(addr lang.Address, scop
 				ScopeId:     scopeId,
 				Type:        cty.Object(bodySchemaAsAttrTypes(bSchema.Body)),
 				Description: bSchema.Description,
+				DefRangePtr: block.DefRange().Ptr(),
 				RangePtr:    block.Range().Ptr(),
 				NestedTargets: d.collectInferredReferenceTargetsForBody(
 					elemAddr, scopeId, block.Body, bSchema.Body),
@@ -1004,6 +1061,7 @@ func (d *Decoder) collectInferredReferenceTargetsForBody(addr lang.Address, scop
 				Type:        refType,
 				Description: bSchema.Description,
 				RangePtr:    block.Range().Ptr(),
+				DefRangePtr: block.DefRange().Ptr(),
 				NestedTargets: d.collectInferredReferenceTargetsForBody(
 					elemAddr, scopeId, block.Body, bSchema.Body),
 			}

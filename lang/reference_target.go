@@ -8,9 +8,21 @@ import (
 type ScopeId string
 
 type ReferenceTarget struct {
-	Addr     Address
-	ScopeId  ScopeId
+	Addr    Address
+	ScopeId ScopeId
+
+	// RangePtr represents range of the whole attribute or block
+	// or nil if the target is not addressable.
 	RangePtr *hcl.Range
+
+	// DefRangePtr represents a definition range, i.e. block header,
+	// or an attribute name or nil if the target is not addressable
+	// or when it represents multiple list, set or map blocks.
+	//
+	// This is useful in situation where a representative single-line
+	// range is needed - e.g. to render a contextual UI element in
+	// the editor near the middle of this range.
+	DefRangePtr *hcl.Range
 
 	Type        cty.Type
 	Name        string
@@ -39,6 +51,7 @@ func (ref ReferenceTarget) Copy() ReferenceTarget {
 		Addr:          ref.Addr,
 		ScopeId:       ref.ScopeId,
 		RangePtr:      copyHclRangePtr(ref.RangePtr),
+		DefRangePtr:   copyHclRangePtr(ref.DefRangePtr),
 		Type:          ref.Type, // cty.Type is immutable by design
 		Name:          ref.Name,
 		Description:   ref.Description,
