@@ -108,7 +108,11 @@ func (d *Decoder) referenceOriginsInBody(body *hclsyntax.Body, bodySchema *schem
 				// skip unknown blocks
 				continue
 			}
-			origins = append(origins, d.referenceOriginsInBody(block.Body, bSchema.Body)...)
+			mergedSchema, err := mergeBlockBodySchemas(block, bSchema)
+			if err != nil {
+				continue
+			}
+			origins = append(origins, d.referenceOriginsInBody(block.Body, mergedSchema)...)
 		}
 	}
 

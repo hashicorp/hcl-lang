@@ -534,6 +534,149 @@ attr3 = onestep`,
 				},
 			},
 		},
+		{
+			"origins within block with matching dependent body",
+			&schema.BodySchema{
+				Blocks: map[string]*schema.BlockSchema{
+					"myblock": {
+						Labels: []*schema.LabelSchema{
+							{Name: "type", IsDepKey: true},
+						},
+						Body: &schema.BodySchema{
+							Attributes: map[string]*schema.AttributeSchema{
+								"static": {
+									Expr: schema.ExprConstraints{
+										schema.TraversalExpr{},
+									},
+								},
+							},
+						},
+						DependentBody: map[schema.SchemaKey]*schema.BodySchema{
+							schema.NewSchemaKey(schema.DependencyKeys{
+								Labels: []schema.LabelDependent{
+									{Index: 0, Value: "special"},
+								},
+							}): {
+								Attributes: map[string]*schema.AttributeSchema{
+									"dep_attr": {
+										Expr: schema.ExprConstraints{
+											schema.TraversalExpr{},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			`myblock "special" {
+  static = var.first
+  dep_attr = var.second
+}
+`,
+			lang.ReferenceOrigins{
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "first"},
+					},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   2,
+							Column: 12,
+							Byte:   31,
+						},
+						End: hcl.Pos{
+							Line:   2,
+							Column: 21,
+							Byte:   40,
+						},
+					},
+				},
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "second"},
+					},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   3,
+							Column: 14,
+							Byte:   54,
+						},
+						End: hcl.Pos{
+							Line:   3,
+							Column: 24,
+							Byte:   64,
+						},
+					},
+				},
+			},
+		},
+		{
+			"origins within block with mismatching dependent body",
+			&schema.BodySchema{
+				Blocks: map[string]*schema.BlockSchema{
+					"myblock": {
+						Labels: []*schema.LabelSchema{
+							{Name: "type", IsDepKey: true},
+						},
+						Body: &schema.BodySchema{
+							Attributes: map[string]*schema.AttributeSchema{
+								"static": {
+									Expr: schema.ExprConstraints{
+										schema.TraversalExpr{},
+									},
+								},
+							},
+						},
+						DependentBody: map[schema.SchemaKey]*schema.BodySchema{
+							schema.NewSchemaKey(schema.DependencyKeys{
+								Labels: []schema.LabelDependent{
+									{Index: 0, Value: "special"},
+								},
+							}): {
+								Attributes: map[string]*schema.AttributeSchema{
+									"dep_attr": {
+										Expr: schema.ExprConstraints{
+											schema.TraversalExpr{},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			`myblock "different" {
+  static = var.first
+  dep_attr = var.second
+}
+`,
+			lang.ReferenceOrigins{
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "first"},
+					},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   2,
+							Column: 12,
+							Byte:   33,
+						},
+						End: hcl.Pos{
+							Line:   2,
+							Column: 21,
+							Byte:   42,
+						},
+					},
+				},
+			},
+		},
 	}
 	for i, tc := range testCases {
 		t.Run(fmt.Sprintf("%d-%s", i, tc.name), func(t *testing.T) {
