@@ -282,6 +282,8 @@ func (d *Decoder) decodeReferenceTargetsForBody(body *hclsyntax.Body, bodySchema
 			continue
 		}
 
+		// TODO: Support dependent schemas
+
 		iRefs := d.decodeReferenceTargetsForBody(block.Body, bSchema.Body)
 		refs = append(refs, iRefs...)
 
