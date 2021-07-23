@@ -185,6 +185,9 @@ func mergeBlockBodySchemas(block *hclsyntax.Block, blockSchema *schema.BlockSche
 	if mergedSchema.Blocks == nil {
 		mergedSchema.Blocks = make(map[string]*schema.BlockSchema, 0)
 	}
+	if mergedSchema.TargetableAs == nil {
+		mergedSchema.TargetableAs = make([]*schema.Targetable, 0)
+	}
 
 	depSchema, _, ok := NewBlockSchema(blockSchema).DependentBodySchema(block)
 	if ok {
@@ -203,6 +206,9 @@ func mergeBlockBodySchemas(block *hclsyntax.Block, blockSchema *schema.BlockSche
 				// Skip duplicate block type
 				continue
 			}
+		}
+		for _, tBody := range depSchema.TargetableAs {
+			mergedSchema.TargetableAs = append(mergedSchema.TargetableAs, tBody)
 		}
 	}
 
