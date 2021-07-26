@@ -87,7 +87,7 @@ func (d *Decoder) referenceOriginsInBody(body *hclsyntax.Body, bodySchema *schem
 			aSchema = bodySchema.AnyAttribute
 		}
 
-		te, ok := ExprConstraints(aSchema.Expr).TraversalExpr()
+		te, ok := d.findTraversalContraintForExpr(aSchema.Expr)
 		if !ok {
 			continue
 		}
@@ -117,6 +117,58 @@ func (d *Decoder) referenceOriginsInBody(body *hclsyntax.Body, bodySchema *schem
 	}
 
 	return origins
+}
+
+func (d *Decoder) findTraversalContraintForExpr(ec schema.ExprConstraints) (schema.TraversalExpr, bool) {
+	te, ok := ExprConstraints(ec).TraversalExpr()
+	if ok {
+		return te, true
+	}
+
+	tce, ok := ExprConstraints(ec).TupleConsExpr()
+	if ok {
+		return d.findTraversalContraintForExpr(tce.AnyElem)
+	}
+
+	le, ok := ExprConstraints(ec).ListExpr()
+	if ok {
+		return d.findTraversalContraintForExpr(le.Elem)
+	}
+
+	se, ok := ExprConstraints(ec).SetExpr()
+	if ok {
+		return d.findTraversalContraintForExpr(se.Elem)
+	}
+
+	tue, ok := ExprConstraints(ec).TupleExpr()
+	if ok {
+		for _, elem := range tue.Elems {
+			te, ok := d.findTraversalContraintForExpr(elem)
+			if ok {
+				return te, true
+			}
+		}
+	}
+
+	oe, ok := ExprConstraints(ec).ObjectExpr()
+	if ok {
+		for _, val := range oe.Attributes {
+			te, ok := d.findTraversalContraintForExpr(val.Expr)
+			if ok {
+				return te, true
+			}
+		}
+	}
+
+	me, ok := ExprConstraints(ec).MapExpr()
+	if ok {
+		te, ok := d.findTraversalContraintForExpr(me.Elem)
+		if ok {
+			return te, true
+		}
+	}
+
+	return schema.TraversalExpr{}, false
 }
 
 func (d *Decoder) referenceOriginAtPos(body *hclsyntax.Body, pos hcl.Pos) (*lang.ReferenceOrigin, error) {
