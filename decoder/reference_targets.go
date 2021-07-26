@@ -62,13 +62,14 @@ func (d *Decoder) ReferenceTargetsInFile(file string) (lang.ReferenceTargets, er
 	return targets, nil
 }
 
-func (d *Decoder) OutermostReferenceTargetAtPos(file string, pos hcl.Pos) (*lang.ReferenceTarget, error) {
+func (d *Decoder) OutermostReferenceTargetsAtPos(file string, pos hcl.Pos) (lang.ReferenceTargets, error) {
 	if d.refTargetReader == nil {
 		return nil, nil
 	}
 
 	allTargets := ReferenceTargets(d.refTargetReader())
 
+	matchingTargets := make(lang.ReferenceTargets, 0)
 	for _, target := range allTargets {
 		if target.RangePtr == nil {
 			continue
@@ -77,24 +78,24 @@ func (d *Decoder) OutermostReferenceTargetAtPos(file string, pos hcl.Pos) (*lang
 			continue
 		}
 		if target.RangePtr.ContainsPos(pos) {
-			return &target, nil
+			matchingTargets = append(matchingTargets, target)
 		}
 	}
 
-	return nil, nil
+	return matchingTargets, nil
 }
 
-func (d *Decoder) InnermostReferenceTargetAtPos(file string, pos hcl.Pos) (*lang.ReferenceTarget, error) {
+func (d *Decoder) InnermostReferenceTargetsAtPos(file string, pos hcl.Pos) (lang.ReferenceTargets, error) {
 	if d.refTargetReader == nil {
 		return nil, nil
 	}
 
-	target, _ := d.innermostReferenceTargetAtPos(d.refTargetReader(), file, pos)
+	targets, _ := d.innermostReferenceTargetsAtPos(d.refTargetReader(), file, pos)
 
-	return target, nil
+	return targets, nil
 }
 
-func (d *Decoder) innermostReferenceTargetAtPos(targets lang.ReferenceTargets, file string, pos hcl.Pos) (*lang.ReferenceTarget, bool) {
+func (d *Decoder) innermostReferenceTargetsAtPos(targets lang.ReferenceTargets, file string, pos hcl.Pos) (lang.ReferenceTargets, bool) {
 	allTargets := ReferenceTargets(targets)
 
 	matchingTargets := make(lang.ReferenceTargets, 0)
@@ -111,19 +112,19 @@ func (d *Decoder) innermostReferenceTargetAtPos(targets lang.ReferenceTargets, f
 		}
 	}
 
-	var innermostTarget *lang.ReferenceTarget
+	var innermostTargets lang.ReferenceTargets
 
 	for _, target := range matchingTargets {
-		nestedTarget, ok := d.innermostReferenceTargetAtPos(target.NestedTargets, file, pos)
+		nestedTargets, ok := d.innermostReferenceTargetsAtPos(target.NestedTargets, file, pos)
 		if ok {
-			innermostTarget = nestedTarget
+			innermostTargets = nestedTargets
 			continue
 		}
 
-		innermostTarget = &target
+		innermostTargets = append(innermostTargets, target)
 	}
 
-	return innermostTarget, innermostTarget != nil
+	return innermostTargets, len(innermostTargets) > 0
 }
 
 type ReferenceTarget lang.ReferenceTarget
