@@ -466,6 +466,168 @@ func TestCollectReferenceTargets_basic(t *testing.T) {
 			},
 		},
 		{
+			"root attribute as list type",
+			&schema.BodySchema{
+				Attributes: map[string]*schema.AttributeSchema{
+					"testattr": {
+						Address: &schema.AttributeAddrSchema{
+							Steps: []schema.AddrStep{
+								schema.StaticStep{Name: "special"},
+								schema.AttrNameStep{},
+							},
+							AsExprType: true,
+						},
+						Expr:       schema.LiteralTypeOnly(cty.List(cty.String)),
+						IsOptional: true,
+					},
+				},
+			},
+			`testattr = [ "example" ]
+`,
+			lang.ReferenceTargets{
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "special"},
+						lang.AttrStep{Name: "testattr"},
+					},
+					Type: cty.List(cty.String),
+					DefRangePtr: &hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   1,
+							Column: 1,
+							Byte:   0,
+						},
+						End: hcl.Pos{
+							Line:   1,
+							Column: 9,
+							Byte:   8,
+						},
+					},
+					RangePtr: &hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   1,
+							Column: 1,
+							Byte:   0,
+						},
+						End: hcl.Pos{
+							Line:   1,
+							Column: 25,
+							Byte:   24,
+						},
+					},
+					NestedTargets: lang.ReferenceTargets{
+						{
+							Addr: lang.Address{
+								lang.RootStep{Name: "special"},
+								lang.AttrStep{Name: "testattr"},
+								lang.IndexStep{Key: cty.NumberIntVal(0)},
+							},
+							Type:        cty.String,
+							DefRangePtr: nil,
+							RangePtr: &hcl.Range{
+								Filename: "test.tf",
+								Start: hcl.Pos{
+									Line:   1,
+									Column: 14,
+									Byte:   13,
+								},
+								End: hcl.Pos{
+									Line:   1,
+									Column: 23,
+									Byte:   22,
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			"root attribute as list expression",
+			&schema.BodySchema{
+				Attributes: map[string]*schema.AttributeSchema{
+					"testattr": {
+						Address: &schema.AttributeAddrSchema{
+							Steps: []schema.AddrStep{
+								schema.StaticStep{Name: "special"},
+								schema.AttrNameStep{},
+							},
+							AsExprType: true,
+						},
+						Expr: schema.ExprConstraints{
+							schema.ListExpr{
+								Elem: schema.LiteralTypeOnly(cty.String),
+							},
+						},
+						IsOptional: true,
+					},
+				},
+			},
+			`testattr = [ "example" ]
+`,
+			lang.ReferenceTargets{
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "special"},
+						lang.AttrStep{Name: "testattr"},
+					},
+					Type: cty.List(cty.String),
+					DefRangePtr: &hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   1,
+							Column: 1,
+							Byte:   0,
+						},
+						End: hcl.Pos{
+							Line:   1,
+							Column: 9,
+							Byte:   8,
+						},
+					},
+					RangePtr: &hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   1,
+							Column: 1,
+							Byte:   0,
+						},
+						End: hcl.Pos{
+							Line:   1,
+							Column: 25,
+							Byte:   24,
+						},
+					},
+					NestedTargets: lang.ReferenceTargets{
+						{
+							Addr: lang.Address{
+								lang.RootStep{Name: "special"},
+								lang.AttrStep{Name: "testattr"},
+								lang.IndexStep{Key: cty.NumberIntVal(0)},
+							},
+							Type:        cty.String,
+							DefRangePtr: nil,
+							RangePtr: &hcl.Range{
+								Filename: "test.tf",
+								Start: hcl.Pos{
+									Line:   1,
+									Column: 14,
+									Byte:   13,
+								},
+								End: hcl.Pos{
+									Line:   1,
+									Column: 23,
+									Byte:   22,
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
 			"root attribute with undeclared type",
 			&schema.BodySchema{
 				Attributes: map[string]*schema.AttributeSchema{
