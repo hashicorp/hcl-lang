@@ -29,13 +29,15 @@ func (ec ExprConstraints) KeywordExpr() (schema.KeywordExpr, bool) {
 	return schema.KeywordExpr{}, false
 }
 
-func (ec ExprConstraints) TraversalExpr() (schema.TraversalExpr, bool) {
+func (ec ExprConstraints) TraversalExprs() (schema.TraversalExprs, bool) {
+	tes := make([]schema.TraversalExpr, 0)
 	for _, c := range ec {
 		if te, ok := c.(schema.TraversalExpr); ok {
-			return te, ok
+			tes = append(tes, te)
 		}
 	}
-	return schema.TraversalExpr{}, false
+
+	return tes, len(tes) > 0
 }
 
 func (ec ExprConstraints) MapExpr() (schema.MapExpr, bool) {

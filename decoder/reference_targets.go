@@ -153,19 +153,29 @@ func (target ReferenceTarget) IsTargetableBy(origin lang.ReferenceOrigin) bool {
 		return false
 	}
 
-	if !target.MatchesScopeId(origin.OfScopeId) {
-		return false
-	}
-
 	originAddr := Address(origin.Addr)
 
-	if target.Type == cty.DynamicPseudoType {
-		originAddr = Address(origin.Addr).FirstSteps(uint(len(target.Addr)))
-	} else if origin.OfType != cty.NilType && !target.ConformsToType(origin.OfType) {
-		return false
+	matchesCons := false
+	for _, cons := range origin.Constraints {
+		if !target.MatchesScopeId(cons.OfScopeId) {
+			continue
+		}
+
+		if target.Type == cty.DynamicPseudoType {
+			originAddr = Address(origin.Addr).FirstSteps(uint(len(target.Addr)))
+			matchesCons = true
+			continue
+		}
+		if cons.OfType != cty.NilType && target.ConformsToType(cons.OfType) {
+			matchesCons = true
+		}
+		if cons.OfType == cty.NilType && target.Type == cty.NilType {
+			// This just simplifies testing
+			matchesCons = true
+		}
 	}
 
-	return Address(target.Addr).Equals(originAddr)
+	return Address(target.Addr).Equals(originAddr) && matchesCons
 }
 
 type ReferenceTargets lang.ReferenceTargets
@@ -471,7 +481,7 @@ func decodeReferenceTargetsForAttribute(attr *hclsyntax.Attribute, attrSchema *s
 	}
 
 	ec := ExprConstraints(attrSchema.Expr)
-	refs = append(refs, referencesForExpr(attr.Expr, ec)...)
+	refs = append(refs, referenceTargetsForExpr(attr.Expr, ec)...)
 	return refs
 }
 
@@ -704,19 +714,15 @@ func exprConstraintToDataType(expr schema.ExprConstraints) (cty.Type, bool) {
 	return cty.NilType, false
 }
 
-func referencesForExpr(expr hcl.Expression, ec ExprConstraints) lang.ReferenceTargets {
+func referenceTargetsForExpr(expr hcl.Expression, ec ExprConstraints) lang.ReferenceTargets {
 	refs := make(lang.ReferenceTargets, 0)
 
 	switch e := expr.(type) {
 	// TODO: Support all expression types (list/set/map literals)
 	case *hclsyntax.ScopeTraversalExpr:
-		te, ok := ec.TraversalExpr()
+		tes, ok := ec.TraversalExprs()
 		if !ok {
 			// unknown traversal
-			return lang.ReferenceTargets{}
-		}
-		if te.Address == nil {
-			// traversal not addressable
 			return lang.ReferenceTargets{}
 		}
 
@@ -724,12 +730,20 @@ func referencesForExpr(expr hcl.Expression, ec ExprConstraints) lang.ReferenceTa
 		if err != nil {
 			return lang.ReferenceTargets{}
 		}
-		refs = append(refs, lang.ReferenceTarget{
-			Addr:     addr,
-			ScopeId:  te.Address.ScopeId,
-			RangePtr: e.SrcRange.Ptr(),
-			Name:     te.Name,
-		})
+
+		for _, te := range tes {
+			if te.Address == nil {
+				// skip traversals which are not addressable by themselves
+				continue
+			}
+
+			refs = append(refs, lang.ReferenceTarget{
+				Addr:     addr,
+				ScopeId:  te.Address.ScopeId,
+				RangePtr: e.SrcRange.Ptr(),
+				Name:     te.Name,
+			})
+		}
 	case *hclsyntax.ObjectConsExpr:
 		oe, ok := ec.ObjectExpr()
 		if ok {
@@ -745,26 +759,26 @@ func referencesForExpr(expr hcl.Expression, ec ExprConstraints) lang.ReferenceTa
 					continue
 				}
 
-				refs = append(refs, referencesForExpr(item.ValueExpr, ExprConstraints(attr.Expr))...)
+				refs = append(refs, referenceTargetsForExpr(item.ValueExpr, ExprConstraints(attr.Expr))...)
 			}
 		}
 		me, ok := ec.MapExpr()
 		if ok {
 			for _, item := range e.Items {
-				refs = append(refs, referencesForExpr(item.ValueExpr, ExprConstraints(me.Elem))...)
+				refs = append(refs, referenceTargetsForExpr(item.ValueExpr, ExprConstraints(me.Elem))...)
 			}
 		}
 	case *hclsyntax.TupleConsExpr:
 		le, ok := ec.ListExpr()
 		if ok {
 			for _, itemExpr := range e.Exprs {
-				refs = append(refs, referencesForExpr(itemExpr, ExprConstraints(le.Elem))...)
+				refs = append(refs, referenceTargetsForExpr(itemExpr, ExprConstraints(le.Elem))...)
 			}
 		}
 		se, ok := ec.SetExpr()
 		if ok {
 			for _, itemExpr := range e.Exprs {
-				refs = append(refs, referencesForExpr(itemExpr, ExprConstraints(se.Elem))...)
+				refs = append(refs, referenceTargetsForExpr(itemExpr, ExprConstraints(se.Elem))...)
 			}
 		}
 		te, ok := ec.TupleExpr()
@@ -773,13 +787,13 @@ func referencesForExpr(expr hcl.Expression, ec ExprConstraints) lang.ReferenceTa
 				if i >= len(te.Elems) {
 					break
 				}
-				refs = append(refs, referencesForExpr(itemExpr, ExprConstraints(te.Elems[i]))...)
+				refs = append(refs, referenceTargetsForExpr(itemExpr, ExprConstraints(te.Elems[i]))...)
 			}
 		}
 		tce, ok := ec.TupleConsExpr()
 		if ok {
 			for _, itemExpr := range e.Exprs {
-				refs = append(refs, referencesForExpr(itemExpr, ExprConstraints(tce.AnyElem))...)
+				refs = append(refs, referenceTargetsForExpr(itemExpr, ExprConstraints(tce.AnyElem))...)
 			}
 		}
 	}

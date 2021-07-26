@@ -12,6 +12,8 @@ import (
 // ReferenceOriginAtPos returns the ReferenceOrigin
 // enclosing the position in a file, if one exists, else nil
 func (d *Decoder) ReferenceOriginAtPos(filename string, pos hcl.Pos) (*lang.ReferenceOrigin, error) {
+	// TODO: Filter d.refOriginReader instead here
+
 	f, err := d.fileByName(filename)
 	if err != nil {
 		return nil, err
@@ -22,7 +24,13 @@ func (d *Decoder) ReferenceOriginAtPos(filename string, pos hcl.Pos) (*lang.Refe
 		return nil, err
 	}
 
-	return d.referenceOriginAtPos(rootBody, pos)
+	d.rootSchemaMu.RLock()
+	defer d.rootSchemaMu.RUnlock()
+	if d.rootSchema == nil {
+		return nil, &NoSchemaError{}
+	}
+
+	return d.referenceOriginAtPos(rootBody, d.rootSchema, pos)
 }
 
 func (d *Decoder) ReferenceOriginsTargeting(refTarget lang.ReferenceTarget) (lang.ReferenceOrigins, error) {
@@ -42,6 +50,7 @@ func (d *Decoder) CollectReferenceOrigins() (lang.ReferenceOrigins, error) {
 	defer d.rootSchemaMu.RUnlock()
 
 	if d.rootSchema == nil {
+		// unable to collect reference origins without schema
 		return refOrigins, &NoSchemaError{}
 	}
 
@@ -87,12 +96,12 @@ func (d *Decoder) referenceOriginsInBody(body *hclsyntax.Body, bodySchema *schem
 			aSchema = bodySchema.AnyAttribute
 		}
 
-		te, ok := d.findTraversalContraintForExpr(aSchema.Expr)
+		tes, ok := d.findTraversalContraintsForExpr(aSchema.Expr)
 		if !ok {
 			continue
 		}
 		for _, traversal := range attr.Expr.Variables() {
-			origin, err := TraversalToReferenceOrigin(traversal, te)
+			origin, err := TraversalToReferenceOrigin(traversal, tes)
 			if err != nil {
 				continue
 			}
@@ -119,31 +128,31 @@ func (d *Decoder) referenceOriginsInBody(body *hclsyntax.Body, bodySchema *schem
 	return origins
 }
 
-func (d *Decoder) findTraversalContraintForExpr(ec schema.ExprConstraints) (schema.TraversalExpr, bool) {
-	te, ok := ExprConstraints(ec).TraversalExpr()
+func (d *Decoder) findTraversalContraintsForExpr(ec schema.ExprConstraints) (schema.TraversalExprs, bool) {
+	tes, ok := ExprConstraints(ec).TraversalExprs()
 	if ok {
-		return te, true
+		return tes, true
 	}
 
 	tce, ok := ExprConstraints(ec).TupleConsExpr()
 	if ok {
-		return d.findTraversalContraintForExpr(tce.AnyElem)
+		return d.findTraversalContraintsForExpr(tce.AnyElem)
 	}
 
 	le, ok := ExprConstraints(ec).ListExpr()
 	if ok {
-		return d.findTraversalContraintForExpr(le.Elem)
+		return d.findTraversalContraintsForExpr(le.Elem)
 	}
 
 	se, ok := ExprConstraints(ec).SetExpr()
 	if ok {
-		return d.findTraversalContraintForExpr(se.Elem)
+		return d.findTraversalContraintsForExpr(se.Elem)
 	}
 
 	tue, ok := ExprConstraints(ec).TupleExpr()
 	if ok {
 		for _, elem := range tue.Elems {
-			te, ok := d.findTraversalContraintForExpr(elem)
+			te, ok := d.findTraversalContraintsForExpr(elem)
 			if ok {
 				return te, true
 			}
@@ -153,7 +162,7 @@ func (d *Decoder) findTraversalContraintForExpr(ec schema.ExprConstraints) (sche
 	oe, ok := ExprConstraints(ec).ObjectExpr()
 	if ok {
 		for _, val := range oe.Attributes {
-			te, ok := d.findTraversalContraintForExpr(val.Expr)
+			te, ok := d.findTraversalContraintsForExpr(val.Expr)
 			if ok {
 				return te, true
 			}
@@ -162,27 +171,51 @@ func (d *Decoder) findTraversalContraintForExpr(ec schema.ExprConstraints) (sche
 
 	me, ok := ExprConstraints(ec).MapExpr()
 	if ok {
-		te, ok := d.findTraversalContraintForExpr(me.Elem)
+		te, ok := d.findTraversalContraintsForExpr(me.Elem)
 		if ok {
 			return te, true
 		}
 	}
 
-	return schema.TraversalExpr{}, false
+	return nil, false
 }
 
-func (d *Decoder) referenceOriginAtPos(body *hclsyntax.Body, pos hcl.Pos) (*lang.ReferenceOrigin, error) {
+func (d *Decoder) referenceOriginAtPos(body *hclsyntax.Body, bodySchema *schema.BodySchema, pos hcl.Pos) (*lang.ReferenceOrigin, error) {
 	for _, attr := range body.Attributes {
 		if d.isPosInsideAttrExpr(attr, pos) {
+			aSchema, ok := bodySchema.Attributes[attr.Name]
+			if !ok {
+				if bodySchema.AnyAttribute == nil {
+					// skip unknown attribute
+					continue
+				}
+				aSchema = bodySchema.AnyAttribute
+			}
+
 			traversal, ok := d.traversalAtPos(attr.Expr, pos)
 			if ok {
-				addr, err := lang.TraversalToAddress(traversal)
-				if err == nil {
-					return &lang.ReferenceOrigin{
-						Addr:  addr,
-						Range: traversal.SourceRange(),
-					}, nil
+				var tExprs schema.TraversalExprs
+				switch attr.Expr.(type) {
+				case *hclsyntax.ScopeTraversalExpr:
+					tes, ok := ExprConstraints(aSchema.Expr).TraversalExprs()
+					if !ok {
+						continue
+					}
+					tExprs = tes
+				default:
+					// TODO Reflect real expression at position
+					tes, ok := d.findTraversalContraintsForExpr(aSchema.Expr)
+					if !ok {
+						continue
+					}
+					tExprs = tes
 				}
+
+				origin, err := TraversalToReferenceOrigin(traversal, tExprs)
+				if err != nil {
+					continue
+				}
+				return &origin, nil
 			}
 
 			return nil, nil
@@ -192,7 +225,18 @@ func (d *Decoder) referenceOriginAtPos(body *hclsyntax.Body, pos hcl.Pos) (*lang
 	for _, block := range body.Blocks {
 		if block.Range().ContainsPos(pos) {
 			if block.Body != nil && block.Body.Range().ContainsPos(pos) {
-				return d.referenceOriginAtPos(block.Body, pos)
+				bSchema, ok := bodySchema.Blocks[block.Type]
+				if !ok {
+					// skip unknown block
+					continue
+				}
+
+				mergedSchema, err := mergeBlockBodySchemas(block, bSchema)
+				if err != nil {
+					continue
+				}
+
+				return d.referenceOriginAtPos(block.Body, mergedSchema, pos)
 			}
 		}
 	}
@@ -230,16 +274,34 @@ func (ro ReferenceOrigins) Targeting(refTarget lang.ReferenceTarget) lang.Refere
 	return origins
 }
 
-func TraversalToReferenceOrigin(traversal hcl.Traversal, te schema.TraversalExpr) (lang.ReferenceOrigin, error) {
+func TraversalToReferenceOrigin(traversal hcl.Traversal, tes []schema.TraversalExpr) (lang.ReferenceOrigin, error) {
 	addr, err := lang.TraversalToAddress(traversal)
 	if err != nil {
 		return lang.ReferenceOrigin{}, err
 	}
 
 	return lang.ReferenceOrigin{
-		Addr:      addr,
-		Range:     traversal.SourceRange(),
-		OfScopeId: te.OfScopeId,
-		OfType:    te.OfType,
+		Addr:        addr,
+		Range:       traversal.SourceRange(),
+		Constraints: traversalExpressionsToOriginConstraints(tes),
 	}, nil
+}
+
+func traversalExpressionsToOriginConstraints(tes []schema.TraversalExpr) lang.ReferenceOriginConstraints {
+	if tes == nil {
+		return nil
+	}
+
+	roc := make(lang.ReferenceOriginConstraints, 0)
+	for _, te := range tes {
+		if te.Address != nil {
+			// skip traversals which are targets by themselves (not origins)
+			continue
+		}
+		roc = append(roc, lang.ReferenceOriginConstraint{
+			OfType:    te.OfType,
+			OfScopeId: te.OfScopeId,
+		})
+	}
+	return roc
 }

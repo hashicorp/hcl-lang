@@ -48,9 +48,9 @@ func constraintsAtPos(expr hcl.Expression, constraints ExprConstraints, pos hcl.
 		if ok {
 			matchedConstraints = append(matchedConstraints, ke)
 		}
-		te, ok := constraints.TraversalExpr()
+		tes, ok := constraints.TraversalExprs()
 		if ok {
-			matchedConstraints = append(matchedConstraints, te)
+			matchedConstraints = append(matchedConstraints, tes.AsConstraints()...)
 		}
 
 		if len(matchedConstraints) > 0 {

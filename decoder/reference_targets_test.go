@@ -4623,6 +4623,7 @@ func TestReferenceTargetForOrigin(t *testing.T) {
 					lang.RootStep{Name: "var"},
 					lang.AttrStep{Name: "test"},
 				},
+				Constraints: lang.ReferenceOriginConstraints{{}},
 			},
 			&lang.ReferenceTarget{
 				Addr: lang.Address{
@@ -4661,7 +4662,9 @@ func TestReferenceTargetForOrigin(t *testing.T) {
 					lang.RootStep{Name: "var"},
 					lang.AttrStep{Name: "test"},
 				},
-				OfType: cty.Bool,
+				Constraints: lang.ReferenceOriginConstraints{
+					{OfType: cty.Bool},
+				},
 			},
 			&lang.ReferenceTarget{
 				Addr: lang.Address{
@@ -4695,6 +4698,7 @@ func TestReferenceTargetForOrigin(t *testing.T) {
 					lang.AttrStep{Name: "foo"},
 					lang.AttrStep{Name: "bar"},
 				},
+				Constraints: lang.ReferenceOriginConstraints{{}},
 			},
 			&lang.ReferenceTarget{
 				Addr: lang.Address{
@@ -4739,6 +4743,9 @@ func TestReferenceTargetForOrigin(t *testing.T) {
 					lang.RootStep{Name: "var"},
 					lang.AttrStep{Name: "foo"},
 					lang.AttrStep{Name: "bar"},
+				},
+				Constraints: lang.ReferenceOriginConstraints{
+					{OfType: cty.String},
 				},
 			},
 			&lang.ReferenceTarget{

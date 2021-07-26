@@ -234,9 +234,9 @@ func (d *Decoder) hoverDataForExpr(expr hcl.Expression, constraints ExprConstrai
 			}, nil
 		}
 
-		te, ok := constraints.TraversalExpr()
+		tes, ok := constraints.TraversalExprs()
 		if ok {
-			content, err := d.hoverContentForTraversalExpr(e.AsTraversal(), te)
+			content, err := d.hoverContentForTraversalExpr(e.AsTraversal(), tes)
 			if err != nil {
 				return nil, err
 			}
@@ -595,14 +595,14 @@ func stringValFromTemplateExpr(tplExpr *hclsyntax.TemplateExpr) (cty.Value, bool
 	return cty.StringVal(value), true
 }
 
-func (d *Decoder) hoverContentForTraversalExpr(traversal hcl.Traversal, te schema.TraversalExpr) (string, error) {
+func (d *Decoder) hoverContentForTraversalExpr(traversal hcl.Traversal, tes []schema.TraversalExpr) (string, error) {
 	if d.refTargetReader == nil {
 		return "", &NoRefTargetFound{}
 	}
 
 	allTargets := ReferenceTargets(d.refTargetReader())
 
-	origin, err := TraversalToReferenceOrigin(traversal, te)
+	origin, err := TraversalToReferenceOrigin(traversal, tes)
 	if err != nil {
 		return "", nil
 	}

@@ -334,6 +334,19 @@ type TraversalExpr struct {
 	Address *TraversalAddrSchema
 }
 
+type TraversalExprs []TraversalExpr
+
+func (tes TraversalExprs) AsConstraints() ExprConstraints {
+	if tes == nil {
+		return nil
+	}
+	ec := make(ExprConstraints, 0)
+	for _, te := range tes {
+		ec = append(ec, te)
+	}
+	return ec
+}
+
 type TraversalAddrSchema struct {
 	ScopeId lang.ScopeId
 }
