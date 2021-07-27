@@ -142,12 +142,12 @@ func (d *Decoder) tokensForExpression(expr hclsyntax.Expression, constraints Exp
 			}
 		}
 
-		te, ok := constraints.TraversalExpr()
+		tes, ok := constraints.TraversalExprs()
 		if ok && d.refTargetReader != nil {
 			refs := ReferenceTargets(d.refTargetReader())
 			traversal := eType.AsTraversal()
 
-			origin, err := TraversalToReferenceOrigin(traversal, te)
+			origin, err := TraversalToReferenceOrigin(traversal, tes)
 			if err != nil {
 				return tokens
 			}
