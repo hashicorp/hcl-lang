@@ -466,6 +466,168 @@ func TestCollectReferenceTargets_basic(t *testing.T) {
 			},
 		},
 		{
+			"root attribute as list type",
+			&schema.BodySchema{
+				Attributes: map[string]*schema.AttributeSchema{
+					"testattr": {
+						Address: &schema.AttributeAddrSchema{
+							Steps: []schema.AddrStep{
+								schema.StaticStep{Name: "special"},
+								schema.AttrNameStep{},
+							},
+							AsExprType: true,
+						},
+						Expr:       schema.LiteralTypeOnly(cty.List(cty.String)),
+						IsOptional: true,
+					},
+				},
+			},
+			`testattr = [ "example" ]
+`,
+			lang.ReferenceTargets{
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "special"},
+						lang.AttrStep{Name: "testattr"},
+					},
+					Type: cty.List(cty.String),
+					DefRangePtr: &hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   1,
+							Column: 1,
+							Byte:   0,
+						},
+						End: hcl.Pos{
+							Line:   1,
+							Column: 9,
+							Byte:   8,
+						},
+					},
+					RangePtr: &hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   1,
+							Column: 1,
+							Byte:   0,
+						},
+						End: hcl.Pos{
+							Line:   1,
+							Column: 25,
+							Byte:   24,
+						},
+					},
+					NestedTargets: lang.ReferenceTargets{
+						{
+							Addr: lang.Address{
+								lang.RootStep{Name: "special"},
+								lang.AttrStep{Name: "testattr"},
+								lang.IndexStep{Key: cty.NumberIntVal(0)},
+							},
+							Type:        cty.String,
+							DefRangePtr: nil,
+							RangePtr: &hcl.Range{
+								Filename: "test.tf",
+								Start: hcl.Pos{
+									Line:   1,
+									Column: 14,
+									Byte:   13,
+								},
+								End: hcl.Pos{
+									Line:   1,
+									Column: 23,
+									Byte:   22,
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			"root attribute as list expression",
+			&schema.BodySchema{
+				Attributes: map[string]*schema.AttributeSchema{
+					"testattr": {
+						Address: &schema.AttributeAddrSchema{
+							Steps: []schema.AddrStep{
+								schema.StaticStep{Name: "special"},
+								schema.AttrNameStep{},
+							},
+							AsExprType: true,
+						},
+						Expr: schema.ExprConstraints{
+							schema.ListExpr{
+								Elem: schema.LiteralTypeOnly(cty.String),
+							},
+						},
+						IsOptional: true,
+					},
+				},
+			},
+			`testattr = [ "example" ]
+`,
+			lang.ReferenceTargets{
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "special"},
+						lang.AttrStep{Name: "testattr"},
+					},
+					Type: cty.List(cty.String),
+					DefRangePtr: &hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   1,
+							Column: 1,
+							Byte:   0,
+						},
+						End: hcl.Pos{
+							Line:   1,
+							Column: 9,
+							Byte:   8,
+						},
+					},
+					RangePtr: &hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   1,
+							Column: 1,
+							Byte:   0,
+						},
+						End: hcl.Pos{
+							Line:   1,
+							Column: 25,
+							Byte:   24,
+						},
+					},
+					NestedTargets: lang.ReferenceTargets{
+						{
+							Addr: lang.Address{
+								lang.RootStep{Name: "special"},
+								lang.AttrStep{Name: "testattr"},
+								lang.IndexStep{Key: cty.NumberIntVal(0)},
+							},
+							Type:        cty.String,
+							DefRangePtr: nil,
+							RangePtr: &hcl.Range{
+								Filename: "test.tf",
+								Start: hcl.Pos{
+									Line:   1,
+									Column: 14,
+									Byte:   13,
+								},
+								End: hcl.Pos{
+									Line:   1,
+									Column: 23,
+									Byte:   22,
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
 			"root attribute with undeclared type",
 			&schema.BodySchema{
 				Attributes: map[string]*schema.AttributeSchema{
@@ -4608,20 +4770,20 @@ func TestReferenceTargetForOrigin(t *testing.T) {
 	}
 }
 
-func TestOutermostReferenceTargetAtPos(t *testing.T) {
+func TestOutermostReferenceTargetsAtPos(t *testing.T) {
 	testCases := []struct {
-		name           string
-		refTargets     lang.ReferenceTargets
-		filename       string
-		pos            hcl.Pos
-		expectedTarget *lang.ReferenceTarget
+		name            string
+		refTargets      lang.ReferenceTargets
+		filename        string
+		pos             hcl.Pos
+		expectedTargets lang.ReferenceTargets
 	}{
 		{
 			"no targets",
 			lang.ReferenceTargets{},
 			"test.tf",
 			hcl.InitialPos,
-			nil,
+			lang.ReferenceTargets{},
 		},
 		{
 			"file mismatch",
@@ -4649,7 +4811,7 @@ func TestOutermostReferenceTargetAtPos(t *testing.T) {
 				Column: 3,
 				Byte:   2,
 			},
-			nil,
+			lang.ReferenceTargets{},
 		},
 		{
 			"position mismatch",
@@ -4677,7 +4839,7 @@ func TestOutermostReferenceTargetAtPos(t *testing.T) {
 				Column: 1,
 				Byte:   50,
 			},
-			nil,
+			lang.ReferenceTargets{},
 		},
 		{
 			"single matching target",
@@ -4705,19 +4867,98 @@ func TestOutermostReferenceTargetAtPos(t *testing.T) {
 				Column: 3,
 				Byte:   2,
 			},
-			&lang.ReferenceTarget{
-				Addr: lang.Address{
-					lang.RootStep{Name: "var"},
-					lang.AttrStep{Name: "test"},
+			lang.ReferenceTargets{
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "test"},
+					},
+					Type: cty.String,
+					RangePtr: &hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.InitialPos,
+						End: hcl.Pos{
+							Line:   3,
+							Column: 2,
+							Byte:   35,
+						},
+					},
 				},
-				Type: cty.String,
-				RangePtr: &hcl.Range{
-					Filename: "test.tf",
-					Start:    hcl.InitialPos,
-					End: hcl.Pos{
-						Line:   3,
-						Column: 2,
-						Byte:   35,
+			},
+		},
+		{
+			"two matching targets for the same position",
+			lang.ReferenceTargets{
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "test"},
+					},
+					Type: cty.String,
+					RangePtr: &hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.InitialPos,
+						End: hcl.Pos{
+							Line:   3,
+							Column: 2,
+							Byte:   35,
+						},
+					},
+				},
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "test"},
+					},
+					ScopeId: lang.ScopeId("test"),
+					RangePtr: &hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.InitialPos,
+						End: hcl.Pos{
+							Line:   3,
+							Column: 2,
+							Byte:   35,
+						},
+					},
+				},
+			},
+			"test.tf",
+			hcl.Pos{
+				Line:   1,
+				Column: 3,
+				Byte:   2,
+			},
+			lang.ReferenceTargets{
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "test"},
+					},
+					Type: cty.String,
+					RangePtr: &hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.InitialPos,
+						End: hcl.Pos{
+							Line:   3,
+							Column: 2,
+							Byte:   35,
+						},
+					},
+				},
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "test"},
+					},
+					ScopeId: lang.ScopeId("test"),
+					RangePtr: &hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.InitialPos,
+						End: hcl.Pos{
+							Line:   3,
+							Column: 2,
+							Byte:   35,
+						},
 					},
 				},
 			},
@@ -4773,42 +5014,44 @@ func TestOutermostReferenceTargetAtPos(t *testing.T) {
 				Column: 4,
 				Byte:   36,
 			},
-			&lang.ReferenceTarget{
-				Addr: lang.Address{
-					lang.RootStep{Name: "aws_instance"},
-					lang.AttrStep{Name: "test"},
-				},
-				Type: cty.Object(map[string]cty.Type{
-					"instance_type": cty.String,
-				}),
-				RangePtr: &hcl.Range{
-					Filename: "test.tf",
-					Start:    hcl.InitialPos,
-					End: hcl.Pos{
-						Line:   3,
-						Column: 2,
-						Byte:   63,
+			lang.ReferenceTargets{
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "aws_instance"},
+						lang.AttrStep{Name: "test"},
 					},
-				},
-				NestedTargets: lang.ReferenceTargets{
-					{
-						Addr: lang.Address{
-							lang.RootStep{Name: "aws_instance"},
-							lang.AttrStep{Name: "test"},
-							lang.AttrStep{Name: "instance_type"},
+					Type: cty.Object(map[string]cty.Type{
+						"instance_type": cty.String,
+					}),
+					RangePtr: &hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.InitialPos,
+						End: hcl.Pos{
+							Line:   3,
+							Column: 2,
+							Byte:   63,
 						},
-						Type: cty.String,
-						RangePtr: &hcl.Range{
-							Filename: "test.tf",
-							Start: hcl.Pos{
-								Line:   2,
-								Column: 3,
-								Byte:   35,
+					},
+					NestedTargets: lang.ReferenceTargets{
+						{
+							Addr: lang.Address{
+								lang.RootStep{Name: "aws_instance"},
+								lang.AttrStep{Name: "test"},
+								lang.AttrStep{Name: "instance_type"},
 							},
-							End: hcl.Pos{
-								Line:   2,
-								Column: 29,
-								Byte:   61,
+							Type: cty.String,
+							RangePtr: &hcl.Range{
+								Filename: "test.tf",
+								Start: hcl.Pos{
+									Line:   2,
+									Column: 3,
+									Byte:   35,
+								},
+								End: hcl.Pos{
+									Line:   2,
+									Column: 29,
+									Byte:   61,
+								},
 							},
 						},
 					},
@@ -4823,25 +5066,25 @@ func TestOutermostReferenceTargetAtPos(t *testing.T) {
 				return tc.refTargets
 			})
 
-			refTarget, err := d.OutermostReferenceTargetAtPos(tc.filename, tc.pos)
+			refTargets, err := d.OutermostReferenceTargetsAtPos(tc.filename, tc.pos)
 			if err != nil {
 				t.Fatal(err)
 			}
 
-			if diff := cmp.Diff(tc.expectedTarget, refTarget, ctydebug.CmpOptions); diff != "" {
-				t.Fatalf("mismatch of reference target: %s", diff)
+			if diff := cmp.Diff(tc.expectedTargets, refTargets, ctydebug.CmpOptions); diff != "" {
+				t.Fatalf("mismatch of reference targets: %s", diff)
 			}
 		})
 	}
 }
 
-func TestInnermostReferenceTargetAtPos(t *testing.T) {
+func TestInnermostReferenceTargetsAtPos(t *testing.T) {
 	testCases := []struct {
-		name           string
-		refTargets     lang.ReferenceTargets
-		filename       string
-		pos            hcl.Pos
-		expectedTarget *lang.ReferenceTarget
+		name            string
+		refTargets      lang.ReferenceTargets
+		filename        string
+		pos             hcl.Pos
+		expectedTargets lang.ReferenceTargets
 	}{
 		{
 			"no targets",
@@ -4932,19 +5175,98 @@ func TestInnermostReferenceTargetAtPos(t *testing.T) {
 				Column: 3,
 				Byte:   2,
 			},
-			&lang.ReferenceTarget{
-				Addr: lang.Address{
-					lang.RootStep{Name: "var"},
-					lang.AttrStep{Name: "test"},
+			lang.ReferenceTargets{
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "test"},
+					},
+					Type: cty.String,
+					RangePtr: &hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.InitialPos,
+						End: hcl.Pos{
+							Line:   3,
+							Column: 2,
+							Byte:   35,
+						},
+					},
 				},
-				Type: cty.String,
-				RangePtr: &hcl.Range{
-					Filename: "test.tf",
-					Start:    hcl.InitialPos,
-					End: hcl.Pos{
-						Line:   3,
-						Column: 2,
-						Byte:   35,
+			},
+		},
+		{
+			"multiple targets matching at the same position",
+			lang.ReferenceTargets{
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "test"},
+					},
+					Type: cty.String,
+					RangePtr: &hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.InitialPos,
+						End: hcl.Pos{
+							Line:   3,
+							Column: 2,
+							Byte:   35,
+						},
+					},
+				},
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "test"},
+					},
+					ScopeId: lang.ScopeId("test"),
+					RangePtr: &hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.InitialPos,
+						End: hcl.Pos{
+							Line:   3,
+							Column: 2,
+							Byte:   35,
+						},
+					},
+				},
+			},
+			"test.tf",
+			hcl.Pos{
+				Line:   1,
+				Column: 3,
+				Byte:   2,
+			},
+			lang.ReferenceTargets{
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "test"},
+					},
+					Type: cty.String,
+					RangePtr: &hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.InitialPos,
+						End: hcl.Pos{
+							Line:   3,
+							Column: 2,
+							Byte:   35,
+						},
+					},
+				},
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "test"},
+					},
+					ScopeId: lang.ScopeId("test"),
+					RangePtr: &hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.InitialPos,
+						End: hcl.Pos{
+							Line:   3,
+							Column: 2,
+							Byte:   35,
+						},
 					},
 				},
 			},
@@ -5000,24 +5322,26 @@ func TestInnermostReferenceTargetAtPos(t *testing.T) {
 				Column: 4,
 				Byte:   36,
 			},
-			&lang.ReferenceTarget{
-				Addr: lang.Address{
-					lang.RootStep{Name: "aws_instance"},
-					lang.AttrStep{Name: "test"},
-					lang.AttrStep{Name: "instance_type"},
-				},
-				Type: cty.String,
-				RangePtr: &hcl.Range{
-					Filename: "test.tf",
-					Start: hcl.Pos{
-						Line:   2,
-						Column: 3,
-						Byte:   35,
+			lang.ReferenceTargets{
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "aws_instance"},
+						lang.AttrStep{Name: "test"},
+						lang.AttrStep{Name: "instance_type"},
 					},
-					End: hcl.Pos{
-						Line:   2,
-						Column: 29,
-						Byte:   61,
+					Type: cty.String,
+					RangePtr: &hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   2,
+							Column: 3,
+							Byte:   35,
+						},
+						End: hcl.Pos{
+							Line:   2,
+							Column: 29,
+							Byte:   61,
+						},
 					},
 				},
 			},
@@ -5030,13 +5354,13 @@ func TestInnermostReferenceTargetAtPos(t *testing.T) {
 				return tc.refTargets
 			})
 
-			refTarget, err := d.InnermostReferenceTargetAtPos(tc.filename, tc.pos)
+			refTargets, err := d.InnermostReferenceTargetsAtPos(tc.filename, tc.pos)
 			if err != nil {
 				t.Fatal(err)
 			}
 
-			if diff := cmp.Diff(tc.expectedTarget, refTarget, ctydebug.CmpOptions); diff != "" {
-				t.Fatalf("mismatch of reference target: %s", diff)
+			if diff := cmp.Diff(tc.expectedTargets, refTargets, ctydebug.CmpOptions); diff != "" {
+				t.Fatalf("mismatch of reference targets: %s", diff)
 			}
 		})
 	}

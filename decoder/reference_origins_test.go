@@ -677,6 +677,245 @@ attr3 = onestep`,
 				},
 			},
 		},
+		{
+			"origin inside collection expressions",
+			&schema.BodySchema{
+				Attributes: map[string]*schema.AttributeSchema{
+					"list": {
+						Expr: schema.ExprConstraints{
+							schema.ListExpr{
+								Elem: schema.ExprConstraints{
+									schema.TraversalExpr{
+										OfScopeId: lang.ScopeId("test"),
+									},
+								},
+							},
+						},
+					},
+					"set": {
+						Expr: schema.ExprConstraints{
+							schema.SetExpr{
+								Elem: schema.ExprConstraints{
+									schema.TraversalExpr{
+										OfScopeId: lang.ScopeId("test"),
+									},
+								},
+							},
+						},
+					},
+					"tuple": {
+						Expr: schema.ExprConstraints{
+							schema.TupleExpr{
+								Elems: []schema.ExprConstraints{
+									{
+										schema.TraversalExpr{
+											OfScopeId: lang.ScopeId("test"),
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			`list = [ var.first ]
+set = [ var.second ]
+tuple = [ var.third ]
+`,
+			lang.ReferenceOrigins{
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "first"},
+					},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   1,
+							Column: 10,
+							Byte:   9,
+						},
+						End: hcl.Pos{
+							Line:   1,
+							Column: 19,
+							Byte:   18,
+						},
+					},
+					OfScopeId: lang.ScopeId("test"),
+				},
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "second"},
+					},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   2,
+							Column: 9,
+							Byte:   29,
+						},
+						End: hcl.Pos{
+							Line:   2,
+							Column: 19,
+							Byte:   39,
+						},
+					},
+					OfScopeId: lang.ScopeId("test"),
+				},
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "third"},
+					},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   3,
+							Column: 11,
+							Byte:   52,
+						},
+						End: hcl.Pos{
+							Line:   3,
+							Column: 20,
+							Byte:   61,
+						},
+					},
+					OfScopeId: lang.ScopeId("test"),
+				},
+			},
+		},
+		{
+			"origin inside object expression",
+			&schema.BodySchema{
+				Attributes: map[string]*schema.AttributeSchema{
+					"obj": {
+						Expr: schema.ExprConstraints{
+							schema.ObjectExpr{
+								Attributes: schema.ObjectExprAttributes{
+									"attr": &schema.AttributeSchema{
+										Expr: schema.ExprConstraints{
+											schema.TraversalExpr{
+												OfScopeId: lang.ScopeId("test"),
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			`obj = {
+  attr = var.first
+}`,
+			lang.ReferenceOrigins{
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "first"},
+					},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   2,
+							Column: 10,
+							Byte:   17,
+						},
+						End: hcl.Pos{
+							Line:   2,
+							Column: 19,
+							Byte:   26,
+						},
+					},
+					OfScopeId: lang.ScopeId("test"),
+				},
+			},
+		},
+		{
+			"origin inside map expression",
+			&schema.BodySchema{
+				Attributes: map[string]*schema.AttributeSchema{
+					"map": {
+						Expr: schema.ExprConstraints{
+							schema.MapExpr{
+								Elem: schema.ExprConstraints{
+									schema.TraversalExpr{
+										OfScopeId: lang.ScopeId("test"),
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			`map = {
+  key = var.first
+}`,
+			lang.ReferenceOrigins{
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "first"},
+					},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   2,
+							Column: 9,
+							Byte:   16,
+						},
+						End: hcl.Pos{
+							Line:   2,
+							Column: 18,
+							Byte:   25,
+						},
+					},
+					OfScopeId: lang.ScopeId("test"),
+				},
+			},
+		},
+		{
+			"origin inside tuple cons expression",
+			&schema.BodySchema{
+				Attributes: map[string]*schema.AttributeSchema{
+					"tuple_cons": {
+						Expr: schema.ExprConstraints{
+							schema.TupleConsExpr{
+								AnyElem: schema.ExprConstraints{
+									schema.TraversalExpr{
+										OfScopeId: lang.ScopeId("test"),
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			`tuple_cons = [ var.one ]`,
+			lang.ReferenceOrigins{
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "one"},
+					},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   1,
+							Column: 16,
+							Byte:   15,
+						},
+						End: hcl.Pos{
+							Line:   1,
+							Column: 23,
+							Byte:   22,
+						},
+					},
+					OfScopeId: lang.ScopeId("test"),
+				},
+			},
+		},
 	}
 	for i, tc := range testCases {
 		t.Run(fmt.Sprintf("%d-%s", i, tc.name), func(t *testing.T) {
