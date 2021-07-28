@@ -1719,6 +1719,83 @@ func TestDecoder_CandidateAtPos_traversalExpressions(t *testing.T) {
 			}),
 		},
 		{
+			"reference targets of any type",
+			&schema.BodySchema{
+				Attributes: map[string]*schema.AttributeSchema{
+					"attr": {
+						Expr: schema.ExprConstraints{
+							schema.TraversalExpr{OfType: cty.String},
+						},
+					},
+				},
+			},
+			lang.ReferenceTargets{
+				lang.ReferenceTarget{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "first"},
+					},
+					Type: cty.DynamicPseudoType,
+				},
+				lang.ReferenceTarget{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "second"},
+					},
+					Type: cty.DynamicPseudoType,
+				},
+			},
+			`attr = 
+`,
+			hcl.Pos{Line: 1, Column: 8, Byte: 7},
+			lang.CompleteCandidates([]lang.Candidate{
+				{
+					Label:  "var.first",
+					Detail: "dynamic",
+					TextEdit: lang.TextEdit{
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start: hcl.Pos{
+								Line:   1,
+								Column: 8,
+								Byte:   7,
+							},
+							End: hcl.Pos{
+								Line:   1,
+								Column: 8,
+								Byte:   7,
+							},
+						},
+						NewText: "var.first",
+						Snippet: "var.first",
+					},
+					Kind: lang.TraversalCandidateKind,
+				},
+				{
+					Label:  "var.second",
+					Detail: "dynamic",
+					TextEdit: lang.TextEdit{
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start: hcl.Pos{
+								Line:   1,
+								Column: 8,
+								Byte:   7,
+							},
+							End: hcl.Pos{
+								Line:   1,
+								Column: 8,
+								Byte:   7,
+							},
+						},
+						NewText: "var.second",
+						Snippet: "var.second",
+					},
+					Kind: lang.TraversalCandidateKind,
+				},
+			}),
+		},
+		{
 			"scope matching references",
 			&schema.BodySchema{
 				Attributes: map[string]*schema.AttributeSchema{

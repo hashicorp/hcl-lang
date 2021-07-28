@@ -140,6 +140,10 @@ func (ref ReferenceTarget) MatchesScopeId(scopeId lang.ScopeId) bool {
 func (ref ReferenceTarget) ConformsToType(typ cty.Type) bool {
 	conformsToType := false
 	if typ != cty.NilType && ref.Type != cty.NilType {
+		if ref.Type == cty.DynamicPseudoType {
+			// anything conforms with dynamic
+			conformsToType = true
+		}
 		if errs := ref.Type.TestConformance(typ); len(errs) == 0 {
 			conformsToType = true
 		}
