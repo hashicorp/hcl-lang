@@ -115,6 +115,14 @@ func (d *Decoder) innermostReferenceTargetsAtPos(targets lang.ReferenceTargets, 
 	var innermostTargets lang.ReferenceTargets
 
 	for _, target := range matchingTargets {
+		if target.DefRangePtr != nil {
+			if target.DefRangePtr.Filename == file &&
+				target.DefRangePtr.ContainsPos(pos) {
+				innermostTargets = append(innermostTargets, target)
+				continue
+			}
+		}
+
 		nestedTargets, ok := d.innermostReferenceTargetsAtPos(target.NestedTargets, file, pos)
 		if ok {
 			innermostTargets = nestedTargets

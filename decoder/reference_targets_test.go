@@ -5353,6 +5353,111 @@ func TestInnermostReferenceTargetsAtPos(t *testing.T) {
 				},
 			},
 		},
+		{
+			"matching nested targets with position at block definition",
+			lang.ReferenceTargets{
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "module"},
+						lang.AttrStep{Name: "test"},
+					},
+					Type: cty.Object(map[string]cty.Type{
+						"instance_id": cty.String,
+					}),
+					DefRangePtr: &hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.InitialPos,
+						End: hcl.Pos{
+							Line:   1,
+							Column: 20,
+							Byte:   21,
+						},
+					},
+					RangePtr: &hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.InitialPos,
+						End: hcl.Pos{
+							Line:   3,
+							Column: 2,
+							Byte:   63,
+						},
+					},
+					NestedTargets: lang.ReferenceTargets{
+						{
+							Addr: lang.Address{
+								lang.RootStep{Name: "module"},
+								lang.AttrStep{Name: "test"},
+								lang.AttrStep{Name: "instance_id"},
+							},
+							Type: cty.String,
+							RangePtr: &hcl.Range{
+								Filename: "test.tf",
+								Start:    hcl.InitialPos,
+								End: hcl.Pos{
+									Line:   3,
+									Column: 2,
+									Byte:   63,
+								},
+							},
+						},
+					},
+				},
+			},
+			"test.tf",
+			hcl.Pos{
+				Line:   1,
+				Column: 15,
+				Byte:   16,
+			},
+			lang.ReferenceTargets{
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "module"},
+						lang.AttrStep{Name: "test"},
+					},
+					Type: cty.Object(map[string]cty.Type{
+						"instance_id": cty.String,
+					}),
+					DefRangePtr: &hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.InitialPos,
+						End: hcl.Pos{
+							Line:   1,
+							Column: 20,
+							Byte:   21,
+						},
+					},
+					RangePtr: &hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.InitialPos,
+						End: hcl.Pos{
+							Line:   3,
+							Column: 2,
+							Byte:   63,
+						},
+					},
+					NestedTargets: lang.ReferenceTargets{
+						{
+							Addr: lang.Address{
+								lang.RootStep{Name: "module"},
+								lang.AttrStep{Name: "test"},
+								lang.AttrStep{Name: "instance_id"},
+							},
+							Type: cty.String,
+							RangePtr: &hcl.Range{
+								Filename: "test.tf",
+								Start:    hcl.InitialPos,
+								End: hcl.Pos{
+									Line:   3,
+									Column: 2,
+									Byte:   63,
+								},
+							},
+						},
+					},
+				},
+			},
+		},
 	}
 	for i, tc := range testCases {
 		t.Run(fmt.Sprintf("%d-%s", i, tc.name), func(t *testing.T) {
