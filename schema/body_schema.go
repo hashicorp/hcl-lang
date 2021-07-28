@@ -26,6 +26,10 @@ type BodySchema struct {
 	// but often will match.
 	HoverURL string
 
+	// TargetableAs represents how else the body may be targeted
+	// if not by its declarable attributes or blocks.
+	TargetableAs []*Targetable
+
 	// TODO: Functions
 }
 
@@ -87,6 +91,13 @@ func (bs *BodySchema) Copy() *BodySchema {
 		AnyAttribute: bs.AnyAttribute.Copy(),
 		HoverURL:     bs.HoverURL,
 		DocsLink:     bs.DocsLink.Copy(),
+	}
+
+	if bs.TargetableAs != nil {
+		newBs.TargetableAs = make([]*Targetable, len(bs.TargetableAs))
+		for id, target := range bs.TargetableAs {
+			newBs.TargetableAs[id] = target.Copy()
+		}
 	}
 
 	if bs.Attributes != nil {

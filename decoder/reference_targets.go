@@ -318,13 +318,13 @@ func (d *Decoder) CollectReferenceTargets() (lang.ReferenceTargets, error) {
 			continue
 		}
 
-		refs = append(refs, d.decodeReferenceTargetsForBody(body, d.rootSchema)...)
+		refs = append(refs, d.decodeReferenceTargetsForBody(body, nil, d.rootSchema)...)
 	}
 
 	return refs, nil
 }
 
-func (d *Decoder) decodeReferenceTargetsForBody(body *hclsyntax.Body, bodySchema *schema.BodySchema) lang.ReferenceTargets {
+func (d *Decoder) decodeReferenceTargetsForBody(body *hclsyntax.Body, parentBlock *hclsyntax.Block, bodySchema *schema.BodySchema) lang.ReferenceTargets {
 	refs := make(lang.ReferenceTargets, 0)
 
 	if bodySchema == nil {
@@ -351,9 +351,12 @@ func (d *Decoder) decodeReferenceTargetsForBody(body *hclsyntax.Body, bodySchema
 			continue
 		}
 
-		// TODO: Support dependent schemas
+		mergedSchema, err := mergeBlockBodySchemas(block, bSchema)
+		if err != nil {
+			mergedSchema = bSchema.Body
+		}
 
-		iRefs := d.decodeReferenceTargetsForBody(block.Body, bSchema.Body)
+		iRefs := d.decodeReferenceTargetsForBody(block.Body, block, mergedSchema)
 		refs = append(refs, iRefs...)
 
 		addr, ok := resolveBlockAddress(block, bSchema.Address)
@@ -439,9 +442,41 @@ func (d *Decoder) decodeReferenceTargetsForBody(body *hclsyntax.Body, bodySchema
 		sort.Sort(bodyRef.NestedTargets)
 	}
 
+	for _, tb := range bodySchema.TargetableAs {
+		refs = append(refs, decodeTargetableBody(body, parentBlock, tb))
+	}
+
 	sort.Sort(refs)
 
 	return refs
+}
+
+func decodeTargetableBody(body *hclsyntax.Body, parentBlock *hclsyntax.Block, tt *schema.Targetable) lang.ReferenceTarget {
+	rng := body.SrcRange.Ptr()
+	var defRng *hcl.Range
+
+	if parentBlock != nil {
+		rng = hcl.RangeBetween(parentBlock.TypeRange, parentBlock.CloseBraceRange).Ptr()
+		defRng = parentBlock.DefRange().Ptr()
+	}
+
+	target := lang.ReferenceTarget{
+		Addr:        tt.Address.Copy(),
+		ScopeId:     tt.ScopeId,
+		RangePtr:    rng,
+		DefRangePtr: defRng,
+		Type:        tt.AsType,
+		Description: tt.Description,
+	}
+
+	if tt.NestedTargetables != nil {
+		target.NestedTargets = make(lang.ReferenceTargets, len(tt.NestedTargetables))
+		for i, ntt := range tt.NestedTargetables {
+			target.NestedTargets[i] = decodeTargetableBody(body, parentBlock, ntt)
+		}
+	}
+
+	return target
 }
 
 func decodeReferenceTargetsForAttribute(attr *hclsyntax.Attribute, attrSchema *schema.AttributeSchema) lang.ReferenceTargets {

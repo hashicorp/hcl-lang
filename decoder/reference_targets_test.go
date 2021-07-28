@@ -4172,6 +4172,225 @@ provider "test" {
 			},
 		},
 		{
+			"additional targetables",
+			&schema.BodySchema{
+				Blocks: map[string]*schema.BlockSchema{
+					"module": {
+						Labels: []*schema.LabelSchema{
+							{Name: "name"},
+						},
+						Address: &schema.BlockAddrSchema{
+							Steps: []schema.AddrStep{
+								schema.StaticStep{Name: "module"},
+								schema.LabelStep{Index: 0},
+							},
+							AsReference: true,
+						},
+						Type: schema.BlockTypeObject,
+						Body: &schema.BodySchema{
+							TargetableAs: []*schema.Targetable{
+								{
+									Address: lang.Address{
+										lang.RootStep{Name: "module"},
+										lang.AttrStep{Name: "xyz"},
+										lang.AttrStep{Name: "test"},
+									},
+									AsType: cty.String,
+								},
+							},
+						},
+					},
+				},
+			},
+			`module "test" {
+}
+`,
+			lang.ReferenceTargets{
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "module"},
+						lang.AttrStep{Name: "test"},
+					},
+					RangePtr: &hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   1,
+							Column: 1,
+							Byte:   0,
+						},
+						End: hcl.Pos{
+							Line:   2,
+							Column: 2,
+							Byte:   17,
+						},
+					},
+					DefRangePtr: &hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   1,
+							Column: 1,
+							Byte:   0,
+						},
+						End: hcl.Pos{
+							Line:   1,
+							Column: 16,
+							Byte:   15,
+						},
+					},
+				},
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "module"},
+						lang.AttrStep{Name: "xyz"},
+						lang.AttrStep{Name: "test"},
+					},
+					Type: cty.String,
+					RangePtr: &hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   1,
+							Column: 1,
+							Byte:   0,
+						},
+						End: hcl.Pos{
+							Line:   2,
+							Column: 2,
+							Byte:   17,
+						},
+					},
+					DefRangePtr: &hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   1,
+							Column: 1,
+							Byte:   0,
+						},
+						End: hcl.Pos{
+							Line:   1,
+							Column: 16,
+							Byte:   15,
+						},
+					},
+				},
+			},
+		},
+		{
+			"block with dependent body",
+			&schema.BodySchema{
+				Blocks: map[string]*schema.BlockSchema{
+					"module": {
+						Labels: []*schema.LabelSchema{
+							{Name: "name", IsDepKey: true},
+						},
+						Address: &schema.BlockAddrSchema{
+							Steps: []schema.AddrStep{
+								schema.StaticStep{Name: "module"},
+								schema.LabelStep{Index: 0},
+							},
+							DependentBodyAsData: true,
+							InferDependentBody:  true,
+						},
+						Type: schema.BlockTypeObject,
+						Body: &schema.BodySchema{},
+						DependentBody: map[schema.SchemaKey]*schema.BodySchema{
+							schema.NewSchemaKey(schema.DependencyKeys{
+								Labels: []schema.LabelDependent{
+									{Index: 0, Value: "test"},
+								},
+							}): {
+								Attributes: map[string]*schema.AttributeSchema{
+									"attr": {
+										Expr:       schema.LiteralTypeOnly(cty.String),
+										IsOptional: true,
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			`module "test" {
+  attr = "foo"
+}
+module "different" {
+  attr = "foo"
+}
+`,
+			lang.ReferenceTargets{
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "module"},
+						lang.AttrStep{Name: "test"},
+					},
+					Type: cty.Object(map[string]cty.Type{
+						"attr": cty.String,
+					}),
+					RangePtr: &hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   1,
+							Column: 1,
+							Byte:   0,
+						},
+						End: hcl.Pos{
+							Line:   3,
+							Column: 2,
+							Byte:   32,
+						},
+					},
+					DefRangePtr: &hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   1,
+							Column: 1,
+							Byte:   0,
+						},
+						End: hcl.Pos{
+							Line:   1,
+							Column: 16,
+							Byte:   15,
+						},
+					},
+					NestedTargets: lang.ReferenceTargets{
+						{
+							Addr: lang.Address{
+								lang.RootStep{Name: "module"},
+								lang.AttrStep{Name: "test"},
+								lang.AttrStep{Name: "attr"},
+							},
+							Type: cty.String,
+							RangePtr: &hcl.Range{
+								Filename: "test.tf",
+								Start: hcl.Pos{
+									Line:   2,
+									Column: 3,
+									Byte:   18,
+								},
+								End: hcl.Pos{
+									Line:   2,
+									Column: 15,
+									Byte:   30,
+								},
+							},
+							DefRangePtr: &hcl.Range{
+								Filename: "test.tf",
+								Start: hcl.Pos{
+									Line:   2,
+									Column: 3,
+									Byte:   18,
+								},
+								End: hcl.Pos{
+									Line:   2,
+									Column: 7,
+									Byte:   22,
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
 			// repro case for https://github.com/hashicorp/terraform-ls/issues/573
 			"nested complex objects",
 			&schema.BodySchema{
