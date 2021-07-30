@@ -7,6 +7,7 @@ import (
 	"github.com/hashicorp/hcl-lang/schema"
 	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hclsyntax"
+	"github.com/zclconf/go-cty/cty"
 )
 
 // ReferenceOriginAtPos returns the ReferenceOrigin
@@ -96,18 +97,7 @@ func (d *Decoder) referenceOriginsInBody(body *hclsyntax.Body, bodySchema *schem
 			aSchema = bodySchema.AnyAttribute
 		}
 
-		tes, ok := d.findTraversalContraintsForExpr(aSchema.Expr)
-		if !ok {
-			continue
-		}
-		for _, traversal := range attr.Expr.Variables() {
-			origin, err := TraversalToReferenceOrigin(traversal, tes)
-			if err != nil {
-				continue
-			}
-
-			origins = append(origins, origin)
-		}
+		origins = append(origins, d.findOriginsInExpression(attr.Expr, aSchema.Expr)...)
 	}
 
 	for _, block := range body.Blocks {
@@ -128,56 +118,94 @@ func (d *Decoder) referenceOriginsInBody(body *hclsyntax.Body, bodySchema *schem
 	return origins
 }
 
-func (d *Decoder) findTraversalContraintsForExpr(ec schema.ExprConstraints) (schema.TraversalExprs, bool) {
-	tes, ok := ExprConstraints(ec).TraversalExprs()
-	if ok {
-		return tes, true
-	}
+func (d *Decoder) findOriginsInExpression(expr hcl.Expression, ec schema.ExprConstraints) lang.ReferenceOrigins {
+	// TODO Review once nested expressions are supported
 
-	tce, ok := ExprConstraints(ec).TupleConsExpr()
-	if ok {
-		return d.findTraversalContraintsForExpr(tce.AnyElem)
-	}
+	origins := make(lang.ReferenceOrigins, 0)
 
-	le, ok := ExprConstraints(ec).ListExpr()
-	if ok {
-		return d.findTraversalContraintsForExpr(le.Elem)
-	}
-
-	se, ok := ExprConstraints(ec).SetExpr()
-	if ok {
-		return d.findTraversalContraintsForExpr(se.Elem)
-	}
-
-	tue, ok := ExprConstraints(ec).TupleExpr()
-	if ok {
-		for _, elem := range tue.Elems {
-			te, ok := d.findTraversalContraintsForExpr(elem)
-			if ok {
-				return te, true
-			}
-		}
-	}
-
-	oe, ok := ExprConstraints(ec).ObjectExpr()
-	if ok {
-		for _, val := range oe.Attributes {
-			te, ok := d.findTraversalContraintsForExpr(val.Expr)
-			if ok {
-				return te, true
-			}
-		}
-	}
-
-	me, ok := ExprConstraints(ec).MapExpr()
-	if ok {
-		te, ok := d.findTraversalContraintsForExpr(me.Elem)
+	switch eType := expr.(type) {
+	case *hclsyntax.TupleConsExpr:
+		tce, ok := ExprConstraints(ec).TupleConsExpr()
 		if ok {
-			return te, true
+			for _, elemExpr := range eType.ExprList() {
+				origins = append(origins, d.findOriginsInExpression(elemExpr, tce.AnyElem)...)
+			}
+			break
+		}
+
+		le, ok := ExprConstraints(ec).ListExpr()
+		if ok {
+			for _, elemExpr := range eType.ExprList() {
+				origins = append(origins, d.findOriginsInExpression(elemExpr, le.Elem)...)
+			}
+			break
+		}
+
+		se, ok := ExprConstraints(ec).SetExpr()
+		if ok {
+			for _, elemExpr := range eType.ExprList() {
+				origins = append(origins, d.findOriginsInExpression(elemExpr, se.Elem)...)
+			}
+			break
+		}
+
+		tue, ok := ExprConstraints(ec).TupleExpr()
+		if ok {
+			for i, elemExpr := range eType.ExprList() {
+				if len(tue.Elems) < i+1 {
+					break
+				}
+				origins = append(origins, d.findOriginsInExpression(elemExpr, tue.Elems[i])...)
+			}
+		}
+	case *hclsyntax.ObjectConsExpr:
+		oe, ok := ExprConstraints(ec).ObjectExpr()
+		if ok {
+			for _, item := range eType.Items {
+				key, _ := item.KeyExpr.Value(nil)
+				if key.IsNull() || !key.IsWhollyKnown() || key.Type() != cty.String {
+					// skip items keys that can't be interpolated
+					// without further context
+					continue
+				}
+
+				attr, ok := oe.Attributes[key.AsString()]
+				if !ok {
+					// skip unknown attribute
+					continue
+				}
+
+				origins = append(origins, d.findOriginsInExpression(item.ValueExpr, attr.Expr)...)
+			}
+		}
+
+		me, ok := ExprConstraints(ec).MapExpr()
+		if ok {
+			for _, item := range eType.Items {
+				origins = append(origins, d.findOriginsInExpression(item.ValueExpr, me.Elem)...)
+			}
+		}
+	default:
+		tes, ok := ExprConstraints(ec).TraversalExprs()
+		if ok {
+			origins = append(origins, traversalsToReferenceOrigins(expr.Variables(), tes)...)
 		}
 	}
 
-	return nil, false
+	return origins
+}
+
+func traversalsToReferenceOrigins(traversals []hcl.Traversal, tes schema.TraversalExprs) lang.ReferenceOrigins {
+	origins := make(lang.ReferenceOrigins, 0)
+	for _, traversal := range traversals {
+		origin, err := TraversalToReferenceOrigin(traversal, tes)
+		if err != nil {
+			continue
+		}
+		origins = append(origins, origin)
+	}
+
+	return origins
 }
 
 func (d *Decoder) referenceOriginAtPos(body *hclsyntax.Body, bodySchema *schema.BodySchema, pos hcl.Pos) (*lang.ReferenceOrigin, error) {
@@ -192,30 +220,10 @@ func (d *Decoder) referenceOriginAtPos(body *hclsyntax.Body, bodySchema *schema.
 				aSchema = bodySchema.AnyAttribute
 			}
 
-			traversal, ok := d.traversalAtPos(attr.Expr, pos)
-			if ok {
-				var tExprs schema.TraversalExprs
-				switch attr.Expr.(type) {
-				case *hclsyntax.ScopeTraversalExpr:
-					tes, ok := ExprConstraints(aSchema.Expr).TraversalExprs()
-					if !ok {
-						continue
-					}
-					tExprs = tes
-				default:
-					// TODO Reflect real expression at position
-					tes, ok := d.findTraversalContraintsForExpr(aSchema.Expr)
-					if !ok {
-						continue
-					}
-					tExprs = tes
+			for _, origin := range d.findOriginsInExpression(attr.Expr, aSchema.Expr) {
+				if origin.Range.ContainsPos(pos) {
+					return &origin, nil
 				}
-
-				origin, err := TraversalToReferenceOrigin(traversal, tExprs)
-				if err != nil {
-					continue
-				}
-				return &origin, nil
 			}
 
 			return nil, nil
