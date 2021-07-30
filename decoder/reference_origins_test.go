@@ -1063,6 +1063,203 @@ tuple = [ var.third ]
 				},
 			},
 		},
+		{
+			"origin inside object and map expression with multiple matches",
+			&schema.BodySchema{
+				Attributes: map[string]*schema.AttributeSchema{
+					"map": {
+						Expr: schema.ExprConstraints{
+							schema.TraversalExpr{OfType: cty.Map(cty.String)},
+							schema.MapExpr{
+								Elem: schema.ExprConstraints{
+									schema.TraversalExpr{OfType: cty.String},
+								},
+							},
+						},
+					},
+					"obj": {
+						Expr: schema.ExprConstraints{
+							schema.TraversalExpr{OfType: cty.Object(map[string]cty.Type{
+								"foo": cty.String,
+							})},
+							schema.ObjectExpr{
+								Attributes: schema.ObjectExprAttributes{
+									"foo": &schema.AttributeSchema{
+										Expr: schema.ExprConstraints{
+											schema.TraversalExpr{OfType: cty.String},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			`map = {
+  bar = var.one
+}
+obj = {
+  foo = var.two
+}
+`,
+			lang.ReferenceOrigins{
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "one"},
+					},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   2,
+							Column: 9,
+							Byte:   16,
+						},
+						End: hcl.Pos{
+							Line:   2,
+							Column: 16,
+							Byte:   23,
+						},
+					},
+					Constraints: lang.ReferenceOriginConstraints{
+						{OfType: cty.String},
+					},
+				},
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "two"},
+					},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   5,
+							Column: 9,
+							Byte:   42,
+						},
+						End: hcl.Pos{
+							Line:   5,
+							Column: 16,
+							Byte:   49,
+						},
+					},
+					Constraints: lang.ReferenceOriginConstraints{
+						{OfType: cty.String},
+					},
+				},
+			},
+		},
+		{
+			"origin inside list, set and tuple expression with multiple matches",
+			&schema.BodySchema{
+				Attributes: map[string]*schema.AttributeSchema{
+					"list": {
+						Expr: schema.ExprConstraints{
+							schema.TraversalExpr{OfType: cty.List(cty.String)},
+							schema.ListExpr{
+								Elem: schema.ExprConstraints{
+									schema.TraversalExpr{OfType: cty.String},
+								},
+							},
+						},
+					},
+					"set": {
+						Expr: schema.ExprConstraints{
+							schema.TraversalExpr{OfType: cty.Set(cty.String)},
+							schema.SetExpr{
+								Elem: schema.ExprConstraints{
+									schema.TraversalExpr{OfType: cty.String},
+								},
+							},
+						},
+					},
+					"tup": {
+						Expr: schema.ExprConstraints{
+							schema.TraversalExpr{OfType: cty.Tuple([]cty.Type{cty.String})},
+							schema.TupleExpr{
+								Elems: []schema.ExprConstraints{
+									{
+										schema.TraversalExpr{OfType: cty.String},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			`list = [ var.one ]
+set = [ var.two ]
+tup = [ var.three ]
+`,
+			lang.ReferenceOrigins{
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "one"},
+					},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   1,
+							Column: 10,
+							Byte:   9,
+						},
+						End: hcl.Pos{
+							Line:   1,
+							Column: 17,
+							Byte:   16,
+						},
+					},
+					Constraints: lang.ReferenceOriginConstraints{
+						{OfType: cty.String},
+					},
+				},
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "two"},
+					},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   2,
+							Column: 9,
+							Byte:   27,
+						},
+						End: hcl.Pos{
+							Line:   2,
+							Column: 16,
+							Byte:   34,
+						},
+					},
+					Constraints: lang.ReferenceOriginConstraints{
+						{OfType: cty.String},
+					},
+				},
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "three"},
+					},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   3,
+							Column: 9,
+							Byte:   45,
+						},
+						End: hcl.Pos{
+							Line:   3,
+							Column: 18,
+							Byte:   54,
+						},
+					},
+					Constraints: lang.ReferenceOriginConstraints{
+						{OfType: cty.String},
+					},
+				},
+			},
+		},
 	}
 	for i, tc := range testCases {
 		t.Run(fmt.Sprintf("%d-%s", i, tc.name), func(t *testing.T) {
