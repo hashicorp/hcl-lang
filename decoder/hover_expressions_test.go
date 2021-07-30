@@ -344,7 +344,7 @@ _object_`),
 ]`,
 			hcl.Pos{Line: 1, Column: 3, Byte: 2},
 			&lang.HoverData{
-				Content: lang.Markdown(`**objects** _list_`),
+				Content: lang.Markdown(`**objects** _list of object_`),
 				Range: hcl.Range{
 					Filename: "test.tf",
 					Start: hcl.Pos{
@@ -976,7 +976,7 @@ _object_`),
 			`list = [ "one", "two" ]`,
 			hcl.Pos{Line: 1, Column: 8, Byte: 7},
 			&lang.HoverData{
-				Content: lang.Markdown("_list_\n\nSpecial list"),
+				Content: lang.Markdown("_list of string_\n\nSpecial list"),
 				Range: hcl.Range{
 					Filename: "test.tf",
 					Start: hcl.Pos{
@@ -1035,7 +1035,7 @@ _object_`),
 			`set = [ "one", "two" ]`,
 			hcl.Pos{Line: 1, Column: 7, Byte: 6},
 			&lang.HoverData{
-				Content: lang.Markdown("_set_\n\nSpecial set"),
+				Content: lang.Markdown("_set of string_\n\nSpecial set"),
 				Range: hcl.Range{
 					Filename: "test.tf",
 					Start: hcl.Pos{

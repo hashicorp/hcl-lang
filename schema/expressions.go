@@ -162,7 +162,11 @@ func (ListExpr) isExprConstraintImpl() exprConstrSigil {
 	return exprConstrSigil{}
 }
 
-func (ListExpr) FriendlyName() string {
+func (le ListExpr) FriendlyName() string {
+	elemName := le.Elem.FriendlyName()
+	if elemName != "" {
+		return fmt.Sprintf("list of %s", elemName)
+	}
 	return "list"
 }
 
@@ -186,7 +190,11 @@ func (SetExpr) isExprConstraintImpl() exprConstrSigil {
 	return exprConstrSigil{}
 }
 
-func (SetExpr) FriendlyName() string {
+func (se SetExpr) FriendlyName() string {
+	elemName := se.Elem.FriendlyName()
+	if elemName != "" {
+		return fmt.Sprintf("set of %s", elemName)
+	}
 	return "set"
 }
 
@@ -239,6 +247,10 @@ func (MapExpr) isExprConstraintImpl() exprConstrSigil {
 
 func (me MapExpr) FriendlyName() string {
 	if me.Name == "" {
+		elemName := me.Elem.FriendlyName()
+		if elemName != "" {
+			return fmt.Sprintf("map of %s", elemName)
+		}
 		return "map"
 	}
 	return me.Name

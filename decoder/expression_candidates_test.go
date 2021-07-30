@@ -836,7 +836,7 @@ func TestDecoder_CandidateAtPos_expressions(t *testing.T) {
 			lang.CompleteCandidates([]lang.Candidate{
 				{
 					Label:  "attr",
-					Detail: "list",
+					Detail: "list of string",
 					TextEdit: lang.TextEdit{
 						Range: hcl.Range{
 							Filename: "test.tf",
@@ -867,7 +867,7 @@ func TestDecoder_CandidateAtPos_expressions(t *testing.T) {
 			lang.CompleteCandidates([]lang.Candidate{
 				{
 					Label:  "[ string ]",
-					Detail: "list",
+					Detail: "list of string",
 					TextEdit: lang.TextEdit{
 						Range: hcl.Range{
 							Filename: "test.tf",
@@ -959,7 +959,7 @@ func TestDecoder_CandidateAtPos_expressions(t *testing.T) {
 			lang.CompleteCandidates([]lang.Candidate{
 				{
 					Label:  "attr",
-					Detail: "set",
+					Detail: "set of string",
 					TextEdit: lang.TextEdit{
 						Range: hcl.Range{
 							Filename: "test.tf",
@@ -990,7 +990,7 @@ func TestDecoder_CandidateAtPos_expressions(t *testing.T) {
 			lang.CompleteCandidates([]lang.Candidate{
 				{
 					Label:  "[ string ]",
-					Detail: "set",
+					Detail: "set of string",
 					TextEdit: lang.TextEdit{
 						Range: hcl.Range{
 							Filename: "test.tf",
