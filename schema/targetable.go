@@ -15,7 +15,21 @@ type Targetable struct {
 	FriendlyName string
 	Description  lang.MarkupContent
 
-	NestedTargetables []*Targetable
+	NestedTargetables Targetables
+}
+
+type Targetables []*Targetable
+
+func (ts Targetables) Len() int {
+	return len(ts)
+}
+
+func (ts Targetables) Less(i, j int) bool {
+	return ts[i].Address.String() < ts[j].Address.String()
+}
+
+func (ts Targetables) Swap(i, j int) {
+	ts[i], ts[j] = ts[j], ts[i]
 }
 
 func (tb *Targetable) Copy() *Targetable {
@@ -37,7 +51,7 @@ func (tb *Targetable) Copy() *Targetable {
 	return newTb
 }
 
-func NestedTargetablesForValue(address lang.Address, scopeId lang.ScopeId, val cty.Value) []*Targetable {
+func NestedTargetablesForValue(address lang.Address, scopeId lang.ScopeId, val cty.Value) Targetables {
 	if val.IsNull() {
 		return nil
 	}
@@ -52,7 +66,7 @@ func NestedTargetablesForValue(address lang.Address, scopeId lang.ScopeId, val c
 		return nil
 	}
 
-	nestedTargetables := make([]*Targetable, 0)
+	nestedTargetables := make(Targetables, 0)
 
 	if typ.IsObjectType() {
 		for key := range typ.AttributeTypes() {
@@ -84,9 +98,7 @@ func NestedTargetablesForValue(address lang.Address, scopeId lang.ScopeId, val c
 		}
 	}
 
-	sort.SliceStable(nestedTargetables, func(i, j int) bool {
-		return nestedTargetables[i].Address.String() < nestedTargetables[j].Address.String()
-	})
+	sort.Sort(nestedTargetables)
 
 	return nestedTargetables
 }

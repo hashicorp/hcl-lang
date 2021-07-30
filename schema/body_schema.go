@@ -28,7 +28,7 @@ type BodySchema struct {
 
 	// TargetableAs represents how else the body may be targeted
 	// if not by its declarable attributes or blocks.
-	TargetableAs []*Targetable
+	TargetableAs Targetables
 
 	// TODO: Functions
 }
@@ -94,7 +94,7 @@ func (bs *BodySchema) Copy() *BodySchema {
 	}
 
 	if bs.TargetableAs != nil {
-		newBs.TargetableAs = make([]*Targetable, len(bs.TargetableAs))
+		newBs.TargetableAs = make(Targetables, len(bs.TargetableAs))
 		for id, target := range bs.TargetableAs {
 			newBs.TargetableAs[id] = target.Copy()
 		}

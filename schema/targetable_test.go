@@ -16,7 +16,7 @@ func TestNestedTargetablesForValue(t *testing.T) {
 		addr                lang.Address
 		scopeId             lang.ScopeId
 		val                 cty.Value
-		expectedTargetables []*Targetable
+		expectedTargetables Targetables
 	}{
 		{
 			"primitive type",
@@ -47,7 +47,7 @@ func TestNestedTargetablesForValue(t *testing.T) {
 			cty.ListVal([]cty.Value{
 				cty.StringVal("test"),
 			}),
-			[]*Targetable{
+			Targetables{
 				{
 					Address: lang.Address{
 						lang.RootStep{Name: "foo"},
@@ -67,7 +67,7 @@ func TestNestedTargetablesForValue(t *testing.T) {
 			cty.TupleVal([]cty.Value{
 				cty.StringVal("test"),
 			}),
-			[]*Targetable{
+			Targetables{
 				{
 					Address: lang.Address{
 						lang.RootStep{Name: "foo"},
@@ -89,7 +89,7 @@ func TestNestedTargetablesForValue(t *testing.T) {
 				"attr2": cty.StringVal("test2"),
 				"attr3": cty.StringVal("test3"),
 			}),
-			[]*Targetable{
+			Targetables{
 				{
 					Address: lang.Address{
 						lang.RootStep{Name: "foo"},
@@ -125,7 +125,7 @@ func TestNestedTargetablesForValue(t *testing.T) {
 			cty.MapVal(map[string]cty.Value{
 				"key": cty.StringVal("test"),
 			}),
-			[]*Targetable{
+			Targetables{
 				{
 					Address: lang.Address{
 						lang.RootStep{Name: "foo"},
