@@ -47,6 +47,20 @@ func (d *Decoder) bodySchemaCandidates(body *hclsyntax.Body, schema *schema.Body
 	for _, bType := range blockTypes {
 		block := schema.Blocks[bType]
 
+		// In Terraform duplicates should never occur when providers
+		// use the official plugin SDK, except when a field uses
+		// SchemaConfigMode to turn blocks into attributes
+		// for backwards compatibility reasons.
+		//
+		// Decoder allows duplicates but they should be avoided if possible.
+		//
+		// Here we prefer attribute completion in case of a duplicate
+		// to mimic how Terraform Core treats duplicate list(object)
+		// and set(object) attributes.
+		if _, ok := schema.Attributes[bType]; ok {
+			continue
+		}
+
 		if !isBlockDeclarable(body, bType, block) {
 			continue
 		}

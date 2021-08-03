@@ -229,3 +229,65 @@ func TestDecoder_CandidateAtPos_incompleteBlocks(t *testing.T) {
 		t.Fatalf("unexpected candidates: %s", diff)
 	}
 }
+
+func TestDecoder_CandidateAtPos_duplicateNames(t *testing.T) {
+	bodySchema := &schema.BodySchema{
+		Attributes: map[string]*schema.AttributeSchema{
+			"ingress": {
+				IsOptional: true,
+				Expr: schema.LiteralTypeOnly(cty.Object(map[string]cty.Type{
+					"attr1": cty.String,
+					"attr2": cty.Number,
+				})),
+			},
+		},
+		Blocks: map[string]*schema.BlockSchema{
+			"ingress": {
+				Body: &schema.BodySchema{
+					Attributes: map[string]*schema.AttributeSchema{
+						"attr1": {Expr: schema.LiteralTypeOnly(cty.String)},
+						"attr2": {Expr: schema.LiteralTypeOnly(cty.Number)},
+					},
+				},
+			},
+		},
+	}
+	d := NewDecoder()
+	d.SetSchema(bodySchema)
+
+	f, _ := hclsyntax.ParseConfig([]byte("\n"), "test.tf", hcl.InitialPos)
+	err := d.LoadFile("test.tf", f)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	candidates, err := d.CandidatesAtPos("test.tf", hcl.InitialPos)
+	if err != nil {
+		t.Fatal(err)
+	}
+	expectedCandidates := lang.Candidates{
+		List: []lang.Candidate{
+			{
+				Label:  "ingress",
+				Detail: "optional, object",
+				TextEdit: lang.TextEdit{
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.InitialPos,
+						End:      hcl.InitialPos,
+					},
+					NewText: "ingress",
+					Snippet: `ingress = {
+  attr1 = "${1:value}"
+  attr2 = ${2:1}
+}`,
+				},
+				Kind: lang.AttributeCandidateKind,
+			},
+		},
+		IsComplete: true,
+	}
+	if diff := cmp.Diff(expectedCandidates, candidates); diff != "" {
+		t.Fatalf("unexpected candidates: %s", diff)
+	}
+}
