@@ -501,7 +501,12 @@ func tokensForTupleConsExpr(expr *hclsyntax.TupleConsExpr, exprType cty.Type) []
 			elemType = *exprType.SetElementType()
 		}
 		if exprType.IsTupleType() {
-			elemType = exprType.TupleElementType(i)
+			elTypes := exprType.TupleElementTypes()
+			if len(elTypes) < i+1 {
+				// skip unknown tuple element
+				continue
+			}
+			elemType = elTypes[i]
 		}
 
 		tokens = append(tokens, tokenForTypedExpression(e, elemType)...)

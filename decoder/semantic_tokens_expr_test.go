@@ -1173,6 +1173,68 @@ EOT
 			},
 		},
 		{
+			"undefined tuple expression",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Expr: schema.ExprConstraints{
+						schema.TupleExpr{
+							Elems: []schema.ExprConstraints{},
+						},
+					},
+				},
+			},
+			`attr = [ "one" ]
+`,
+			[]lang.SemanticToken{
+				{ // attr
+					Type:      lang.TokenAttrName,
+					Modifiers: []lang.SemanticTokenModifier{},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   1,
+							Column: 1,
+							Byte:   0,
+						},
+						End: hcl.Pos{
+							Line:   1,
+							Column: 5,
+							Byte:   4,
+						},
+					},
+				},
+			},
+		},
+		{
+			"undefined tuple type",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Expr: schema.LiteralTypeOnly(cty.Tuple([]cty.Type{})),
+				},
+			},
+			`attr = [ "one" ]
+`,
+			[]lang.SemanticToken{
+				{ // attr
+					Type:      lang.TokenAttrName,
+					Modifiers: []lang.SemanticTokenModifier{},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   1,
+							Column: 1,
+							Byte:   0,
+						},
+						End: hcl.Pos{
+							Line:   1,
+							Column: 5,
+							Byte:   4,
+						},
+					},
+				},
+			},
+		},
+		{
 			"tuple as list",
 			map[string]*schema.AttributeSchema{
 				"attr": {
