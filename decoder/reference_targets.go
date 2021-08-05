@@ -1226,7 +1226,7 @@ func resolveBlockAddress(block *hclsyntax.Block, addr *schema.BlockAddrSchema) (
 		case schema.StaticStep:
 			stepName = step.Name
 		case schema.LabelStep:
-			if uint(len(block.Labels)-1) < step.Index {
+			if len(block.Labels)-1 < int(step.Index) {
 				// label not present
 				return lang.Address{}, false
 			}
