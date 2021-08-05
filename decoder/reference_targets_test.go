@@ -4784,6 +4784,29 @@ module "different" {
 				},
 			},
 		},
+		{
+			"block with missing label",
+			&schema.BodySchema{
+				Blocks: map[string]*schema.BlockSchema{
+					"output": {
+						Labels: []*schema.LabelSchema{
+							{Name: "name", IsDepKey: true},
+						},
+						Address: &schema.BlockAddrSchema{
+							Steps: []schema.AddrStep{
+								schema.StaticStep{Name: "output"},
+								schema.LabelStep{Index: 0},
+							},
+						},
+						Body: &schema.BodySchema{},
+					},
+				},
+			},
+			`output {
+}
+`,
+			lang.ReferenceTargets{},
+		},
 	}
 
 	for i, tc := range testCases {
