@@ -66,6 +66,7 @@ func (d *Decoder) labelCandidatesFromDependentSchema(idx int, db map[schema.Sche
 					Description: bodySchema.Description,
 				})
 				foundCandidateNames[label.Value] = true
+				count++
 			}
 		}
 	}
