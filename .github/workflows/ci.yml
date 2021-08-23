@@ -8,12 +8,16 @@ on:
     branches:
       - main
 
+permissions:
+  contents: read
+
 env:
   GOPROXY: https://proxy.golang.org/
 
 jobs:
   test:
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 5
     strategy:
       matrix:
         os:
