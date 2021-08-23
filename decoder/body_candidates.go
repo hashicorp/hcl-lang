@@ -77,10 +77,7 @@ func (d *Decoder) bodySchemaCandidates(body *hclsyntax.Body, schema *schema.Body
 
 	candidates.IsComplete = true
 
-	// TODO: sort by more metadata, such as IsRequired or IsDeprecated
-	sort.Slice(candidates.List, func(i, j int) bool {
-		return candidates.List[i].Label < candidates.List[j].Label
-	})
+	sort.Sort(candidates)
 
 	return candidates
 }
