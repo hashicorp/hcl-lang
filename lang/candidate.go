@@ -67,6 +67,19 @@ type Candidates struct {
 	IsComplete bool
 }
 
+func (ca Candidates) Len() int {
+	return len(ca.List)
+}
+
+func (ca Candidates) Less(i, j int) bool {
+	// TODO: sort by more metadata, such as IsRequired or IsDeprecated
+	return ca.List[i].Label < ca.List[j].Label
+}
+
+func (ca Candidates) Swap(i, j int) {
+	ca.List[i], ca.List[j] = ca.List[j], ca.List[i]
+}
+
 // NewCandidates creates a new (incomplete) list of candidates
 // to be appended to.
 func NewCandidates() Candidates {
