@@ -9,7 +9,10 @@ import (
 	"github.com/hashicorp/hcl/v2"
 )
 
-func blockSchemaToCandidate(blockType string, block *schema.BlockSchema, rng hcl.Range) lang.Candidate {
+// blockSchemaToCandidate generates a lang.Candidate used for auto-complete inside an editor from a BlockSchema.
+// If `prefillRequiredFields` is `false`, it returns a snippet that does not expect any prefilled fields.
+// If `prefillRequiredFields` is `true`, it returns a snippet that is compatiable with a list of prefilled fields from `generateRequiredFieldsSnippet`
+func (d *Decoder) BlockSchemaToCandidate(blockType string, block *schema.BlockSchema, rng hcl.Range) lang.Candidate {
 	triggerSuggest := false
 	if len(block.Labels) > 0 {
 		// We make some naive assumptions here for simplicity
@@ -31,13 +34,14 @@ func blockSchemaToCandidate(blockType string, block *schema.BlockSchema, rng hcl
 		Kind:         lang.BlockCandidateKind,
 		TextEdit: lang.TextEdit{
 			NewText: blockType,
-			Snippet: snippetForBlock(blockType, block),
+			Snippet: snippetForBlock(blockType, block, d.PrefillRequiredFields),
 			Range:   rng,
 		},
 		TriggerSuggest: triggerSuggest,
 	}
 }
 
+// detailForBlock returns a `Detail` info string to display in an editor in a hover event
 func detailForBlock(block *schema.BlockSchema) string {
 	detail := "Block"
 	if block.Type != schema.BlockTypeNil {
@@ -54,7 +58,40 @@ func detailForBlock(block *schema.BlockSchema) string {
 	return strings.TrimSpace(detail)
 }
 
-func snippetForBlock(blockType string, block *schema.BlockSchema) string {
+// snippetForBlock takes a block and returns a formatted snippet for a user to complete inside an editor.
+// If `prefillRequiredFields` is `false`, it returns a snippet that does not expect any prefilled fields.
+// If `prefillRequiredFields` is `true`, it returns a snippet that is compatiable with a list of prefilled fields from `generateRequiredFieldsSnippet`
+func snippetForBlock(blockType string, block *schema.BlockSchema, prefillRequiredFields bool) string {
+	if prefillRequiredFields {
+		labels := ""
+
+		depKey := false
+		for _, l := range block.Labels {
+			if l.IsDepKey {
+				depKey = true
+			}
+		}
+
+		if depKey {
+			for _, l := range block.Labels {
+				if l.IsDepKey {
+					labels += ` "${0}"`
+				} else {
+					labels += fmt.Sprintf(` "%s"`, l.Name)
+				}
+			}
+			return fmt.Sprintf("%s%s {\n}", blockType, labels)
+		}
+
+		placeholder := 1
+		for _, l := range block.Labels {
+			labels += fmt.Sprintf(` "${%d:%s}"`, placeholder, l.Name)
+			placeholder++
+		}
+
+		return fmt.Sprintf("%s%s {\n  ${%d}\n}", blockType, labels, placeholder)
+	}
+
 	labels := ""
 	placeholder := 1
 

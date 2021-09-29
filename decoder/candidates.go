@@ -117,7 +117,7 @@ func (d *Decoder) candidatesAtPos(body *hclsyntax.Body, outerBodyRng hcl.Range, 
 						return lang.ZeroCandidates(), nil
 					}
 
-					return d.labelCandidatesFromDependentSchema(i, bSchema.DependentBody, prefixRng, rng)
+					return d.labelCandidatesFromDependentSchema(i, bSchema.DependentBody, prefixRng, rng, block, bSchema.Labels)
 				}
 			}
 

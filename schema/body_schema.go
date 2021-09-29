@@ -2,6 +2,7 @@ package schema
 
 import (
 	"fmt"
+	"sort"
 
 	"github.com/hashicorp/go-multierror"
 	"github.com/hashicorp/hcl-lang/lang"
@@ -48,6 +49,24 @@ func NewBodySchema() *BodySchema {
 		Blocks:     make(map[string]*BlockSchema, 0),
 		Attributes: make(map[string]*AttributeSchema, 0),
 	}
+}
+
+func (as *BodySchema) AttributeNames() []string {
+	keys := make([]string, 0, len(as.Attributes))
+	for k := range as.Attributes {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	return keys
+}
+
+func (as *BodySchema) BlockTypes() []string {
+	keys := make([]string, 0, len(as.Blocks))
+	for k := range as.Blocks {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	return keys
 }
 
 func (bs *BodySchema) Validate() error {

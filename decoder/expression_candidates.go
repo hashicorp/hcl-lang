@@ -673,6 +673,59 @@ func snippetForExprContraints(placeholder uint, ec schema.ExprConstraints) strin
 	return ""
 }
 
+func snippetForExprContraint(placeholder uint, ec schema.ExprConstraints) string {
+	e := ExprConstraints(ec)
+
+	// TODO: implement rest of these
+	if t, ok := e.LiteralType(); ok {
+		return snippetForLiteralType(placeholder, t)
+	}
+	// case schema.LiteralValue:
+	// 	if len(ec) == 1 {
+	// 		return snippetForLiteralValue(placeholder, et.Val)
+	// 	}
+	// 	return ""
+	if t, ok := e.TupleConsExpr(); ok {
+		ec := ExprConstraints(t.AnyElem)
+		if ec.HasKeywordsOnly() {
+			return "[ ${0} ]"
+		}
+		return "[\n  ${0}\n]"
+	}
+	if t, ok := e.ListExpr(); ok {
+		ec := ExprConstraints(t.Elem)
+		if ec.HasKeywordsOnly() {
+			return "[ ${0} ]"
+		}
+		return "[\n  ${0}\n]"
+	}
+	if t, ok := e.SetExpr(); ok {
+		ec := ExprConstraints(t.Elem)
+		if ec.HasKeywordsOnly() {
+			return "[ ${0} ]"
+		}
+		return "[\n  ${0}\n]"
+	}
+	if t, ok := e.TupleExpr(); ok {
+		// TODO: multiple constraints?
+		ec := ExprConstraints(t.Elems[0])
+		if ec.HasKeywordsOnly() {
+			return "[ ${0} ]"
+		}
+		return "[\n  ${0}\n]"
+	}
+	if t, ok := e.MapExpr(); ok {
+		return fmt.Sprintf("{\n  ${%d:name} = %s\n }",
+			placeholder,
+			snippetForExprContraints(placeholder+1, t.Elem))
+	}
+	if _, ok := e.ObjectExpr(); ok {
+		return fmt.Sprintf("{\n  ${%d}\n }", placeholder+1)
+	}
+
+	return ""
+}
+
 type snippetGenerator struct {
 	placeholder uint
 }
