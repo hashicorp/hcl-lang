@@ -10,6 +10,7 @@ import (
 	"github.com/hashicorp/hcl/v2/hclsyntax"
 )
 
+// bodySchemaCandidates returns candidates for completion of fields inside a body or block.
 func (d *Decoder) bodySchemaCandidates(body *hclsyntax.Body, schema *schema.BodySchema, prefixRng, editRng hcl.Range) lang.Candidates {
 	prefix, _ := d.bytesFromRange(prefixRng)
 
@@ -71,7 +72,7 @@ func (d *Decoder) bodySchemaCandidates(body *hclsyntax.Body, schema *schema.Body
 			return candidates
 		}
 
-		candidates.List = append(candidates.List, blockSchemaToCandidate(bType, block, editRng))
+		candidates.List = append(candidates.List, d.BlockSchemaToCandidate(bType, block, editRng))
 		count++
 	}
 

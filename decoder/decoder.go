@@ -28,6 +28,9 @@ type Decoder struct {
 	utmMedium string
 	// utm_content parameter, e.g. documentHover or documentLink
 	useUtmContent bool
+
+	// PrefillRequiredFields enriches label-based completion candidates with required attributes and blocks
+	PrefillRequiredFields bool
 }
 
 type ReferenceTargetReader func() lang.ReferenceTargets
