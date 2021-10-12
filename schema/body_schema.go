@@ -6,6 +6,7 @@ import (
 
 	"github.com/hashicorp/go-multierror"
 	"github.com/hashicorp/hcl-lang/lang"
+	"github.com/hashicorp/hcl/v2"
 )
 
 // BodySchema describes schema of a body comprised of blocks or attributes
@@ -41,6 +42,34 @@ type DocsLink struct {
 
 func (*BodySchema) isSchemaImpl() schemaImplSigil {
 	return schemaImplSigil{}
+}
+
+func (bs *BodySchema) ToHCLSchema() *hcl.BodySchema {
+	attributes := make([]hcl.AttributeSchema, 0)
+	for name, attr := range bs.Attributes {
+		attributes = append(attributes, hcl.AttributeSchema{
+			Name:     name,
+			Required: attr.IsRequired,
+		})
+	}
+
+	blocks := make([]hcl.BlockHeaderSchema, 0)
+	for blockType, block := range bs.Blocks {
+		labelNames := make([]string, len(block.Labels))
+		for i, label := range block.Labels {
+			labelNames[i] = label.Name
+		}
+
+		blocks = append(blocks, hcl.BlockHeaderSchema{
+			Type:       blockType,
+			LabelNames: labelNames,
+		})
+	}
+
+	return &hcl.BodySchema{
+		Attributes: attributes,
+		Blocks:     blocks,
+	}
 }
 
 // NewBodySchema creates a new BodySchema instance

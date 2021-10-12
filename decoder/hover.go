@@ -125,7 +125,7 @@ func (d *Decoder) hoverAtPos(body *hclsyntax.Body, bodySchema *schema.BodySchema
 			}
 
 			if block.Body != nil && block.Body.Range().ContainsPos(pos) {
-				mergedSchema, err := mergeBlockBodySchemas(block, bSchema)
+				mergedSchema, err := mergeBlockBodySchemas(block.AsHCLBlock(), bSchema)
 				if err != nil {
 					return nil, err
 				}
@@ -148,7 +148,7 @@ func (d *Decoder) hoverContentForLabel(i int, block *hclsyntax.Block, bSchema *s
 	labelSchema := bSchema.Labels[i]
 
 	if labelSchema.IsDepKey {
-		bs, _, ok := NewBlockSchema(bSchema).DependentBodySchema(block)
+		bs, _, ok := NewBlockSchema(bSchema).DependentBodySchema(block.AsHCLBlock())
 		if ok {
 			content := fmt.Sprintf("`%s`", value)
 			if bs.Detail != "" {
