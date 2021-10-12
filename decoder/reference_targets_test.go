@@ -744,8 +744,8 @@ func TestCollectReferenceTargets_basic(t *testing.T) {
 						},
 						End: hcl.Pos{
 							Line:   1,
-							Column: 25,
-							Byte:   24,
+							Column: 23,
+							Byte:   22,
 						},
 					},
 				},
@@ -876,8 +876,8 @@ func TestCollectReferenceTargets_basic(t *testing.T) {
 						},
 						End: hcl.Pos{
 							Line:   1,
-							Column: 25,
-							Byte:   24,
+							Column: 23,
+							Byte:   22,
 						},
 					},
 				},
@@ -952,8 +952,8 @@ func TestCollectReferenceTargets_basic(t *testing.T) {
 						},
 						End: hcl.Pos{
 							Line:   1,
-							Column: 25,
-							Byte:   24,
+							Column: 23,
+							Byte:   22,
 						},
 					},
 				},
@@ -1028,8 +1028,8 @@ func TestCollectReferenceTargets_basic(t *testing.T) {
 						},
 						End: hcl.Pos{
 							Line:   1,
-							Column: 25,
-							Byte:   24,
+							Column: 23,
+							Byte:   22,
 						},
 					},
 				},
@@ -1105,8 +1105,8 @@ listener "https" {
 						},
 						End: hcl.Pos{
 							Line:   1,
-							Column: 18,
-							Byte:   17,
+							Column: 16,
+							Byte:   15,
 						},
 					},
 				},
@@ -1140,8 +1140,8 @@ listener "https" {
 						},
 						End: hcl.Pos{
 							Line:   5,
-							Column: 19,
-							Byte:   74,
+							Column: 17,
+							Byte:   72,
 						},
 					},
 				},
@@ -1244,8 +1244,8 @@ listener "https" {
 						},
 						End: hcl.Pos{
 							Line:   1,
-							Column: 17,
-							Byte:   16,
+							Column: 15,
+							Byte:   14,
 						},
 					},
 					NestedTargets: lang.ReferenceTargets{
@@ -1679,8 +1679,8 @@ provider "test" {
 						},
 						End: hcl.Pos{
 							Line:   1,
-							Column: 17,
-							Byte:   16,
+							Column: 15,
+							Byte:   14,
 						},
 					},
 				},
@@ -1796,8 +1796,8 @@ provider "test" {
 						},
 						End: hcl.Pos{
 							Line:   1,
-							Column: 17,
-							Byte:   16,
+							Column: 15,
+							Byte:   14,
 						},
 					},
 					NestedTargets: lang.ReferenceTargets{
@@ -2169,8 +2169,8 @@ provider "test" {
 						},
 						End: hcl.Pos{
 							Line:   1,
-							Column: 18,
-							Byte:   17,
+							Column: 16,
+							Byte:   15,
 						},
 					},
 					Type: cty.Object(map[string]cty.Type{
@@ -2243,8 +2243,8 @@ provider "test" {
 								},
 								End: hcl.Pos{
 									Line:   3,
-									Column: 13,
-									Byte:   42,
+									Column: 11,
+									Byte:   40,
 								},
 							},
 							Type: cty.Object(map[string]cty.Type{
@@ -2413,8 +2413,8 @@ provider "test" {
 						},
 						End: hcl.Pos{
 							Line:   1,
-							Column: 18,
-							Byte:   17,
+							Column: 16,
+							Byte:   15,
 						},
 					},
 					Type: cty.Object(map[string]cty.Type{
@@ -2513,8 +2513,8 @@ provider "test" {
 										},
 										End: hcl.Pos{
 											Line:   3,
-											Column: 14,
-											Byte:   43,
+											Column: 12,
+											Byte:   41,
 										},
 									},
 									Type: cty.Object(map[string]cty.Type{
@@ -2625,8 +2625,8 @@ provider "test" {
 										},
 										End: hcl.Pos{
 											Line:   7,
-											Column: 14,
-											Byte:   96,
+											Column: 12,
+											Byte:   94,
 										},
 									},
 									Type: cty.Object(map[string]cty.Type{
@@ -2799,8 +2799,8 @@ provider "test" {
 						},
 						End: hcl.Pos{
 							Line:   1,
-							Column: 18,
-							Byte:   17,
+							Column: 16,
+							Byte:   15,
 						},
 					},
 					Type: cty.Object(map[string]cty.Type{
@@ -2960,8 +2960,8 @@ provider "test" {
 						},
 						End: hcl.Pos{
 							Line:   1,
-							Column: 18,
-							Byte:   17,
+							Column: 16,
+							Byte:   15,
 						},
 					},
 					Type: cty.Object(map[string]cty.Type{
@@ -3060,8 +3060,8 @@ provider "test" {
 										},
 										End: hcl.Pos{
 											Line:   2,
-											Column: 14,
-											Byte:   31,
+											Column: 12,
+											Byte:   29,
 										},
 									},
 									Type: cty.Object(map[string]cty.Type{
@@ -3172,8 +3172,8 @@ provider "test" {
 										},
 										End: hcl.Pos{
 											Line:   7,
-											Column: 14,
-											Byte:   96,
+											Column: 12,
+											Byte:   94,
 										},
 									},
 									Type: cty.Object(map[string]cty.Type{
@@ -3348,8 +3348,8 @@ provider "test" {
 						},
 						End: hcl.Pos{
 							Line:   1,
-							Column: 22,
-							Byte:   21,
+							Column: 20,
+							Byte:   19,
 						},
 					},
 					Type: cty.Object(map[string]cty.Type{
@@ -3452,8 +3452,8 @@ provider "test" {
 										},
 										End: hcl.Pos{
 											Line:   3,
-											Column: 20,
-											Byte:   53,
+											Column: 18,
+											Byte:   51,
 										},
 									},
 									NestedTargets: lang.ReferenceTargets{
@@ -3564,8 +3564,8 @@ provider "test" {
 										},
 										End: hcl.Pos{
 											Line:   7,
-											Column: 21,
-											Byte:   113,
+											Column: 19,
+											Byte:   111,
 										},
 									},
 									NestedTargets: lang.ReferenceTargets{
@@ -3616,14 +3616,14 @@ provider "test" {
 											RangePtr: &hcl.Range{
 												Filename: "test.tf",
 												Start: hcl.Pos{
-													Line:   9,
-													Column: 4,
-													Byte:   132,
+													Line:   7,
+													Column: 20,
+													Byte:   112,
 												},
 												End: hcl.Pos{
-													Line:   9,
-													Column: 4,
-													Byte:   132,
+													Line:   7,
+													Column: 20,
+													Byte:   112,
 												},
 											},
 											Type: cty.String,
@@ -3738,8 +3738,8 @@ provider "test" {
 						},
 						End: hcl.Pos{
 							Line:   1,
-							Column: 17,
-							Byte:   16,
+							Column: 15,
+							Byte:   14,
 						},
 					},
 				},
@@ -3797,8 +3797,8 @@ provider "test" {
 						},
 						End: hcl.Pos{
 							Line:   1,
-							Column: 18,
-							Byte:   17,
+							Column: 16,
+							Byte:   15,
 						},
 					},
 				},
@@ -3866,8 +3866,8 @@ provider "test" {
 						},
 						End: hcl.Pos{
 							Line:   1,
-							Column: 18,
-							Byte:   17,
+							Column: 16,
+							Byte:   15,
 						},
 					},
 				},
@@ -3939,8 +3939,8 @@ provider "test" {
 						},
 						End: hcl.Pos{
 							Line:   1,
-							Column: 18,
-							Byte:   17,
+							Column: 16,
+							Byte:   15,
 						},
 					},
 				},
@@ -4013,8 +4013,8 @@ provider "test" {
 						},
 						End: hcl.Pos{
 							Line:   1,
-							Column: 18,
-							Byte:   17,
+							Column: 16,
+							Byte:   15,
 						},
 					},
 				},
@@ -4090,8 +4090,8 @@ provider "test" {
 						},
 						End: hcl.Pos{
 							Line:   1,
-							Column: 18,
-							Byte:   17,
+							Column: 16,
+							Byte:   15,
 						},
 					},
 				},
@@ -4164,8 +4164,8 @@ provider "test" {
 						},
 						End: hcl.Pos{
 							Line:   1,
-							Column: 18,
-							Byte:   17,
+							Column: 16,
+							Byte:   15,
 						},
 					},
 				},
@@ -4233,8 +4233,8 @@ provider "test" {
 						},
 						End: hcl.Pos{
 							Line:   1,
-							Column: 16,
-							Byte:   15,
+							Column: 14,
+							Byte:   13,
 						},
 					},
 				},
@@ -4267,8 +4267,8 @@ provider "test" {
 						},
 						End: hcl.Pos{
 							Line:   1,
-							Column: 16,
-							Byte:   15,
+							Column: 14,
+							Byte:   13,
 						},
 					},
 				},
@@ -4347,8 +4347,8 @@ module "different" {
 						},
 						End: hcl.Pos{
 							Line:   1,
-							Column: 16,
-							Byte:   15,
+							Column: 14,
+							Byte:   13,
 						},
 					},
 					NestedTargets: lang.ReferenceTargets{
