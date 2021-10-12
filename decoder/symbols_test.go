@@ -21,10 +21,12 @@ func TestDecoder_SymbolsInFile_emptyBody(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	_, err = d.SymbolsInFile("test.tf")
-	unknownFormatErr := &UnknownFileFormatError{}
-	if !errors.As(err, &unknownFormatErr) {
-		t.Fatal("expected UnknownFileFormatError for empty body")
+	symbols, err := d.SymbolsInFile("test.tf")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(symbols) != 0 {
+		t.Fatal("expected zero symbols for empty body")
 	}
 }
 
