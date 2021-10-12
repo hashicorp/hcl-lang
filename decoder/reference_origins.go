@@ -63,13 +63,7 @@ func (d *Decoder) CollectReferenceOrigins() (lang.ReferenceOrigins, error) {
 			continue
 		}
 
-		body, ok := f.Body.(*hclsyntax.Body)
-		if !ok {
-			// skip JSON or other body format
-			continue
-		}
-
-		refOrigins = append(refOrigins, d.referenceOriginsInBody(body, d.rootSchema)...)
+		refOrigins = append(refOrigins, d.referenceOriginsInBody(f.Body, d.rootSchema)...)
 	}
 
 	sort.SliceStable(refOrigins, func(i, j int) bool {
@@ -80,14 +74,16 @@ func (d *Decoder) CollectReferenceOrigins() (lang.ReferenceOrigins, error) {
 	return refOrigins, nil
 }
 
-func (d *Decoder) referenceOriginsInBody(body *hclsyntax.Body, bodySchema *schema.BodySchema) lang.ReferenceOrigins {
+func (d *Decoder) referenceOriginsInBody(body hcl.Body, bodySchema *schema.BodySchema) lang.ReferenceOrigins {
 	origins := make(lang.ReferenceOrigins, 0)
 
 	if bodySchema == nil {
 		return origins
 	}
 
-	for _, attr := range body.Attributes {
+	content := decodeBody(body, bodySchema)
+
+	for _, attr := range content.Attributes {
 		aSchema, ok := bodySchema.Attributes[attr.Name]
 		if !ok {
 			if bodySchema.AnyAttribute == nil {
@@ -100,14 +96,14 @@ func (d *Decoder) referenceOriginsInBody(body *hclsyntax.Body, bodySchema *schem
 		origins = append(origins, d.findOriginsInExpression(attr.Expr, aSchema.Expr)...)
 	}
 
-	for _, block := range body.Blocks {
+	for _, block := range content.Blocks {
 		if block.Body != nil {
 			bSchema, ok := bodySchema.Blocks[block.Type]
 			if !ok {
 				// skip unknown blocks
 				continue
 			}
-			mergedSchema, err := mergeBlockBodySchemas(block, bSchema)
+			mergedSchema, err := mergeBlockBodySchemas(block.Block, bSchema)
 			if err != nil {
 				continue
 			}
@@ -119,8 +115,6 @@ func (d *Decoder) referenceOriginsInBody(body *hclsyntax.Body, bodySchema *schem
 }
 
 func (d *Decoder) findOriginsInExpression(expr hcl.Expression, ec schema.ExprConstraints) lang.ReferenceOrigins {
-	// TODO Review once nested expressions are supported
-
 	origins := make(lang.ReferenceOrigins, 0)
 
 	switch eType := expr.(type) {
@@ -185,11 +179,39 @@ func (d *Decoder) findOriginsInExpression(expr hcl.Expression, ec schema.ExprCon
 				origins = append(origins, d.findOriginsInExpression(item.ValueExpr, me.Elem)...)
 			}
 		}
-	default:
+	case *hclsyntax.AnonSymbolExpr,
+		*hclsyntax.BinaryOpExpr,
+		*hclsyntax.ConditionalExpr,
+		*hclsyntax.ForExpr,
+		*hclsyntax.FunctionCallExpr,
+		*hclsyntax.IndexExpr,
+		*hclsyntax.ParenthesesExpr,
+		*hclsyntax.RelativeTraversalExpr,
+		*hclsyntax.ScopeTraversalExpr,
+		*hclsyntax.SplatExpr,
+		*hclsyntax.TemplateExpr,
+		*hclsyntax.TemplateJoinExpr,
+		*hclsyntax.TemplateWrapExpr,
+		*hclsyntax.UnaryOpExpr:
+
+		// Constraints detected here may be inaccurate, but close enough
+		// to be more useful for relevant completion than no constraints.
+		// TODO: Review this when we support all expression types and nesting
+		// see https://github.com/hashicorp/terraform-ls/issues/496
 		tes, ok := ExprConstraints(ec).TraversalExprs()
 		if ok {
 			origins = append(origins, traversalsToReferenceOrigins(expr.Variables(), tes)...)
 		}
+	case *hclsyntax.LiteralValueExpr:
+		// String constant may also be a traversal in some cases, but currently not recognized
+		// TODO: https://github.com/hashicorp/terraform-ls/issues/674
+	default:
+		// Given that all hclsyntax.* expressions are listed above
+		// this should only apply to (unexported) json.* expressions
+		// for which we return no constraints as upstream doesn't provide
+		// any way to map the schema to individual traversals.
+		// TODO: https://github.com/hashicorp/terraform-ls/issues/675
+		origins = append(origins, traversalsToReferenceOrigins(expr.Variables(), schema.TraversalExprs{})...)
 	}
 
 	return origins
@@ -239,7 +261,7 @@ func (d *Decoder) referenceOriginAtPos(body *hclsyntax.Body, bodySchema *schema.
 					continue
 				}
 
-				mergedSchema, err := mergeBlockBodySchemas(block, bSchema)
+				mergedSchema, err := mergeBlockBodySchemas(block.AsHCLBlock(), bSchema)
 				if err != nil {
 					continue
 				}
@@ -296,7 +318,7 @@ func TraversalToReferenceOrigin(traversal hcl.Traversal, tes []schema.TraversalE
 }
 
 func traversalExpressionsToOriginConstraints(tes []schema.TraversalExpr) lang.ReferenceOriginConstraints {
-	if tes == nil {
+	if len(tes) == 0 {
 		return nil
 	}
 
