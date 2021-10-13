@@ -1,6 +1,7 @@
 package decoder
 
 import (
+	"errors"
 	"fmt"
 	"testing"
 
@@ -9,6 +10,7 @@ import (
 	"github.com/hashicorp/hcl-lang/schema"
 	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hclsyntax"
+	"github.com/hashicorp/hcl/v2/json"
 	"github.com/zclconf/go-cty-debug/ctydebug"
 	"github.com/zclconf/go-cty/cty"
 )
@@ -330,6 +332,25 @@ func TestReferenceOriginAtPos(t *testing.T) {
 				t.Fatalf("mismatched reference origin: %s", diff)
 			}
 		})
+	}
+}
+
+func TestReferenceOriginAtPos_json(t *testing.T) {
+	d := NewDecoder()
+
+	f, diags := json.Parse([]byte(`{}`), "test.tf.json")
+	if len(diags) > 0 {
+		t.Fatal(diags)
+	}
+	err := d.LoadFile("test.tf.json", f)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	_, err = d.ReferenceOriginAtPos("test.tf.json", hcl.InitialPos)
+	unknownFormatErr := &UnknownFileFormatError{}
+	if !errors.As(err, &unknownFormatErr) {
+		t.Fatal("expected UnknownFileFormatError for JSON body")
 	}
 }
 
