@@ -210,6 +210,8 @@ func (d *Decoder) findOriginsInExpression(expr hcl.Expression, ec schema.ExprCon
 		// this should only apply to (unexported) json.* expressions
 		// for which we return no constraints as upstream doesn't provide
 		// any way to map the schema to individual traversals.
+		// This may result in less accurate decoding where even origins
+		// which do not actually conform to the constraints are recognized.
 		// TODO: https://github.com/hashicorp/terraform-ls/issues/675
 		origins = append(origins, traversalsToReferenceOrigins(expr.Variables(), schema.TraversalExprs{})...)
 	}

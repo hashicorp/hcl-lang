@@ -1492,6 +1492,57 @@ func TestReferenceOriginsTargeting(t *testing.T) {
 			},
 			lang.ReferenceOrigins{},
 		},
+		// JSON edge cases
+		{
+			"constraint-less origin mismatching scope-only target",
+			lang.ReferenceOrigins{
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "alpha"},
+					},
+					Constraints: nil,
+				},
+			},
+			lang.ReferenceTarget{
+				Addr: lang.Address{
+					lang.RootStep{Name: "var"},
+					lang.AttrStep{Name: "alpha"},
+				},
+				ScopeId: "variable",
+				Type:    cty.NilType,
+			},
+			lang.ReferenceOrigins{},
+		},
+		{
+			"constraint-less origin matching type-aware target",
+			lang.ReferenceOrigins{
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "beta"},
+					},
+					Constraints: nil,
+				},
+			},
+			lang.ReferenceTarget{
+				Addr: lang.Address{
+					lang.RootStep{Name: "var"},
+					lang.AttrStep{Name: "beta"},
+				},
+				ScopeId: "variable",
+				Type:    cty.DynamicPseudoType,
+			},
+			lang.ReferenceOrigins{
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "beta"},
+					},
+					Constraints: nil,
+				},
+			},
+		},
 	}
 	for i, tc := range testCases {
 		t.Run(fmt.Sprintf("%d-%s", i, tc.name), func(t *testing.T) {
