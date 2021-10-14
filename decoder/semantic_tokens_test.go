@@ -9,6 +9,7 @@ import (
 	"github.com/hashicorp/hcl-lang/schema"
 	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hclsyntax"
+	"github.com/hashicorp/hcl/v2/json"
 	"github.com/zclconf/go-cty/cty"
 )
 
@@ -26,6 +27,28 @@ func TestDecoder_SemanticTokensInFile_emptyBody(t *testing.T) {
 	unknownFormatErr := &UnknownFileFormatError{}
 	if !errors.As(err, &unknownFormatErr) {
 		t.Fatal("expected UnknownFileFormatError for empty body")
+	}
+}
+
+func TestDecoder_SemanticTokensInFile_json(t *testing.T) {
+	d := NewDecoder()
+	f, pDiags := json.Parse([]byte(`{
+	"customblock": {
+		"label1": {}
+	}
+}`), "test.tf.json")
+	if len(pDiags) > 0 {
+		t.Fatal(pDiags)
+	}
+	err := d.LoadFile("test.tf.json", f)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	_, err = d.SemanticTokensInFile("test.tf.json")
+	unknownFormatErr := &UnknownFileFormatError{}
+	if !errors.As(err, &unknownFormatErr) {
+		t.Fatal("expected UnknownFileFormatError for JSON body")
 	}
 }
 

@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/hashicorp/hcl-lang/lang"
+	"github.com/hashicorp/hcl-lang/schema"
 	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hclsyntax"
 	"github.com/zclconf/go-cty/cty"
@@ -14,21 +15,35 @@ import (
 // SymbolsInFile returns a hierarchy of symbols within the config file
 //
 // A symbol is typically represented by a block or an attribute.
+//
+// Symbols within JSON files require schema to be present for decoding.
 func (d *Decoder) SymbolsInFile(filename string) ([]Symbol, error) {
-	symbols := make([]Symbol, 0)
-
 	f, err := d.fileByName(filename)
 	if err != nil {
 		return nil, err
 	}
 
-	body, err := d.bodyForFileAndPos(filename, f, hcl.InitialPos)
+	_, isHcl := f.Body.(*hclsyntax.Body)
+	if !isHcl {
+		return nil, &UnknownFileFormatError{Filename: filename}
+	}
+
+	return d.symbolsForBody(f.Body, d.rootSchema), nil
+}
+
+func (d *Decoder) symbolsInFile(filename string) ([]Symbol, error) {
+	f, err := d.fileByName(filename)
 	if err != nil {
 		return nil, err
 	}
-	symbols = append(symbols, symbolsForBody(body)...)
 
-	return symbols, nil
+	_, isHcl := f.Body.(*hclsyntax.Body)
+	if !isHcl {
+		d.rootSchemaMu.RLock()
+		defer d.rootSchemaMu.RUnlock()
+	}
+
+	return d.symbolsForBody(f.Body, d.rootSchema), nil
 }
 
 // Symbols returns a hierarchy of symbols matching the query
@@ -37,16 +52,19 @@ func (d *Decoder) SymbolsInFile(filename string) ([]Symbol, error) {
 // in which case all symbols are returned.
 //
 // A symbol is typically represented by a block or an attribute.
+//
+// Symbols within JSON files require schema to be present for decoding.
 func (d *Decoder) Symbols(query string) ([]Symbol, error) {
 	symbols := make([]Symbol, 0)
 
 	files := d.Filenames()
 
 	for _, filename := range files {
-		fSymbols, err := d.SymbolsInFile(filename)
+		fSymbols, err := d.symbolsInFile(filename)
 		if err != nil {
 			return nil, err
 		}
+
 		for _, symbol := range fSymbols {
 			if query == "" || strings.Contains(symbol.Name(), query) {
 				symbols = append(symbols, symbol)
@@ -57,26 +75,41 @@ func (d *Decoder) Symbols(query string) ([]Symbol, error) {
 	return symbols, nil
 }
 
-func symbolsForBody(body *hclsyntax.Body) []Symbol {
+func (d *Decoder) symbolsForBody(body hcl.Body, bodySchema *schema.BodySchema) []Symbol {
 	symbols := make([]Symbol, 0)
 	if body == nil {
 		return symbols
 	}
 
-	for name, attr := range body.Attributes {
+	content := decodeBody(body, bodySchema)
+
+	for name, attr := range content.Attributes {
 		symbols = append(symbols, &AttributeSymbol{
 			AttrName:      name,
 			ExprKind:      symbolExprKind(attr.Expr),
-			rng:           attr.Range(),
+			rng:           attr.Range,
 			nestedSymbols: nestedSymbolsForExpr(attr.Expr),
 		})
 	}
-	for _, block := range body.Blocks {
+
+	for _, block := range content.Blocks {
+		var bSchema *schema.BodySchema
+		if bodySchema != nil {
+			bs, ok := bodySchema.Blocks[block.Type]
+			if ok {
+				bSchema = bs.Body
+				mergedSchema, err := mergeBlockBodySchemas(block.Block, bs)
+				if err == nil {
+					bSchema = mergedSchema
+				}
+			}
+		}
+
 		symbols = append(symbols, &BlockSymbol{
 			Type:          block.Type,
 			Labels:        block.Labels,
-			rng:           block.Range(),
-			nestedSymbols: symbolsForBody(block.Body),
+			rng:           block.Range,
+			nestedSymbols: d.symbolsForBody(block.Body, bSchema),
 		})
 	}
 
@@ -92,6 +125,8 @@ func symbolExprKind(expr hcl.Expression) lang.SymbolExprKind {
 	case *hclsyntax.ScopeTraversalExpr:
 		return lang.TraversalExprKind{}
 	case *hclsyntax.LiteralValueExpr:
+		// String constant may also be a traversal in some cases, but currently not recognized
+		// TODO: https://github.com/hashicorp/terraform-ls/issues/674
 		return lang.LiteralTypeKind{Type: e.Val.Type()}
 	case *hclsyntax.TemplateExpr:
 		if e.IsStringLiteral() {
@@ -104,6 +139,8 @@ func symbolExprKind(expr hcl.Expression) lang.SymbolExprKind {
 		return lang.TupleConsExprKind{}
 	case *hclsyntax.ObjectConsExpr:
 		return lang.ObjectConsExprKind{}
+	default:
+		// TODO Determine expression types for JSON
 	}
 	return nil
 }

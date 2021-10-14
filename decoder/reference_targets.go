@@ -168,6 +168,11 @@ func (target ReferenceTarget) IsTargetableBy(origin lang.ReferenceOrigin) bool {
 	originAddr := Address(origin.Addr)
 
 	matchesCons := false
+
+	if len(origin.Constraints) == 0 && target.Type != cty.NilType {
+		matchesCons = true
+	}
+
 	for _, cons := range origin.Constraints {
 		if !target.MatchesScopeId(cons.OfScopeId) {
 			continue
@@ -311,27 +316,22 @@ func (d *Decoder) CollectReferenceTargets() (lang.ReferenceTargets, error) {
 			// skip unparseable file
 			continue
 		}
-
-		body, ok := f.Body.(*hclsyntax.Body)
-		if !ok {
-			// skip JSON or other body format
-			continue
-		}
-
-		refs = append(refs, d.decodeReferenceTargetsForBody(body, nil, d.rootSchema)...)
+		refs = append(refs, d.decodeReferenceTargetsForBody(f.Body, nil, d.rootSchema)...)
 	}
 
 	return refs, nil
 }
 
-func (d *Decoder) decodeReferenceTargetsForBody(body *hclsyntax.Body, parentBlock *hclsyntax.Block, bodySchema *schema.BodySchema) lang.ReferenceTargets {
+func (d *Decoder) decodeReferenceTargetsForBody(body hcl.Body, parentBlock *blockContent, bodySchema *schema.BodySchema) lang.ReferenceTargets {
 	refs := make(lang.ReferenceTargets, 0)
 
 	if bodySchema == nil {
 		return lang.ReferenceTargets{}
 	}
 
-	for _, attr := range body.Attributes {
+	content := decodeBody(body, bodySchema)
+
+	for _, attr := range content.Attributes {
 		attrSchema, ok := bodySchema.Attributes[attr.Name]
 		if !ok {
 			if bodySchema.AnyAttribute == nil {
@@ -344,22 +344,22 @@ func (d *Decoder) decodeReferenceTargetsForBody(body *hclsyntax.Body, parentBloc
 		refs = append(refs, decodeReferenceTargetsForAttribute(attr, attrSchema)...)
 	}
 
-	for _, block := range body.Blocks {
-		bSchema, ok := bodySchema.Blocks[block.Type]
+	for _, blk := range content.Blocks {
+		bSchema, ok := bodySchema.Blocks[blk.Type]
 		if !ok {
 			// unknown block (no schema)
 			continue
 		}
 
-		mergedSchema, err := mergeBlockBodySchemas(block, bSchema)
+		mergedSchema, err := mergeBlockBodySchemas(blk.Block, bSchema)
 		if err != nil {
 			mergedSchema = bSchema.Body
 		}
 
-		iRefs := d.decodeReferenceTargetsForBody(block.Body, block, mergedSchema)
+		iRefs := d.decodeReferenceTargetsForBody(blk.Body, blk, mergedSchema)
 		refs = append(refs, iRefs...)
 
-		addr, ok := resolveBlockAddress(block, bSchema.Address)
+		addr, ok := resolveBlockAddress(blk.Block, bSchema)
 		if !ok {
 			// skip unresolvable address
 			continue
@@ -369,15 +369,15 @@ func (d *Decoder) decodeReferenceTargetsForBody(body *hclsyntax.Body, parentBloc
 			ref := lang.ReferenceTarget{
 				Addr:        addr,
 				ScopeId:     bSchema.Address.ScopeId,
-				DefRangePtr: block.DefRange().Ptr(),
-				RangePtr:    block.Range().Ptr(),
+				DefRangePtr: blk.DefRange.Ptr(),
+				RangePtr:    blk.Range.Ptr(),
 				Name:        bSchema.Address.FriendlyName,
 			}
 			refs = append(refs, ref)
 		}
 
 		if bSchema.Address.AsTypeOf != nil {
-			refs = append(refs, referenceAsTypeOf(block, bSchema, addr)...)
+			refs = append(refs, referenceAsTypeOf(blk.Block, blk.Range.Ptr(), bSchema, addr)...)
 		}
 
 		var bodyRef lang.ReferenceTarget
@@ -386,8 +386,8 @@ func (d *Decoder) decodeReferenceTargetsForBody(body *hclsyntax.Body, parentBloc
 			bodyRef = lang.ReferenceTarget{
 				Addr:        addr,
 				ScopeId:     bSchema.Address.ScopeId,
-				DefRangePtr: block.DefRange().Ptr(),
-				RangePtr:    block.Range().Ptr(),
+				DefRangePtr: blk.DefRange.Ptr(),
+				RangePtr:    blk.Range.Ptr(),
 			}
 
 			if bSchema.Body != nil {
@@ -396,7 +396,7 @@ func (d *Decoder) decodeReferenceTargetsForBody(body *hclsyntax.Body, parentBloc
 
 			if bSchema.Address.InferBody && bSchema.Body != nil {
 				bodyRef.NestedTargets = append(bodyRef.NestedTargets,
-					d.collectInferredReferenceTargetsForBody(addr, bSchema.Address.ScopeId, block.Body, bSchema.Body)...)
+					d.collectInferredReferenceTargetsForBody(addr, bSchema.Address.ScopeId, blk.Body, bSchema.Body)...)
 			}
 
 			bodyRef.Type = bodyToDataType(bSchema.Type, bSchema.Body)
@@ -409,16 +409,16 @@ func (d *Decoder) decodeReferenceTargetsForBody(body *hclsyntax.Body, parentBloc
 				bodyRef = lang.ReferenceTarget{
 					Addr:        addr,
 					ScopeId:     bSchema.Address.ScopeId,
-					DefRangePtr: block.DefRange().Ptr(),
-					RangePtr:    block.Range().Ptr(),
+					DefRangePtr: blk.DefRange.Ptr(),
+					RangePtr:    blk.Range.Ptr(),
 				}
 			}
 
-			depSchema, _, ok := NewBlockSchema(bSchema).DependentBodySchema(block)
+			depSchema, _, ok := NewBlockSchema(bSchema).DependentBodySchema(blk.Block)
 			if ok {
 				fullSchema := depSchema
 				if bSchema.Address.BodyAsData {
-					mergedSchema, err := mergeBlockBodySchemas(block, bSchema)
+					mergedSchema, err := mergeBlockBodySchemas(blk.Block, bSchema)
 					if err != nil {
 						continue
 					}
@@ -430,7 +430,7 @@ func (d *Decoder) decodeReferenceTargetsForBody(body *hclsyntax.Body, parentBloc
 
 				if bSchema.Address.InferDependentBody && len(bSchema.DependentBody) > 0 {
 					bodyRef.NestedTargets = append(bodyRef.NestedTargets,
-						d.collectInferredReferenceTargetsForBody(addr, bSchema.Address.ScopeId, block.Body, fullSchema)...)
+						d.collectInferredReferenceTargetsForBody(addr, bSchema.Address.ScopeId, blk.Body, fullSchema)...)
 				}
 
 				if !bSchema.Address.BodyAsData {
@@ -451,20 +451,12 @@ func (d *Decoder) decodeReferenceTargetsForBody(body *hclsyntax.Body, parentBloc
 	return refs
 }
 
-func decodeTargetableBody(body *hclsyntax.Body, parentBlock *hclsyntax.Block, tt *schema.Targetable) lang.ReferenceTarget {
-	rng := body.SrcRange.Ptr()
-	var defRng *hcl.Range
-
-	if parentBlock != nil {
-		rng = hcl.RangeBetween(parentBlock.TypeRange, parentBlock.CloseBraceRange).Ptr()
-		defRng = parentBlock.DefRange().Ptr()
-	}
-
+func decodeTargetableBody(body hcl.Body, parentBlock *blockContent, tt *schema.Targetable) lang.ReferenceTarget {
 	target := lang.ReferenceTarget{
 		Addr:        tt.Address.Copy(),
 		ScopeId:     tt.ScopeId,
-		RangePtr:    rng,
-		DefRangePtr: defRng,
+		RangePtr:    parentBlock.Range.Ptr(),
+		DefRangePtr: parentBlock.DefRange.Ptr(),
 		Type:        tt.AsType,
 		Description: tt.Description,
 	}
@@ -479,7 +471,7 @@ func decodeTargetableBody(body *hclsyntax.Body, parentBlock *hclsyntax.Block, tt
 	return target
 }
 
-func decodeReferenceTargetsForAttribute(attr *hclsyntax.Attribute, attrSchema *schema.AttributeSchema) lang.ReferenceTargets {
+func decodeReferenceTargetsForAttribute(attr *hcl.Attribute, attrSchema *schema.AttributeSchema) lang.ReferenceTargets {
 	refs := make(lang.ReferenceTargets, 0)
 
 	attrAddr, ok := resolveAttributeAddress(attr, attrSchema.Address)
@@ -489,7 +481,7 @@ func decodeReferenceTargetsForAttribute(attr *hclsyntax.Attribute, attrSchema *s
 				Addr:        attrAddr,
 				ScopeId:     attrSchema.Address.ScopeId,
 				DefRangePtr: &attr.NameRange,
-				RangePtr:    attr.SrcRange.Ptr(),
+				RangePtr:    attr.Range.Ptr(),
 				Name:        attrSchema.Address.FriendlyName,
 			}
 			refs = append(refs, ref)
@@ -513,7 +505,7 @@ func decodeReferenceTargetsForAttribute(attr *hclsyntax.Attribute, attrSchema *s
 					Type:        t,
 					ScopeId:     scopeId,
 					DefRangePtr: attr.NameRange.Ptr(),
-					RangePtr:    attr.SrcRange.Ptr(),
+					RangePtr:    attr.Range.Ptr(),
 					Name:        attrSchema.Address.FriendlyName,
 				}
 
@@ -532,13 +524,17 @@ func decodeReferenceTargetsForAttribute(attr *hclsyntax.Attribute, attrSchema *s
 	return refs
 }
 
-func decodeReferenceTargetsForComplexTypeExpr(addr lang.Address, expr hclsyntax.Expression, t cty.Type, scopeId lang.ScopeId) lang.ReferenceTargets {
+func decodeReferenceTargetsForComplexTypeExpr(addr lang.Address, expr hcl.Expression, t cty.Type, scopeId lang.ScopeId) lang.ReferenceTargets {
 	refs := make(lang.ReferenceTargets, 0)
 
 	if expr == nil {
 		return refs
 	}
 
+	// Nested expressions are not addressable in JSON yet
+	// as accessing expression in JSON generally requires
+	// some upstream HCL changes.
+	// TODO: See https: //github.com/hashicorp/terraform-ls/issues/675
 	switch e := expr.(type) {
 	case *hclsyntax.TupleConsExpr:
 		if t.IsListType() {
@@ -628,12 +624,12 @@ func decodeReferenceTargetsForComplexTypeExpr(addr lang.Address, expr hclsyntax.
 	return refs
 }
 
-func referenceAsTypeOf(block *hclsyntax.Block, bSchema *schema.BlockSchema, addr lang.Address) lang.ReferenceTargets {
+func referenceAsTypeOf(block *hcl.Block, rngPtr *hcl.Range, bSchema *schema.BlockSchema, addr lang.Address) lang.ReferenceTargets {
 	ref := lang.ReferenceTarget{
 		Addr:        addr,
 		ScopeId:     bSchema.Address.ScopeId,
-		DefRangePtr: block.DefRange().Ptr(),
-		RangePtr:    block.Range().Ptr(),
+		DefRangePtr: block.DefRange.Ptr(),
+		RangePtr:    rngPtr,
 		Type:        cty.DynamicPseudoType,
 	}
 
@@ -869,8 +865,10 @@ func bodySchemaAsAttrTypes(bodySchema *schema.BodySchema) map[string]cty.Type {
 	return attrTypes
 }
 
-func (d *Decoder) collectInferredReferenceTargetsForBody(addr lang.Address, scopeId lang.ScopeId, body *hclsyntax.Body, bodySchema *schema.BodySchema) lang.ReferenceTargets {
+func (d *Decoder) collectInferredReferenceTargetsForBody(addr lang.Address, scopeId lang.ScopeId, body hcl.Body, bodySchema *schema.BodySchema) lang.ReferenceTargets {
 	refs := make(lang.ReferenceTargets, 0)
+
+	content := decodeBody(body, bodySchema)
 
 	for name, aSchema := range bodySchema.Attributes {
 		attrType, ok := exprConstraintToDataType(aSchema.Expr)
@@ -886,16 +884,14 @@ func (d *Decoder) collectInferredReferenceTargetsForBody(addr lang.Address, scop
 			ScopeId:     scopeId,
 			Type:        attrType,
 			Description: aSchema.Description,
-			RangePtr:    body.EndRange.Ptr(),
+			RangePtr:    body.MissingItemRange().Ptr(),
 		}
 
-		var attrExpr hclsyntax.Expression
-		if body != nil {
-			if attr, ok := body.Attributes[name]; ok {
-				ref.RangePtr = attr.Range().Ptr()
-				ref.DefRangePtr = attr.NameRange.Ptr()
-				attrExpr = attr.Expr
-			}
+		var attrExpr hcl.Expression
+		if attr, ok := content.Attributes[name]; ok {
+			ref.RangePtr = attr.Range.Ptr()
+			ref.DefRangePtr = attr.NameRange.Ptr()
+			attrExpr = attr.Expr
 		}
 
 		if attrExpr != nil && !attrType.IsPrimitiveType() {
@@ -906,111 +902,43 @@ func (d *Decoder) collectInferredReferenceTargetsForBody(addr lang.Address, scop
 		refs = append(refs, ref)
 	}
 
-	objectBlocks := make(map[string]*hclsyntax.Block, 0)
-	listBlocks := make(map[string][]*hclsyntax.Block, 0)
-	setBlocks := make(map[string][]*hclsyntax.Block, 0)
-	mapBlocks := make(map[string][]*hclsyntax.Block, 0)
+	bTypes := blocksTypesWithSchema(body, bodySchema)
 
-	for _, block := range body.Blocks {
-		bSchema, ok := bodySchema.Blocks[block.Type]
-		if !ok {
-			// skip unknown block
-			continue
-		}
-
-		switch bSchema.Type {
-		case schema.BlockTypeObject:
-			_, ok := objectBlocks[block.Type]
-			if ok {
-				// objects are expected to be singletons
-				continue
-			}
-			objectBlocks[block.Type] = block
-		case schema.BlockTypeList:
-			if bSchema.MaxItems > 0 && uint64(len(listBlocks[block.Type])) >= bSchema.MaxItems {
-				// skip item if limit was reached
-				continue
-			}
-
-			_, ok := listBlocks[block.Type]
-			if !ok {
-				listBlocks[block.Type] = make([]*hclsyntax.Block, 0)
-			}
-			listBlocks[block.Type] = append(listBlocks[block.Type], block)
-		case schema.BlockTypeSet:
-			if bSchema.MaxItems > 0 && uint64(len(setBlocks[block.Type])) >= bSchema.MaxItems {
-				// skip item if limit was reached
-				continue
-			}
-
-			_, ok := setBlocks[block.Type]
-			if !ok {
-				setBlocks[block.Type] = make([]*hclsyntax.Block, 0)
-			}
-			setBlocks[block.Type] = append(setBlocks[block.Type], block)
-		case schema.BlockTypeMap:
-			if len(block.Labels) != 1 {
-				// this should never happen
-				continue
-			}
-			if bSchema.MaxItems > 0 && uint64(len(listBlocks[block.Type])) >= bSchema.MaxItems {
-				// skip item if limit was reached
-				continue
-			}
-
-			_, ok := mapBlocks[block.Type]
-			if !ok {
-				mapBlocks[block.Type] = make([]*hclsyntax.Block, 0)
-			}
-			mapBlocks[block.Type] = append(mapBlocks[block.Type], block)
-		}
-	}
-
-	for blockType, block := range objectBlocks {
-		bSchema, ok := bodySchema.Blocks[blockType]
-		if !ok {
-			// skip unknown block
-			continue
-		}
-
+	for bType, bCollection := range bTypes.OfSchemaType(schema.BlockTypeObject) {
 		blockAddr := make(lang.Address, len(addr))
 		copy(blockAddr, addr)
-		blockAddr = append(blockAddr, lang.AttrStep{Name: blockType})
+		blockAddr = append(blockAddr, lang.AttrStep{Name: bType})
+
+		blk := bCollection.Blocks[0]
 
 		blockRef := lang.ReferenceTarget{
 			Addr:        blockAddr,
 			ScopeId:     scopeId,
-			Type:        cty.Object(bodySchemaAsAttrTypes(bSchema.Body)),
-			Description: bSchema.Description,
-			DefRangePtr: block.DefRange().Ptr(),
-			RangePtr:    block.Range().Ptr(),
+			Type:        cty.Object(bodySchemaAsAttrTypes(bCollection.Schema.Body)),
+			Description: bCollection.Schema.Description,
+			DefRangePtr: blk.DefRange.Ptr(),
+			RangePtr:    blk.Range.Ptr(),
 			NestedTargets: d.collectInferredReferenceTargetsForBody(
-				blockAddr, scopeId, block.Body, bSchema.Body),
+				blockAddr, scopeId, blk.Body, bCollection.Schema.Body),
 		}
 		sort.Sort(blockRef.NestedTargets)
 		refs = append(refs, blockRef)
 	}
 
-	for blockType, blocks := range listBlocks {
-		bSchema, ok := bodySchema.Blocks[blockType]
-		if !ok {
-			// skip unknown block
-			continue
-		}
-
+	for bType, bCollection := range bTypes.OfSchemaType(schema.BlockTypeList) {
 		blockAddr := make(lang.Address, len(addr))
 		copy(blockAddr, addr)
-		blockAddr = append(blockAddr, lang.AttrStep{Name: blockType})
+		blockAddr = append(blockAddr, lang.AttrStep{Name: bType})
 
 		blockRef := lang.ReferenceTarget{
 			Addr:        blockAddr,
 			ScopeId:     scopeId,
-			Type:        cty.List(cty.Object(bodySchemaAsAttrTypes(bSchema.Body))),
-			Description: bSchema.Description,
+			Type:        cty.List(cty.Object(bodySchemaAsAttrTypes(bCollection.Schema.Body))),
+			Description: bCollection.Schema.Description,
 			RangePtr:    body.MissingItemRange().Ptr(),
 		}
 
-		for i, block := range blocks {
+		for i, b := range bCollection.Blocks {
 			elemAddr := make(lang.Address, len(blockAddr))
 			copy(elemAddr, blockAddr)
 			elemAddr = append(elemAddr, lang.IndexStep{
@@ -1020,12 +948,12 @@ func (d *Decoder) collectInferredReferenceTargetsForBody(addr lang.Address, scop
 			elemRef := lang.ReferenceTarget{
 				Addr:        elemAddr,
 				ScopeId:     scopeId,
-				Type:        cty.Object(bodySchemaAsAttrTypes(bSchema.Body)),
-				Description: bSchema.Description,
-				DefRangePtr: block.DefRange().Ptr(),
-				RangePtr:    block.Range().Ptr(),
+				Type:        cty.Object(bodySchemaAsAttrTypes(bCollection.Schema.Body)),
+				Description: bCollection.Schema.Description,
+				DefRangePtr: b.DefRange.Ptr(),
+				RangePtr:    b.Range.Ptr(),
 				NestedTargets: d.collectInferredReferenceTargetsForBody(
-					elemAddr, scopeId, block.Body, bSchema.Body),
+					elemAddr, scopeId, b.Body, bCollection.Schema.Body),
 			}
 			sort.Sort(elemRef.NestedTargets)
 			blockRef.NestedTargets = append(blockRef.NestedTargets, elemRef)
@@ -1045,87 +973,73 @@ func (d *Decoder) collectInferredReferenceTargetsForBody(addr lang.Address, scop
 				}
 			}
 		}
-
 		sort.Sort(blockRef.NestedTargets)
 		refs = append(refs, blockRef)
 	}
 
-	for blockType, blocks := range setBlocks {
-		bSchema, ok := bodySchema.Blocks[blockType]
-		if !ok {
-			// skip unknown block
-			continue
-		}
-
+	for bType, bCollection := range bTypes.OfSchemaType(schema.BlockTypeSet) {
 		blockAddr := make(lang.Address, len(addr))
 		copy(blockAddr, addr)
-		blockAddr = append(blockAddr, lang.AttrStep{Name: blockType})
+		blockAddr = append(blockAddr, lang.AttrStep{Name: bType})
 
 		blockRef := lang.ReferenceTarget{
 			Addr:        blockAddr,
 			ScopeId:     scopeId,
-			Type:        cty.Set(cty.Object(bodySchemaAsAttrTypes(bSchema.Body))),
-			Description: bSchema.Description,
+			Type:        cty.Set(cty.Object(bodySchemaAsAttrTypes(bCollection.Schema.Body))),
+			Description: bCollection.Schema.Description,
 			RangePtr:    body.MissingItemRange().Ptr(),
 		}
 
-		for i, block := range blocks {
+		for i, b := range bCollection.Blocks {
 			if i == 0 {
-				blockRef.RangePtr = block.Range().Ptr()
+				blockRef.RangePtr = b.Range.Ptr()
 			} else {
 				// try to expand the range of the "parent" (set) reference
 				// if the individual blocks follow each other
 				betweenBlocks, err := d.bytesInRange(hcl.Range{
 					Filename: blockRef.RangePtr.Filename,
 					Start:    blockRef.RangePtr.End,
-					End:      block.Range().Start,
+					End:      b.Range.Start,
 				})
 				if err == nil && len(bytes.TrimSpace(betweenBlocks)) == 0 {
-					blockRef.RangePtr.End = block.Range().End
+					blockRef.RangePtr.End = b.Range.End
 				}
 			}
 		}
-
 		refs = append(refs, blockRef)
 	}
 
-	for blockType, blocks := range mapBlocks {
-		bSchema, ok := bodySchema.Blocks[blockType]
-		if !ok {
-			// skip unknown block
-			continue
-		}
-
+	for bType, bCollection := range bTypes.OfSchemaType(schema.BlockTypeMap) {
 		blockAddr := make(lang.Address, len(addr))
 		copy(blockAddr, addr)
-		blockAddr = append(blockAddr, lang.AttrStep{Name: blockType})
+		blockAddr = append(blockAddr, lang.AttrStep{Name: bType})
 
 		blockRef := lang.ReferenceTarget{
 			Addr:        blockAddr,
 			ScopeId:     scopeId,
-			Type:        cty.Map(cty.Object(bodySchemaAsAttrTypes(bSchema.Body))),
-			Description: bSchema.Description,
+			Type:        cty.Map(cty.Object(bodySchemaAsAttrTypes(bCollection.Schema.Body))),
+			Description: bCollection.Schema.Description,
 			RangePtr:    body.MissingItemRange().Ptr(),
 		}
 
-		for i, block := range blocks {
+		for i, b := range bCollection.Blocks {
 			elemAddr := make(lang.Address, len(blockAddr))
 			copy(elemAddr, blockAddr)
 			elemAddr = append(elemAddr, lang.IndexStep{
-				Key: cty.StringVal(block.Labels[0]),
+				Key: cty.StringVal(b.Labels[0]),
 			})
 
-			refType := cty.Object(bodySchemaAsAttrTypes(bSchema.Body))
+			refType := cty.Object(bodySchemaAsAttrTypes(bCollection.Schema.Body))
 
 			elemRef := lang.ReferenceTarget{
 				Addr:        elemAddr,
 				ScopeId:     scopeId,
 				Type:        refType,
-				Description: bSchema.Description,
-				RangePtr:    block.Range().Ptr(),
-				DefRangePtr: block.DefRange().Ptr(),
+				Description: bCollection.Schema.Description,
+				RangePtr:    b.Range.Ptr(),
+				DefRangePtr: b.DefRange.Ptr(),
 				NestedTargets: d.collectInferredReferenceTargetsForBody(
-					elemAddr, scopeId, block.Body, bSchema.Body),
+					elemAddr, scopeId, b.Body, bCollection.Schema.Body),
 			}
 			sort.Sort(elemRef.NestedTargets)
 			blockRef.NestedTargets = append(blockRef.NestedTargets, elemRef)
@@ -1145,12 +1059,54 @@ func (d *Decoder) collectInferredReferenceTargetsForBody(addr lang.Address, scop
 				}
 			}
 		}
-
 		sort.Sort(blockRef.NestedTargets)
 		refs = append(refs, blockRef)
 	}
 
 	return refs
+}
+
+type blockCollection struct {
+	Schema *schema.BlockSchema
+	Blocks []*blockContent
+}
+
+type blockTypes map[string]*blockCollection
+
+func (bt blockTypes) OfSchemaType(t schema.BlockType) blockTypes {
+	blockTypes := make(blockTypes, 0)
+	for blockType, blockCollection := range bt {
+		if blockCollection.Schema.Type == t {
+			blockTypes[blockType] = blockCollection
+		}
+	}
+	return blockTypes
+}
+
+func blocksTypesWithSchema(body hcl.Body, bodySchema *schema.BodySchema) blockTypes {
+	blockTypes := make(blockTypes, 0)
+
+	content := decodeBody(body, bodySchema)
+
+	for _, block := range content.Blocks {
+		bSchema, ok := bodySchema.Blocks[block.Type]
+		if !ok {
+			// skip unknown block
+			continue
+		}
+
+		_, ok = blockTypes[block.Type]
+		if !ok {
+			blockTypes[block.Type] = &blockCollection{
+				Schema: bSchema,
+				Blocks: make([]*blockContent, 0),
+			}
+		}
+
+		blockTypes[block.Type].Blocks = append(blockTypes[block.Type].Blocks, block)
+	}
+
+	return blockTypes
 }
 
 func (d *Decoder) bytesInRange(rng hcl.Range) ([]byte, error) {
@@ -1175,7 +1131,7 @@ func bodyToDataType(blockType schema.BlockType, body *schema.BodySchema) cty.Typ
 	return cty.Object(bodySchemaAsAttrTypes(body))
 }
 
-func resolveAttributeAddress(attr *hclsyntax.Attribute, addr *schema.AttributeAddrSchema) (lang.Address, bool) {
+func resolveAttributeAddress(attr *hcl.Attribute, addr *schema.AttributeAddrSchema) (lang.Address, bool) {
 	address := make(lang.Address, 0)
 
 	if addr == nil {
@@ -1211,15 +1167,15 @@ func resolveAttributeAddress(attr *hclsyntax.Attribute, addr *schema.AttributeAd
 	return address, true
 }
 
-func resolveBlockAddress(block *hclsyntax.Block, addr *schema.BlockAddrSchema) (lang.Address, bool) {
+func resolveBlockAddress(block *hcl.Block, blockSchema *schema.BlockSchema) (lang.Address, bool) {
 	address := make(lang.Address, 0)
 
-	if addr == nil {
+	if blockSchema.Address == nil {
 		// block not addressable
 		return lang.Address{}, false
 	}
 
-	for i, s := range addr.Steps {
+	for i, s := range blockSchema.Address.Steps {
 		var stepName string
 
 		switch step := s.(type) {
@@ -1232,7 +1188,9 @@ func resolveBlockAddress(block *hclsyntax.Block, addr *schema.BlockAddrSchema) (
 			}
 			stepName = block.Labels[step.Index]
 		case schema.AttrValueStep:
-			attr, ok := block.Body.Attributes[step.Name]
+			content := decodeBody(block.Body, blockSchema.Body)
+
+			attr, ok := content.Attributes[step.Name]
 			if !ok && step.IsOptional {
 				// skip step if not found and optional
 				continue

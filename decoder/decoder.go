@@ -173,7 +173,7 @@ func posEqual(pos, other hcl.Pos) bool {
 		pos.Byte == other.Byte
 }
 
-func mergeBlockBodySchemas(block *hclsyntax.Block, blockSchema *schema.BlockSchema) (*schema.BodySchema, error) {
+func mergeBlockBodySchemas(block *hcl.Block, blockSchema *schema.BlockSchema) (*schema.BodySchema, error) {
 	if len(blockSchema.DependentBody) == 0 {
 		return blockSchema.Body, nil
 	}
@@ -216,6 +216,81 @@ func mergeBlockBodySchemas(block *hclsyntax.Block, blockSchema *schema.BlockSche
 	}
 
 	return mergedSchema, nil
+}
+
+// blockContent represents HCL or JSON block content
+type blockContent struct {
+	*hcl.Block
+
+	// Range represents range of the block in HCL syntax
+	// or closest available representative range in JSON
+	Range hcl.Range
+}
+
+// bodyContent represents an HCL or JSON body content
+type bodyContent struct {
+	Attributes hcl.Attributes
+	Blocks     []*blockContent
+}
+
+// decodeBody produces content of either HCL or JSON body
+//
+// JSON body requires schema for decoding, empty bodyContent
+// is returned if nil schema is provided
+func decodeBody(body hcl.Body, bodySchema *schema.BodySchema) bodyContent {
+	content := bodyContent{
+		Attributes: make(hcl.Attributes, 0),
+		Blocks:     make([]*blockContent, 0),
+	}
+
+	// More common HCL syntax is processed directly (without schema)
+	// which also better represents the reality in symbol lookups
+	// i.e. expressions written as opposed to schema requirements
+	if hclBody, ok := body.(*hclsyntax.Body); ok {
+		for name, attr := range hclBody.Attributes {
+			content.Attributes[name] = attr.AsHCLAttribute()
+		}
+
+		for _, block := range hclBody.Blocks {
+			content.Blocks = append(content.Blocks, &blockContent{
+				Block: block.AsHCLBlock(),
+				Range: block.Range(),
+			})
+		}
+
+		return content
+	}
+
+	// JSON syntax cannot be decoded without schema as attributes
+	// and blocks are otherwise ambiguous
+	if bodySchema != nil {
+		hclSchema := bodySchema.ToHCLSchema()
+		bContent, remainingBody, _ := body.PartialContent(hclSchema)
+
+		content.Attributes = bContent.Attributes
+		if bodySchema.AnyAttribute != nil {
+			// Remaining unknown fields may also be blocks in JSON,
+			// but we blindly treat them as attributes here
+			// as we cannot do any better without upstream HCL changes.
+			remainingAttrs, _ := remainingBody.JustAttributes()
+			for name, attr := range remainingAttrs {
+				content.Attributes[name] = attr
+			}
+		}
+
+		for _, block := range bContent.Blocks {
+			// hcl.Block interface (as the only way of accessing block in JSON)
+			// does not come with Range for the block, so we calculate it here
+			rng := hcl.RangeBetween(block.DefRange, block.Body.MissingItemRange())
+
+			content.Blocks = append(content.Blocks, &blockContent{
+				Block: block,
+				Range: rng,
+			})
+		}
+	}
+
+	return content
 }
 
 func stringPos(pos hcl.Pos) string {

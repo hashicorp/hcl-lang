@@ -14,8 +14,9 @@ import (
 )
 
 func TestBodySchema_DependentBodySchema_label_basic(t *testing.T) {
-	block := &hclsyntax.Block{
+	block := &hcl.Block{
 		Labels: []string{"theircloud", "blah"},
+		Body:   hcl.EmptyBody(),
 	}
 
 	bSchema := &schema.BlockSchema{
@@ -63,8 +64,9 @@ func TestBodySchema_DependentBodySchema_label_basic(t *testing.T) {
 }
 
 func TestBodySchema_DependentBodySchema_mismatchingLabels(t *testing.T) {
-	block := &hclsyntax.Block{
+	block := &hcl.Block{
 		Labels: []string{"theircloud"},
+		Body:   hcl.EmptyBody(),
 	}
 
 	bSchema := &schema.BlockSchema{
@@ -160,7 +162,7 @@ func TestBodySchema_DependentBodySchema_dependentAttr(t *testing.T) {
 		},
 	}
 
-	bodySchema, _, ok := NewBlockSchema(bSchema).DependentBodySchema(&hclsyntax.Block{
+	bodySchema, _, ok := NewBlockSchema(bSchema).DependentBodySchema(&hcl.Block{
 		Labels: []string{"remote_state"},
 	})
 	if !ok {
@@ -170,7 +172,7 @@ func TestBodySchema_DependentBodySchema_dependentAttr(t *testing.T) {
 		t.Fatalf("mismatching body schema: %s", diff)
 	}
 
-	bodySchema, _, ok = NewBlockSchema(bSchema).DependentBodySchema(&hclsyntax.Block{
+	bodySchema, _, ok = NewBlockSchema(bSchema).DependentBodySchema(&hcl.Block{
 		Labels: []string{"remote_state"},
 		Body: &hclsyntax.Body{
 			Attributes: hclsyntax.Attributes{
@@ -246,7 +248,7 @@ func TestBodySchema_DependentBodySchema_missingDependentAttr(t *testing.T) {
 		},
 	}
 
-	bodySchema, _, ok := NewBlockSchema(bSchema).DependentBodySchema(&hclsyntax.Block{
+	bodySchema, _, ok := NewBlockSchema(bSchema).DependentBodySchema(&hcl.Block{
 		Labels: []string{"remote_state"},
 		Body: &hclsyntax.Body{
 			Attributes: hclsyntax.Attributes{
@@ -370,7 +372,7 @@ func TestBodySchema_DependentBodySchema_attributes(t *testing.T) {
 
 	for i, tc := range testCases {
 		t.Run(fmt.Sprintf("%d-%s", i, tc.name), func(t *testing.T) {
-			block := &hclsyntax.Block{
+			block := &hcl.Block{
 				Body: &hclsyntax.Body{
 					Attributes: tc.attributes,
 				},
@@ -387,8 +389,9 @@ func TestBodySchema_DependentBodySchema_attributes(t *testing.T) {
 }
 
 func TestBodySchema_DependentBodySchema_label_notFound(t *testing.T) {
-	block := &hclsyntax.Block{
+	block := &hcl.Block{
 		Labels: []string{"test", "mycloud"},
+		Body:   hcl.EmptyBody(),
 	}
 	_, _, ok := testSchemaWithLabels.DependentBodySchema(block)
 	if ok {
@@ -397,8 +400,9 @@ func TestBodySchema_DependentBodySchema_label_notFound(t *testing.T) {
 }
 
 func TestBodySchema_DependentBodySchema_label_storedUnsorted(t *testing.T) {
-	block := &hclsyntax.Block{
+	block := &hcl.Block{
 		Labels: []string{"complexcloud", "pumpkin"},
+		Body:   hcl.EmptyBody(),
 	}
 	bodySchema, _, ok := testSchemaWithLabels.DependentBodySchema(block)
 	if !ok {
@@ -415,8 +419,9 @@ func TestBodySchema_DependentBodySchema_label_storedUnsorted(t *testing.T) {
 }
 
 func TestBodySchema_DependentBodySchema_label_lookupUnsorted(t *testing.T) {
-	block := &hclsyntax.Block{
+	block := &hcl.Block{
 		Labels: []string{"apple", "crazycloud"},
+		Body:   hcl.EmptyBody(),
 	}
 	_, _, ok := testSchemaWithLabels.DependentBodySchema(block)
 	if ok {

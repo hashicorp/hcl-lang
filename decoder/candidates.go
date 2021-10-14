@@ -130,7 +130,7 @@ func (d *Decoder) candidatesAtPos(body *hclsyntax.Body, outerBodyRng hcl.Range, 
 			}
 
 			if block.Body != nil && block.Body.Range().ContainsPos(pos) {
-				mergedSchema, err := mergeBlockBodySchemas(block, bSchema)
+				mergedSchema, err := mergeBlockBodySchemas(block.AsHCLBlock(), bSchema)
 				if err != nil {
 					return lang.ZeroCandidates(), err
 				}

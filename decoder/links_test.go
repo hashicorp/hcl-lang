@@ -1,6 +1,7 @@
 package decoder
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -8,6 +9,7 @@ import (
 	"github.com/hashicorp/hcl-lang/schema"
 	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hclsyntax"
+	"github.com/hashicorp/hcl/v2/json"
 	"github.com/zclconf/go-cty/cty"
 )
 
@@ -96,5 +98,27 @@ func TestLinksInFile(t *testing.T) {
 	diff := cmp.Diff(expectedLinks, links)
 	if diff != "" {
 		t.Fatalf("unexpected links: %s", diff)
+	}
+}
+
+func TestLinksInFile_json(t *testing.T) {
+	d := NewDecoder()
+	f, pDiags := json.Parse([]byte(`{
+	"customblock": {
+		"label1": {}
+	}
+}`), "test.tf.json")
+	if len(pDiags) > 0 {
+		t.Fatal(pDiags)
+	}
+	err := d.LoadFile("test.tf.json", f)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	_, err = d.LinksInFile("test.tf.json")
+	unknownFormatErr := &UnknownFileFormatError{}
+	if !errors.As(err, &unknownFormatErr) {
+		t.Fatal("expected UnknownFileFormatError for JSON body")
 	}
 }

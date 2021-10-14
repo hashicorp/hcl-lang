@@ -3,6 +3,7 @@ package decoder
 import (
 	"github.com/hashicorp/hcl-lang/lang"
 	"github.com/hashicorp/hcl-lang/schema"
+	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hclsyntax"
 )
 
@@ -17,7 +18,7 @@ func NewBlockSchema(bs *schema.BlockSchema) blockSchema {
 
 // DependentBodySchema finds relevant BodySchema based on dependency keys
 // such as a label or an attribute (or combination of both).
-func (bs blockSchema) DependentBodySchema(block *hclsyntax.Block) (*schema.BodySchema, schema.DependencyKeys, bool) {
+func (bs blockSchema) DependentBodySchema(block *hcl.Block) (*schema.BodySchema, schema.DependencyKeys, bool) {
 	dks := dependencyKeysFromBlock(block, bs)
 	b, err := dks.MarshalJSON()
 	if err != nil {
@@ -47,7 +48,7 @@ func (bs blockSchema) DependentBodySchema(block *hclsyntax.Block) (*schema.BodyS
 	return depBodySchema, dks, ok
 }
 
-func dependencyKeysFromBlock(block *hclsyntax.Block, blockSchema blockSchema) schema.DependencyKeys {
+func dependencyKeysFromBlock(block *hcl.Block, blockSchema blockSchema) schema.DependencyKeys {
 	dk := schema.DependencyKeys{
 		Labels:     []schema.LabelDependent{},
 		Attributes: []schema.AttributeDependent{},
@@ -75,9 +76,11 @@ func dependencyKeysFromBlock(block *hclsyntax.Block, blockSchema blockSchema) sc
 		return dk
 	}
 
+	content := decodeBody(block.Body, blockSchema.Body)
+
 	for name, attrSchema := range blockSchema.Body.Attributes {
 		if attrSchema.IsDepKey {
-			attr, ok := block.Body.Attributes[name]
+			attr, ok := content.Attributes[name]
 			if !ok {
 				// dependent attribute not present
 				continue
