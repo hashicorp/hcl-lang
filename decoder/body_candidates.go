@@ -72,7 +72,7 @@ func (d *Decoder) bodySchemaCandidates(body *hclsyntax.Body, schema *schema.Body
 			return candidates
 		}
 
-		candidates.List = append(candidates.List, d.BlockSchemaToCandidate(bType, block, editRng))
+		candidates.List = append(candidates.List, d.blockSchemaToCandidate(bType, block, editRng))
 		count++
 	}
 
