@@ -1504,16 +1504,17 @@ func TestDecoder_CandidateAtPos_expressions(t *testing.T) {
 
 	for i, tc := range testCases {
 		t.Run(fmt.Sprintf("%d-%s", i, tc.testName), func(t *testing.T) {
-			d := NewDecoder()
-			d.SetSchema(&schema.BodySchema{
+			bodySchema := &schema.BodySchema{
 				Attributes: tc.attrSchema,
-			})
+			}
 
 			f, _ := hclsyntax.ParseConfig([]byte(tc.cfg), "test.tf", hcl.InitialPos)
-			err := d.LoadFile("test.tf", f)
-			if err != nil {
-				t.Fatal(err)
-			}
+			d := testPathDecoder(t, &PathContext{
+				Schema: bodySchema,
+				Files: map[string]*hcl.File{
+					"test.tf": f,
+				},
+			})
 
 			candidates, err := d.CandidatesAtPos("test.tf", tc.pos)
 			if err != nil {
@@ -2527,20 +2528,31 @@ another_block "meh" {
 
 	for i, tc := range testCases {
 		t.Run(fmt.Sprintf("%d-%s", i, tc.testName), func(t *testing.T) {
-			d := NewDecoder()
-			d.SetSchema(tc.bodySchema)
-			d.SetReferenceTargetReader(func() lang.ReferenceTargets {
-				bRefs := tc.builtinRefs
-				refs, _ := d.CollectReferenceTargets()
-				refs = append(refs, bRefs...)
-				return refs
-			})
-
 			f, _ := hclsyntax.ParseConfig([]byte(tc.cfg), "test.tf", hcl.InitialPos)
-			err := d.LoadFile("test.tf", f)
+
+			testDir := t.TempDir()
+			dirReader := &testPathReader{
+				paths: map[string]*PathContext{
+					testDir: {
+						Schema: tc.bodySchema,
+						Files: map[string]*hcl.File{
+							"test.tf": f,
+						},
+						ReferenceTargets: tc.builtinRefs,
+					},
+				},
+			}
+			decoder := NewDecoder(dirReader)
+			d, err := decoder.Path(lang.Path{Path: testDir})
 			if err != nil {
 				t.Fatal(err)
 			}
+			refTargets, err := d.CollectReferenceTargets()
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			dirReader.paths[testDir].ReferenceTargets = append(dirReader.paths[testDir].ReferenceTargets, refTargets...)
 
 			candidates, err := d.CandidatesAtPos("test.tf", tc.pos)
 			if err != nil {

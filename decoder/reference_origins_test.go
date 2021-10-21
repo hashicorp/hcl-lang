@@ -314,14 +314,14 @@ func TestReferenceOriginAtPos(t *testing.T) {
 
 	for i, tc := range testCases {
 		t.Run(fmt.Sprintf("%d-%s", i, tc.name), func(t *testing.T) {
-			d := NewDecoder()
-			d.SetSchema(tc.bodySchema)
-
 			f, _ := hclsyntax.ParseConfig([]byte(tc.cfg), "test.tf", hcl.InitialPos)
-			err := d.LoadFile("test.tf", f)
-			if err != nil {
-				t.Fatal(err)
-			}
+
+			d := testPathDecoder(t, &PathContext{
+				Schema: tc.bodySchema,
+				Files: map[string]*hcl.File{
+					"test.tf": f,
+				},
+			})
 
 			refOrigin, err := d.ReferenceOriginAtPos("test.tf", tc.pos)
 			if err != nil {
@@ -336,18 +336,18 @@ func TestReferenceOriginAtPos(t *testing.T) {
 }
 
 func TestReferenceOriginAtPos_json(t *testing.T) {
-	d := NewDecoder()
-
 	f, diags := json.Parse([]byte(`{}`), "test.tf.json")
 	if len(diags) > 0 {
 		t.Fatal(diags)
 	}
-	err := d.LoadFile("test.tf.json", f)
-	if err != nil {
-		t.Fatal(err)
-	}
 
-	_, err = d.ReferenceOriginAtPos("test.tf.json", hcl.InitialPos)
+	d := testPathDecoder(t, &PathContext{
+		Files: map[string]*hcl.File{
+			"test.tf.json": f,
+		},
+	})
+
+	_, err := d.ReferenceOriginAtPos("test.tf.json", hcl.InitialPos)
 	unknownFormatErr := &UnknownFileFormatError{}
 	if !errors.As(err, &unknownFormatErr) {
 		t.Fatal("expected UnknownFileFormatError for JSON body")
@@ -616,10 +616,10 @@ func TestReferenceOriginsTargeting(t *testing.T) {
 	}
 	for i, tc := range testCases {
 		t.Run(fmt.Sprintf("%d-%s", i, tc.name), func(t *testing.T) {
-			d := NewDecoder()
-			d.SetReferenceOriginReader(func() lang.ReferenceOrigins {
-				return tc.allOrigins
+			d := testPathDecoder(t, &PathContext{
+				ReferenceOrigins: tc.allOrigins,
 			})
+
 			origins, err := d.ReferenceOriginsTargeting(tc.refTarget)
 			if err != nil {
 				t.Fatal(err)

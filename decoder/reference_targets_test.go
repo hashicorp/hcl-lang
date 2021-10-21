@@ -88,7 +88,7 @@ func TestAddress_Equals_stringIndexStep(t *testing.T) {
 }
 
 func TestCollectReferenceTargets_noSchema(t *testing.T) {
-	d := NewDecoder()
+	d := testPathDecoder(t, &PathContext{})
 	_, err := d.CollectReferenceTargets()
 	if err == nil {
 		t.Fatal("expected error when no schema is set")
@@ -270,9 +270,8 @@ func TestReferenceTargetForOrigin(t *testing.T) {
 	}
 	for i, tc := range testCases {
 		t.Run(fmt.Sprintf("%d-%s", i, tc.name), func(t *testing.T) {
-			d := NewDecoder()
-			d.SetReferenceTargetReader(func() lang.ReferenceTargets {
-				return tc.refTargets
+			d := testPathDecoder(t, &PathContext{
+				ReferenceTargets: tc.refTargets,
 			})
 
 			refTarget, err := d.ReferenceTargetForOrigin(tc.refOrigin)
@@ -578,9 +577,8 @@ func TestOutermostReferenceTargetsAtPos(t *testing.T) {
 	}
 	for i, tc := range testCases {
 		t.Run(fmt.Sprintf("%d-%s", i, tc.name), func(t *testing.T) {
-			d := NewDecoder()
-			d.SetReferenceTargetReader(func() lang.ReferenceTargets {
-				return tc.refTargets
+			d := testPathDecoder(t, &PathContext{
+				ReferenceTargets: tc.refTargets,
 			})
 
 			refTargets, err := d.OutermostReferenceTargetsAtPos(tc.filename, tc.pos)
@@ -971,9 +969,8 @@ func TestInnermostReferenceTargetsAtPos(t *testing.T) {
 	}
 	for i, tc := range testCases {
 		t.Run(fmt.Sprintf("%d-%s", i, tc.name), func(t *testing.T) {
-			d := NewDecoder()
-			d.SetReferenceTargetReader(func() lang.ReferenceTargets {
-				return tc.refTargets
+			d := testPathDecoder(t, &PathContext{
+				ReferenceTargets: tc.refTargets,
 			})
 
 			refTargets, err := d.InnermostReferenceTargetsAtPos(tc.filename, tc.pos)
@@ -1095,9 +1092,8 @@ func TestReferenceTargetsInFile(t *testing.T) {
 	}
 	for i, tc := range testCases {
 		t.Run(fmt.Sprintf("%d-%s", i, tc.name), func(t *testing.T) {
-			d := NewDecoder()
-			d.SetReferenceTargetReader(func() lang.ReferenceTargets {
-				return tc.refTargets
+			d := testPathDecoder(t, &PathContext{
+				ReferenceTargets: tc.refTargets,
 			})
 
 			targets, err := d.ReferenceTargetsInFile(tc.filename)

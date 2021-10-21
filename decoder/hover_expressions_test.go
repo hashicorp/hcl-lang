@@ -1268,16 +1268,18 @@ _object_`),
 
 	for i, tc := range testCases {
 		t.Run(fmt.Sprintf("%d-%s", i, tc.name), func(t *testing.T) {
-			d := NewDecoder()
-			d.SetSchema(&schema.BodySchema{
+			bodySchema := &schema.BodySchema{
 				Attributes: tc.attrSchema,
-			})
+			}
 
 			f, _ := hclsyntax.ParseConfig([]byte(tc.cfg), "test.tf", hcl.InitialPos)
-			err := d.LoadFile("test.tf", f)
-			if err != nil {
-				t.Fatal(err)
-			}
+
+			d := testPathDecoder(t, &PathContext{
+				Schema: bodySchema,
+				Files: map[string]*hcl.File{
+					"test.tf": f,
+				},
+			})
 
 			data, err := d.HoverAtPos("test.tf", tc.pos)
 
@@ -1466,19 +1468,19 @@ func TestDecoder_HoverAtPos_traversalExpressions(t *testing.T) {
 
 	for i, tc := range testCases {
 		t.Run(fmt.Sprintf("%d-%s", i, tc.name), func(t *testing.T) {
-			d := NewDecoder()
-			d.SetSchema(&schema.BodySchema{
+			bodySchema := &schema.BodySchema{
 				Attributes: tc.attrSchema,
-			})
-			d.SetReferenceTargetReader(func() lang.ReferenceTargets {
-				return tc.refs
-			})
+			}
 
 			f, _ := hclsyntax.ParseConfig([]byte(tc.cfg), "test.tf", hcl.InitialPos)
-			err := d.LoadFile("test.tf", f)
-			if err != nil {
-				t.Fatal(err)
-			}
+
+			d := testPathDecoder(t, &PathContext{
+				Schema:           bodySchema,
+				ReferenceTargets: tc.refs,
+				Files: map[string]*hcl.File{
+					"test.tf": f,
+				},
+			})
 
 			data, err := d.HoverAtPos("test.tf", tc.pos)
 			if err != nil {

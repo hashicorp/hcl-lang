@@ -12,7 +12,7 @@ import (
 
 // ReferenceOriginAtPos returns the ReferenceOrigin
 // enclosing the position in a file, if one exists, else nil
-func (d *Decoder) ReferenceOriginAtPos(filename string, pos hcl.Pos) (*lang.ReferenceOrigin, error) {
+func (d *PathDecoder) ReferenceOriginAtPos(filename string, pos hcl.Pos) (*lang.ReferenceOrigin, error) {
 	// TODO: Filter d.refOriginReader instead here
 
 	f, err := d.fileByName(filename)
@@ -25,37 +25,32 @@ func (d *Decoder) ReferenceOriginAtPos(filename string, pos hcl.Pos) (*lang.Refe
 		return nil, err
 	}
 
-	d.rootSchemaMu.RLock()
-	defer d.rootSchemaMu.RUnlock()
-	if d.rootSchema == nil {
+	if d.pathCtx.Schema == nil {
 		return nil, &NoSchemaError{}
 	}
 
-	return d.referenceOriginAtPos(rootBody, d.rootSchema, pos)
+	return d.referenceOriginAtPos(rootBody, d.pathCtx.Schema, pos)
 }
 
-func (d *Decoder) ReferenceOriginsTargeting(refTarget lang.ReferenceTarget) (lang.ReferenceOrigins, error) {
-	if d.refOriginReader == nil {
+func (d *PathDecoder) ReferenceOriginsTargeting(refTarget lang.ReferenceTarget) (lang.ReferenceOrigins, error) {
+	if d.pathCtx.ReferenceOrigins == nil {
 		return nil, nil
 	}
 
-	allOrigins := ReferenceOrigins(d.refOriginReader())
+	allOrigins := ReferenceOrigins(d.pathCtx.ReferenceOrigins)
 
 	return allOrigins.Targeting(refTarget), nil
 }
 
-func (d *Decoder) CollectReferenceOrigins() (lang.ReferenceOrigins, error) {
+func (d *PathDecoder) CollectReferenceOrigins() (lang.ReferenceOrigins, error) {
 	refOrigins := make(lang.ReferenceOrigins, 0)
 
-	d.rootSchemaMu.RLock()
-	defer d.rootSchemaMu.RUnlock()
-
-	if d.rootSchema == nil {
+	if d.pathCtx.Schema == nil {
 		// unable to collect reference origins without schema
 		return refOrigins, &NoSchemaError{}
 	}
 
-	files := d.Filenames()
+	files := d.filenames()
 	for _, filename := range files {
 		f, err := d.fileByName(filename)
 		if err != nil {
@@ -63,7 +58,7 @@ func (d *Decoder) CollectReferenceOrigins() (lang.ReferenceOrigins, error) {
 			continue
 		}
 
-		refOrigins = append(refOrigins, d.referenceOriginsInBody(f.Body, d.rootSchema)...)
+		refOrigins = append(refOrigins, d.referenceOriginsInBody(f.Body, d.pathCtx.Schema)...)
 	}
 
 	sort.SliceStable(refOrigins, func(i, j int) bool {
@@ -74,7 +69,7 @@ func (d *Decoder) CollectReferenceOrigins() (lang.ReferenceOrigins, error) {
 	return refOrigins, nil
 }
 
-func (d *Decoder) referenceOriginsInBody(body hcl.Body, bodySchema *schema.BodySchema) lang.ReferenceOrigins {
+func (d *PathDecoder) referenceOriginsInBody(body hcl.Body, bodySchema *schema.BodySchema) lang.ReferenceOrigins {
 	origins := make(lang.ReferenceOrigins, 0)
 
 	if bodySchema == nil {
@@ -114,7 +109,7 @@ func (d *Decoder) referenceOriginsInBody(body hcl.Body, bodySchema *schema.BodyS
 	return origins
 }
 
-func (d *Decoder) findOriginsInExpression(expr hcl.Expression, ec schema.ExprConstraints) lang.ReferenceOrigins {
+func (d *PathDecoder) findOriginsInExpression(expr hcl.Expression, ec schema.ExprConstraints) lang.ReferenceOrigins {
 	origins := make(lang.ReferenceOrigins, 0)
 
 	switch eType := expr.(type) {
@@ -232,7 +227,7 @@ func traversalsToReferenceOrigins(traversals []hcl.Traversal, tes schema.Travers
 	return origins
 }
 
-func (d *Decoder) referenceOriginAtPos(body *hclsyntax.Body, bodySchema *schema.BodySchema, pos hcl.Pos) (*lang.ReferenceOrigin, error) {
+func (d *PathDecoder) referenceOriginAtPos(body *hclsyntax.Body, bodySchema *schema.BodySchema, pos hcl.Pos) (*lang.ReferenceOrigin, error) {
 	for _, attr := range body.Attributes {
 		if d.isPosInsideAttrExpr(attr, pos) {
 			aSchema, ok := bodySchema.Attributes[attr.Name]
@@ -276,7 +271,7 @@ func (d *Decoder) referenceOriginAtPos(body *hclsyntax.Body, bodySchema *schema.
 	return nil, nil
 }
 
-func (d *Decoder) traversalAtPos(expr hclsyntax.Expression, pos hcl.Pos) (hcl.Traversal, bool) {
+func (d *PathDecoder) traversalAtPos(expr hclsyntax.Expression, pos hcl.Pos) (hcl.Traversal, bool) {
 	for _, traversal := range expr.Variables() {
 		if traversal.SourceRange().ContainsPos(pos) {
 			return traversal, true

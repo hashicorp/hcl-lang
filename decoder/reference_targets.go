@@ -17,12 +17,12 @@ import (
 
 // ReferenceTargetForOrigin returns the first ReferenceTarget
 // with matching ReferenceOrigin Address, if one exists, else nil
-func (d *Decoder) ReferenceTargetForOrigin(refOrigin lang.ReferenceOrigin) (*lang.ReferenceTarget, error) {
-	if d.refTargetReader == nil {
+func (d *PathDecoder) ReferenceTargetForOrigin(refOrigin lang.ReferenceOrigin) (*lang.ReferenceTarget, error) {
+	if d.pathCtx.ReferenceTargets == nil {
 		return nil, nil
 	}
 
-	allTargets := ReferenceTargets(d.refTargetReader())
+	allTargets := ReferenceTargets(d.pathCtx.ReferenceTargets)
 
 	ref, err := allTargets.FirstTargetableBy(refOrigin)
 	if err != nil {
@@ -35,12 +35,12 @@ func (d *Decoder) ReferenceTargetForOrigin(refOrigin lang.ReferenceOrigin) (*lan
 	return &ref, nil
 }
 
-func (d *Decoder) ReferenceTargetsInFile(file string) (lang.ReferenceTargets, error) {
-	if d.refTargetReader == nil {
+func (d *PathDecoder) ReferenceTargetsInFile(file string) (lang.ReferenceTargets, error) {
+	if d.pathCtx.ReferenceTargets == nil {
 		return nil, nil
 	}
 
-	allTargets := ReferenceTargets(d.refTargetReader())
+	allTargets := ReferenceTargets(d.pathCtx.ReferenceTargets)
 
 	targets := make(lang.ReferenceTargets, 0)
 
@@ -62,12 +62,12 @@ func (d *Decoder) ReferenceTargetsInFile(file string) (lang.ReferenceTargets, er
 	return targets, nil
 }
 
-func (d *Decoder) OutermostReferenceTargetsAtPos(file string, pos hcl.Pos) (lang.ReferenceTargets, error) {
-	if d.refTargetReader == nil {
+func (d *PathDecoder) OutermostReferenceTargetsAtPos(file string, pos hcl.Pos) (lang.ReferenceTargets, error) {
+	if d.pathCtx.ReferenceTargets == nil {
 		return nil, nil
 	}
 
-	allTargets := ReferenceTargets(d.refTargetReader())
+	allTargets := ReferenceTargets(d.pathCtx.ReferenceTargets)
 
 	matchingTargets := make(lang.ReferenceTargets, 0)
 	for _, target := range allTargets {
@@ -85,17 +85,17 @@ func (d *Decoder) OutermostReferenceTargetsAtPos(file string, pos hcl.Pos) (lang
 	return matchingTargets, nil
 }
 
-func (d *Decoder) InnermostReferenceTargetsAtPos(file string, pos hcl.Pos) (lang.ReferenceTargets, error) {
-	if d.refTargetReader == nil {
+func (d *PathDecoder) InnermostReferenceTargetsAtPos(file string, pos hcl.Pos) (lang.ReferenceTargets, error) {
+	if d.pathCtx.ReferenceTargets == nil {
 		return nil, nil
 	}
 
-	targets, _ := d.innermostReferenceTargetsAtPos(d.refTargetReader(), file, pos)
+	targets, _ := d.innermostReferenceTargetsAtPos(d.pathCtx.ReferenceTargets, file, pos)
 
 	return targets, nil
 }
 
-func (d *Decoder) innermostReferenceTargetsAtPos(targets lang.ReferenceTargets, file string, pos hcl.Pos) (lang.ReferenceTargets, bool) {
+func (d *PathDecoder) innermostReferenceTargetsAtPos(targets lang.ReferenceTargets, file string, pos hcl.Pos) (lang.ReferenceTargets, bool) {
 	allTargets := ReferenceTargets(targets)
 
 	matchingTargets := make(lang.ReferenceTargets, 0)
@@ -300,29 +300,27 @@ func (a Address) FirstSteps(steps uint) Address {
 	return a[0:steps]
 }
 
-func (d *Decoder) CollectReferenceTargets() (lang.ReferenceTargets, error) {
-	d.rootSchemaMu.RLock()
-	defer d.rootSchemaMu.RUnlock()
-	if d.rootSchema == nil {
+func (d *PathDecoder) CollectReferenceTargets() (lang.ReferenceTargets, error) {
+	if d.pathCtx.Schema == nil {
 		// unable to collect reference targets without schema
 		return nil, &NoSchemaError{}
 	}
 
 	refs := make(lang.ReferenceTargets, 0)
-	files := d.Filenames()
+	files := d.filenames()
 	for _, filename := range files {
 		f, err := d.fileByName(filename)
 		if err != nil {
 			// skip unparseable file
 			continue
 		}
-		refs = append(refs, d.decodeReferenceTargetsForBody(f.Body, nil, d.rootSchema)...)
+		refs = append(refs, d.decodeReferenceTargetsForBody(f.Body, nil, d.pathCtx.Schema)...)
 	}
 
 	return refs, nil
 }
 
-func (d *Decoder) decodeReferenceTargetsForBody(body hcl.Body, parentBlock *blockContent, bodySchema *schema.BodySchema) lang.ReferenceTargets {
+func (d *PathDecoder) decodeReferenceTargetsForBody(body hcl.Body, parentBlock *blockContent, bodySchema *schema.BodySchema) lang.ReferenceTargets {
 	refs := make(lang.ReferenceTargets, 0)
 
 	if bodySchema == nil {
@@ -865,7 +863,7 @@ func bodySchemaAsAttrTypes(bodySchema *schema.BodySchema) map[string]cty.Type {
 	return attrTypes
 }
 
-func (d *Decoder) collectInferredReferenceTargetsForBody(addr lang.Address, scopeId lang.ScopeId, body hcl.Body, bodySchema *schema.BodySchema) lang.ReferenceTargets {
+func (d *PathDecoder) collectInferredReferenceTargetsForBody(addr lang.Address, scopeId lang.ScopeId, body hcl.Body, bodySchema *schema.BodySchema) lang.ReferenceTargets {
 	refs := make(lang.ReferenceTargets, 0)
 
 	content := decodeBody(body, bodySchema)
@@ -1109,7 +1107,7 @@ func blocksTypesWithSchema(body hcl.Body, bodySchema *schema.BodySchema) blockTy
 	return blockTypes
 }
 
-func (d *Decoder) bytesInRange(rng hcl.Range) ([]byte, error) {
+func (d *PathDecoder) bytesInRange(rng hcl.Range) ([]byte, error) {
 	f, err := d.fileByName(rng.Filename)
 	if err != nil {
 		return nil, err

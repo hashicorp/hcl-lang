@@ -12,7 +12,7 @@ import (
 	"github.com/hashicorp/hcl/v2/hclsyntax"
 )
 
-func (d *Decoder) labelCandidatesFromDependentSchema(idx int, db map[schema.SchemaKey]*schema.BodySchema, prefixRng, editRng hcl.Range, block *hclsyntax.Block, labelSchemas []*schema.LabelSchema) (lang.Candidates, error) {
+func (d *PathDecoder) labelCandidatesFromDependentSchema(idx int, db map[schema.SchemaKey]*schema.BodySchema, prefixRng, editRng hcl.Range, block *hclsyntax.Block, labelSchemas []*schema.LabelSchema) (lang.Candidates, error) {
 	candidates := lang.NewCandidates()
 	candidates.IsComplete = true
 	count := 0

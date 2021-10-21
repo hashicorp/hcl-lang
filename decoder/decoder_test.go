@@ -1,6 +1,7 @@
 package decoder
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
@@ -12,29 +13,42 @@ import (
 	"github.com/zclconf/go-cty/cty"
 )
 
-func TestDecoder_LoadFile_nilFile(t *testing.T) {
-	d := NewDecoder()
-	err := d.LoadFile("test.tf", nil)
-	if err == nil {
-		t.Fatal("expected error for nil file")
-	}
-	if diff := cmp.Diff(`test.tf: invalid content provided`, err.Error()); diff != "" {
-		t.Fatalf("unexpected error: %s", diff)
-	}
+type testPathReader struct {
+	paths map[string]*PathContext
 }
 
-func TestDecoder_LoadFile_nilRootBody(t *testing.T) {
-	d := NewDecoder()
-	f := &hcl.File{
-		Body: nil,
+func (r *testPathReader) Paths(ctx context.Context) []lang.Path {
+	paths := make([]lang.Path, len(r.paths))
+
+	i := 0
+	for path := range r.paths {
+		paths[i] = lang.Path{Path: path}
+		i++
 	}
-	err := d.LoadFile("test.tf", f)
-	if err == nil {
-		t.Fatal("expected error for nil body")
+
+	return paths
+}
+
+func (r *testPathReader) PathContext(path lang.Path) (*PathContext, error) {
+	return r.paths[path.Path], nil
+}
+
+func testPathDecoder(t *testing.T, pathCtx *PathContext) *PathDecoder {
+	dirPath := t.TempDir()
+	dirs := map[string]*PathContext{
+		dirPath: pathCtx,
 	}
-	if diff := cmp.Diff(`test.tf: file has no body`, err.Error()); diff != "" {
-		t.Fatalf("unexpected error: %s", diff)
+
+	d := NewDecoder(&testPathReader{
+		paths: dirs,
+	})
+
+	pathDecoder, err := d.Path(lang.Path{Path: dirPath})
+	if err != nil {
+		t.Fatal(err)
 	}
+
+	return pathDecoder
 }
 
 func TestTraversalToAddress(t *testing.T) {

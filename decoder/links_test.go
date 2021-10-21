@@ -59,17 +59,17 @@ func TestLinksInFile(t *testing.T) {
 }
 `)
 
-	d := NewDecoder()
 	f, pDiags := hclsyntax.ParseConfig(testConfig, "test.tf", hcl.InitialPos)
 	if len(pDiags) > 0 {
 		t.Fatal(pDiags)
 	}
-	err := d.LoadFile("test.tf", f)
-	if err != nil {
-		t.Fatal(err)
-	}
 
-	d.SetSchema(bodySchema)
+	d := testPathDecoder(t, &PathContext{
+		Schema: bodySchema,
+		Files: map[string]*hcl.File{
+			"test.tf": f,
+		},
+	})
 
 	links, err := d.LinksInFile("test.tf")
 	if err != nil {
@@ -102,7 +102,6 @@ func TestLinksInFile(t *testing.T) {
 }
 
 func TestLinksInFile_json(t *testing.T) {
-	d := NewDecoder()
 	f, pDiags := json.Parse([]byte(`{
 	"customblock": {
 		"label1": {}
@@ -111,12 +110,14 @@ func TestLinksInFile_json(t *testing.T) {
 	if len(pDiags) > 0 {
 		t.Fatal(pDiags)
 	}
-	err := d.LoadFile("test.tf.json", f)
-	if err != nil {
-		t.Fatal(err)
-	}
 
-	_, err = d.LinksInFile("test.tf.json")
+	d := testPathDecoder(t, &PathContext{
+		Files: map[string]*hcl.File{
+			"test.tf.json": f,
+		},
+	})
+
+	_, err := d.LinksInFile("test.tf.json")
 	unknownFormatErr := &UnknownFileFormatError{}
 	if !errors.As(err, &unknownFormatErr) {
 		t.Fatal("expected UnknownFileFormatError for JSON body")

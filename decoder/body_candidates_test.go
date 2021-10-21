@@ -30,19 +30,18 @@ func TestDecoder_CandidateAtPos_incompleteAttributes(t *testing.T) {
 		},
 	}
 
-	d := NewDecoder()
-	d.maxCandidates = 1
-
-	d.SetSchema(bodySchema)
-
 	f, _ := hclsyntax.ParseConfig([]byte(`customblock "label1" {
   attr
 }
 `), "test.tf", hcl.InitialPos)
-	err := d.LoadFile("test.tf", f)
-	if err != nil {
-		t.Fatal(err)
-	}
+
+	d := testPathDecoder(t, &PathContext{
+		Schema: bodySchema,
+		Files: map[string]*hcl.File{
+			"test.tf": f,
+		},
+	})
+	d.maxCandidates = 1
 
 	candidates, err := d.CandidatesAtPos("test.tf", hcl.Pos{
 		Line:   2,
@@ -103,17 +102,16 @@ func TestDecoder_CandidateAtPos_computedAttributes(t *testing.T) {
 		},
 	}
 
-	d := NewDecoder()
-	d.SetSchema(bodySchema)
-
 	f, _ := hclsyntax.ParseConfig([]byte(`customblock "label1" {
   attr
 }
 `), "test.tf", hcl.InitialPos)
-	err := d.LoadFile("test.tf", f)
-	if err != nil {
-		t.Fatal(err)
-	}
+	d := testPathDecoder(t, &PathContext{
+		Schema: bodySchema,
+		Files: map[string]*hcl.File{
+			"test.tf": f,
+		},
+	})
 
 	candidates, err := d.CandidatesAtPos("test.tf", hcl.Pos{
 		Line:   2,
@@ -175,20 +173,18 @@ func TestDecoder_CandidateAtPos_incompleteBlocks(t *testing.T) {
 		},
 	}
 
-	d := NewDecoder()
-	d.maxCandidates = 1
-
-	d.SetSchema(bodySchema)
-
 	f, _ := hclsyntax.ParseConfig([]byte(`customblock "label1" {
   block1 {}
   block
 }
 `), "test.tf", hcl.InitialPos)
-	err := d.LoadFile("test.tf", f)
-	if err != nil {
-		t.Fatal(err)
-	}
+	d := testPathDecoder(t, &PathContext{
+		Schema: bodySchema,
+		Files: map[string]*hcl.File{
+			"test.tf": f,
+		},
+	})
+	d.maxCandidates = 1
 
 	candidates, err := d.CandidatesAtPos("test.tf", hcl.Pos{
 		Line:   3,
@@ -252,14 +248,15 @@ func TestDecoder_CandidateAtPos_duplicateNames(t *testing.T) {
 			},
 		},
 	}
-	d := NewDecoder()
-	d.SetSchema(bodySchema)
 
 	f, _ := hclsyntax.ParseConfig([]byte("\n"), "test.tf", hcl.InitialPos)
-	err := d.LoadFile("test.tf", f)
-	if err != nil {
-		t.Fatal(err)
-	}
+
+	d := testPathDecoder(t, &PathContext{
+		Schema: bodySchema,
+		Files: map[string]*hcl.File{
+			"test.tf": f,
+		},
+	})
 
 	candidates, err := d.CandidatesAtPos("test.tf", hcl.InitialPos)
 	if err != nil {

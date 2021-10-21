@@ -919,17 +919,17 @@ func TestCollectReferenceOrigins_json(t *testing.T) {
 	}
 	for i, tc := range testCases {
 		t.Run(fmt.Sprintf("%d/%s", i, tc.name), func(t *testing.T) {
-			d := NewDecoder()
-			d.SetSchema(tc.schema)
-
 			f, diags := json.Parse([]byte(tc.cfg), "test.tf.json")
 			if len(diags) > 0 {
 				t.Fatal(diags)
 			}
-			err := d.LoadFile("test.tf.json", f)
-			if err != nil {
-				t.Fatal(err)
-			}
+
+			d := testPathDecoder(t, &PathContext{
+				Schema: tc.schema,
+				Files: map[string]*hcl.File{
+					"test.tf.json": f,
+				},
+			})
 
 			origins, err := d.CollectReferenceOrigins()
 			if err != nil {

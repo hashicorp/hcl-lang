@@ -12,7 +12,7 @@ import (
 	"github.com/zclconf/go-cty/cty"
 )
 
-func (d *Decoder) HoverAtPos(filename string, pos hcl.Pos) (*lang.HoverData, error) {
+func (d *PathDecoder) HoverAtPos(filename string, pos hcl.Pos) (*lang.HoverData, error) {
 	f, err := d.fileByName(filename)
 	if err != nil {
 		return nil, err
@@ -23,14 +23,11 @@ func (d *Decoder) HoverAtPos(filename string, pos hcl.Pos) (*lang.HoverData, err
 		return nil, err
 	}
 
-	d.rootSchemaMu.RLock()
-	defer d.rootSchemaMu.RUnlock()
-
-	if d.rootSchema == nil {
+	if d.pathCtx.Schema == nil {
 		return nil, &NoSchemaError{}
 	}
 
-	data, err := d.hoverAtPos(rootBody, d.rootSchema, pos)
+	data, err := d.hoverAtPos(rootBody, d.pathCtx.Schema, pos)
 	if err != nil {
 		return nil, err
 	}
@@ -38,7 +35,7 @@ func (d *Decoder) HoverAtPos(filename string, pos hcl.Pos) (*lang.HoverData, err
 	return data, nil
 }
 
-func (d *Decoder) hoverAtPos(body *hclsyntax.Body, bodySchema *schema.BodySchema, pos hcl.Pos) (*lang.HoverData, error) {
+func (d *PathDecoder) hoverAtPos(body *hclsyntax.Body, bodySchema *schema.BodySchema, pos hcl.Pos) (*lang.HoverData, error) {
 	if bodySchema == nil {
 		return nil, nil
 	}
@@ -143,7 +140,7 @@ func (d *Decoder) hoverAtPos(body *hclsyntax.Body, bodySchema *schema.BodySchema
 	}
 }
 
-func (d *Decoder) hoverContentForLabel(i int, block *hclsyntax.Block, bSchema *schema.BlockSchema) lang.MarkupContent {
+func (d *PathDecoder) hoverContentForLabel(i int, block *hclsyntax.Block, bSchema *schema.BlockSchema) lang.MarkupContent {
 	value := block.Labels[i]
 	labelSchema := bSchema.Labels[i]
 
@@ -197,7 +194,7 @@ func hoverContentForAttribute(name string, schema *schema.AttributeSchema) lang.
 	}
 }
 
-func (d *Decoder) hoverContentForBlock(bType string, schema *schema.BlockSchema) lang.MarkupContent {
+func (d *PathDecoder) hoverContentForBlock(bType string, schema *schema.BlockSchema) lang.MarkupContent {
 	value := fmt.Sprintf("**%s** _%s_", bType, detailForBlock(schema))
 	if schema.Description.Value != "" {
 		value += fmt.Sprintf("\n\n%s", schema.Description.Value)
@@ -217,7 +214,7 @@ func (d *Decoder) hoverContentForBlock(bType string, schema *schema.BlockSchema)
 	}
 }
 
-func (d *Decoder) hoverDataForExpr(expr hcl.Expression, constraints ExprConstraints, nestingLvl int, pos hcl.Pos) (*lang.HoverData, error) {
+func (d *PathDecoder) hoverDataForExpr(expr hcl.Expression, constraints ExprConstraints, nestingLvl int, pos hcl.Pos) (*lang.HoverData, error) {
 	switch e := expr.(type) {
 	case *hclsyntax.ScopeTraversalExpr:
 		kw, ok := constraints.KeywordExpr()
@@ -471,7 +468,7 @@ func (d *Decoder) hoverDataForExpr(expr hcl.Expression, constraints ExprConstrai
 	return nil, fmt.Errorf("unsupported expression (%T)", expr)
 }
 
-func (d *Decoder) hoverDataForObjectExpr(objExpr *hclsyntax.ObjectConsExpr, oe schema.ObjectExpr, nestingLvl int, pos hcl.Pos) (*lang.HoverData, error) {
+func (d *PathDecoder) hoverDataForObjectExpr(objExpr *hclsyntax.ObjectConsExpr, oe schema.ObjectExpr, nestingLvl int, pos hcl.Pos) (*lang.HoverData, error) {
 	declaredAttributes := make(map[string]hclsyntax.Expression, 0)
 	for _, item := range objExpr.Items {
 		key, _ := item.KeyExpr.Value(nil)
@@ -595,12 +592,12 @@ func stringValFromTemplateExpr(tplExpr *hclsyntax.TemplateExpr) (cty.Value, bool
 	return cty.StringVal(value), true
 }
 
-func (d *Decoder) hoverContentForTraversalExpr(traversal hcl.Traversal, tes []schema.TraversalExpr) (string, error) {
-	if d.refTargetReader == nil {
+func (d *PathDecoder) hoverContentForTraversalExpr(traversal hcl.Traversal, tes []schema.TraversalExpr) (string, error) {
+	if d.pathCtx.ReferenceTargets == nil {
 		return "", &NoRefTargetFound{}
 	}
 
-	allTargets := ReferenceTargets(d.refTargetReader())
+	allTargets := ReferenceTargets(d.pathCtx.ReferenceTargets)
 
 	origin, err := TraversalToReferenceOrigin(traversal, tes)
 	if err != nil {

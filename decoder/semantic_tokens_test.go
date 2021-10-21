@@ -14,16 +14,16 @@ import (
 )
 
 func TestDecoder_SemanticTokensInFile_emptyBody(t *testing.T) {
-	d := NewDecoder()
 	f := &hcl.File{
 		Body: hcl.EmptyBody(),
 	}
-	err := d.LoadFile("test.tf", f)
-	if err != nil {
-		t.Fatal(err)
-	}
+	d := testPathDecoder(t, &PathContext{
+		Files: map[string]*hcl.File{
+			"test.tf": f,
+		},
+	})
 
-	_, err = d.SemanticTokensInFile("test.tf")
+	_, err := d.SemanticTokensInFile("test.tf")
 	unknownFormatErr := &UnknownFileFormatError{}
 	if !errors.As(err, &unknownFormatErr) {
 		t.Fatal("expected UnknownFileFormatError for empty body")
@@ -31,7 +31,6 @@ func TestDecoder_SemanticTokensInFile_emptyBody(t *testing.T) {
 }
 
 func TestDecoder_SemanticTokensInFile_json(t *testing.T) {
-	d := NewDecoder()
 	f, pDiags := json.Parse([]byte(`{
 	"customblock": {
 		"label1": {}
@@ -40,12 +39,14 @@ func TestDecoder_SemanticTokensInFile_json(t *testing.T) {
 	if len(pDiags) > 0 {
 		t.Fatal(pDiags)
 	}
-	err := d.LoadFile("test.tf.json", f)
-	if err != nil {
-		t.Fatal(err)
-	}
 
-	_, err = d.SemanticTokensInFile("test.tf.json")
+	d := testPathDecoder(t, &PathContext{
+		Files: map[string]*hcl.File{
+			"test.tf.json": f,
+		},
+	})
+
+	_, err := d.SemanticTokensInFile("test.tf.json")
 	unknownFormatErr := &UnknownFileFormatError{}
 	if !errors.As(err, &unknownFormatErr) {
 		t.Fatal("expected UnknownFileFormatError for JSON body")
@@ -53,15 +54,16 @@ func TestDecoder_SemanticTokensInFile_json(t *testing.T) {
 }
 
 func TestDecoder_SemanticTokensInFile_zeroByteContent(t *testing.T) {
-	d := NewDecoder()
 	f, pDiags := hclsyntax.ParseConfig([]byte{}, "test.tf", hcl.InitialPos)
 	if len(pDiags) > 0 {
 		t.Fatal(pDiags)
 	}
-	err := d.LoadFile("test.tf", f)
-	if err != nil {
-		t.Fatal(err)
-	}
+
+	d := testPathDecoder(t, &PathContext{
+		Files: map[string]*hcl.File{
+			"test.tf": f,
+		},
+	})
 
 	tokens, err := d.SemanticTokensInFile("test.tf")
 	if err != nil {
@@ -74,17 +76,18 @@ func TestDecoder_SemanticTokensInFile_zeroByteContent(t *testing.T) {
 }
 
 func TestDecoder_SemanticTokensInFile_fileNotFound(t *testing.T) {
-	d := NewDecoder()
 	f, pDiags := hclsyntax.ParseConfig([]byte{}, "test.tf", hcl.InitialPos)
 	if len(pDiags) > 0 {
 		t.Fatal(pDiags)
 	}
-	err := d.LoadFile("test.tf", f)
-	if err != nil {
-		t.Fatal(err)
-	}
 
-	_, err = d.SemanticTokensInFile("foobar.tf")
+	d := testPathDecoder(t, &PathContext{
+		Files: map[string]*hcl.File{
+			"test.tf": f,
+		},
+	})
+
+	_, err := d.SemanticTokensInFile("foobar.tf")
 	notFoundErr := &FileNotFoundError{}
 	if !errors.As(err, &notFoundErr) {
 		t.Fatal("expected FileNotFoundError for non-existent file")
@@ -92,8 +95,7 @@ func TestDecoder_SemanticTokensInFile_fileNotFound(t *testing.T) {
 }
 
 func TestDecoder_SemanticTokensInFile_basic(t *testing.T) {
-	d := NewDecoder()
-	d.SetSchema(&schema.BodySchema{
+	bodySchema := &schema.BodySchema{
 		Blocks: map[string]*schema.BlockSchema{
 			"module": {
 				Body: &schema.BodySchema{
@@ -115,7 +117,7 @@ func TestDecoder_SemanticTokensInFile_basic(t *testing.T) {
 				},
 			},
 		},
-	})
+	}
 
 	testCfg := []byte(`module "ref" {
   source = "./sub"
@@ -130,10 +132,13 @@ resource "vault_auth_backend" "blah" {
 	if len(pDiags) > 0 {
 		t.Fatal(pDiags)
 	}
-	err := d.LoadFile("test.tf", f)
-	if err != nil {
-		t.Fatal(err)
-	}
+
+	d := testPathDecoder(t, &PathContext{
+		Schema: bodySchema,
+		Files: map[string]*hcl.File{
+			"test.tf": f,
+		},
+	})
 
 	tokens, err := d.SemanticTokensInFile("test.tf")
 	if err != nil {
@@ -290,8 +295,7 @@ resource "vault_auth_backend" "blah" {
 }
 
 func TestDecoder_SemanticTokensInFile_dependentSchema(t *testing.T) {
-	d := NewDecoder()
-	d.SetSchema(&schema.BodySchema{
+	bodySchema := &schema.BodySchema{
 		Blocks: map[string]*schema.BlockSchema{
 			"resource": {
 				Labels: []*schema.LabelSchema{
@@ -319,7 +323,7 @@ func TestDecoder_SemanticTokensInFile_dependentSchema(t *testing.T) {
 				},
 			},
 		},
-	})
+	}
 
 	testCfg := []byte(`resource "vault_auth_backend" "alpha" {
   default_lease_ttl_seconds = 1
@@ -334,10 +338,13 @@ resource "aws_instance" "beta" {
 	if len(pDiags) > 0 {
 		t.Fatal(pDiags)
 	}
-	err := d.LoadFile("test.tf", f)
-	if err != nil {
-		t.Fatal(err)
-	}
+
+	d := testPathDecoder(t, &PathContext{
+		Schema: bodySchema,
+		Files: map[string]*hcl.File{
+			"test.tf": f,
+		},
+	})
 
 	tokens, err := d.SemanticTokensInFile("test.tf")
 	if err != nil {
@@ -532,8 +539,7 @@ resource "aws_instance" "beta" {
 }
 
 func TestDecoder_SemanticTokensInFile_typeDeclaration(t *testing.T) {
-	d := NewDecoder()
-	d.SetSchema(&schema.BodySchema{
+	bodySchema := &schema.BodySchema{
 		Blocks: map[string]*schema.BlockSchema{
 			"variable": {
 				Labels: []*schema.LabelSchema{
@@ -548,7 +554,7 @@ func TestDecoder_SemanticTokensInFile_typeDeclaration(t *testing.T) {
 				},
 			},
 		},
-	})
+	}
 
 	testCfg := []byte(`variable "meh" {
 	type = string 
@@ -568,10 +574,13 @@ variable "bah" {
 	if len(pDiags) > 0 {
 		t.Fatal(pDiags)
 	}
-	err := d.LoadFile("test.tf", f)
-	if err != nil {
-		t.Fatal(err)
-	}
+
+	d := testPathDecoder(t, &PathContext{
+		Schema: bodySchema,
+		Files: map[string]*hcl.File{
+			"test.tf": f,
+		},
+	})
 
 	tokens, err := d.SemanticTokensInFile("test.tf")
 	if err != nil {

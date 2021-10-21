@@ -11,7 +11,7 @@ import (
 )
 
 // bodySchemaCandidates returns candidates for completion of fields inside a body or block.
-func (d *Decoder) bodySchemaCandidates(body *hclsyntax.Body, schema *schema.BodySchema, prefixRng, editRng hcl.Range) lang.Candidates {
+func (d *PathDecoder) bodySchemaCandidates(body *hclsyntax.Body, schema *schema.BodySchema, prefixRng, editRng hcl.Range) lang.Candidates {
 	prefix, _ := d.bytesFromRange(prefixRng)
 
 	candidates := lang.NewCandidates()

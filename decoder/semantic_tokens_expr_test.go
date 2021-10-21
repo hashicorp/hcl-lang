@@ -1434,19 +1434,21 @@ EOT
 
 	for i, tc := range testCases {
 		t.Run(fmt.Sprintf("%d-%s", i, tc.name), func(t *testing.T) {
-			d := NewDecoder()
-			d.SetSchema(&schema.BodySchema{
+			bodySchema := &schema.BodySchema{
 				Attributes: tc.attrSchema,
-			})
+			}
 
 			f, pDiags := hclsyntax.ParseConfig([]byte(tc.cfg), "test.tf", hcl.InitialPos)
 			if len(pDiags) > 0 {
 				t.Fatal(pDiags)
 			}
-			err := d.LoadFile("test.tf", f)
-			if err != nil {
-				t.Fatal(err)
-			}
+
+			d := testPathDecoder(t, &PathContext{
+				Schema: bodySchema,
+				Files: map[string]*hcl.File{
+					"test.tf": f,
+				},
+			})
 
 			tokens, err := d.SemanticTokensInFile("test.tf")
 			if err != nil {
@@ -1911,22 +1913,22 @@ func TestDecoder_SemanticTokensInFile_traversalExpression(t *testing.T) {
 
 	for i, tc := range testCases {
 		t.Run(fmt.Sprintf("%d-%s", i, tc.name), func(t *testing.T) {
-			d := NewDecoder()
-			d.SetSchema(&schema.BodySchema{
+			bodySchema := &schema.BodySchema{
 				Attributes: tc.attrSchema,
-			})
-			d.SetReferenceTargetReader(func() lang.ReferenceTargets {
-				return tc.refs
-			})
+			}
 
 			f, pDiags := hclsyntax.ParseConfig([]byte(tc.cfg), "test.tf", hcl.InitialPos)
 			if len(pDiags) > 0 {
 				t.Fatal(pDiags)
 			}
-			err := d.LoadFile("test.tf", f)
-			if err != nil {
-				t.Fatal(err)
-			}
+
+			d := testPathDecoder(t, &PathContext{
+				Schema:           bodySchema,
+				ReferenceTargets: tc.refs,
+				Files: map[string]*hcl.File{
+					"test.tf": f,
+				},
+			})
 
 			tokens, err := d.SemanticTokensInFile("test.tf")
 			if err != nil {
