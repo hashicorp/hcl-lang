@@ -7,6 +7,7 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/hashicorp/hcl-lang/lang"
+	"github.com/hashicorp/hcl-lang/reference"
 	"github.com/hashicorp/hcl-lang/schema"
 	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hclsyntax"
@@ -1305,7 +1306,7 @@ func TestDecoder_HoverAtPos_traversalExpressions(t *testing.T) {
 	testCases := []struct {
 		name         string
 		attrSchema   map[string]*schema.AttributeSchema
-		refs         lang.ReferenceTargets
+		refs         reference.Targets
 		cfg          string
 		pos          hcl.Pos
 		expectedData *lang.HoverData
@@ -1320,11 +1321,11 @@ func TestDecoder_HoverAtPos_traversalExpressions(t *testing.T) {
 					},
 				},
 			},
-			lang.ReferenceTargets{},
+			reference.Targets{},
 			`attr = var.blah`,
 			hcl.Pos{Line: 1, Column: 10, Byte: 9},
 			nil,
-			&NoRefTargetFound{},
+			&reference.NoTargetFound{},
 		},
 		{
 			"known mismatching traversal",
@@ -1335,7 +1336,7 @@ func TestDecoder_HoverAtPos_traversalExpressions(t *testing.T) {
 					},
 				},
 			},
-			lang.ReferenceTargets{
+			reference.Targets{
 				{
 					Addr: lang.Address{
 						lang.RootStep{Name: "var"},
@@ -1347,7 +1348,7 @@ func TestDecoder_HoverAtPos_traversalExpressions(t *testing.T) {
 			`attr = var.blah`,
 			hcl.Pos{Line: 1, Column: 10, Byte: 9},
 			nil,
-			&NoRefTargetFound{},
+			&reference.NoTargetFound{},
 		},
 		{
 			"known type matching traversal",
@@ -1358,7 +1359,7 @@ func TestDecoder_HoverAtPos_traversalExpressions(t *testing.T) {
 					},
 				},
 			},
-			lang.ReferenceTargets{
+			reference.Targets{
 				{
 					Addr: lang.Address{
 						lang.RootStep{Name: "var"},
@@ -1396,7 +1397,7 @@ func TestDecoder_HoverAtPos_traversalExpressions(t *testing.T) {
 					},
 				},
 			},
-			lang.ReferenceTargets{
+			reference.Targets{
 				{
 					Addr: lang.Address{
 						lang.RootStep{Name: "var"},
@@ -1434,7 +1435,7 @@ func TestDecoder_HoverAtPos_traversalExpressions(t *testing.T) {
 					},
 				},
 			},
-			lang.ReferenceTargets{
+			reference.Targets{
 				{
 					Addr: lang.Address{
 						lang.RootStep{Name: "var"},

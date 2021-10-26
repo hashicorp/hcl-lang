@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/hashicorp/hcl-lang/lang"
+	"github.com/hashicorp/hcl-lang/reference"
 	"github.com/hashicorp/hcl-lang/schema"
 	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hclsyntax"
@@ -328,9 +329,7 @@ func (d *PathDecoder) candidatesForTraversalConstraint(tc schema.TraversalExpr, 
 
 	prefix, _ := d.bytesFromRange(prefixRng)
 
-	refs := ReferenceTargets(d.pathCtx.ReferenceTargets)
-
-	refs.MatchWalk(tc, string(prefix), func(ref lang.ReferenceTarget) error {
+	d.pathCtx.ReferenceTargets.MatchWalk(tc, string(prefix), func(ref reference.Target) error {
 		// avoid suggesting references to block's own fields from within (for now)
 		if ref.RangePtr != nil &&
 			(outerBodyRng.ContainsPos(ref.RangePtr.Start) ||

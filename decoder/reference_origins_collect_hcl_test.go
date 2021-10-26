@@ -6,6 +6,7 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/hashicorp/hcl-lang/lang"
+	"github.com/hashicorp/hcl-lang/reference"
 	"github.com/hashicorp/hcl-lang/schema"
 	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hclsyntax"
@@ -18,7 +19,7 @@ func TestCollectReferenceOrigins_hcl(t *testing.T) {
 		name            string
 		schema          *schema.BodySchema
 		cfg             string
-		expectedOrigins lang.ReferenceOrigins
+		expectedOrigins reference.Origins
 	}{
 		{
 			"no origins",
@@ -30,7 +31,7 @@ func TestCollectReferenceOrigins_hcl(t *testing.T) {
 				},
 			},
 			`attribute = "foo-bar"`,
-			lang.ReferenceOrigins{},
+			reference.Origins{},
 		},
 		{
 			"root attribute single step",
@@ -44,12 +45,12 @@ func TestCollectReferenceOrigins_hcl(t *testing.T) {
 				},
 			},
 			`attr = onestep`,
-			lang.ReferenceOrigins{
+			reference.Origins{
 				{
 					Addr: lang.Address{
 						lang.RootStep{Name: "onestep"},
 					},
-					Constraints: lang.ReferenceOriginConstraints{{}},
+					Constraints: reference.OriginConstraints{{}},
 					Range: hcl.Range{
 						Filename: "test.tf",
 						Start: hcl.Pos{
@@ -90,12 +91,12 @@ func TestCollectReferenceOrigins_hcl(t *testing.T) {
 			`attr1 = onestep
 attr2 = anotherstep
 attr3 = onestep`,
-			lang.ReferenceOrigins{
+			reference.Origins{
 				{
 					Addr: lang.Address{
 						lang.RootStep{Name: "onestep"},
 					},
-					Constraints: lang.ReferenceOriginConstraints{{}},
+					Constraints: reference.OriginConstraints{{}},
 					Range: hcl.Range{
 						Filename: "test.tf",
 						Start: hcl.Pos{
@@ -114,7 +115,7 @@ attr3 = onestep`,
 					Addr: lang.Address{
 						lang.RootStep{Name: "anotherstep"},
 					},
-					Constraints: lang.ReferenceOriginConstraints{{}},
+					Constraints: reference.OriginConstraints{{}},
 					Range: hcl.Range{
 						Filename: "test.tf",
 						Start: hcl.Pos{
@@ -133,7 +134,7 @@ attr3 = onestep`,
 					Addr: lang.Address{
 						lang.RootStep{Name: "onestep"},
 					},
-					Constraints: lang.ReferenceOriginConstraints{{}},
+					Constraints: reference.OriginConstraints{{}},
 					Range: hcl.Range{
 						Filename: "test.tf",
 						Start: hcl.Pos{
@@ -162,12 +163,12 @@ attr3 = onestep`,
 				},
 			},
 			`attr1 = "${onestep}-${onestep}-${another.foo.bar}"`,
-			lang.ReferenceOrigins{
+			reference.Origins{
 				{
 					Addr: lang.Address{
 						lang.RootStep{Name: "onestep"},
 					},
-					Constraints: lang.ReferenceOriginConstraints{{}},
+					Constraints: reference.OriginConstraints{{}},
 					Range: hcl.Range{
 						Filename: "test.tf",
 						Start: hcl.Pos{
@@ -186,7 +187,7 @@ attr3 = onestep`,
 					Addr: lang.Address{
 						lang.RootStep{Name: "onestep"},
 					},
-					Constraints: lang.ReferenceOriginConstraints{{}},
+					Constraints: reference.OriginConstraints{{}},
 					Range: hcl.Range{
 						Filename: "test.tf",
 						Start: hcl.Pos{
@@ -207,7 +208,7 @@ attr3 = onestep`,
 						lang.AttrStep{Name: "foo"},
 						lang.AttrStep{Name: "bar"},
 					},
-					Constraints: lang.ReferenceOriginConstraints{{}},
+					Constraints: reference.OriginConstraints{{}},
 					Range: hcl.Range{
 						Filename: "test.tf",
 						Start: hcl.Pos{
@@ -236,7 +237,7 @@ attr3 = onestep`,
 				},
 			},
 			`attr = one.two["key"].attr[0]`,
-			lang.ReferenceOrigins{
+			reference.Origins{
 				{
 					Addr: lang.Address{
 						lang.RootStep{Name: "one"},
@@ -245,7 +246,7 @@ attr3 = onestep`,
 						lang.AttrStep{Name: "attr"},
 						lang.IndexStep{Key: cty.NumberIntVal(0)},
 					},
-					Constraints: lang.ReferenceOriginConstraints{{}},
+					Constraints: reference.OriginConstraints{{}},
 					Range: hcl.Range{
 						Filename: "test.tf",
 						Start: hcl.Pos{
@@ -283,12 +284,12 @@ attr3 = onestep`,
   attr = onestep
 }
 `,
-			lang.ReferenceOrigins{
+			reference.Origins{
 				{
 					Addr: lang.Address{
 						lang.RootStep{Name: "onestep"},
 					},
-					Constraints: lang.ReferenceOriginConstraints{{}},
+					Constraints: reference.OriginConstraints{{}},
 					Range: hcl.Range{
 						Filename: "test.tf",
 						Start: hcl.Pos{
@@ -324,12 +325,12 @@ attr3 = onestep`,
   attr = onestep
 }
 `,
-			lang.ReferenceOrigins{
+			reference.Origins{
 				{
 					Addr: lang.Address{
 						lang.RootStep{Name: "onestep"},
 					},
-					Constraints: lang.ReferenceOriginConstraints{{}},
+					Constraints: reference.OriginConstraints{{}},
 					Range: hcl.Range{
 						Filename: "test.tf",
 						Start: hcl.Pos{
@@ -386,13 +387,13 @@ attr3 = onestep`,
   dep_attr = var.second
 }
 `,
-			lang.ReferenceOrigins{
+			reference.Origins{
 				{
 					Addr: lang.Address{
 						lang.RootStep{Name: "var"},
 						lang.AttrStep{Name: "first"},
 					},
-					Constraints: lang.ReferenceOriginConstraints{{}},
+					Constraints: reference.OriginConstraints{{}},
 					Range: hcl.Range{
 						Filename: "test.tf",
 						Start: hcl.Pos{
@@ -412,7 +413,7 @@ attr3 = onestep`,
 						lang.RootStep{Name: "var"},
 						lang.AttrStep{Name: "second"},
 					},
-					Constraints: lang.ReferenceOriginConstraints{{}},
+					Constraints: reference.OriginConstraints{{}},
 					Range: hcl.Range{
 						Filename: "test.tf",
 						Start: hcl.Pos{
@@ -469,13 +470,13 @@ attr3 = onestep`,
   dep_attr = var.second
 }
 `,
-			lang.ReferenceOrigins{
+			reference.Origins{
 				{
 					Addr: lang.Address{
 						lang.RootStep{Name: "var"},
 						lang.AttrStep{Name: "first"},
 					},
-					Constraints: lang.ReferenceOriginConstraints{{}},
+					Constraints: reference.OriginConstraints{{}},
 					Range: hcl.Range{
 						Filename: "test.tf",
 						Start: hcl.Pos{
@@ -537,7 +538,7 @@ attr3 = onestep`,
 set = [ var.second ]
 tuple = [ var.third ]
 `,
-			lang.ReferenceOrigins{
+			reference.Origins{
 				{
 					Addr: lang.Address{
 						lang.RootStep{Name: "var"},
@@ -556,7 +557,7 @@ tuple = [ var.third ]
 							Byte:   18,
 						},
 					},
-					Constraints: lang.ReferenceOriginConstraints{
+					Constraints: reference.OriginConstraints{
 						{OfScopeId: lang.ScopeId("test")},
 					},
 				},
@@ -578,7 +579,7 @@ tuple = [ var.third ]
 							Byte:   39,
 						},
 					},
-					Constraints: lang.ReferenceOriginConstraints{
+					Constraints: reference.OriginConstraints{
 						{OfScopeId: lang.ScopeId("test")},
 					},
 				},
@@ -600,7 +601,7 @@ tuple = [ var.third ]
 							Byte:   61,
 						},
 					},
-					Constraints: lang.ReferenceOriginConstraints{
+					Constraints: reference.OriginConstraints{
 						{OfScopeId: lang.ScopeId("test")},
 					},
 				},
@@ -630,7 +631,7 @@ tuple = [ var.third ]
 			`obj = {
   attr = var.first
 }`,
-			lang.ReferenceOrigins{
+			reference.Origins{
 				{
 					Addr: lang.Address{
 						lang.RootStep{Name: "var"},
@@ -649,7 +650,7 @@ tuple = [ var.third ]
 							Byte:   26,
 						},
 					},
-					Constraints: lang.ReferenceOriginConstraints{
+					Constraints: reference.OriginConstraints{
 						{OfScopeId: lang.ScopeId("test")},
 					},
 				},
@@ -675,7 +676,7 @@ tuple = [ var.third ]
 			`map = {
   key = var.first
 }`,
-			lang.ReferenceOrigins{
+			reference.Origins{
 				{
 					Addr: lang.Address{
 						lang.RootStep{Name: "var"},
@@ -694,7 +695,7 @@ tuple = [ var.third ]
 							Byte:   25,
 						},
 					},
-					Constraints: lang.ReferenceOriginConstraints{
+					Constraints: reference.OriginConstraints{
 						{OfScopeId: lang.ScopeId("test")},
 					},
 				},
@@ -718,7 +719,7 @@ tuple = [ var.third ]
 				},
 			},
 			`tuple_cons = [ var.one ]`,
-			lang.ReferenceOrigins{
+			reference.Origins{
 				{
 					Addr: lang.Address{
 						lang.RootStep{Name: "var"},
@@ -737,7 +738,7 @@ tuple = [ var.third ]
 							Byte:   22,
 						},
 					},
-					Constraints: lang.ReferenceOriginConstraints{
+					Constraints: reference.OriginConstraints{
 						{OfScopeId: lang.ScopeId("test")},
 					},
 				},
@@ -782,7 +783,7 @@ obj = {
   foo = var.two
 }
 `,
-			lang.ReferenceOrigins{
+			reference.Origins{
 				{
 					Addr: lang.Address{
 						lang.RootStep{Name: "var"},
@@ -801,7 +802,7 @@ obj = {
 							Byte:   23,
 						},
 					},
-					Constraints: lang.ReferenceOriginConstraints{
+					Constraints: reference.OriginConstraints{
 						{OfType: cty.String},
 					},
 				},
@@ -823,7 +824,7 @@ obj = {
 							Byte:   49,
 						},
 					},
-					Constraints: lang.ReferenceOriginConstraints{
+					Constraints: reference.OriginConstraints{
 						{OfType: cty.String},
 					},
 				},
@@ -871,7 +872,7 @@ obj = {
 set = [ var.two ]
 tup = [ var.three ]
 `,
-			lang.ReferenceOrigins{
+			reference.Origins{
 				{
 					Addr: lang.Address{
 						lang.RootStep{Name: "var"},
@@ -890,7 +891,7 @@ tup = [ var.three ]
 							Byte:   16,
 						},
 					},
-					Constraints: lang.ReferenceOriginConstraints{
+					Constraints: reference.OriginConstraints{
 						{OfType: cty.String},
 					},
 				},
@@ -912,7 +913,7 @@ tup = [ var.three ]
 							Byte:   34,
 						},
 					},
-					Constraints: lang.ReferenceOriginConstraints{
+					Constraints: reference.OriginConstraints{
 						{OfType: cty.String},
 					},
 				},
@@ -934,7 +935,7 @@ tup = [ var.three ]
 							Byte:   54,
 						},
 					},
-					Constraints: lang.ReferenceOriginConstraints{
+					Constraints: reference.OriginConstraints{
 						{OfType: cty.String},
 					},
 				},

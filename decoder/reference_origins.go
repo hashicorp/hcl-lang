@@ -4,6 +4,7 @@ import (
 	"sort"
 
 	"github.com/hashicorp/hcl-lang/lang"
+	"github.com/hashicorp/hcl-lang/reference"
 	"github.com/hashicorp/hcl-lang/schema"
 	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hclsyntax"
@@ -12,7 +13,7 @@ import (
 
 // ReferenceOriginAtPos returns the ReferenceOrigin
 // enclosing the position in a file, if one exists, else nil
-func (d *PathDecoder) ReferenceOriginAtPos(filename string, pos hcl.Pos) (*lang.ReferenceOrigin, error) {
+func (d *PathDecoder) ReferenceOriginAtPos(filename string, pos hcl.Pos) (*reference.Origin, error) {
 	// TODO: Filter d.refOriginReader instead here
 
 	f, err := d.fileByName(filename)
@@ -32,18 +33,12 @@ func (d *PathDecoder) ReferenceOriginAtPos(filename string, pos hcl.Pos) (*lang.
 	return d.referenceOriginAtPos(rootBody, d.pathCtx.Schema, pos)
 }
 
-func (d *PathDecoder) ReferenceOriginsTargeting(refTarget lang.ReferenceTarget) (lang.ReferenceOrigins, error) {
-	if d.pathCtx.ReferenceOrigins == nil {
-		return nil, nil
-	}
-
-	allOrigins := ReferenceOrigins(d.pathCtx.ReferenceOrigins)
-
-	return allOrigins.Targeting(refTarget), nil
+func (d *PathDecoder) ReferenceOriginsTargeting(refTarget reference.Target) (reference.Origins, error) {
+	return d.pathCtx.ReferenceOrigins.Targeting(refTarget), nil
 }
 
-func (d *PathDecoder) CollectReferenceOrigins() (lang.ReferenceOrigins, error) {
-	refOrigins := make(lang.ReferenceOrigins, 0)
+func (d *PathDecoder) CollectReferenceOrigins() (reference.Origins, error) {
+	refOrigins := make(reference.Origins, 0)
 
 	if d.pathCtx.Schema == nil {
 		// unable to collect reference origins without schema
@@ -69,8 +64,8 @@ func (d *PathDecoder) CollectReferenceOrigins() (lang.ReferenceOrigins, error) {
 	return refOrigins, nil
 }
 
-func (d *PathDecoder) referenceOriginsInBody(body hcl.Body, bodySchema *schema.BodySchema) lang.ReferenceOrigins {
-	origins := make(lang.ReferenceOrigins, 0)
+func (d *PathDecoder) referenceOriginsInBody(body hcl.Body, bodySchema *schema.BodySchema) reference.Origins {
+	origins := make(reference.Origins, 0)
 
 	if bodySchema == nil {
 		return origins
@@ -109,8 +104,8 @@ func (d *PathDecoder) referenceOriginsInBody(body hcl.Body, bodySchema *schema.B
 	return origins
 }
 
-func (d *PathDecoder) findOriginsInExpression(expr hcl.Expression, ec schema.ExprConstraints) lang.ReferenceOrigins {
-	origins := make(lang.ReferenceOrigins, 0)
+func (d *PathDecoder) findOriginsInExpression(expr hcl.Expression, ec schema.ExprConstraints) reference.Origins {
+	origins := make(reference.Origins, 0)
 
 	switch eType := expr.(type) {
 	case *hclsyntax.TupleConsExpr:
@@ -214,8 +209,8 @@ func (d *PathDecoder) findOriginsInExpression(expr hcl.Expression, ec schema.Exp
 	return origins
 }
 
-func traversalsToReferenceOrigins(traversals []hcl.Traversal, tes schema.TraversalExprs) lang.ReferenceOrigins {
-	origins := make(lang.ReferenceOrigins, 0)
+func traversalsToReferenceOrigins(traversals []hcl.Traversal, tes schema.TraversalExprs) reference.Origins {
+	origins := make(reference.Origins, 0)
 	for _, traversal := range traversals {
 		origin, err := TraversalToReferenceOrigin(traversal, tes)
 		if err != nil {
@@ -227,7 +222,7 @@ func traversalsToReferenceOrigins(traversals []hcl.Traversal, tes schema.Travers
 	return origins
 }
 
-func (d *PathDecoder) referenceOriginAtPos(body *hclsyntax.Body, bodySchema *schema.BodySchema, pos hcl.Pos) (*lang.ReferenceOrigin, error) {
+func (d *PathDecoder) referenceOriginAtPos(body *hclsyntax.Body, bodySchema *schema.BodySchema, pos hcl.Pos) (*reference.Origin, error) {
 	for _, attr := range body.Attributes {
 		if d.isPosInsideAttrExpr(attr, pos) {
 			aSchema, ok := bodySchema.Attributes[attr.Name]
@@ -281,51 +276,31 @@ func (d *PathDecoder) traversalAtPos(expr hclsyntax.Expression, pos hcl.Pos) (hc
 	return nil, false
 }
 
-type ReferenceOrigins lang.ReferenceOrigins
-
-func (ro ReferenceOrigins) Targeting(refTarget lang.ReferenceTarget) lang.ReferenceOrigins {
-	origins := make(lang.ReferenceOrigins, 0)
-
-	target := ReferenceTarget(refTarget)
-
-	for _, refOrigin := range ro {
-		if target.IsTargetableBy(refOrigin) {
-			origins = append(origins, refOrigin)
-		}
-	}
-
-	for _, iTarget := range refTarget.NestedTargets {
-		origins = append(origins, ro.Targeting(iTarget)...)
-	}
-
-	return origins
-}
-
-func TraversalToReferenceOrigin(traversal hcl.Traversal, tes []schema.TraversalExpr) (lang.ReferenceOrigin, error) {
+func TraversalToReferenceOrigin(traversal hcl.Traversal, tes []schema.TraversalExpr) (reference.Origin, error) {
 	addr, err := lang.TraversalToAddress(traversal)
 	if err != nil {
-		return lang.ReferenceOrigin{}, err
+		return reference.Origin{}, err
 	}
 
-	return lang.ReferenceOrigin{
+	return reference.Origin{
 		Addr:        addr,
 		Range:       traversal.SourceRange(),
 		Constraints: traversalExpressionsToOriginConstraints(tes),
 	}, nil
 }
 
-func traversalExpressionsToOriginConstraints(tes []schema.TraversalExpr) lang.ReferenceOriginConstraints {
+func traversalExpressionsToOriginConstraints(tes []schema.TraversalExpr) reference.OriginConstraints {
 	if len(tes) == 0 {
 		return nil
 	}
 
-	roc := make(lang.ReferenceOriginConstraints, 0)
+	roc := make(reference.OriginConstraints, 0)
 	for _, te := range tes {
 		if te.Address != nil {
 			// skip traversals which are targets by themselves (not origins)
 			continue
 		}
-		roc = append(roc, lang.ReferenceOriginConstraint{
+		roc = append(roc, reference.OriginConstraint{
 			OfType:    te.OfType,
 			OfScopeId: te.OfScopeId,
 		})

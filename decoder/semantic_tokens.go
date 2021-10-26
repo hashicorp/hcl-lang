@@ -4,6 +4,7 @@ import (
 	"sort"
 
 	"github.com/hashicorp/hcl-lang/lang"
+	"github.com/hashicorp/hcl-lang/reference"
 	"github.com/hashicorp/hcl-lang/schema"
 	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hclsyntax"
@@ -144,16 +145,15 @@ func (d *PathDecoder) tokensForExpression(expr hclsyntax.Expression, constraints
 
 		tes, ok := constraints.TraversalExprs()
 		if ok && d.pathCtx.ReferenceTargets != nil {
-			refs := ReferenceTargets(d.pathCtx.ReferenceTargets)
 			traversal := eType.AsTraversal()
 
-			origin, err := TraversalToReferenceOrigin(traversal, tes)
+			origin, err := reference.TraversalToOrigin(traversal, tes)
 			if err != nil {
 				return tokens
 			}
 
-			_, err = refs.FirstTargetableBy(origin)
-			if err != nil {
+			_, targetFound := d.pathCtx.ReferenceTargets.FirstTargetableBy(origin)
+			if !targetFound {
 				return tokens
 			}
 

@@ -7,85 +7,11 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/hashicorp/hcl-lang/lang"
+	"github.com/hashicorp/hcl-lang/reference"
 	"github.com/hashicorp/hcl/v2"
 	"github.com/zclconf/go-cty-debug/ctydebug"
 	"github.com/zclconf/go-cty/cty"
 )
-
-func TestAddress_Equals_basic(t *testing.T) {
-	originalAddr := Address(lang.Address{
-		lang.RootStep{Name: "provider"},
-		lang.AttrStep{Name: "aws"},
-	})
-
-	matchingAddr := lang.Address{
-		lang.RootStep{Name: "provider"},
-		lang.AttrStep{Name: "aws"},
-	}
-	if !originalAddr.Equals(Address(matchingAddr)) {
-		t.Fatalf("expected %q to match %q", originalAddr, matchingAddr)
-	}
-
-	mismatchingAddr := lang.Address{
-		lang.RootStep{Name: "provider"},
-		lang.AttrStep{Name: "aaa"},
-	}
-	if originalAddr.Equals(Address(mismatchingAddr)) {
-		t.Fatalf("expected %q not to match %q", originalAddr, mismatchingAddr)
-	}
-}
-
-func TestAddress_Equals_numericIndexStep(t *testing.T) {
-	originalAddr := Address(lang.Address{
-		lang.RootStep{Name: "aws_alb"},
-		lang.AttrStep{Name: "example"},
-		lang.IndexStep{Key: cty.NumberIntVal(0)},
-	})
-
-	matchingAddr := lang.Address{
-		lang.RootStep{Name: "aws_alb"},
-		lang.AttrStep{Name: "example"},
-		lang.IndexStep{Key: cty.NumberIntVal(0)},
-	}
-	if !originalAddr.Equals(Address(matchingAddr)) {
-		t.Fatalf("expected %q to match %q", originalAddr, matchingAddr)
-	}
-
-	mismatchingAddr := lang.Address{
-		lang.RootStep{Name: "aws_alb"},
-		lang.AttrStep{Name: "example"},
-		lang.IndexStep{Key: cty.NumberIntVal(4)},
-	}
-	if originalAddr.Equals(Address(mismatchingAddr)) {
-		t.Fatalf("expected %q not to match %q", originalAddr, mismatchingAddr)
-	}
-}
-
-func TestAddress_Equals_stringIndexStep(t *testing.T) {
-	originalAddr := Address(lang.Address{
-		lang.RootStep{Name: "aws_alb"},
-		lang.AttrStep{Name: "example"},
-		lang.IndexStep{Key: cty.StringVal("first")},
-	})
-
-	matchingAddr := lang.Address{
-		lang.RootStep{Name: "aws_alb"},
-		lang.AttrStep{Name: "example"},
-		lang.IndexStep{Key: cty.StringVal("first")},
-	}
-	if !originalAddr.Equals(Address(matchingAddr)) {
-		t.Fatalf("expected %q to match %q", originalAddr, matchingAddr)
-	}
-
-	mismatchingAddr := lang.Address{
-		lang.RootStep{Name: "aws_alb"},
-		lang.AttrStep{Name: "example"},
-		lang.IndexStep{Key: cty.StringVal("second")},
-	}
-	if originalAddr.Equals(Address(mismatchingAddr)) {
-		t.Fatalf("expected %q not to match %q", originalAddr, mismatchingAddr)
-	}
-}
 
 func TestCollectReferenceTargets_noSchema(t *testing.T) {
 	d := testPathDecoder(t, &PathContext{})
@@ -103,14 +29,14 @@ func TestCollectReferenceTargets_noSchema(t *testing.T) {
 func TestReferenceTargetForOrigin(t *testing.T) {
 	testCases := []struct {
 		name              string
-		refTargets        lang.ReferenceTargets
-		refOrigin         lang.ReferenceOrigin
-		expectedRefTarget *lang.ReferenceTarget
+		refTargets        reference.Targets
+		refOrigin         reference.Origin
+		expectedRefTarget *reference.Target
 	}{
 		{
 			"no targets",
-			lang.ReferenceTargets{},
-			lang.ReferenceOrigin{
+			reference.Targets{},
+			reference.Origin{
 				Addr: lang.Address{
 					lang.RootStep{Name: "var"},
 					lang.AttrStep{Name: "test"},
@@ -120,7 +46,7 @@ func TestReferenceTargetForOrigin(t *testing.T) {
 		},
 		{
 			"single match",
-			lang.ReferenceTargets{
+			reference.Targets{
 				{
 					Addr: lang.Address{
 						lang.RootStep{Name: "var"},
@@ -128,14 +54,14 @@ func TestReferenceTargetForOrigin(t *testing.T) {
 					},
 				},
 			},
-			lang.ReferenceOrigin{
+			reference.Origin{
 				Addr: lang.Address{
 					lang.RootStep{Name: "var"},
 					lang.AttrStep{Name: "test"},
 				},
-				Constraints: lang.ReferenceOriginConstraints{{}},
+				Constraints: reference.OriginConstraints{{}},
 			},
-			&lang.ReferenceTarget{
+			&reference.Target{
 				Addr: lang.Address{
 					lang.RootStep{Name: "var"},
 					lang.AttrStep{Name: "test"},
@@ -144,7 +70,7 @@ func TestReferenceTargetForOrigin(t *testing.T) {
 		},
 		{
 			"first of two matches",
-			lang.ReferenceTargets{
+			reference.Targets{
 				{
 					Addr: lang.Address{
 						lang.RootStep{Name: "data"},
@@ -167,16 +93,16 @@ func TestReferenceTargetForOrigin(t *testing.T) {
 					ScopeId: lang.ScopeId("variable"),
 				},
 			},
-			lang.ReferenceOrigin{
+			reference.Origin{
 				Addr: lang.Address{
 					lang.RootStep{Name: "var"},
 					lang.AttrStep{Name: "test"},
 				},
-				Constraints: lang.ReferenceOriginConstraints{
+				Constraints: reference.OriginConstraints{
 					{OfType: cty.Bool},
 				},
 			},
-			&lang.ReferenceTarget{
+			&reference.Target{
 				Addr: lang.Address{
 					lang.RootStep{Name: "var"},
 					lang.AttrStep{Name: "test"},
@@ -186,7 +112,7 @@ func TestReferenceTargetForOrigin(t *testing.T) {
 		},
 		{
 			"match of unknown type",
-			lang.ReferenceTargets{
+			reference.Targets{
 				{
 					Addr: lang.Address{
 						lang.RootStep{Name: "data"},
@@ -202,15 +128,15 @@ func TestReferenceTargetForOrigin(t *testing.T) {
 					Type: cty.DynamicPseudoType,
 				},
 			},
-			lang.ReferenceOrigin{
+			reference.Origin{
 				Addr: lang.Address{
 					lang.RootStep{Name: "var"},
 					lang.AttrStep{Name: "foo"},
 					lang.AttrStep{Name: "bar"},
 				},
-				Constraints: lang.ReferenceOriginConstraints{{}},
+				Constraints: reference.OriginConstraints{{}},
 			},
-			&lang.ReferenceTarget{
+			&reference.Target{
 				Addr: lang.Address{
 					lang.RootStep{Name: "var"},
 					lang.AttrStep{Name: "foo"},
@@ -220,7 +146,7 @@ func TestReferenceTargetForOrigin(t *testing.T) {
 		},
 		{
 			"match of nested target",
-			lang.ReferenceTargets{
+			reference.Targets{
 				{
 					Addr: lang.Address{
 						lang.RootStep{Name: "data"},
@@ -236,7 +162,7 @@ func TestReferenceTargetForOrigin(t *testing.T) {
 					Type: cty.Object(map[string]cty.Type{
 						"bar": cty.String,
 					}),
-					NestedTargets: lang.ReferenceTargets{
+					NestedTargets: reference.Targets{
 						{
 							Addr: lang.Address{
 								lang.RootStep{Name: "var"},
@@ -248,17 +174,17 @@ func TestReferenceTargetForOrigin(t *testing.T) {
 					},
 				},
 			},
-			lang.ReferenceOrigin{
+			reference.Origin{
 				Addr: lang.Address{
 					lang.RootStep{Name: "var"},
 					lang.AttrStep{Name: "foo"},
 					lang.AttrStep{Name: "bar"},
 				},
-				Constraints: lang.ReferenceOriginConstraints{
+				Constraints: reference.OriginConstraints{
 					{OfType: cty.String},
 				},
 			},
-			&lang.ReferenceTarget{
+			&reference.Target{
 				Addr: lang.Address{
 					lang.RootStep{Name: "var"},
 					lang.AttrStep{Name: "foo"},
@@ -289,21 +215,21 @@ func TestReferenceTargetForOrigin(t *testing.T) {
 func TestOutermostReferenceTargetsAtPos(t *testing.T) {
 	testCases := []struct {
 		name            string
-		refTargets      lang.ReferenceTargets
+		refTargets      reference.Targets
 		filename        string
 		pos             hcl.Pos
-		expectedTargets lang.ReferenceTargets
+		expectedTargets reference.Targets
 	}{
 		{
 			"no targets",
-			lang.ReferenceTargets{},
+			reference.Targets{},
 			"test.tf",
 			hcl.InitialPos,
-			lang.ReferenceTargets{},
+			reference.Targets{},
 		},
 		{
 			"file mismatch",
-			lang.ReferenceTargets{
+			reference.Targets{
 				{
 					Addr: lang.Address{
 						lang.RootStep{Name: "var"},
@@ -327,11 +253,11 @@ func TestOutermostReferenceTargetsAtPos(t *testing.T) {
 				Column: 3,
 				Byte:   2,
 			},
-			lang.ReferenceTargets{},
+			reference.Targets{},
 		},
 		{
 			"position mismatch",
-			lang.ReferenceTargets{
+			reference.Targets{
 				{
 					Addr: lang.Address{
 						lang.RootStep{Name: "var"},
@@ -355,11 +281,11 @@ func TestOutermostReferenceTargetsAtPos(t *testing.T) {
 				Column: 1,
 				Byte:   50,
 			},
-			lang.ReferenceTargets{},
+			reference.Targets{},
 		},
 		{
 			"single matching target",
-			lang.ReferenceTargets{
+			reference.Targets{
 				{
 					Addr: lang.Address{
 						lang.RootStep{Name: "var"},
@@ -383,7 +309,7 @@ func TestOutermostReferenceTargetsAtPos(t *testing.T) {
 				Column: 3,
 				Byte:   2,
 			},
-			lang.ReferenceTargets{
+			reference.Targets{
 				{
 					Addr: lang.Address{
 						lang.RootStep{Name: "var"},
@@ -404,7 +330,7 @@ func TestOutermostReferenceTargetsAtPos(t *testing.T) {
 		},
 		{
 			"two matching targets for the same position",
-			lang.ReferenceTargets{
+			reference.Targets{
 				{
 					Addr: lang.Address{
 						lang.RootStep{Name: "var"},
@@ -444,7 +370,7 @@ func TestOutermostReferenceTargetsAtPos(t *testing.T) {
 				Column: 3,
 				Byte:   2,
 			},
-			lang.ReferenceTargets{
+			reference.Targets{
 				{
 					Addr: lang.Address{
 						lang.RootStep{Name: "var"},
@@ -481,7 +407,7 @@ func TestOutermostReferenceTargetsAtPos(t *testing.T) {
 		},
 		{
 			"nested target matches outermost",
-			lang.ReferenceTargets{
+			reference.Targets{
 				{
 					Addr: lang.Address{
 						lang.RootStep{Name: "aws_instance"},
@@ -499,7 +425,7 @@ func TestOutermostReferenceTargetsAtPos(t *testing.T) {
 							Byte:   63,
 						},
 					},
-					NestedTargets: lang.ReferenceTargets{
+					NestedTargets: reference.Targets{
 						{
 							Addr: lang.Address{
 								lang.RootStep{Name: "aws_instance"},
@@ -530,7 +456,7 @@ func TestOutermostReferenceTargetsAtPos(t *testing.T) {
 				Column: 4,
 				Byte:   36,
 			},
-			lang.ReferenceTargets{
+			reference.Targets{
 				{
 					Addr: lang.Address{
 						lang.RootStep{Name: "aws_instance"},
@@ -548,7 +474,7 @@ func TestOutermostReferenceTargetsAtPos(t *testing.T) {
 							Byte:   63,
 						},
 					},
-					NestedTargets: lang.ReferenceTargets{
+					NestedTargets: reference.Targets{
 						{
 							Addr: lang.Address{
 								lang.RootStep{Name: "aws_instance"},
@@ -596,21 +522,21 @@ func TestOutermostReferenceTargetsAtPos(t *testing.T) {
 func TestInnermostReferenceTargetsAtPos(t *testing.T) {
 	testCases := []struct {
 		name            string
-		refTargets      lang.ReferenceTargets
+		refTargets      reference.Targets
 		filename        string
 		pos             hcl.Pos
-		expectedTargets lang.ReferenceTargets
+		expectedTargets reference.Targets
 	}{
 		{
 			"no targets",
-			lang.ReferenceTargets{},
+			reference.Targets{},
 			"test.tf",
 			hcl.InitialPos,
 			nil,
 		},
 		{
 			"file mismatch",
-			lang.ReferenceTargets{
+			reference.Targets{
 				{
 					Addr: lang.Address{
 						lang.RootStep{Name: "var"},
@@ -638,7 +564,7 @@ func TestInnermostReferenceTargetsAtPos(t *testing.T) {
 		},
 		{
 			"position mismatch",
-			lang.ReferenceTargets{
+			reference.Targets{
 				{
 					Addr: lang.Address{
 						lang.RootStep{Name: "var"},
@@ -666,7 +592,7 @@ func TestInnermostReferenceTargetsAtPos(t *testing.T) {
 		},
 		{
 			"single target match",
-			lang.ReferenceTargets{
+			reference.Targets{
 				{
 					Addr: lang.Address{
 						lang.RootStep{Name: "var"},
@@ -690,7 +616,7 @@ func TestInnermostReferenceTargetsAtPos(t *testing.T) {
 				Column: 3,
 				Byte:   2,
 			},
-			lang.ReferenceTargets{
+			reference.Targets{
 				{
 					Addr: lang.Address{
 						lang.RootStep{Name: "var"},
@@ -711,7 +637,7 @@ func TestInnermostReferenceTargetsAtPos(t *testing.T) {
 		},
 		{
 			"multiple targets matching at the same position",
-			lang.ReferenceTargets{
+			reference.Targets{
 				{
 					Addr: lang.Address{
 						lang.RootStep{Name: "var"},
@@ -751,7 +677,7 @@ func TestInnermostReferenceTargetsAtPos(t *testing.T) {
 				Column: 3,
 				Byte:   2,
 			},
-			lang.ReferenceTargets{
+			reference.Targets{
 				{
 					Addr: lang.Address{
 						lang.RootStep{Name: "var"},
@@ -788,7 +714,7 @@ func TestInnermostReferenceTargetsAtPos(t *testing.T) {
 		},
 		{
 			"nested target matches innermost",
-			lang.ReferenceTargets{
+			reference.Targets{
 				{
 					Addr: lang.Address{
 						lang.RootStep{Name: "aws_instance"},
@@ -806,7 +732,7 @@ func TestInnermostReferenceTargetsAtPos(t *testing.T) {
 							Byte:   63,
 						},
 					},
-					NestedTargets: lang.ReferenceTargets{
+					NestedTargets: reference.Targets{
 						{
 							Addr: lang.Address{
 								lang.RootStep{Name: "aws_instance"},
@@ -837,7 +763,7 @@ func TestInnermostReferenceTargetsAtPos(t *testing.T) {
 				Column: 4,
 				Byte:   36,
 			},
-			lang.ReferenceTargets{
+			reference.Targets{
 				{
 					Addr: lang.Address{
 						lang.RootStep{Name: "aws_instance"},
@@ -863,7 +789,7 @@ func TestInnermostReferenceTargetsAtPos(t *testing.T) {
 		},
 		{
 			"matching nested targets with position at block definition",
-			lang.ReferenceTargets{
+			reference.Targets{
 				{
 					Addr: lang.Address{
 						lang.RootStep{Name: "module"},
@@ -890,7 +816,7 @@ func TestInnermostReferenceTargetsAtPos(t *testing.T) {
 							Byte:   63,
 						},
 					},
-					NestedTargets: lang.ReferenceTargets{
+					NestedTargets: reference.Targets{
 						{
 							Addr: lang.Address{
 								lang.RootStep{Name: "module"},
@@ -917,7 +843,7 @@ func TestInnermostReferenceTargetsAtPos(t *testing.T) {
 				Column: 15,
 				Byte:   16,
 			},
-			lang.ReferenceTargets{
+			reference.Targets{
 				{
 					Addr: lang.Address{
 						lang.RootStep{Name: "module"},
@@ -944,7 +870,7 @@ func TestInnermostReferenceTargetsAtPos(t *testing.T) {
 							Byte:   63,
 						},
 					},
-					NestedTargets: lang.ReferenceTargets{
+					NestedTargets: reference.Targets{
 						{
 							Addr: lang.Address{
 								lang.RootStep{Name: "module"},
@@ -988,19 +914,19 @@ func TestInnermostReferenceTargetsAtPos(t *testing.T) {
 func TestReferenceTargetsInFile(t *testing.T) {
 	testCases := []struct {
 		name            string
-		refTargets      lang.ReferenceTargets
+		refTargets      reference.Targets
 		filename        string
-		expectedTargets lang.ReferenceTargets
+		expectedTargets reference.Targets
 	}{
 		{
 			"no targets",
-			lang.ReferenceTargets{},
+			reference.Targets{},
 			"test.tf",
-			lang.ReferenceTargets{},
+			reference.Targets{},
 		},
 		{
 			"mismatching filename",
-			lang.ReferenceTargets{
+			reference.Targets{
 				{
 					Addr: lang.Address{
 						lang.RootStep{Name: "foo"},
@@ -1017,11 +943,11 @@ func TestReferenceTargetsInFile(t *testing.T) {
 				},
 			},
 			"test.tf",
-			lang.ReferenceTargets{},
+			reference.Targets{},
 		},
 		{
 			"matching file",
-			lang.ReferenceTargets{
+			reference.Targets{
 				{
 					Addr: lang.Address{
 						lang.RootStep{Name: "foo"},
@@ -1035,7 +961,7 @@ func TestReferenceTargetsInFile(t *testing.T) {
 							Byte:   10,
 						},
 					},
-					NestedTargets: lang.ReferenceTargets{
+					NestedTargets: reference.Targets{
 						{
 							Addr: lang.Address{
 								lang.RootStep{Name: "foo"},
@@ -1055,7 +981,7 @@ func TestReferenceTargetsInFile(t *testing.T) {
 				},
 			},
 			"test.tf",
-			lang.ReferenceTargets{
+			reference.Targets{
 				{
 					Addr: lang.Address{
 						lang.RootStep{Name: "foo"},
@@ -1069,7 +995,7 @@ func TestReferenceTargetsInFile(t *testing.T) {
 							Byte:   10,
 						},
 					},
-					NestedTargets: lang.ReferenceTargets{
+					NestedTargets: reference.Targets{
 						{
 							Addr: lang.Address{
 								lang.RootStep{Name: "foo"},

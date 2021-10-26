@@ -7,6 +7,7 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/hashicorp/hcl-lang/lang"
+	"github.com/hashicorp/hcl-lang/reference"
 	"github.com/hashicorp/hcl-lang/schema"
 	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hclsyntax"
@@ -21,7 +22,7 @@ func TestReferenceOriginAtPos(t *testing.T) {
 		cfg            string
 		bodySchema     *schema.BodySchema
 		pos            hcl.Pos
-		expectedOrigin *lang.ReferenceOrigin
+		expectedOrigin *reference.Origin
 	}{
 		{
 			"empty config",
@@ -48,7 +49,7 @@ func TestReferenceOriginAtPos(t *testing.T) {
 				Column: 9,
 				Byte:   8,
 			},
-			&lang.ReferenceOrigin{
+			&reference.Origin{
 				Addr: lang.Address{
 					lang.RootStep{Name: "blah"},
 				},
@@ -65,7 +66,7 @@ func TestReferenceOriginAtPos(t *testing.T) {
 						Byte:   11,
 					},
 				},
-				Constraints: lang.ReferenceOriginConstraints{{}},
+				Constraints: reference.OriginConstraints{{}},
 			},
 		},
 		{
@@ -106,7 +107,7 @@ func TestReferenceOriginAtPos(t *testing.T) {
 				Column: 9,
 				Byte:   8,
 			},
-			&lang.ReferenceOrigin{
+			&reference.Origin{
 				Addr: lang.Address{
 					lang.RootStep{Name: "var"},
 					lang.AttrStep{Name: "myobj"},
@@ -127,7 +128,7 @@ func TestReferenceOriginAtPos(t *testing.T) {
 						Byte:   29,
 					},
 				},
-				Constraints: lang.ReferenceOriginConstraints{{}},
+				Constraints: reference.OriginConstraints{{}},
 			},
 		},
 		{
@@ -148,7 +149,7 @@ func TestReferenceOriginAtPos(t *testing.T) {
 				Column: 9,
 				Byte:   8,
 			},
-			&lang.ReferenceOrigin{
+			&reference.Origin{
 				Addr: lang.Address{
 					lang.RootStep{Name: "var"},
 					lang.AttrStep{Name: "myobj"},
@@ -168,7 +169,7 @@ func TestReferenceOriginAtPos(t *testing.T) {
 						Byte:   31,
 					},
 				},
-				Constraints: lang.ReferenceOriginConstraints{{}},
+				Constraints: reference.OriginConstraints{{}},
 			},
 		},
 		{
@@ -189,7 +190,7 @@ func TestReferenceOriginAtPos(t *testing.T) {
 				Column: 9,
 				Byte:   8,
 			},
-			&lang.ReferenceOrigin{
+			&reference.Origin{
 				Addr: lang.Address{
 					lang.RootStep{Name: "var"},
 					lang.AttrStep{Name: "myobj"},
@@ -209,7 +210,7 @@ func TestReferenceOriginAtPos(t *testing.T) {
 						Byte:   28,
 					},
 				},
-				Constraints: lang.ReferenceOriginConstraints{{}},
+				Constraints: reference.OriginConstraints{{}},
 			},
 		},
 		{
@@ -242,7 +243,7 @@ func TestReferenceOriginAtPos(t *testing.T) {
 				Column: 11,
 				Byte:   30,
 			},
-			&lang.ReferenceOrigin{
+			&reference.Origin{
 				Addr: lang.Address{
 					lang.RootStep{Name: "var"},
 					lang.AttrStep{Name: "myobj"},
@@ -262,7 +263,7 @@ func TestReferenceOriginAtPos(t *testing.T) {
 						Byte:   50,
 					},
 				},
-				Constraints: lang.ReferenceOriginConstraints{{}},
+				Constraints: reference.OriginConstraints{{}},
 			},
 		},
 		{
@@ -287,7 +288,7 @@ func TestReferenceOriginAtPos(t *testing.T) {
 				Column: 11,
 				Byte:   12,
 			},
-			&lang.ReferenceOrigin{
+			&reference.Origin{
 				Addr: lang.Address{
 					lang.RootStep{Name: "var"},
 					lang.AttrStep{Name: "test"},
@@ -305,7 +306,7 @@ func TestReferenceOriginAtPos(t *testing.T) {
 						Byte:   17,
 					},
 				},
-				Constraints: lang.ReferenceOriginConstraints{
+				Constraints: reference.OriginConstraints{
 					{OfScopeId: lang.ScopeId("test")},
 				},
 			},
@@ -357,24 +358,24 @@ func TestReferenceOriginAtPos_json(t *testing.T) {
 func TestReferenceOriginsTargeting(t *testing.T) {
 	testCases := []struct {
 		name            string
-		allOrigins      lang.ReferenceOrigins
-		refTarget       lang.ReferenceTarget
-		expectedOrigins lang.ReferenceOrigins
+		allOrigins      reference.Origins
+		refTarget       reference.Target
+		expectedOrigins reference.Origins
 	}{
 		{
 			"no origins",
-			lang.ReferenceOrigins{},
-			lang.ReferenceTarget{
+			reference.Origins{},
+			reference.Target{
 				Addr: lang.Address{
 					lang.RootStep{Name: "test"},
 				},
 				Type: cty.String,
 			},
-			lang.ReferenceOrigins{},
+			reference.Origins{},
 		},
 		{
 			"exact address match",
-			lang.ReferenceOrigins{
+			reference.Origins{
 				{
 					Addr: lang.Address{
 						lang.RootStep{Name: "test"},
@@ -385,25 +386,25 @@ func TestReferenceOriginsTargeting(t *testing.T) {
 						lang.RootStep{Name: "test"},
 						lang.AttrStep{Name: "secondstep"},
 					},
-					Constraints: lang.ReferenceOriginConstraints{
+					Constraints: reference.OriginConstraints{
 						{OfType: cty.String},
 					},
 				},
 			},
-			lang.ReferenceTarget{
+			reference.Target{
 				Addr: lang.Address{
 					lang.RootStep{Name: "test"},
 					lang.AttrStep{Name: "secondstep"},
 				},
 				Type: cty.String,
 			},
-			lang.ReferenceOrigins{
+			reference.Origins{
 				{
 					Addr: lang.Address{
 						lang.RootStep{Name: "test"},
 						lang.AttrStep{Name: "secondstep"},
 					},
-					Constraints: lang.ReferenceOriginConstraints{
+					Constraints: reference.OriginConstraints{
 						{OfType: cty.String},
 					},
 				},
@@ -411,7 +412,7 @@ func TestReferenceOriginsTargeting(t *testing.T) {
 		},
 		{
 			"no match",
-			lang.ReferenceOrigins{
+			reference.Origins{
 				{
 					Addr: lang.Address{
 						lang.RootStep{Name: "test"},
@@ -424,18 +425,18 @@ func TestReferenceOriginsTargeting(t *testing.T) {
 					},
 				},
 			},
-			lang.ReferenceTarget{
+			reference.Target{
 				Addr: lang.Address{
 					lang.RootStep{Name: "test"},
 					lang.AttrStep{Name: "different"},
 				},
 				Type: cty.String,
 			},
-			lang.ReferenceOrigins{},
+			reference.Origins{},
 		},
 		{
 			"match of nested target - two matches",
-			lang.ReferenceOrigins{
+			reference.Origins{
 				{
 					Addr: lang.Address{
 						lang.RootStep{Name: "foo"},
@@ -445,7 +446,7 @@ func TestReferenceOriginsTargeting(t *testing.T) {
 					Addr: lang.Address{
 						lang.RootStep{Name: "test"},
 					},
-					Constraints: lang.ReferenceOriginConstraints{
+					Constraints: reference.OriginConstraints{
 						{OfType: cty.DynamicPseudoType},
 					},
 				},
@@ -454,19 +455,19 @@ func TestReferenceOriginsTargeting(t *testing.T) {
 						lang.RootStep{Name: "test"},
 						lang.AttrStep{Name: "second"},
 					},
-					Constraints: lang.ReferenceOriginConstraints{
+					Constraints: reference.OriginConstraints{
 						{OfType: cty.String},
 					},
 				},
 			},
-			lang.ReferenceTarget{
+			reference.Target{
 				Addr: lang.Address{
 					lang.RootStep{Name: "test"},
 				},
 				Type: cty.Object(map[string]cty.Type{
 					"second": cty.String,
 				}),
-				NestedTargets: lang.ReferenceTargets{
+				NestedTargets: reference.Targets{
 					{
 						Addr: lang.Address{
 							lang.RootStep{Name: "test"},
@@ -476,12 +477,12 @@ func TestReferenceOriginsTargeting(t *testing.T) {
 					},
 				},
 			},
-			lang.ReferenceOrigins{
+			reference.Origins{
 				{
 					Addr: lang.Address{
 						lang.RootStep{Name: "test"},
 					},
-					Constraints: lang.ReferenceOriginConstraints{
+					Constraints: reference.OriginConstraints{
 						{OfType: cty.DynamicPseudoType},
 					},
 				},
@@ -490,7 +491,7 @@ func TestReferenceOriginsTargeting(t *testing.T) {
 						lang.RootStep{Name: "test"},
 						lang.AttrStep{Name: "second"},
 					},
-					Constraints: lang.ReferenceOriginConstraints{
+					Constraints: reference.OriginConstraints{
 						{OfType: cty.String},
 					},
 				},
@@ -498,74 +499,74 @@ func TestReferenceOriginsTargeting(t *testing.T) {
 		},
 		{
 			"loose match of target of unknown type",
-			lang.ReferenceOrigins{
+			reference.Origins{
 				{
 					Addr: lang.Address{
 						lang.RootStep{Name: "foo"},
 					},
-					Constraints: lang.ReferenceOriginConstraints{{}},
+					Constraints: reference.OriginConstraints{{}},
 				},
 				{
 					Addr: lang.Address{
 						lang.RootStep{Name: "test"},
 					},
-					Constraints: lang.ReferenceOriginConstraints{{}},
+					Constraints: reference.OriginConstraints{{}},
 				},
 				{
 					Addr: lang.Address{
 						lang.RootStep{Name: "test"},
 						lang.AttrStep{Name: "second"},
 					},
-					Constraints: lang.ReferenceOriginConstraints{{}},
+					Constraints: reference.OriginConstraints{{}},
 				},
 			},
-			lang.ReferenceTarget{
+			reference.Target{
 				Addr: lang.Address{
 					lang.RootStep{Name: "test"},
 				},
 				Type: cty.DynamicPseudoType,
 			},
-			lang.ReferenceOrigins{
+			reference.Origins{
 				{
 					Addr: lang.Address{
 						lang.RootStep{Name: "test"},
 					},
-					Constraints: lang.ReferenceOriginConstraints{{}},
+					Constraints: reference.OriginConstraints{{}},
 				},
 				{
 					Addr: lang.Address{
 						lang.RootStep{Name: "test"},
 						lang.AttrStep{Name: "second"},
 					},
-					Constraints: lang.ReferenceOriginConstraints{{}},
+					Constraints: reference.OriginConstraints{{}},
 				},
 			},
 		},
 		{
 			"mismatch of target nil type",
-			lang.ReferenceOrigins{
+			reference.Origins{
 				{
 					Addr: lang.Address{
 						lang.RootStep{Name: "test"},
 					},
-					Constraints: lang.ReferenceOriginConstraints{
+					Constraints: reference.OriginConstraints{
 						{OfScopeId: lang.ScopeId("test")},
 					},
 				},
 			},
-			lang.ReferenceTarget{
+			reference.Target{
 				Addr: lang.Address{
 					lang.RootStep{Name: "test"},
 				},
 				ScopeId: lang.ScopeId("test"),
 				Type:    cty.String,
 			},
-			lang.ReferenceOrigins{},
+			reference.Origins{},
 		},
 		// JSON edge cases
 		{
 			"constraint-less origin mismatching scope-only target",
-			lang.ReferenceOrigins{
+			reference.Origins{
 				{
 					Addr: lang.Address{
 						lang.RootStep{Name: "var"},
@@ -574,7 +575,7 @@ func TestReferenceOriginsTargeting(t *testing.T) {
 					Constraints: nil,
 				},
 			},
-			lang.ReferenceTarget{
+			reference.Target{
 				Addr: lang.Address{
 					lang.RootStep{Name: "var"},
 					lang.AttrStep{Name: "alpha"},
@@ -582,11 +583,11 @@ func TestReferenceOriginsTargeting(t *testing.T) {
 				ScopeId: "variable",
 				Type:    cty.NilType,
 			},
-			lang.ReferenceOrigins{},
+			reference.Origins{},
 		},
 		{
 			"constraint-less origin matching type-aware target",
-			lang.ReferenceOrigins{
+			reference.Origins{
 				{
 					Addr: lang.Address{
 						lang.RootStep{Name: "var"},
@@ -595,7 +596,7 @@ func TestReferenceOriginsTargeting(t *testing.T) {
 					Constraints: nil,
 				},
 			},
-			lang.ReferenceTarget{
+			reference.Target{
 				Addr: lang.Address{
 					lang.RootStep{Name: "var"},
 					lang.AttrStep{Name: "beta"},
@@ -603,7 +604,7 @@ func TestReferenceOriginsTargeting(t *testing.T) {
 				ScopeId: "variable",
 				Type:    cty.DynamicPseudoType,
 			},
-			lang.ReferenceOrigins{
+			reference.Origins{
 				{
 					Addr: lang.Address{
 						lang.RootStep{Name: "var"},

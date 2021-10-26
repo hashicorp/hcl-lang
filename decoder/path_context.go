@@ -1,7 +1,7 @@
 package decoder
 
 import (
-	"github.com/hashicorp/hcl-lang/lang"
+	"github.com/hashicorp/hcl-lang/reference"
 	"github.com/hashicorp/hcl-lang/schema"
 	"github.com/hashicorp/hcl/v2"
 )
@@ -10,7 +10,7 @@ import (
 // i.e. anything that is tied either to path or language ID
 type PathContext struct {
 	Schema           *schema.BodySchema
-	ReferenceOrigins lang.ReferenceOrigins
-	ReferenceTargets lang.ReferenceTargets
+	ReferenceOrigins reference.Origins
+	ReferenceTargets reference.Targets
 	Files            map[string]*hcl.File
 }

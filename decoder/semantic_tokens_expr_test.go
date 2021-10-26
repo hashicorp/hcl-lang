@@ -6,6 +6,7 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/hashicorp/hcl-lang/lang"
+	"github.com/hashicorp/hcl-lang/reference"
 	"github.com/hashicorp/hcl-lang/schema"
 	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hclsyntax"
@@ -1467,7 +1468,7 @@ func TestDecoder_SemanticTokensInFile_traversalExpression(t *testing.T) {
 	testCases := []struct {
 		name           string
 		attrSchema     map[string]*schema.AttributeSchema
-		refs           lang.ReferenceTargets
+		refs           reference.Targets
 		cfg            string
 		expectedTokens []lang.SemanticToken
 	}{
@@ -1480,7 +1481,7 @@ func TestDecoder_SemanticTokensInFile_traversalExpression(t *testing.T) {
 					},
 				},
 			},
-			lang.ReferenceTargets{},
+			reference.Targets{},
 			`attr = var.blah
 `,
 			[]lang.SemanticToken{
@@ -1512,8 +1513,8 @@ func TestDecoder_SemanticTokensInFile_traversalExpression(t *testing.T) {
 					},
 				},
 			},
-			lang.ReferenceTargets{
-				lang.ReferenceTarget{
+			reference.Targets{
+				reference.Target{
 					Addr: lang.Address{
 						lang.RootStep{Name: "var"},
 						lang.AttrStep{Name: "blah"},
@@ -1552,8 +1553,8 @@ func TestDecoder_SemanticTokensInFile_traversalExpression(t *testing.T) {
 					},
 				},
 			},
-			lang.ReferenceTargets{
-				lang.ReferenceTarget{
+			reference.Targets{
+				reference.Target{
 					Addr: lang.Address{
 						lang.RootStep{Name: "var"},
 						lang.AttrStep{Name: "blah"},
@@ -1626,8 +1627,8 @@ func TestDecoder_SemanticTokensInFile_traversalExpression(t *testing.T) {
 					},
 				},
 			},
-			lang.ReferenceTargets{
-				lang.ReferenceTarget{
+			reference.Targets{
+				reference.Target{
 					Addr: lang.Address{
 						lang.RootStep{Name: "var"},
 						lang.AttrStep{Name: "blah"},
@@ -1700,8 +1701,8 @@ func TestDecoder_SemanticTokensInFile_traversalExpression(t *testing.T) {
 					},
 				},
 			},
-			lang.ReferenceTargets{
-				lang.ReferenceTarget{
+			reference.Targets{
+				reference.Target{
 					Addr: lang.Address{
 						lang.RootStep{Name: "var"},
 						lang.AttrStep{Name: "foo"},
@@ -1827,7 +1828,7 @@ func TestDecoder_SemanticTokensInFile_traversalExpression(t *testing.T) {
 					},
 				},
 			},
-			lang.ReferenceTargets{
+			reference.Targets{
 				{
 					Addr: lang.Address{
 						lang.RootStep{Name: "var"},

@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/hashicorp/hcl-lang/lang"
+	"github.com/hashicorp/hcl-lang/reference"
 	"github.com/hashicorp/hcl-lang/schema"
 	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hclsyntax"
@@ -593,26 +594,20 @@ func stringValFromTemplateExpr(tplExpr *hclsyntax.TemplateExpr) (cty.Value, bool
 }
 
 func (d *PathDecoder) hoverContentForTraversalExpr(traversal hcl.Traversal, tes []schema.TraversalExpr) (string, error) {
-	if d.pathCtx.ReferenceTargets == nil {
-		return "", &NoRefTargetFound{}
-	}
-
-	allTargets := ReferenceTargets(d.pathCtx.ReferenceTargets)
-
-	origin, err := TraversalToReferenceOrigin(traversal, tes)
+	origin, err := reference.TraversalToOrigin(traversal, tes)
 	if err != nil {
 		return "", nil
 	}
 
-	ref, err := allTargets.FirstTargetableBy(origin)
-	if err != nil {
-		return "", err
+	ref, ok := d.pathCtx.ReferenceTargets.FirstTargetableBy(origin)
+	if !ok {
+		return "", &reference.NoTargetFound{}
 	}
 
 	return hoverContentForReferenceTarget(ref)
 }
 
-func hoverContentForReferenceTarget(ref lang.ReferenceTarget) (string, error) {
+func hoverContentForReferenceTarget(ref *reference.Target) (string, error) {
 	content := fmt.Sprintf("`%s`", ref.Addr.String())
 
 	var friendlyName string
