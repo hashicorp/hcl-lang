@@ -2,6 +2,7 @@ package decoder
 
 import (
 	"bytes"
+	"fmt"
 	"sort"
 
 	"github.com/hashicorp/hcl-lang/lang"
@@ -14,112 +15,27 @@ import (
 	"github.com/zclconf/go-cty/cty/convert"
 )
 
-// ReferenceTargetForOrigin returns the first ReferenceTarget
-// with matching ReferenceOrigin Address, if one exists, else nil
-func (d *PathDecoder) ReferenceTargetForOrigin(refOrigin reference.Origin) (*reference.Target, error) {
-	if d.pathCtx.ReferenceTargets == nil {
-		return nil, nil
+func (d *PathDecoder) ReferenceTargetForOriginAtPos(file string, pos hcl.Pos) (*ReferenceTarget, error) {
+	origin, ok := d.pathCtx.ReferenceOrigins.AtPos(file, pos)
+	if !ok {
+		return nil, &reference.NoOriginFound{}
 	}
 
-	ref, err := d.pathCtx.ReferenceTargets.FirstTargetableBy(refOrigin)
-	if err != nil {
-		if _, ok := err.(*reference.NoTargetFound); ok {
-			return nil, nil
-		}
-		return nil, err
+	target, ok := d.pathCtx.ReferenceTargets.FirstTargetableBy(*origin)
+	if !ok {
+		return nil, &reference.NoTargetFound{}
 	}
 
-	return &ref, nil
-}
-
-func (d *PathDecoder) ReferenceTargetsInFile(file string) (reference.Targets, error) {
-	targets := make(reference.Targets, 0)
-
-	// It is practically impossible for nested targets to be placed
-	// in a separate file from their parent target, so we save
-	// some cycles here by limiting walk just to the top level.
-	depth := 0
-
-	d.pathCtx.ReferenceTargets.DeepWalk(func(target reference.Target) error {
-		if target.RangePtr == nil {
-			return nil
-		}
-		if target.RangePtr.Filename == file {
-			targets = append(targets, target)
-		}
-		return nil
-	}, depth)
-
-	return targets, nil
-}
-
-func (d *PathDecoder) OutermostReferenceTargetsAtPos(file string, pos hcl.Pos) (reference.Targets, error) {
-	if d.pathCtx.ReferenceTargets == nil {
-		return nil, nil
+	if target.RangePtr == nil {
+		return nil, fmt.Errorf("target %s is not addressable", target.Addr)
 	}
 
-	matchingTargets := make(reference.Targets, 0)
-	for _, target := range d.pathCtx.ReferenceTargets {
-		if target.RangePtr == nil {
-			continue
-		}
-		if target.RangePtr.Filename != file {
-			continue
-		}
-		if target.RangePtr.ContainsPos(pos) {
-			matchingTargets = append(matchingTargets, target)
-		}
-	}
-
-	return matchingTargets, nil
-}
-
-func (d *PathDecoder) InnermostReferenceTargetsAtPos(file string, pos hcl.Pos) (reference.Targets, error) {
-	if d.pathCtx.ReferenceTargets == nil {
-		return nil, nil
-	}
-
-	targets, _ := d.innermostReferenceTargetsAtPos(d.pathCtx.ReferenceTargets, file, pos)
-
-	return targets, nil
-}
-
-func (d *PathDecoder) innermostReferenceTargetsAtPos(targets reference.Targets, file string, pos hcl.Pos) (reference.Targets, bool) {
-	matchingTargets := make(reference.Targets, 0)
-
-	for _, target := range targets {
-		if target.RangePtr == nil {
-			continue
-		}
-		if target.RangePtr.Filename != file {
-			continue
-		}
-		if target.RangePtr.ContainsPos(pos) {
-			matchingTargets = append(matchingTargets, target)
-		}
-	}
-
-	var innermostTargets reference.Targets
-
-	for _, target := range matchingTargets {
-		if target.DefRangePtr != nil {
-			if target.DefRangePtr.Filename == file &&
-				target.DefRangePtr.ContainsPos(pos) {
-				innermostTargets = append(innermostTargets, target)
-				continue
-			}
-		}
-
-		nestedTargets, ok := d.innermostReferenceTargetsAtPos(target.NestedTargets, file, pos)
-		if ok {
-			innermostTargets = nestedTargets
-			continue
-		}
-
-		innermostTargets = append(innermostTargets, target)
-	}
-
-	return innermostTargets, len(innermostTargets) > 0
+	return &ReferenceTarget{
+		OriginRange: origin.Range,
+		Path:        d.path,
+		Range:       *target.RangePtr,
+		DefRangePtr: target.DefRangePtr,
+	}, nil
 }
 
 func (d *PathDecoder) CollectReferenceTargets() (reference.Targets, error) {
