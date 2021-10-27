@@ -1,6 +1,9 @@
 package decoder
 
 import (
+	"context"
+	"fmt"
+
 	"github.com/hashicorp/hcl-lang/reference"
 	"github.com/hashicorp/hcl-lang/schema"
 	"github.com/hashicorp/hcl/v2"
@@ -13,4 +16,18 @@ type PathContext struct {
 	ReferenceOrigins reference.Origins
 	ReferenceTargets reference.Targets
 	Files            map[string]*hcl.File
+}
+
+type pathCtxKey struct{}
+
+func withPathContext(ctx context.Context, pathCtx *PathContext) context.Context {
+	return context.WithValue(ctx, pathCtxKey{}, pathCtx)
+}
+
+func PathCtx(ctx context.Context) (*PathContext, error) {
+	pathCtx, ok := ctx.Value(pathCtxKey{}).(*PathContext)
+	if !ok {
+		return nil, fmt.Errorf("path context not found")
+	}
+	return pathCtx, nil
 }
