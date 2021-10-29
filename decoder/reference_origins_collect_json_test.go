@@ -6,6 +6,7 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/hashicorp/hcl-lang/lang"
+	"github.com/hashicorp/hcl-lang/reference"
 	"github.com/hashicorp/hcl-lang/schema"
 	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/json"
@@ -18,7 +19,7 @@ func TestCollectReferenceOrigins_json(t *testing.T) {
 		name            string
 		schema          *schema.BodySchema
 		cfg             string
-		expectedOrigins lang.ReferenceOrigins
+		expectedOrigins reference.Origins
 	}{
 		{
 			"no origins",
@@ -30,7 +31,7 @@ func TestCollectReferenceOrigins_json(t *testing.T) {
 				},
 			},
 			`{"attribute": "foo-bar"}`,
-			lang.ReferenceOrigins{},
+			reference.Origins{},
 		},
 		{
 			"root attribute single step",
@@ -44,7 +45,7 @@ func TestCollectReferenceOrigins_json(t *testing.T) {
 				},
 			},
 			`{"attr": "${onestep}"}`,
-			lang.ReferenceOrigins{
+			reference.Origins{
 				{
 					Addr: lang.Address{
 						lang.RootStep{Name: "onestep"},
@@ -91,7 +92,7 @@ func TestCollectReferenceOrigins_json(t *testing.T) {
   "attr2": "${anotherstep}",
   "attr3": "${onestep}"
 }`,
-			lang.ReferenceOrigins{
+			reference.Origins{
 				{
 					Addr: lang.Address{
 						lang.RootStep{Name: "onestep"},
@@ -160,7 +161,7 @@ func TestCollectReferenceOrigins_json(t *testing.T) {
 				},
 			},
 			`{"attr1": "${onestep}-${onestep}-${another.foo.bar}"}`,
-			lang.ReferenceOrigins{
+			reference.Origins{
 				{
 					Addr: lang.Address{
 						lang.RootStep{Name: "onestep"},
@@ -231,7 +232,7 @@ func TestCollectReferenceOrigins_json(t *testing.T) {
 				},
 			},
 			`{"attr": "${one.two[\"key\"].attr[0]}"}`,
-			lang.ReferenceOrigins{
+			reference.Origins{
 				{
 					Addr: lang.Address{
 						lang.RootStep{Name: "one"},
@@ -279,7 +280,7 @@ func TestCollectReferenceOrigins_json(t *testing.T) {
   }
 }
 `,
-			lang.ReferenceOrigins{
+			reference.Origins{
 				{
 					Addr: lang.Address{
 						lang.RootStep{Name: "onestep"},
@@ -321,7 +322,7 @@ func TestCollectReferenceOrigins_json(t *testing.T) {
   }
 }
 `,
-			lang.ReferenceOrigins{
+			reference.Origins{
 				{
 					Addr: lang.Address{
 						lang.RootStep{Name: "onestep"},
@@ -386,7 +387,7 @@ func TestCollectReferenceOrigins_json(t *testing.T) {
   }
 }
 `,
-			lang.ReferenceOrigins{
+			reference.Origins{
 				{
 					Addr: lang.Address{
 						lang.RootStep{Name: "var"},
@@ -471,7 +472,7 @@ func TestCollectReferenceOrigins_json(t *testing.T) {
   }
 }
 `,
-			lang.ReferenceOrigins{
+			reference.Origins{
 				{
 					Addr: lang.Address{
 						lang.RootStep{Name: "var"},
@@ -539,7 +540,7 @@ func TestCollectReferenceOrigins_json(t *testing.T) {
   "set": [ "${var.second}" ],
   "tuple": [ "${var.third}" ]
 }`,
-			lang.ReferenceOrigins{
+			reference.Origins{
 				{
 					Addr: lang.Address{
 						lang.RootStep{Name: "var"},
@@ -625,7 +626,7 @@ func TestCollectReferenceOrigins_json(t *testing.T) {
     "attr": "${var.first}"
   }
 }`,
-			lang.ReferenceOrigins{
+			reference.Origins{
 				{
 					Addr: lang.Address{
 						lang.RootStep{Name: "var"},
@@ -669,7 +670,7 @@ func TestCollectReferenceOrigins_json(t *testing.T) {
     "key": "${var.first}"
   }
 }`,
-			lang.ReferenceOrigins{
+			reference.Origins{
 				{
 					Addr: lang.Address{
 						lang.RootStep{Name: "var"},
@@ -709,7 +710,7 @@ func TestCollectReferenceOrigins_json(t *testing.T) {
 				},
 			},
 			`{"tuple_cons": [ "${var.one}" ]}`,
-			lang.ReferenceOrigins{
+			reference.Origins{
 				{
 					Addr: lang.Address{
 						lang.RootStep{Name: "var"},
@@ -772,7 +773,7 @@ func TestCollectReferenceOrigins_json(t *testing.T) {
   }
 }
 `,
-			lang.ReferenceOrigins{
+			reference.Origins{
 				{
 					Addr: lang.Address{
 						lang.RootStep{Name: "var"},
@@ -856,7 +857,7 @@ func TestCollectReferenceOrigins_json(t *testing.T) {
   "set": [ "${var.two}" ],
   "tup": [ "${var.three}" ]
 }`,
-			lang.ReferenceOrigins{
+			reference.Origins{
 				{
 					Addr: lang.Address{
 						lang.RootStep{Name: "var"},
@@ -919,17 +920,17 @@ func TestCollectReferenceOrigins_json(t *testing.T) {
 	}
 	for i, tc := range testCases {
 		t.Run(fmt.Sprintf("%d/%s", i, tc.name), func(t *testing.T) {
-			d := NewDecoder()
-			d.SetSchema(tc.schema)
-
 			f, diags := json.Parse([]byte(tc.cfg), "test.tf.json")
 			if len(diags) > 0 {
 				t.Fatal(diags)
 			}
-			err := d.LoadFile("test.tf.json", f)
-			if err != nil {
-				t.Fatal(err)
-			}
+
+			d := testPathDecoder(t, &PathContext{
+				Schema: tc.schema,
+				Files: map[string]*hcl.File{
+					"test.tf.json": f,
+				},
+			})
 
 			origins, err := d.CollectReferenceOrigins()
 			if err != nil {

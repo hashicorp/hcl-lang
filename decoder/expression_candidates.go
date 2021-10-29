@@ -7,13 +7,14 @@ import (
 	"strings"
 
 	"github.com/hashicorp/hcl-lang/lang"
+	"github.com/hashicorp/hcl-lang/reference"
 	"github.com/hashicorp/hcl-lang/schema"
 	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hclsyntax"
 	"github.com/zclconf/go-cty/cty"
 )
 
-func (d *Decoder) attrValueCandidatesAtPos(attr *hclsyntax.Attribute, schema *schema.AttributeSchema, outerBodyRng hcl.Range, pos hcl.Pos) (lang.Candidates, error) {
+func (d *PathDecoder) attrValueCandidatesAtPos(attr *hclsyntax.Attribute, schema *schema.AttributeSchema, outerBodyRng hcl.Range, pos hcl.Pos) (lang.Candidates, error) {
 	constraints, editRng := constraintsAtPos(attr.Expr, ExprConstraints(schema.Expr), pos)
 	if len(constraints) > 0 {
 		prefixRng := editRng
@@ -151,7 +152,7 @@ func constraintsAtPos(expr hcl.Expression, constraints ExprConstraints, pos hcl.
 	return ExprConstraints{}, expr.Range()
 }
 
-func (d *Decoder) expressionCandidatesAtPos(constraints ExprConstraints, outerBodyRng, prefixRng, editRng hcl.Range) (lang.Candidates, error) {
+func (d *PathDecoder) expressionCandidatesAtPos(constraints ExprConstraints, outerBodyRng, prefixRng, editRng hcl.Range) (lang.Candidates, error) {
 	candidates := lang.NewCandidates()
 
 	for _, c := range constraints {
@@ -162,7 +163,7 @@ func (d *Decoder) expressionCandidatesAtPos(constraints ExprConstraints, outerBo
 	return candidates, nil
 }
 
-func (d *Decoder) constraintToCandidates(constraint schema.ExprConstraint, outerBodyRng, prefixRng, editRng hcl.Range) []lang.Candidate {
+func (d *PathDecoder) constraintToCandidates(constraint schema.ExprConstraint, outerBodyRng, prefixRng, editRng hcl.Range) []lang.Candidate {
 	candidates := make([]lang.Candidate, 0)
 
 	switch c := constraint.(type) {
@@ -314,10 +315,10 @@ func (d *Decoder) constraintToCandidates(constraint schema.ExprConstraint, outer
 	return candidates
 }
 
-func (d *Decoder) candidatesForTraversalConstraint(tc schema.TraversalExpr, outerBodyRng, prefixRng, editRng hcl.Range) []lang.Candidate {
+func (d *PathDecoder) candidatesForTraversalConstraint(tc schema.TraversalExpr, outerBodyRng, prefixRng, editRng hcl.Range) []lang.Candidate {
 	candidates := make([]lang.Candidate, 0)
 
-	if d.refTargetReader == nil {
+	if d.pathCtx.ReferenceTargets == nil {
 		return candidates
 	}
 
@@ -328,9 +329,7 @@ func (d *Decoder) candidatesForTraversalConstraint(tc schema.TraversalExpr, oute
 
 	prefix, _ := d.bytesFromRange(prefixRng)
 
-	refs := ReferenceTargets(d.refTargetReader())
-
-	refs.MatchWalk(tc, string(prefix), func(ref lang.ReferenceTarget) error {
+	d.pathCtx.ReferenceTargets.MatchWalk(tc, string(prefix), func(ref reference.Target) error {
 		// avoid suggesting references to block's own fields from within (for now)
 		if ref.RangePtr != nil &&
 			(outerBodyRng.ContainsPos(ref.RangePtr.Start) ||

@@ -12,7 +12,7 @@ import (
 // LinksInFile returns links relevant to parts of config in the given file
 //
 // A link (URI) typically points to the documentation.
-func (d *Decoder) LinksInFile(filename string) ([]lang.Link, error) {
+func (d *PathDecoder) LinksInFile(filename string) ([]lang.Link, error) {
 	f, err := d.fileByName(filename)
 	if err != nil {
 		return nil, err
@@ -23,17 +23,14 @@ func (d *Decoder) LinksInFile(filename string) ([]lang.Link, error) {
 		return nil, err
 	}
 
-	d.rootSchemaMu.RLock()
-	defer d.rootSchemaMu.RUnlock()
-
-	if d.rootSchema == nil {
+	if d.pathCtx.Schema == nil {
 		return []lang.Link{}, &NoSchemaError{}
 	}
 
-	return d.linksInBody(body, d.rootSchema)
+	return d.linksInBody(body, d.pathCtx.Schema)
 }
 
-func (d *Decoder) linksInBody(body *hclsyntax.Body, bodySchema *schema.BodySchema) ([]lang.Link, error) {
+func (d *PathDecoder) linksInBody(body *hclsyntax.Body, bodySchema *schema.BodySchema) ([]lang.Link, error) {
 	links := make([]lang.Link, 0)
 
 	for _, block := range body.Blocks {
@@ -66,20 +63,20 @@ func (d *Decoder) linksInBody(body *hclsyntax.Body, bodySchema *schema.BodySchem
 	return links, nil
 }
 
-func (d *Decoder) docsURL(uri, utmContent string) (*url.URL, error) {
+func (d *PathDecoder) docsURL(uri, utmContent string) (*url.URL, error) {
 	u, err := url.Parse(uri)
 	if err != nil {
 		return nil, err
 	}
 
 	q := u.Query()
-	if d.utmSource != "" {
-		q.Set("utm_source", d.utmSource)
+	if d.decoderCtx.UtmSource != "" {
+		q.Set("utm_source", d.decoderCtx.UtmSource)
 	}
-	if d.utmMedium != "" {
-		q.Set("utm_medium", d.utmMedium)
+	if d.decoderCtx.UtmMedium != "" {
+		q.Set("utm_medium", d.decoderCtx.UtmMedium)
 	}
-	if d.useUtmContent {
+	if d.decoderCtx.UseUtmContent {
 		q.Set("utm_content", utmContent)
 	}
 	u.RawQuery = q.Encode()

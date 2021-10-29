@@ -17,17 +17,18 @@ import (
 )
 
 func TestDecoder_HoverAtPos_noSchema(t *testing.T) {
-	d := NewDecoder()
 	f, pDiags := hclsyntax.ParseConfig(testConfig, "test.tf", hcl.InitialPos)
 	if len(pDiags) > 0 {
 		t.Fatal(pDiags)
 	}
-	err := d.LoadFile("test.tf", f)
-	if err != nil {
-		t.Fatal(err)
-	}
 
-	_, err = d.HoverAtPos("test.tf", hcl.InitialPos)
+	d := testPathDecoder(t, &PathContext{
+		Files: map[string]*hcl.File{
+			"test.tf": f,
+		},
+	})
+
+	_, err := d.HoverAtPos("test.tf", hcl.InitialPos)
 	noSchemaErr := &NoSchemaError{}
 	if !errors.As(err, &noSchemaErr) {
 		t.Fatal("expected NoSchemaError for no schema")
@@ -35,16 +36,17 @@ func TestDecoder_HoverAtPos_noSchema(t *testing.T) {
 }
 
 func TestDecoder_HoverAtPos_emptyBody(t *testing.T) {
-	d := NewDecoder()
 	f := &hcl.File{
 		Body: hcl.EmptyBody(),
 	}
-	err := d.LoadFile("test.tf", f)
-	if err != nil {
-		t.Fatal(err)
-	}
 
-	_, err = d.HoverAtPos("test.tf", hcl.InitialPos)
+	d := testPathDecoder(t, &PathContext{
+		Files: map[string]*hcl.File{
+			"test.tf": f,
+		},
+	})
+
+	_, err := d.HoverAtPos("test.tf", hcl.InitialPos)
 	unknownFormatErr := &UnknownFileFormatError{}
 	if !errors.As(err, &unknownFormatErr) {
 		t.Fatal("expected UnknownFileFormatError for empty body")
@@ -52,7 +54,6 @@ func TestDecoder_HoverAtPos_emptyBody(t *testing.T) {
 }
 
 func TestDecoder_HoverAtPos_json(t *testing.T) {
-	d := NewDecoder()
 	f, pDiags := json.Parse([]byte(`{
 	"customblock": {
 		"label1": {}
@@ -61,12 +62,14 @@ func TestDecoder_HoverAtPos_json(t *testing.T) {
 	if len(pDiags) > 0 {
 		t.Fatal(pDiags)
 	}
-	err := d.LoadFile("test.tf.json", f)
-	if err != nil {
-		t.Fatal(err)
-	}
 
-	_, err = d.HoverAtPos("test.tf.json", hcl.InitialPos)
+	d := testPathDecoder(t, &PathContext{
+		Files: map[string]*hcl.File{
+			"test.tf.json": f,
+		},
+	})
+
+	_, err := d.HoverAtPos("test.tf.json", hcl.InitialPos)
 	unknownFormatErr := &UnknownFileFormatError{}
 	if !errors.As(err, &unknownFormatErr) {
 		t.Fatal("expected UnknownFileFormatError for JSON body")
@@ -231,16 +234,17 @@ func TestDecoder_HoverAtPos_nilBodySchema(t *testing.T) {
 
 	for i, tc := range testCases {
 		t.Run(fmt.Sprintf("%d-%s", i, tc.name), func(t *testing.T) {
-			d := NewDecoder()
-			d.SetSchema(tc.rootSchema)
 			f, pDiags := hclsyntax.ParseConfig([]byte(tc.config), "test.tf", hcl.InitialPos)
 			if len(pDiags) > 0 {
 				t.Fatal(pDiags)
 			}
-			err := d.LoadFile("test.tf", f)
-			if err != nil {
-				t.Fatal(err)
-			}
+
+			d := testPathDecoder(t, &PathContext{
+				Schema: tc.rootSchema,
+				Files: map[string]*hcl.File{
+					"test.tf": f,
+				},
+			})
 
 			data, err := d.HoverAtPos("test.tf", tc.pos)
 			if err != nil {
@@ -273,8 +277,6 @@ func TestDecoder_HoverAtPos_unknownAttribute(t *testing.T) {
 		},
 	}
 
-	d := NewDecoder()
-	d.SetSchema(bodySchema)
 	f, pDiags := hclsyntax.ParseConfig([]byte(`resource "label1" "test" {
   blablah = 42
 }
@@ -282,12 +284,15 @@ func TestDecoder_HoverAtPos_unknownAttribute(t *testing.T) {
 	if len(pDiags) > 0 {
 		t.Fatal(pDiags)
 	}
-	err := d.LoadFile("test.tf", f)
-	if err != nil {
-		t.Fatal(err)
-	}
 
-	_, err = d.HoverAtPos("test.tf", hcl.Pos{
+	d := testPathDecoder(t, &PathContext{
+		Schema: bodySchema,
+		Files: map[string]*hcl.File{
+			"test.tf": f,
+		},
+	})
+
+	_, err := d.HoverAtPos("test.tf", hcl.Pos{
 		Line:   2,
 		Column: 6,
 		Byte:   32,
@@ -319,8 +324,6 @@ func TestDecoder_HoverAtPos_unknownBlock(t *testing.T) {
 		},
 	}
 
-	d := NewDecoder()
-	d.SetSchema(bodySchema)
 	f, pDiags := hclsyntax.ParseConfig([]byte(`customblock "label1" {
 
 }
@@ -328,12 +331,15 @@ func TestDecoder_HoverAtPos_unknownBlock(t *testing.T) {
 	if len(pDiags) > 0 {
 		t.Fatal(pDiags)
 	}
-	err := d.LoadFile("test.tf", f)
-	if err != nil {
-		t.Fatal(err)
-	}
 
-	_, err = d.HoverAtPos("test.tf", hcl.Pos{
+	d := testPathDecoder(t, &PathContext{
+		Schema: bodySchema,
+		Files: map[string]*hcl.File{
+			"test.tf": f,
+		},
+	})
+
+	_, err := d.HoverAtPos("test.tf", hcl.Pos{
 		Line:   2,
 		Column: 1,
 		Byte:   23,
@@ -397,20 +403,21 @@ func TestDecoder_HoverAtPos_invalidBlockPositions(t *testing.T) {
 		},
 	}
 
-	d := NewDecoder()
-	d.SetSchema(bodySchema)
 	f, pDiags := hclsyntax.ParseConfig(testConfig, "test.tf", hcl.InitialPos)
 	if len(pDiags) > 0 {
 		t.Fatal(pDiags)
 	}
-	err := d.LoadFile("test.tf", f)
-	if err != nil {
-		t.Fatal(err)
-	}
+
+	d := testPathDecoder(t, &PathContext{
+		Schema: bodySchema,
+		Files: map[string]*hcl.File{
+			"test.tf": f,
+		},
+	})
 
 	for i, tc := range testCases {
 		t.Run(fmt.Sprintf("%d-%s", i, tc.name), func(t *testing.T) {
-			_, err = d.HoverAtPos("test.tf", tc.pos)
+			_, err := d.HoverAtPos("test.tf", tc.pos)
 			if err == nil {
 				t.Fatal("expected error")
 			}
@@ -444,13 +451,14 @@ func TestDecoder_HoverAtPos_rightHandSide(t *testing.T) {
 }
 `)
 
-	d := NewDecoder()
-	d.SetSchema(bodySchema)
 	f, _ := hclsyntax.ParseConfig(testConfig, "test.tf", hcl.InitialPos)
-	err := d.LoadFile("test.tf", f)
-	if err != nil {
-		t.Fatal(err)
-	}
+
+	d := testPathDecoder(t, &PathContext{
+		Schema: bodySchema,
+		Files: map[string]*hcl.File{
+			"test.tf": f,
+		},
+	})
 
 	data, err := d.HoverAtPos("test.tf", hcl.Pos{
 		Line:   2,
@@ -537,14 +545,15 @@ func TestDecoder_HoverAtPos_basic(t *testing.T) {
   }
 }
 `)
-	d := NewDecoder()
-	d.SetSchema(bodySchema)
 
 	f, _ := hclsyntax.ParseConfig(testConfig, "test.tf", hcl.InitialPos)
-	err := d.LoadFile("test.tf", f)
-	if err != nil {
-		t.Fatal(err)
-	}
+
+	d := testPathDecoder(t, &PathContext{
+		Schema: bodySchema,
+		Files: map[string]*hcl.File{
+			"test.tf": f,
+		},
+	})
 
 	testCases := []struct {
 		name         string
@@ -792,14 +801,14 @@ My food block
 	}
 	for i, tc := range testCases {
 		t.Run(fmt.Sprintf("%d-%s", i, tc.name), func(t *testing.T) {
-			d := NewDecoder()
-			d.SetSchema(bodySchema)
-
 			f, _ := hclsyntax.ParseConfig([]byte(tc.cfg), "test.tf", hcl.InitialPos)
-			err := d.LoadFile("test.tf", f)
-			if err != nil {
-				t.Fatal(err)
-			}
+
+			d := testPathDecoder(t, &PathContext{
+				Schema: bodySchema,
+				Files: map[string]*hcl.File{
+					"test.tf": f,
+				},
+			})
 
 			data, err := d.HoverAtPos("test.tf", tc.pos)
 			if err != nil {
@@ -834,9 +843,6 @@ func TestDecoder_HoverAtPos_typeDeclaration(t *testing.T) {
 			"myblock": blockSchema,
 		},
 	}
-
-	d := NewDecoder()
-	d.SetSchema(bodySchema)
 
 	testCases := []struct {
 		name         string
@@ -896,10 +902,14 @@ func TestDecoder_HoverAtPos_typeDeclaration(t *testing.T) {
 		t.Run(fmt.Sprintf("%d-%s", i, tc.name), func(t *testing.T) {
 			testConfig := []byte(tc.cfg)
 			f, _ := hclsyntax.ParseConfig(testConfig, "test.tf", hcl.InitialPos)
-			err := d.LoadFile("test.tf", f)
-			if err != nil {
-				t.Fatal(err)
-			}
+
+			d := testPathDecoder(t, &PathContext{
+				Schema: bodySchema,
+				Files: map[string]*hcl.File{
+					"test.tf": f,
+				},
+			})
+
 			pos := hcl.Pos{Line: 2, Column: 6, Byte: 32}
 			data, err := d.HoverAtPos("test.tf", pos)
 			if err != nil {

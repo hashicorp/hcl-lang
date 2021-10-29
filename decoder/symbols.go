@@ -1,6 +1,7 @@
 package decoder
 
 import (
+	"context"
 	"fmt"
 	"sort"
 	"strings"
@@ -17,7 +18,7 @@ import (
 // A symbol is typically represented by a block or an attribute.
 //
 // Symbols within JSON files require schema to be present for decoding.
-func (d *Decoder) SymbolsInFile(filename string) ([]Symbol, error) {
+func (d *PathDecoder) SymbolsInFile(filename string) ([]Symbol, error) {
 	f, err := d.fileByName(filename)
 	if err != nil {
 		return nil, err
@@ -28,36 +29,47 @@ func (d *Decoder) SymbolsInFile(filename string) ([]Symbol, error) {
 		return nil, &UnknownFileFormatError{Filename: filename}
 	}
 
-	return d.symbolsForBody(f.Body, d.rootSchema), nil
+	return d.symbolsForBody(f.Body, d.pathCtx.Schema), nil
 }
 
-func (d *Decoder) symbolsInFile(filename string) ([]Symbol, error) {
+func (d *PathDecoder) symbolsInFile(filename string) ([]Symbol, error) {
 	f, err := d.fileByName(filename)
 	if err != nil {
 		return nil, err
 	}
 
-	_, isHcl := f.Body.(*hclsyntax.Body)
-	if !isHcl {
-		d.rootSchemaMu.RLock()
-		defer d.rootSchemaMu.RUnlock()
-	}
-
-	return d.symbolsForBody(f.Body, d.rootSchema), nil
+	return d.symbolsForBody(f.Body, d.pathCtx.Schema), nil
 }
 
-// Symbols returns a hierarchy of symbols matching the query
-// in all loaded files (typically whole module).
+// Symbols returns a hierarchy of symbols matching the query in all paths.
 // Query can be empty, as per LSP's workspace/symbol request,
 // in which case all symbols are returned.
 //
 // A symbol is typically represented by a block or an attribute.
 //
 // Symbols within JSON files require schema to be present for decoding.
-func (d *Decoder) Symbols(query string) ([]Symbol, error) {
+func (d *Decoder) Symbols(ctx context.Context, query string) ([]Symbol, error) {
 	symbols := make([]Symbol, 0)
 
-	files := d.Filenames()
+	for _, path := range d.pathReader.Paths(ctx) {
+		pathDecoder, err := d.Path(path)
+		if err != nil {
+			continue
+		}
+		dirSymbols, err := pathDecoder.symbols(query)
+		if err != nil {
+			continue
+		}
+
+		symbols = append(symbols, dirSymbols...)
+	}
+
+	return symbols, nil
+}
+
+func (d *PathDecoder) symbols(query string) ([]Symbol, error) {
+	symbols := make([]Symbol, 0)
+	files := d.filenames()
 
 	for _, filename := range files {
 		fSymbols, err := d.symbolsInFile(filename)
@@ -75,7 +87,7 @@ func (d *Decoder) Symbols(query string) ([]Symbol, error) {
 	return symbols, nil
 }
 
-func (d *Decoder) symbolsForBody(body hcl.Body, bodySchema *schema.BodySchema) []Symbol {
+func (d *PathDecoder) symbolsForBody(body hcl.Body, bodySchema *schema.BodySchema) []Symbol {
 	symbols := make([]Symbol, 0)
 	if body == nil {
 		return symbols
@@ -87,8 +99,9 @@ func (d *Decoder) symbolsForBody(body hcl.Body, bodySchema *schema.BodySchema) [
 		symbols = append(symbols, &AttributeSymbol{
 			AttrName:      name,
 			ExprKind:      symbolExprKind(attr.Expr),
+			path:          d.path,
 			rng:           attr.Range,
-			nestedSymbols: nestedSymbolsForExpr(attr.Expr),
+			nestedSymbols: d.nestedSymbolsForExpr(attr.Expr),
 		})
 	}
 
@@ -108,6 +121,7 @@ func (d *Decoder) symbolsForBody(body hcl.Body, bodySchema *schema.BodySchema) [
 		symbols = append(symbols, &BlockSymbol{
 			Type:          block.Type,
 			Labels:        block.Labels,
+			path:          d.path,
 			rng:           block.Range,
 			nestedSymbols: d.symbolsForBody(block.Body, bSchema),
 		})
@@ -145,7 +159,7 @@ func symbolExprKind(expr hcl.Expression) lang.SymbolExprKind {
 	return nil
 }
 
-func nestedSymbolsForExpr(expr hcl.Expression) []Symbol {
+func (d *PathDecoder) nestedSymbolsForExpr(expr hcl.Expression) []Symbol {
 	symbols := make([]Symbol, 0)
 
 	switch e := expr.(type) {
@@ -154,8 +168,9 @@ func nestedSymbolsForExpr(expr hcl.Expression) []Symbol {
 			symbols = append(symbols, &ExprSymbol{
 				ExprName:      fmt.Sprintf("%d", i),
 				ExprKind:      symbolExprKind(item),
+				path:          d.path,
 				rng:           item.Range(),
-				nestedSymbols: nestedSymbolsForExpr(item),
+				nestedSymbols: d.nestedSymbolsForExpr(item),
 			})
 		}
 	case *hclsyntax.ObjectConsExpr:
@@ -169,8 +184,9 @@ func nestedSymbolsForExpr(expr hcl.Expression) []Symbol {
 			symbols = append(symbols, &ExprSymbol{
 				ExprName:      key.AsString(),
 				ExprKind:      symbolExprKind(item.ValueExpr),
+				path:          d.path,
 				rng:           hcl.RangeBetween(item.KeyExpr.Range(), item.ValueExpr.Range()),
-				nestedSymbols: nestedSymbolsForExpr(item.ValueExpr),
+				nestedSymbols: d.nestedSymbolsForExpr(item.ValueExpr),
 			})
 		}
 	}

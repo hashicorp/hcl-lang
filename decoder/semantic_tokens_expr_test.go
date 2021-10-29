@@ -6,6 +6,7 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/hashicorp/hcl-lang/lang"
+	"github.com/hashicorp/hcl-lang/reference"
 	"github.com/hashicorp/hcl-lang/schema"
 	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hclsyntax"
@@ -1434,19 +1435,21 @@ EOT
 
 	for i, tc := range testCases {
 		t.Run(fmt.Sprintf("%d-%s", i, tc.name), func(t *testing.T) {
-			d := NewDecoder()
-			d.SetSchema(&schema.BodySchema{
+			bodySchema := &schema.BodySchema{
 				Attributes: tc.attrSchema,
-			})
+			}
 
 			f, pDiags := hclsyntax.ParseConfig([]byte(tc.cfg), "test.tf", hcl.InitialPos)
 			if len(pDiags) > 0 {
 				t.Fatal(pDiags)
 			}
-			err := d.LoadFile("test.tf", f)
-			if err != nil {
-				t.Fatal(err)
-			}
+
+			d := testPathDecoder(t, &PathContext{
+				Schema: bodySchema,
+				Files: map[string]*hcl.File{
+					"test.tf": f,
+				},
+			})
 
 			tokens, err := d.SemanticTokensInFile("test.tf")
 			if err != nil {
@@ -1465,7 +1468,7 @@ func TestDecoder_SemanticTokensInFile_traversalExpression(t *testing.T) {
 	testCases := []struct {
 		name           string
 		attrSchema     map[string]*schema.AttributeSchema
-		refs           lang.ReferenceTargets
+		refs           reference.Targets
 		cfg            string
 		expectedTokens []lang.SemanticToken
 	}{
@@ -1478,7 +1481,7 @@ func TestDecoder_SemanticTokensInFile_traversalExpression(t *testing.T) {
 					},
 				},
 			},
-			lang.ReferenceTargets{},
+			reference.Targets{},
 			`attr = var.blah
 `,
 			[]lang.SemanticToken{
@@ -1510,8 +1513,8 @@ func TestDecoder_SemanticTokensInFile_traversalExpression(t *testing.T) {
 					},
 				},
 			},
-			lang.ReferenceTargets{
-				lang.ReferenceTarget{
+			reference.Targets{
+				reference.Target{
 					Addr: lang.Address{
 						lang.RootStep{Name: "var"},
 						lang.AttrStep{Name: "blah"},
@@ -1550,8 +1553,8 @@ func TestDecoder_SemanticTokensInFile_traversalExpression(t *testing.T) {
 					},
 				},
 			},
-			lang.ReferenceTargets{
-				lang.ReferenceTarget{
+			reference.Targets{
+				reference.Target{
 					Addr: lang.Address{
 						lang.RootStep{Name: "var"},
 						lang.AttrStep{Name: "blah"},
@@ -1624,8 +1627,8 @@ func TestDecoder_SemanticTokensInFile_traversalExpression(t *testing.T) {
 					},
 				},
 			},
-			lang.ReferenceTargets{
-				lang.ReferenceTarget{
+			reference.Targets{
+				reference.Target{
 					Addr: lang.Address{
 						lang.RootStep{Name: "var"},
 						lang.AttrStep{Name: "blah"},
@@ -1698,8 +1701,8 @@ func TestDecoder_SemanticTokensInFile_traversalExpression(t *testing.T) {
 					},
 				},
 			},
-			lang.ReferenceTargets{
-				lang.ReferenceTarget{
+			reference.Targets{
+				reference.Target{
 					Addr: lang.Address{
 						lang.RootStep{Name: "var"},
 						lang.AttrStep{Name: "foo"},
@@ -1825,7 +1828,7 @@ func TestDecoder_SemanticTokensInFile_traversalExpression(t *testing.T) {
 					},
 				},
 			},
-			lang.ReferenceTargets{
+			reference.Targets{
 				{
 					Addr: lang.Address{
 						lang.RootStep{Name: "var"},
@@ -1911,22 +1914,22 @@ func TestDecoder_SemanticTokensInFile_traversalExpression(t *testing.T) {
 
 	for i, tc := range testCases {
 		t.Run(fmt.Sprintf("%d-%s", i, tc.name), func(t *testing.T) {
-			d := NewDecoder()
-			d.SetSchema(&schema.BodySchema{
+			bodySchema := &schema.BodySchema{
 				Attributes: tc.attrSchema,
-			})
-			d.SetReferenceTargetReader(func() lang.ReferenceTargets {
-				return tc.refs
-			})
+			}
 
 			f, pDiags := hclsyntax.ParseConfig([]byte(tc.cfg), "test.tf", hcl.InitialPos)
 			if len(pDiags) > 0 {
 				t.Fatal(pDiags)
 			}
-			err := d.LoadFile("test.tf", f)
-			if err != nil {
-				t.Fatal(err)
-			}
+
+			d := testPathDecoder(t, &PathContext{
+				Schema:           bodySchema,
+				ReferenceTargets: tc.refs,
+				Files: map[string]*hcl.File{
+					"test.tf": f,
+				},
+			})
 
 			tokens, err := d.SemanticTokensInFile("test.tf")
 			if err != nil {

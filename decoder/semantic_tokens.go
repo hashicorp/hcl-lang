@@ -4,6 +4,7 @@ import (
 	"sort"
 
 	"github.com/hashicorp/hcl-lang/lang"
+	"github.com/hashicorp/hcl-lang/reference"
 	"github.com/hashicorp/hcl-lang/schema"
 	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hclsyntax"
@@ -12,7 +13,7 @@ import (
 
 // SemanticTokensInFile returns a sequence of semantic tokens
 // within the config file.
-func (d *Decoder) SemanticTokensInFile(filename string) ([]lang.SemanticToken, error) {
+func (d *PathDecoder) SemanticTokensInFile(filename string) ([]lang.SemanticToken, error) {
 	f, err := d.fileByName(filename)
 	if err != nil {
 		return nil, err
@@ -23,11 +24,11 @@ func (d *Decoder) SemanticTokensInFile(filename string) ([]lang.SemanticToken, e
 		return nil, err
 	}
 
-	if d.rootSchema == nil {
+	if d.pathCtx.Schema == nil {
 		return []lang.SemanticToken{}, nil
 	}
 
-	tokens := d.tokensForBody(body, d.rootSchema, false)
+	tokens := d.tokensForBody(body, d.pathCtx.Schema, false)
 
 	sort.Slice(tokens, func(i, j int) bool {
 		return tokens[i].Range.Start.Byte < tokens[j].Range.Start.Byte
@@ -36,7 +37,7 @@ func (d *Decoder) SemanticTokensInFile(filename string) ([]lang.SemanticToken, e
 	return tokens, nil
 }
 
-func (d *Decoder) tokensForBody(body *hclsyntax.Body, bodySchema *schema.BodySchema, isDependent bool) []lang.SemanticToken {
+func (d *PathDecoder) tokensForBody(body *hclsyntax.Body, bodySchema *schema.BodySchema, isDependent bool) []lang.SemanticToken {
 	tokens := make([]lang.SemanticToken, 0)
 
 	if bodySchema == nil {
@@ -125,7 +126,7 @@ func (d *Decoder) tokensForBody(body *hclsyntax.Body, bodySchema *schema.BodySch
 	return tokens
 }
 
-func (d *Decoder) tokensForExpression(expr hclsyntax.Expression, constraints ExprConstraints) []lang.SemanticToken {
+func (d *PathDecoder) tokensForExpression(expr hclsyntax.Expression, constraints ExprConstraints) []lang.SemanticToken {
 	tokens := make([]lang.SemanticToken, 0)
 
 	switch eType := expr.(type) {
@@ -143,17 +144,16 @@ func (d *Decoder) tokensForExpression(expr hclsyntax.Expression, constraints Exp
 		}
 
 		tes, ok := constraints.TraversalExprs()
-		if ok && d.refTargetReader != nil {
-			refs := ReferenceTargets(d.refTargetReader())
+		if ok && d.pathCtx.ReferenceTargets != nil {
 			traversal := eType.AsTraversal()
 
-			origin, err := TraversalToReferenceOrigin(traversal, tes)
+			origin, err := reference.TraversalToOrigin(traversal, tes)
 			if err != nil {
 				return tokens
 			}
 
-			_, err = refs.FirstTargetableBy(origin)
-			if err != nil {
+			_, targetFound := d.pathCtx.ReferenceTargets.FirstTargetableBy(origin)
+			if !targetFound {
 				return tokens
 			}
 
@@ -365,7 +365,7 @@ func (d *Decoder) tokensForExpression(expr hclsyntax.Expression, constraints Exp
 	return tokens
 }
 
-func (d *Decoder) tokensForObjectConsTypeDeclarationExpr(expr *hclsyntax.ObjectConsExpr, constraints ExprConstraints) []lang.SemanticToken {
+func (d *PathDecoder) tokensForObjectConsTypeDeclarationExpr(expr *hclsyntax.ObjectConsExpr, constraints ExprConstraints) []lang.SemanticToken {
 	tokens := make([]lang.SemanticToken, 0)
 	for _, item := range expr.Items {
 		key, _ := item.KeyExpr.Value(nil)

@@ -6,6 +6,7 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/hashicorp/hcl-lang/lang"
+	"github.com/hashicorp/hcl-lang/reference"
 	"github.com/hashicorp/hcl-lang/schema"
 	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/json"
@@ -18,7 +19,7 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 		name         string
 		schema       *schema.BodySchema
 		cfg          string
-		expectedRefs lang.ReferenceTargets
+		expectedRefs reference.Targets
 	}{
 		{
 			"root attribute as reference",
@@ -39,7 +40,7 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 				},
 			},
 			`{"testattr": "${example}"}`,
-			lang.ReferenceTargets{
+			reference.Targets{
 				{
 					Addr: lang.Address{
 						lang.RootStep{Name: "special"},
@@ -93,7 +94,7 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 				},
 			},
 			`{"testattr": "example"}`,
-			lang.ReferenceTargets{
+			reference.Targets{
 				{
 					Addr: lang.Address{
 						lang.RootStep{Name: "special"},
@@ -147,7 +148,7 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 				},
 			},
 			`{"testattr": "example"}`,
-			lang.ReferenceTargets{
+			reference.Targets{
 				{
 					Addr: lang.Address{
 						lang.RootStep{Name: "special"},
@@ -208,7 +209,7 @@ func TestCollectReferenceTargets_json(t *testing.T) {
   }
 }
 `,
-			lang.ReferenceTargets{
+			reference.Targets{
 				{
 					Addr: lang.Address{
 						lang.RootStep{Name: "special"},
@@ -243,7 +244,7 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 							Byte:   14,
 						},
 					},
-					NestedTargets: lang.ReferenceTargets{
+					NestedTargets: reference.Targets{
 						// TODO: See https: //github.com/hashicorp/terraform-ls/issues/675
 					},
 				},
@@ -272,7 +273,7 @@ func TestCollectReferenceTargets_json(t *testing.T) {
   }
 }
 `,
-			lang.ReferenceTargets{
+			reference.Targets{
 				{
 					Addr: lang.Address{
 						lang.RootStep{Name: "special"},
@@ -305,7 +306,7 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 							Byte:   14,
 						},
 					},
-					NestedTargets: lang.ReferenceTargets{
+					NestedTargets: reference.Targets{
 						// TODO: See https: //github.com/hashicorp/terraform-ls/issues/675
 					},
 				},
@@ -331,7 +332,7 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 			`{
   "testattr": [ "example" ]
 }`,
-			lang.ReferenceTargets{
+			reference.Targets{
 				{
 					Addr: lang.Address{
 						lang.RootStep{Name: "special"},
@@ -364,7 +365,7 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 							Byte:   14,
 						},
 					},
-					NestedTargets: lang.ReferenceTargets{
+					NestedTargets: reference.Targets{
 						// TODO: See https: //github.com/hashicorp/terraform-ls/issues/675
 					},
 				},
@@ -394,7 +395,7 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 			`{
   "testattr": [ "example" ]
 }`,
-			lang.ReferenceTargets{
+			reference.Targets{
 				{
 					Addr: lang.Address{
 						lang.RootStep{Name: "special"},
@@ -427,7 +428,7 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 							Byte:   14,
 						},
 					},
-					NestedTargets: lang.ReferenceTargets{
+					NestedTargets: reference.Targets{
 						// TODO: See https: //github.com/hashicorp/terraform-ls/issues/675
 					},
 				},
@@ -450,7 +451,7 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 				},
 			},
 			`{"testattr": "example"}`,
-			lang.ReferenceTargets{},
+			reference.Targets{},
 		},
 		{
 			"block with mismatching steps",
@@ -487,7 +488,7 @@ func TestCollectReferenceTargets_json(t *testing.T) {
   }
 }
 `,
-			lang.ReferenceTargets{},
+			reference.Targets{},
 		},
 		{
 			"block as ref only",
@@ -531,7 +532,7 @@ func TestCollectReferenceTargets_json(t *testing.T) {
   }
 }
 `,
-			lang.ReferenceTargets{
+			reference.Targets{
 				{
 					Addr: lang.Address{
 						lang.RootStep{Name: "blah"},
@@ -658,7 +659,7 @@ func TestCollectReferenceTargets_json(t *testing.T) {
   }
 }
 `,
-			lang.ReferenceTargets{
+			reference.Targets{
 				{
 					Addr: lang.Address{
 						lang.RootStep{Name: "blah"},
@@ -746,7 +747,7 @@ func TestCollectReferenceTargets_json(t *testing.T) {
     }
   }
 }`,
-			lang.ReferenceTargets{
+			reference.Targets{
 				{
 					Addr: lang.Address{
 						lang.RootStep{Name: "blah"},
@@ -828,7 +829,7 @@ func TestCollectReferenceTargets_json(t *testing.T) {
   }
 }
 `,
-			lang.ReferenceTargets{
+			reference.Targets{
 				{
 					Addr: lang.Address{
 						lang.RootStep{Name: "blah"},
@@ -910,7 +911,7 @@ func TestCollectReferenceTargets_json(t *testing.T) {
   }
 }
 `,
-			lang.ReferenceTargets{
+			reference.Targets{
 				{
 					Addr: lang.Address{
 						lang.RootStep{Name: "http"},
@@ -1048,7 +1049,7 @@ func TestCollectReferenceTargets_json(t *testing.T) {
   }
 }
 `,
-			lang.ReferenceTargets{
+			reference.Targets{
 				{
 					Addr: lang.Address{
 						lang.RootStep{Name: "aws"},
@@ -1088,7 +1089,7 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 							Byte:   30,
 						},
 					},
-					NestedTargets: lang.ReferenceTargets{
+					NestedTargets: reference.Targets{
 						{
 							Addr: lang.Address{
 								lang.RootStep{Name: "aws"},
@@ -1154,7 +1155,7 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 									Byte:   171,
 								},
 							},
-							NestedTargets: lang.ReferenceTargets{
+							NestedTargets: reference.Targets{
 								// TODO: See https: //github.com/hashicorp/terraform-ls/issues/675
 							},
 						},
@@ -1190,7 +1191,7 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 									Byte:   94,
 								},
 							},
-							NestedTargets: lang.ReferenceTargets{
+							NestedTargets: reference.Targets{
 								// TODO: See https: //github.com/hashicorp/terraform-ls/issues/675
 							},
 						},
@@ -1261,7 +1262,7 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 									Byte:   207,
 								},
 							},
-							NestedTargets: lang.ReferenceTargets{
+							NestedTargets: reference.Targets{
 								// TODO: See https: //github.com/hashicorp/terraform-ls/issues/675
 							},
 						},
@@ -1346,7 +1347,7 @@ func TestCollectReferenceTargets_json(t *testing.T) {
   }
 }
 `,
-			lang.ReferenceTargets{
+			reference.Targets{
 				{
 					Addr: lang.Address{
 						lang.RootStep{Name: "aws"},
@@ -1467,7 +1468,7 @@ func TestCollectReferenceTargets_json(t *testing.T) {
   }
 }
 `,
-			lang.ReferenceTargets{
+			reference.Targets{
 				{
 					Addr: lang.Address{
 						lang.RootStep{Name: "aws"},
@@ -1507,7 +1508,7 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 							Byte:   30,
 						},
 					},
-					NestedTargets: lang.ReferenceTargets{
+					NestedTargets: reference.Targets{
 						{
 							Addr: lang.Address{
 								lang.RootStep{Name: "aws"},
@@ -1573,7 +1574,7 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 									Byte:   95,
 								},
 							},
-							NestedTargets: lang.ReferenceTargets{
+							NestedTargets: reference.Targets{
 								// TODO: See https: //github.com/hashicorp/terraform-ls/issues/675
 							},
 						},
@@ -1609,7 +1610,7 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 									Byte:   129,
 								},
 							},
-							NestedTargets: lang.ReferenceTargets{
+							NestedTargets: reference.Targets{
 								// TODO: See https: //github.com/hashicorp/terraform-ls/issues/675
 							},
 						},
@@ -1680,7 +1681,7 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 									Byte:   174,
 								},
 							},
-							NestedTargets: lang.ReferenceTargets{
+							NestedTargets: reference.Targets{
 								// TODO: See https: //github.com/hashicorp/terraform-ls/issues/675
 							},
 						},
@@ -1745,7 +1746,7 @@ func TestCollectReferenceTargets_json(t *testing.T) {
   }
 }
 `,
-			lang.ReferenceTargets{
+			reference.Targets{
 				{
 					Addr: lang.Address{
 						lang.RootStep{Name: "root"},
@@ -1784,7 +1785,7 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 							"protocol": cty.String,
 						}),
 					}),
-					NestedTargets: lang.ReferenceTargets{
+					NestedTargets: reference.Targets{
 						{
 							Addr: lang.Address{
 								lang.RootStep{Name: "root"},
@@ -1855,7 +1856,7 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 								"port":     cty.Number,
 								"protocol": cty.String,
 							}),
-							NestedTargets: lang.ReferenceTargets{
+							NestedTargets: reference.Targets{
 								{
 									Addr: lang.Address{
 										lang.RootStep{Name: "root"},
@@ -1993,7 +1994,7 @@ func TestCollectReferenceTargets_json(t *testing.T) {
   }
 }
 `,
-			lang.ReferenceTargets{
+			reference.Targets{
 				{
 					Addr: lang.Address{
 						lang.RootStep{Name: "root"},
@@ -2032,7 +2033,7 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 							"protocol": cty.String,
 						})),
 					}),
-					NestedTargets: lang.ReferenceTargets{
+					NestedTargets: reference.Targets{
 						{
 							Addr: lang.Address{
 								lang.RootStep{Name: "root"},
@@ -2091,7 +2092,7 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 								"port":     cty.Number,
 								"protocol": cty.String,
 							})),
-							NestedTargets: lang.ReferenceTargets{
+							NestedTargets: reference.Targets{
 								{
 									Addr: lang.Address{
 										lang.RootStep{Name: "root"},
@@ -2129,7 +2130,7 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 										"port":     cty.Number,
 										"protocol": cty.String,
 									}),
-									NestedTargets: lang.ReferenceTargets{
+									NestedTargets: reference.Targets{
 										{
 											Addr: lang.Address{
 												lang.RootStep{Name: "root"},
@@ -2241,7 +2242,7 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 										"port":     cty.Number,
 										"protocol": cty.String,
 									}),
-									NestedTargets: lang.ReferenceTargets{
+									NestedTargets: reference.Targets{
 										{
 											Addr: lang.Address{
 												lang.RootStep{Name: "root"},
@@ -2383,7 +2384,7 @@ func TestCollectReferenceTargets_json(t *testing.T) {
   }
 }
 `,
-			lang.ReferenceTargets{
+			reference.Targets{
 				{
 					Addr: lang.Address{
 						lang.RootStep{Name: "root"},
@@ -2422,7 +2423,7 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 							"protocol": cty.String,
 						})),
 					}),
-					NestedTargets: lang.ReferenceTargets{
+					NestedTargets: reference.Targets{
 						{
 							Addr: lang.Address{
 								lang.RootStep{Name: "root"},
@@ -2548,7 +2549,7 @@ func TestCollectReferenceTargets_json(t *testing.T) {
   }
 }
 `,
-			lang.ReferenceTargets{
+			reference.Targets{
 				{
 					Addr: lang.Address{
 						lang.RootStep{Name: "root"},
@@ -2587,7 +2588,7 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 							"protocol": cty.String,
 						})),
 					}),
-					NestedTargets: lang.ReferenceTargets{
+					NestedTargets: reference.Targets{
 						{
 							Addr: lang.Address{
 								lang.RootStep{Name: "root"},
@@ -2646,7 +2647,7 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 								"port":     cty.Number,
 								"protocol": cty.String,
 							})),
-							NestedTargets: lang.ReferenceTargets{
+							NestedTargets: reference.Targets{
 								{
 									Addr: lang.Address{
 										lang.RootStep{Name: "root"},
@@ -2684,7 +2685,7 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 										"port":     cty.Number,
 										"protocol": cty.String,
 									}),
-									NestedTargets: lang.ReferenceTargets{
+									NestedTargets: reference.Targets{
 										{
 											Addr: lang.Address{
 												lang.RootStep{Name: "root"},
@@ -2796,7 +2797,7 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 										"port":     cty.Number,
 										"protocol": cty.String,
 									}),
-									NestedTargets: lang.ReferenceTargets{
+									NestedTargets: reference.Targets{
 										{
 											Addr: lang.Address{
 												lang.RootStep{Name: "root"},
@@ -2942,7 +2943,7 @@ func TestCollectReferenceTargets_json(t *testing.T) {
   }
 }
 `,
-			lang.ReferenceTargets{
+			reference.Targets{
 				{
 					Addr: lang.Address{
 						lang.RootStep{Name: "lb"},
@@ -2981,7 +2982,7 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 							"protocol": cty.String,
 						})),
 					}),
-					NestedTargets: lang.ReferenceTargets{
+					NestedTargets: reference.Targets{
 						{
 							Addr: lang.Address{
 								lang.RootStep{Name: "lb"},
@@ -3040,7 +3041,7 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 								"port":     cty.Number,
 								"protocol": cty.String,
 							})),
-							NestedTargets: lang.ReferenceTargets{
+							NestedTargets: reference.Targets{
 								{
 									Addr: lang.Address{
 										lang.RootStep{Name: "lb"},
@@ -3078,7 +3079,7 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 											Byte:   91,
 										},
 									},
-									NestedTargets: lang.ReferenceTargets{
+									NestedTargets: reference.Targets{
 										{
 											Addr: lang.Address{
 												lang.RootStep{Name: "lb"},
@@ -3190,7 +3191,7 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 											Byte:   171,
 										},
 									},
-									NestedTargets: lang.ReferenceTargets{
+									NestedTargets: reference.Targets{
 										{
 											Addr: lang.Address{
 												lang.RootStep{Name: "lb"},
@@ -3275,7 +3276,7 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 				},
 			},
 			`{"testattr": "${special.test}"}`,
-			lang.ReferenceTargets{
+			reference.Targets{
 				// TODO: See https: //github.com/hashicorp/terraform-ls/issues/675
 			},
 		},
@@ -3314,7 +3315,7 @@ func TestCollectReferenceTargets_json(t *testing.T) {
   }
 }
 `,
-			lang.ReferenceTargets{
+			reference.Targets{
 				{
 					Addr: lang.Address{
 						lang.RootStep{Name: "aws"},
@@ -3376,7 +3377,7 @@ func TestCollectReferenceTargets_json(t *testing.T) {
     "test": {}
   }
 }`,
-			lang.ReferenceTargets{
+			reference.Targets{
 				{
 					Addr: lang.Address{
 						lang.RootStep{Name: "test"},
@@ -3449,7 +3450,7 @@ func TestCollectReferenceTargets_json(t *testing.T) {
   }
 }
 `,
-			lang.ReferenceTargets{
+			reference.Targets{
 				{
 					Addr: lang.Address{
 						lang.RootStep{Name: "test"},
@@ -3526,7 +3527,7 @@ func TestCollectReferenceTargets_json(t *testing.T) {
   }
 }
 `,
-			lang.ReferenceTargets{
+			reference.Targets{
 				{
 					Addr: lang.Address{
 						lang.RootStep{Name: "test"},
@@ -3604,7 +3605,7 @@ func TestCollectReferenceTargets_json(t *testing.T) {
   }
 }
 `,
-			lang.ReferenceTargets{
+			reference.Targets{
 				{
 					Addr: lang.Address{
 						lang.RootStep{Name: "test"},
@@ -3683,7 +3684,7 @@ func TestCollectReferenceTargets_json(t *testing.T) {
   }
 }
 `,
-			lang.ReferenceTargets{
+			reference.Targets{
 				{
 					Addr: lang.Address{
 						lang.RootStep{Name: "test"},
@@ -3760,7 +3761,7 @@ func TestCollectReferenceTargets_json(t *testing.T) {
     }
   }
 }`,
-			lang.ReferenceTargets{
+			reference.Targets{
 				{
 					Addr: lang.Address{
 						lang.RootStep{Name: "test"},
@@ -3832,7 +3833,7 @@ func TestCollectReferenceTargets_json(t *testing.T) {
   }
 }
 `,
-			lang.ReferenceTargets{
+			reference.Targets{
 				{
 					Addr: lang.Address{
 						lang.RootStep{Name: "module"},
@@ -3947,7 +3948,7 @@ func TestCollectReferenceTargets_json(t *testing.T) {
   }
 }
 `,
-			lang.ReferenceTargets{
+			reference.Targets{
 				{
 					Addr: lang.Address{
 						lang.RootStep{Name: "module"},
@@ -3982,7 +3983,7 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 							Byte:   29,
 						},
 					},
-					NestedTargets: lang.ReferenceTargets{
+					NestedTargets: reference.Targets{
 						{
 							Addr: lang.Address{
 								lang.RootStep{Name: "module"},
@@ -4065,7 +4066,7 @@ func TestCollectReferenceTargets_json(t *testing.T) {
   }
 }
 `,
-			lang.ReferenceTargets{
+			reference.Targets{
 				{
 					Addr: lang.Address{
 						lang.RootStep{Name: "local"},
@@ -4112,7 +4113,7 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 							Byte:   29,
 						},
 					},
-					NestedTargets: lang.ReferenceTargets{
+					NestedTargets: reference.Targets{
 						// TODO: See https: //github.com/hashicorp/terraform-ls/issues/675
 					},
 				},
@@ -4140,23 +4141,23 @@ func TestCollectReferenceTargets_json(t *testing.T) {
   "output": {}
 }
 `,
-			lang.ReferenceTargets{},
+			reference.Targets{},
 		},
 	}
 
 	for i, tc := range testCases {
 		t.Run(fmt.Sprintf("%d-%s", i, tc.name), func(t *testing.T) {
-			d := NewDecoder()
-			d.SetSchema(tc.schema)
-
 			f, diags := json.Parse([]byte(tc.cfg), "test.tf.json")
 			if len(diags) > 0 {
 				t.Fatal(diags)
 			}
-			err := d.LoadFile("test.tf.json", f)
-			if err != nil {
-				t.Fatal(err)
-			}
+
+			d := testPathDecoder(t, &PathContext{
+				Schema: tc.schema,
+				Files: map[string]*hcl.File{
+					"test.tf.json": f,
+				},
+			})
 
 			refs, err := d.CollectReferenceTargets()
 			if err != nil {

@@ -13,7 +13,7 @@ import (
 //
 // Schema is required in order to return any candidates and method will return
 // error if there isn't one.
-func (d *Decoder) CandidatesAtPos(filename string, pos hcl.Pos) (lang.Candidates, error) {
+func (d *PathDecoder) CandidatesAtPos(filename string, pos hcl.Pos) (lang.Candidates, error) {
 	f, err := d.fileByName(filename)
 	if err != nil {
 		return lang.ZeroCandidates(), err
@@ -24,10 +24,7 @@ func (d *Decoder) CandidatesAtPos(filename string, pos hcl.Pos) (lang.Candidates
 		return lang.ZeroCandidates(), err
 	}
 
-	d.rootSchemaMu.RLock()
-	defer d.rootSchemaMu.RUnlock()
-
-	if d.rootSchema == nil {
+	if d.pathCtx.Schema == nil {
 		return lang.ZeroCandidates(), &NoSchemaError{}
 	}
 
@@ -40,10 +37,10 @@ func (d *Decoder) CandidatesAtPos(filename string, pos hcl.Pos) (lang.Candidates
 		outerBodyRng = ob.Range()
 	}
 
-	return d.candidatesAtPos(rootBody, outerBodyRng, d.rootSchema, pos)
+	return d.candidatesAtPos(rootBody, outerBodyRng, d.pathCtx.Schema, pos)
 }
 
-func (d *Decoder) candidatesAtPos(body *hclsyntax.Body, outerBodyRng hcl.Range, bodySchema *schema.BodySchema, pos hcl.Pos) (lang.Candidates, error) {
+func (d *PathDecoder) candidatesAtPos(body *hclsyntax.Body, outerBodyRng hcl.Range, bodySchema *schema.BodySchema, pos hcl.Pos) (lang.Candidates, error) {
 	if bodySchema == nil {
 		return lang.ZeroCandidates(), nil
 	}
@@ -148,7 +145,7 @@ func (d *Decoder) candidatesAtPos(body *hclsyntax.Body, outerBodyRng hcl.Range, 
 	return d.bodySchemaCandidates(body, bodySchema, rng, rng), nil
 }
 
-func (d *Decoder) isPosInsideAttrExpr(attr *hclsyntax.Attribute, pos hcl.Pos) bool {
+func (d *PathDecoder) isPosInsideAttrExpr(attr *hclsyntax.Attribute, pos hcl.Pos) bool {
 	if attr.Expr.Range().ContainsPos(pos) {
 		return true
 	}
@@ -180,7 +177,7 @@ func (d *Decoder) isPosInsideAttrExpr(attr *hclsyntax.Attribute, pos hcl.Pos) bo
 	return false
 }
 
-func (d *Decoder) nameTokenRangeAtPos(filename string, pos hcl.Pos) (hcl.Range, error) {
+func (d *PathDecoder) nameTokenRangeAtPos(filename string, pos hcl.Pos) (hcl.Range, error) {
 	rng := hcl.Range{
 		Filename: filename,
 		Start:    pos,
@@ -227,7 +224,7 @@ func nameTokenRangeAtPos(tokens hclsyntax.Tokens, pos hcl.Pos) (hcl.Range, error
 	return hcl.Range{}, fmt.Errorf("no token found at %s", stringPos(pos))
 }
 
-func (d *Decoder) labelTokenRangeAtPos(filename string, pos hcl.Pos) (hcl.Range, error) {
+func (d *PathDecoder) labelTokenRangeAtPos(filename string, pos hcl.Pos) (hcl.Range, error) {
 	rng := hcl.Range{
 		Filename: filename,
 		Start:    pos,

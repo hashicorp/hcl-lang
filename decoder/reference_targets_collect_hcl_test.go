@@ -6,6 +6,7 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/hashicorp/hcl-lang/lang"
+	"github.com/hashicorp/hcl-lang/reference"
 	"github.com/hashicorp/hcl-lang/schema"
 	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hclsyntax"
@@ -18,7 +19,7 @@ func TestCollectReferenceTargets_hcl(t *testing.T) {
 		name         string
 		schema       *schema.BodySchema
 		cfg          string
-		expectedRefs lang.ReferenceTargets
+		expectedRefs reference.Targets
 	}{
 		{
 			"root attribute as reference",
@@ -40,7 +41,7 @@ func TestCollectReferenceTargets_hcl(t *testing.T) {
 			},
 			`testattr = "example"
 `,
-			lang.ReferenceTargets{
+			reference.Targets{
 				{
 					Addr: lang.Address{
 						lang.RootStep{Name: "special"},
@@ -95,7 +96,7 @@ func TestCollectReferenceTargets_hcl(t *testing.T) {
 			},
 			`testattr = "example"
 `,
-			lang.ReferenceTargets{
+			reference.Targets{
 				{
 					Addr: lang.Address{
 						lang.RootStep{Name: "special"},
@@ -150,7 +151,7 @@ func TestCollectReferenceTargets_hcl(t *testing.T) {
 			},
 			`testattr = "example"
 `,
-			lang.ReferenceTargets{
+			reference.Targets{
 				{
 					Addr: lang.Address{
 						lang.RootStep{Name: "special"},
@@ -209,7 +210,7 @@ func TestCollectReferenceTargets_hcl(t *testing.T) {
 	nestedattr = "test"
 }
 `,
-			lang.ReferenceTargets{
+			reference.Targets{
 				{
 					Addr: lang.Address{
 						lang.RootStep{Name: "special"},
@@ -244,7 +245,7 @@ func TestCollectReferenceTargets_hcl(t *testing.T) {
 							Byte:   8,
 						},
 					},
-					NestedTargets: lang.ReferenceTargets{
+					NestedTargets: reference.Targets{
 						{
 							Addr: lang.Address{
 								lang.RootStep{Name: "special"},
@@ -304,7 +305,7 @@ func TestCollectReferenceTargets_hcl(t *testing.T) {
 	nestedattr = "test"
 }
 `,
-			lang.ReferenceTargets{
+			reference.Targets{
 				{
 					Addr: lang.Address{
 						lang.RootStep{Name: "special"},
@@ -337,7 +338,7 @@ func TestCollectReferenceTargets_hcl(t *testing.T) {
 							Byte:   8,
 						},
 					},
-					NestedTargets: lang.ReferenceTargets{
+					NestedTargets: reference.Targets{
 						{
 							Addr: lang.Address{
 								lang.RootStep{Name: "special"},
@@ -395,7 +396,7 @@ func TestCollectReferenceTargets_hcl(t *testing.T) {
 			},
 			`testattr = [ "example" ]
 `,
-			lang.ReferenceTargets{
+			reference.Targets{
 				{
 					Addr: lang.Address{
 						lang.RootStep{Name: "special"},
@@ -428,7 +429,7 @@ func TestCollectReferenceTargets_hcl(t *testing.T) {
 							Byte:   24,
 						},
 					},
-					NestedTargets: lang.ReferenceTargets{
+					NestedTargets: reference.Targets{
 						{
 							Addr: lang.Address{
 								lang.RootStep{Name: "special"},
@@ -478,7 +479,7 @@ func TestCollectReferenceTargets_hcl(t *testing.T) {
 			},
 			`testattr = [ "example" ]
 `,
-			lang.ReferenceTargets{
+			reference.Targets{
 				{
 					Addr: lang.Address{
 						lang.RootStep{Name: "special"},
@@ -511,7 +512,7 @@ func TestCollectReferenceTargets_hcl(t *testing.T) {
 							Byte:   24,
 						},
 					},
-					NestedTargets: lang.ReferenceTargets{
+					NestedTargets: reference.Targets{
 						{
 							Addr: lang.Address{
 								lang.RootStep{Name: "special"},
@@ -556,7 +557,7 @@ func TestCollectReferenceTargets_hcl(t *testing.T) {
 			},
 			`testattr = "example"
 `,
-			lang.ReferenceTargets{},
+			reference.Targets{},
 		},
 		{
 			"block with mismatching steps",
@@ -589,7 +590,7 @@ func TestCollectReferenceTargets_hcl(t *testing.T) {
 	attr = 3
 }
 `,
-			lang.ReferenceTargets{},
+			reference.Targets{},
 		},
 		{
 			"block as ref only",
@@ -627,7 +628,7 @@ func TestCollectReferenceTargets_hcl(t *testing.T) {
 	name = "lorem ipsum"
 }
 `,
-			lang.ReferenceTargets{
+			reference.Targets{
 				{
 					Addr: lang.Address{
 						lang.RootStep{Name: "blah"},
@@ -748,7 +749,7 @@ func TestCollectReferenceTargets_hcl(t *testing.T) {
 	}
 }
 `,
-			lang.ReferenceTargets{
+			reference.Targets{
 				{
 					Addr: lang.Address{
 						lang.RootStep{Name: "blah"},
@@ -831,7 +832,7 @@ func TestCollectReferenceTargets_hcl(t *testing.T) {
 	name = "lorem ipsum"
 }
 `,
-			lang.ReferenceTargets{
+			reference.Targets{
 				{
 					Addr: lang.Address{
 						lang.RootStep{Name: "blah"},
@@ -907,7 +908,7 @@ func TestCollectReferenceTargets_hcl(t *testing.T) {
 	name = "lorem ipsum"
 }
 `,
-			lang.ReferenceTargets{
+			reference.Targets{
 				{
 					Addr: lang.Address{
 						lang.RootStep{Name: "blah"},
@@ -985,7 +986,7 @@ listener "https" {
 	protocol = "tcp"
 }
 `,
-			lang.ReferenceTargets{
+			reference.Targets{
 				{
 					Addr: lang.Address{
 						lang.RootStep{Name: "http"},
@@ -1119,7 +1120,7 @@ listener "https" {
   }
 }
 `,
-			lang.ReferenceTargets{
+			reference.Targets{
 				{
 					Addr: lang.Address{
 						lang.RootStep{Name: "aws"},
@@ -1159,7 +1160,7 @@ listener "https" {
 							Byte:   14,
 						},
 					},
-					NestedTargets: lang.ReferenceTargets{
+					NestedTargets: reference.Targets{
 						{
 							Addr: lang.Address{
 								lang.RootStep{Name: "aws"},
@@ -1225,7 +1226,7 @@ listener "https" {
 									Byte:   118,
 								},
 							},
-							NestedTargets: lang.ReferenceTargets{
+							NestedTargets: reference.Targets{
 								{
 									Addr: lang.Address{
 										lang.RootStep{Name: "aws"},
@@ -1302,7 +1303,7 @@ listener "https" {
 									Byte:   62,
 								},
 							},
-							NestedTargets: lang.ReferenceTargets{
+							NestedTargets: reference.Targets{
 								{
 									Addr: lang.Address{
 										lang.RootStep{Name: "aws"},
@@ -1440,7 +1441,7 @@ listener "https" {
 									Byte:   148,
 								},
 							},
-							NestedTargets: lang.ReferenceTargets{
+							NestedTargets: reference.Targets{
 								{
 									Addr: lang.Address{
 										lang.RootStep{Name: "aws"},
@@ -1554,7 +1555,7 @@ provider "test" {
   }
 }
 `,
-			lang.ReferenceTargets{
+			reference.Targets{
 				{
 					Addr: lang.Address{
 						lang.RootStep{Name: "aws"},
@@ -1671,7 +1672,7 @@ provider "test" {
   }
 }
 `,
-			lang.ReferenceTargets{
+			reference.Targets{
 				{
 					Addr: lang.Address{
 						lang.RootStep{Name: "aws"},
@@ -1711,7 +1712,7 @@ provider "test" {
 							Byte:   14,
 						},
 					},
-					NestedTargets: lang.ReferenceTargets{
+					NestedTargets: reference.Targets{
 						{
 							Addr: lang.Address{
 								lang.RootStep{Name: "aws"},
@@ -1777,7 +1778,7 @@ provider "test" {
 									Byte:   63,
 								},
 							},
-							NestedTargets: lang.ReferenceTargets{
+							NestedTargets: reference.Targets{
 								{
 									Addr: lang.Address{
 										lang.RootStep{Name: "aws"},
@@ -1854,7 +1855,7 @@ provider "test" {
 									Byte:   91,
 								},
 							},
-							NestedTargets: lang.ReferenceTargets{
+							NestedTargets: reference.Targets{
 								{
 									Addr: lang.Address{
 										lang.RootStep{Name: "aws"},
@@ -1958,7 +1959,7 @@ provider "test" {
 									Byte:   121,
 								},
 							},
-							NestedTargets: lang.ReferenceTargets{
+							NestedTargets: reference.Targets{
 								{
 									Addr: lang.Address{
 										lang.RootStep{Name: "aws"},
@@ -2052,7 +2053,7 @@ provider "test" {
   }
 }
 `,
-			lang.ReferenceTargets{
+			reference.Targets{
 				{
 					Addr: lang.Address{
 						lang.RootStep{Name: "root"},
@@ -2091,7 +2092,7 @@ provider "test" {
 							"protocol": cty.String,
 						}),
 					}),
-					NestedTargets: lang.ReferenceTargets{
+					NestedTargets: reference.Targets{
 						{
 							Addr: lang.Address{
 								lang.RootStep{Name: "root"},
@@ -2162,7 +2163,7 @@ provider "test" {
 								"port":     cty.Number,
 								"protocol": cty.String,
 							}),
-							NestedTargets: lang.ReferenceTargets{
+							NestedTargets: reference.Targets{
 								{
 									Addr: lang.Address{
 										lang.RootStep{Name: "root"},
@@ -2296,7 +2297,7 @@ provider "test" {
   }
 }
 `,
-			lang.ReferenceTargets{
+			reference.Targets{
 				{
 					Addr: lang.Address{
 						lang.RootStep{Name: "root"},
@@ -2335,7 +2336,7 @@ provider "test" {
 							"protocol": cty.String,
 						})),
 					}),
-					NestedTargets: lang.ReferenceTargets{
+					NestedTargets: reference.Targets{
 						{
 							Addr: lang.Address{
 								lang.RootStep{Name: "root"},
@@ -2394,7 +2395,7 @@ provider "test" {
 								"port":     cty.Number,
 								"protocol": cty.String,
 							})),
-							NestedTargets: lang.ReferenceTargets{
+							NestedTargets: reference.Targets{
 								{
 									Addr: lang.Address{
 										lang.RootStep{Name: "root"},
@@ -2432,7 +2433,7 @@ provider "test" {
 										"port":     cty.Number,
 										"protocol": cty.String,
 									}),
-									NestedTargets: lang.ReferenceTargets{
+									NestedTargets: reference.Targets{
 										{
 											Addr: lang.Address{
 												lang.RootStep{Name: "root"},
@@ -2544,7 +2545,7 @@ provider "test" {
 										"port":     cty.Number,
 										"protocol": cty.String,
 									}),
-									NestedTargets: lang.ReferenceTargets{
+									NestedTargets: reference.Targets{
 										{
 											Addr: lang.Address{
 												lang.RootStep{Name: "root"},
@@ -2682,7 +2683,7 @@ provider "test" {
   }
 }
 `,
-			lang.ReferenceTargets{
+			reference.Targets{
 				{
 					Addr: lang.Address{
 						lang.RootStep{Name: "root"},
@@ -2721,7 +2722,7 @@ provider "test" {
 							"protocol": cty.String,
 						})),
 					}),
-					NestedTargets: lang.ReferenceTargets{
+					NestedTargets: reference.Targets{
 						{
 							Addr: lang.Address{
 								lang.RootStep{Name: "root"},
@@ -2843,7 +2844,7 @@ provider "test" {
   }
 }
 `,
-			lang.ReferenceTargets{
+			reference.Targets{
 				{
 					Addr: lang.Address{
 						lang.RootStep{Name: "root"},
@@ -2882,7 +2883,7 @@ provider "test" {
 							"protocol": cty.String,
 						})),
 					}),
-					NestedTargets: lang.ReferenceTargets{
+					NestedTargets: reference.Targets{
 						{
 							Addr: lang.Address{
 								lang.RootStep{Name: "root"},
@@ -2941,7 +2942,7 @@ provider "test" {
 								"port":     cty.Number,
 								"protocol": cty.String,
 							})),
-							NestedTargets: lang.ReferenceTargets{
+							NestedTargets: reference.Targets{
 								{
 									Addr: lang.Address{
 										lang.RootStep{Name: "root"},
@@ -2979,7 +2980,7 @@ provider "test" {
 										"port":     cty.Number,
 										"protocol": cty.String,
 									}),
-									NestedTargets: lang.ReferenceTargets{
+									NestedTargets: reference.Targets{
 										{
 											Addr: lang.Address{
 												lang.RootStep{Name: "root"},
@@ -3091,7 +3092,7 @@ provider "test" {
 										"port":     cty.Number,
 										"protocol": cty.String,
 									}),
-									NestedTargets: lang.ReferenceTargets{
+									NestedTargets: reference.Targets{
 										{
 											Addr: lang.Address{
 												lang.RootStep{Name: "root"},
@@ -3231,7 +3232,7 @@ provider "test" {
   }
 }
 `,
-			lang.ReferenceTargets{
+			reference.Targets{
 				{
 					Addr: lang.Address{
 						lang.RootStep{Name: "lb"},
@@ -3270,7 +3271,7 @@ provider "test" {
 							"protocol": cty.String,
 						})),
 					}),
-					NestedTargets: lang.ReferenceTargets{
+					NestedTargets: reference.Targets{
 						{
 							Addr: lang.Address{
 								lang.RootStep{Name: "lb"},
@@ -3329,7 +3330,7 @@ provider "test" {
 								"port":     cty.Number,
 								"protocol": cty.String,
 							})),
-							NestedTargets: lang.ReferenceTargets{
+							NestedTargets: reference.Targets{
 								{
 									Addr: lang.Address{
 										lang.RootStep{Name: "lb"},
@@ -3367,7 +3368,7 @@ provider "test" {
 											Byte:   51,
 										},
 									},
-									NestedTargets: lang.ReferenceTargets{
+									NestedTargets: reference.Targets{
 										{
 											Addr: lang.Address{
 												lang.RootStep{Name: "lb"},
@@ -3479,7 +3480,7 @@ provider "test" {
 											Byte:   111,
 										},
 									},
-									NestedTargets: lang.ReferenceTargets{
+									NestedTargets: reference.Targets{
 										{
 											Addr: lang.Address{
 												lang.RootStep{Name: "lb"},
@@ -3565,7 +3566,7 @@ provider "test" {
 			},
 			`testattr = special.test
 `,
-			lang.ReferenceTargets{
+			reference.Targets{
 				{
 					Addr: lang.Address{
 						lang.RootStep{Name: "special"},
@@ -3620,7 +3621,7 @@ provider "test" {
   alias = "euwest"
 }
 `,
-			lang.ReferenceTargets{
+			reference.Targets{
 				{
 					Addr: lang.Address{
 						lang.RootStep{Name: "aws"},
@@ -3680,7 +3681,7 @@ provider "test" {
 			`variable "test" {
 }
 `,
-			lang.ReferenceTargets{
+			reference.Targets{
 				{
 					Addr: lang.Address{
 						lang.RootStep{Name: "test"},
@@ -3749,7 +3750,7 @@ provider "test" {
   type = map(string)
 }
 `,
-			lang.ReferenceTargets{
+			reference.Targets{
 				{
 					Addr: lang.Address{
 						lang.RootStep{Name: "test"},
@@ -3822,7 +3823,7 @@ provider "test" {
   default = "something"
 }
 `,
-			lang.ReferenceTargets{
+			reference.Targets{
 				{
 					Addr: lang.Address{
 						lang.RootStep{Name: "test"},
@@ -3896,7 +3897,7 @@ provider "test" {
   default = ["something"]
 }
 `,
-			lang.ReferenceTargets{
+			reference.Targets{
 				{
 					Addr: lang.Address{
 						lang.RootStep{Name: "test"},
@@ -3973,7 +3974,7 @@ provider "test" {
   ]
 }
 `,
-			lang.ReferenceTargets{
+			reference.Targets{
 				{
 					Addr: lang.Address{
 						lang.RootStep{Name: "test"},
@@ -4047,7 +4048,7 @@ provider "test" {
   default = "something"
 }
 `,
-			lang.ReferenceTargets{
+			reference.Targets{
 				{
 					Addr: lang.Address{
 						lang.RootStep{Name: "test"},
@@ -4116,7 +4117,7 @@ provider "test" {
 			`module "test" {
 }
 `,
-			lang.ReferenceTargets{
+			reference.Targets{
 				{
 					Addr: lang.Address{
 						lang.RootStep{Name: "module"},
@@ -4227,7 +4228,7 @@ module "different" {
   attr = "foo"
 }
 `,
-			lang.ReferenceTargets{
+			reference.Targets{
 				{
 					Addr: lang.Address{
 						lang.RootStep{Name: "module"},
@@ -4262,7 +4263,7 @@ module "different" {
 							Byte:   13,
 						},
 					},
-					NestedTargets: lang.ReferenceTargets{
+					NestedTargets: reference.Targets{
 						{
 							Addr: lang.Address{
 								lang.RootStep{Name: "module"},
@@ -4343,7 +4344,7 @@ module "different" {
   }
 }
 `,
-			lang.ReferenceTargets{
+			reference.Targets{
 				{
 					Addr: lang.Address{
 						lang.RootStep{Name: "local"},
@@ -4390,7 +4391,7 @@ module "different" {
 							Byte:   18,
 						},
 					},
-					NestedTargets: lang.ReferenceTargets{
+					NestedTargets: reference.Targets{
 						{
 							Addr: lang.Address{
 								lang.RootStep{Name: "local"},
@@ -4427,7 +4428,7 @@ module "different" {
 									Byte:   32,
 								},
 							},
-							NestedTargets: lang.ReferenceTargets{
+							NestedTargets: reference.Targets{
 								{
 									Addr: lang.Address{
 										lang.RootStep{Name: "local"},
@@ -4502,7 +4503,7 @@ module "different" {
 									Byte:   72,
 								},
 							},
-							NestedTargets: lang.ReferenceTargets{
+							NestedTargets: reference.Targets{
 								{
 									Addr: lang.Address{
 										lang.RootStep{Name: "local"},
@@ -4577,7 +4578,7 @@ module "different" {
 									Byte:   111,
 								},
 							},
-							NestedTargets: lang.ReferenceTargets{
+							NestedTargets: reference.Targets{
 								{
 									Addr: lang.Address{
 										lang.RootStep{Name: "local"},
@@ -4652,7 +4653,7 @@ module "different" {
 									Byte:   151,
 								},
 							},
-							NestedTargets: lang.ReferenceTargets{
+							NestedTargets: reference.Targets{
 								{
 									Addr: lang.Address{
 										lang.RootStep{Name: "local"},
@@ -4716,20 +4717,20 @@ module "different" {
 			`output {
 }
 `,
-			lang.ReferenceTargets{},
+			reference.Targets{},
 		},
 	}
 
 	for i, tc := range testCases {
 		t.Run(fmt.Sprintf("%d-%s", i, tc.name), func(t *testing.T) {
-			d := NewDecoder()
-			d.SetSchema(tc.schema)
-
 			f, _ := hclsyntax.ParseConfig([]byte(tc.cfg), "test.tf", hcl.InitialPos)
-			err := d.LoadFile("test.tf", f)
-			if err != nil {
-				t.Fatal(err)
-			}
+
+			d := testPathDecoder(t, &PathContext{
+				Schema: tc.schema,
+				Files: map[string]*hcl.File{
+					"test.tf": f,
+				},
+			})
 
 			refs, err := d.CollectReferenceTargets()
 			if err != nil {

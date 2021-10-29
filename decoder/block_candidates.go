@@ -12,7 +12,7 @@ import (
 // blockSchemaToCandidate generates a lang.Candidate used for auto-complete inside an editor from a BlockSchema.
 // If `prefillRequiredFields` is `false`, it returns a snippet that does not expect any prefilled fields.
 // If `prefillRequiredFields` is `true`, it returns a snippet that is compatiable with a list of prefilled fields from `generateRequiredFieldsSnippet`
-func (d *Decoder) blockSchemaToCandidate(blockType string, block *schema.BlockSchema, rng hcl.Range) lang.Candidate {
+func (d *PathDecoder) blockSchemaToCandidate(blockType string, block *schema.BlockSchema, rng hcl.Range) lang.Candidate {
 	triggerSuggest := false
 	if len(block.Labels) > 0 {
 		// We make some naive assumptions here for simplicity

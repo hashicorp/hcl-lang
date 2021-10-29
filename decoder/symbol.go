@@ -12,6 +12,7 @@ type symbolImplSigil struct{}
 
 // Symbol represents any attribute, or block (and its nested blocks or attributes)
 type Symbol interface {
+	Path() lang.Path
 	Name() string
 	NestedSymbols() []Symbol
 	Range() hcl.Range
@@ -24,6 +25,7 @@ type BlockSymbol struct {
 	Type   string
 	Labels []string
 
+	path          lang.Path
 	rng           hcl.Range
 	nestedSymbols []Symbol
 }
@@ -60,11 +62,16 @@ func (bs *BlockSymbol) Range() hcl.Range {
 	return bs.rng
 }
 
+func (bs *BlockSymbol) Path() lang.Path {
+	return bs.path
+}
+
 // AttributeSymbol is Symbol implementation representing an attribute
 type AttributeSymbol struct {
 	AttrName string
 	ExprKind lang.SymbolExprKind
 
+	path          lang.Path
 	rng           hcl.Range
 	nestedSymbols []Symbol
 }
@@ -97,10 +104,15 @@ func (as *AttributeSymbol) Range() hcl.Range {
 	return as.rng
 }
 
+func (as *AttributeSymbol) Path() lang.Path {
+	return as.path
+}
+
 type ExprSymbol struct {
 	ExprName string
 	ExprKind lang.SymbolExprKind
 
+	path          lang.Path
 	rng           hcl.Range
 	nestedSymbols []Symbol
 }
@@ -131,4 +143,8 @@ func (as *ExprSymbol) NestedSymbols() []Symbol {
 
 func (as *ExprSymbol) Range() hcl.Range {
 	return as.rng
+}
+
+func (as *ExprSymbol) Path() lang.Path {
+	return as.path
 }

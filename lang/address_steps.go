@@ -3,11 +3,8 @@ package lang
 import (
 	"fmt"
 
-	"github.com/hashicorp/hcl/v2"
 	"github.com/zclconf/go-cty/cty"
 )
-
-type Address []AddressStep
 
 type addrStepSigil struct{}
 
@@ -77,27 +74,4 @@ func (s IndexStep) String() string {
 
 func (IndexStep) isRefStepImpl() addrStepSigil {
 	return addrStepSigil{}
-}
-
-func TraversalToAddress(traversal hcl.Traversal) (Address, error) {
-	addr := Address{}
-	for _, tr := range traversal {
-		switch t := tr.(type) {
-		case hcl.TraverseRoot:
-			addr = append(addr, RootStep{
-				Name: t.Name,
-			})
-		case hcl.TraverseAttr:
-			addr = append(addr, AttrStep{
-				Name: t.Name,
-			})
-		case hcl.TraverseIndex:
-			addr = append(addr, IndexStep{
-				Key: t.Key,
-			})
-		default:
-			return addr, fmt.Errorf("invalid traversal: %#v", tr)
-		}
-	}
-	return addr, nil
 }

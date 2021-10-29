@@ -52,17 +52,17 @@ func TestDecoder_CandidateAtPos_incompleteLabels(t *testing.T) {
 		},
 	}
 
-	d := NewDecoder()
-	d.maxCandidates = 1
-	d.SetSchema(bodySchema)
-
 	f, _ := hclsyntax.ParseConfig([]byte(`customblock "" {
 }
 `), "test.tf", hcl.InitialPos)
-	err := d.LoadFile("test.tf", f)
-	if err != nil {
-		t.Fatal(err)
-	}
+
+	d := testPathDecoder(t, &PathContext{
+		Schema: bodySchema,
+		Files: map[string]*hcl.File{
+			"test.tf": f,
+		},
+	})
+	d.maxCandidates = 1
 
 	candidates, err := d.CandidatesAtPos("test.tf", hcl.Pos{
 		Line:   1,
@@ -605,14 +605,14 @@ func TestCandidatesAtPos_prefillRequiredFields(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			f, _ := hclsyntax.ParseConfig([]byte(startingConfig), "test.tf", hcl.InitialPos)
 
-			d := NewDecoder()
+			d := testPathDecoder(t, &PathContext{
+				Schema: tt.schema,
+				Files: map[string]*hcl.File{
+					"test.tf": f,
+				},
+			})
+			d.maxCandidates = 1
 			d.PrefillRequiredFields = tt.prefill
-			d.SetSchema(tt.schema)
-
-			err := d.LoadFile("test.tf", f)
-			if err != nil {
-				t.Fatal(err)
-			}
 
 			got, err := d.CandidatesAtPos("test.tf", startingPos)
 			if err != nil {

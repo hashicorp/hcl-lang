@@ -1,6 +1,7 @@
 package decoder
 
 import (
+	"context"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -11,15 +12,16 @@ import (
 )
 
 func TestDecoder_SymbolsInFile_hcl_zeroByteContent(t *testing.T) {
-	d := NewDecoder()
 	f, pDiags := hclsyntax.ParseConfig([]byte{}, "test.tf", hcl.InitialPos)
 	if len(pDiags) > 0 {
 		t.Fatal(pDiags)
 	}
-	err := d.LoadFile("test.tf", f)
-	if err != nil {
-		t.Fatal(err)
-	}
+
+	d := testPathDecoder(t, &PathContext{
+		Files: map[string]*hcl.File{
+			"test.tf": f,
+		},
+	})
 
 	symbols, err := d.SymbolsInFile("test.tf")
 	if err != nil {
@@ -32,8 +34,6 @@ func TestDecoder_SymbolsInFile_hcl_zeroByteContent(t *testing.T) {
 }
 
 func TestDecoder_Symbols_hcl_basic(t *testing.T) {
-	d := NewDecoder()
-
 	testCfg1 := []byte(`
 resource "aws_vpc" "main" {
   cidr_block = "10.0.0.0/16"
@@ -54,16 +54,19 @@ provider "google" {
 		t.Fatal(pDiags)
 	}
 
-	err := d.LoadFile("first.tf", f1)
-	if err != nil {
-		t.Fatal(err)
-	}
-	err = d.LoadFile("second.tf", f2)
-	if err != nil {
-		t.Fatal(err)
-	}
+	dirPath := t.TempDir()
+	d := NewDecoder(&testPathReader{
+		paths: map[string]*PathContext{
+			dirPath: {
+				Files: map[string]*hcl.File{
+					"first.tf":  f1,
+					"second.tf": f2,
+				},
+			},
+		},
+	})
 
-	symbols, err := d.Symbols("")
+	symbols, err := d.Symbols(context.Background(), "")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -75,6 +78,7 @@ provider "google" {
 				"aws_vpc",
 				"main",
 			},
+			path: lang.Path{Path: dirPath},
 			rng: hcl.Range{
 				Filename: "first.tf",
 				Start:    hcl.Pos{Line: 2, Column: 1, Byte: 1},
@@ -84,6 +88,7 @@ provider "google" {
 				&AttributeSymbol{
 					AttrName: "cidr_block",
 					ExprKind: lang.LiteralTypeKind{Type: cty.String},
+					path:     lang.Path{Path: dirPath},
 					rng: hcl.Range{
 						Filename: "first.tf",
 						Start:    hcl.Pos{Line: 3, Column: 3, Byte: 31},
@@ -98,6 +103,7 @@ provider "google" {
 			Labels: []string{
 				"google",
 			},
+			path: lang.Path{Path: dirPath},
 			rng: hcl.Range{
 				Filename: "second.tf",
 				Start:    hcl.Pos{Line: 2, Column: 1, Byte: 1},
@@ -107,6 +113,7 @@ provider "google" {
 				&AttributeSymbol{
 					AttrName: "project",
 					ExprKind: lang.LiteralTypeKind{Type: cty.String},
+					path:     lang.Path{Path: dirPath},
 					rng: hcl.Range{
 						Filename: "second.tf",
 						Start:    hcl.Pos{Line: 3, Column: 3, Byte: 23},
@@ -117,6 +124,7 @@ provider "google" {
 				&AttributeSymbol{
 					AttrName: "region",
 					ExprKind: lang.LiteralTypeKind{Type: cty.String},
+					path:     lang.Path{Path: dirPath},
 					rng: hcl.Range{
 						Filename: "second.tf",
 						Start:    hcl.Pos{Line: 4, Column: 3, Byte: 55},
@@ -135,8 +143,6 @@ provider "google" {
 }
 
 func TestDecoder_SymbolsInFile_hcl(t *testing.T) {
-	d := NewDecoder()
-
 	testCfg := []byte(`
 resource "aws_instance" "test" {
   subnet_ids = [ "one-1", "two-2" ]
@@ -154,7 +160,16 @@ resource "aws_instance" "test" {
 		t.Fatal(pDiags)
 	}
 
-	err := d.LoadFile("test.tf", f)
+	dirPath := t.TempDir()
+	d, err := NewDecoder(&testPathReader{
+		paths: map[string]*PathContext{
+			dirPath: {
+				Files: map[string]*hcl.File{
+					"test.tf": f,
+				},
+			},
+		},
+	}).Path(lang.Path{Path: dirPath})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -171,6 +186,7 @@ resource "aws_instance" "test" {
 				"aws_instance",
 				"test",
 			},
+			path: lang.Path{Path: dirPath},
 			rng: hcl.Range{
 				Filename: "test.tf",
 				Start:    hcl.Pos{Line: 2, Column: 1, Byte: 1},
@@ -180,6 +196,7 @@ resource "aws_instance" "test" {
 				&AttributeSymbol{
 					AttrName: "subnet_ids",
 					ExprKind: lang.TupleConsExprKind{},
+					path:     lang.Path{Path: dirPath},
 					rng: hcl.Range{
 						Filename: "test.tf",
 						Start: hcl.Pos{
@@ -199,6 +216,7 @@ resource "aws_instance" "test" {
 							ExprKind: lang.LiteralTypeKind{
 								Type: cty.String,
 							},
+							path: lang.Path{Path: dirPath},
 							rng: hcl.Range{
 								Filename: "test.tf",
 								Start: hcl.Pos{
@@ -219,6 +237,7 @@ resource "aws_instance" "test" {
 							ExprKind: lang.LiteralTypeKind{
 								Type: cty.String,
 							},
+							path: lang.Path{Path: dirPath},
 							rng: hcl.Range{
 								Filename: "test.tf",
 								Start: hcl.Pos{
@@ -239,6 +258,7 @@ resource "aws_instance" "test" {
 				&AttributeSymbol{
 					AttrName: "configuration",
 					ExprKind: lang.ObjectConsExprKind{},
+					path:     lang.Path{Path: dirPath},
 					rng: hcl.Range{
 						Filename: "test.tf",
 						Start: hcl.Pos{
@@ -258,6 +278,7 @@ resource "aws_instance" "test" {
 							ExprKind: lang.LiteralTypeKind{
 								Type: cty.String,
 							},
+							path: lang.Path{Path: dirPath},
 							rng: hcl.Range{
 								Filename: "test.tf",
 								Start: hcl.Pos{
@@ -278,6 +299,7 @@ resource "aws_instance" "test" {
 							ExprKind: lang.LiteralTypeKind{
 								Type: cty.Number,
 							},
+							path: lang.Path{Path: dirPath},
 							rng: hcl.Range{
 								Filename: "test.tf",
 								Start: hcl.Pos{
@@ -298,6 +320,7 @@ resource "aws_instance" "test" {
 							ExprKind: lang.LiteralTypeKind{
 								Type: cty.Bool,
 							},
+							path: lang.Path{Path: dirPath},
 							rng: hcl.Range{
 								Filename: "test.tf",
 								Start: hcl.Pos{
@@ -318,6 +341,7 @@ resource "aws_instance" "test" {
 				&AttributeSymbol{
 					AttrName: "random_kw",
 					ExprKind: lang.TraversalExprKind{},
+					path:     lang.Path{Path: dirPath},
 					rng: hcl.Range{
 						Filename: "test.tf",
 						Start: hcl.Pos{
@@ -344,8 +368,6 @@ resource "aws_instance" "test" {
 }
 
 func TestDecoder_SymbolsInFile_hcl_unknownExpression(t *testing.T) {
-	d := NewDecoder()
-
 	testCfg := []byte(`
 resource "aws_instance" "test" {
   subnet_ids = [ var.test, "two-2" ]
@@ -363,7 +385,16 @@ resource "aws_instance" "test" {
 		t.Fatal(pDiags)
 	}
 
-	err := d.LoadFile("test.tf", f)
+	dirPath := t.TempDir()
+	d, err := NewDecoder(&testPathReader{
+		paths: map[string]*PathContext{
+			dirPath: {
+				Files: map[string]*hcl.File{
+					"test.tf": f,
+				},
+			},
+		},
+	}).Path(lang.Path{Path: dirPath})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -380,6 +411,7 @@ resource "aws_instance" "test" {
 				"aws_instance",
 				"test",
 			},
+			path: lang.Path{Path: dirPath},
 			rng: hcl.Range{
 				Filename: "test.tf",
 				Start:    hcl.Pos{Line: 2, Column: 1, Byte: 1},
@@ -389,6 +421,7 @@ resource "aws_instance" "test" {
 				&AttributeSymbol{
 					AttrName: "subnet_ids",
 					ExprKind: lang.TupleConsExprKind{},
+					path:     lang.Path{Path: dirPath},
 					rng: hcl.Range{
 						Filename: "test.tf",
 						Start: hcl.Pos{
@@ -406,6 +439,7 @@ resource "aws_instance" "test" {
 						&ExprSymbol{
 							ExprName: "0",
 							ExprKind: lang.TraversalExprKind{},
+							path:     lang.Path{Path: dirPath},
 							rng: hcl.Range{
 								Filename: "test.tf",
 								Start: hcl.Pos{
@@ -426,6 +460,7 @@ resource "aws_instance" "test" {
 							ExprKind: lang.LiteralTypeKind{
 								Type: cty.String,
 							},
+							path: lang.Path{Path: dirPath},
 							rng: hcl.Range{
 								Filename: "test.tf",
 								Start: hcl.Pos{
@@ -446,6 +481,7 @@ resource "aws_instance" "test" {
 				&AttributeSymbol{
 					AttrName: "configuration",
 					ExprKind: lang.ObjectConsExprKind{},
+					path:     lang.Path{Path: dirPath},
 					rng: hcl.Range{
 						Filename: "test.tf",
 						Start: hcl.Pos{
@@ -463,6 +499,7 @@ resource "aws_instance" "test" {
 						&ExprSymbol{
 							ExprName: "num",
 							ExprKind: lang.TraversalExprKind{},
+							path:     lang.Path{Path: dirPath},
 							rng: hcl.Range{
 								Filename: "test.tf",
 								Start: hcl.Pos{
@@ -483,6 +520,7 @@ resource "aws_instance" "test" {
 				&AttributeSymbol{
 					AttrName: "random_kw",
 					ExprKind: lang.TraversalExprKind{},
+					path:     lang.Path{Path: dirPath},
 					rng: hcl.Range{
 						Filename: "test.tf",
 						Start: hcl.Pos{
@@ -509,8 +547,6 @@ resource "aws_instance" "test" {
 }
 
 func TestDecoder_Symbols_hcl_query(t *testing.T) {
-	d := NewDecoder()
-
 	testCfg1 := []byte(`
 resource "aws_vpc" "main" {
   cidr_block = "10.0.0.0/16"
@@ -531,16 +567,19 @@ provider "google" {
 		t.Fatal(pDiags)
 	}
 
-	err := d.LoadFile("first.tf", f1)
-	if err != nil {
-		t.Fatal(err)
-	}
-	err = d.LoadFile("second.tf", f2)
-	if err != nil {
-		t.Fatal(err)
-	}
+	dirPath := t.TempDir()
+	d := NewDecoder(&testPathReader{
+		paths: map[string]*PathContext{
+			dirPath: {
+				Files: map[string]*hcl.File{
+					"first.tf":  f1,
+					"second.tf": f2,
+				},
+			},
+		},
+	})
 
-	symbols, err := d.Symbols("google")
+	symbols, err := d.Symbols(context.Background(), "google")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -551,6 +590,7 @@ provider "google" {
 			Labels: []string{
 				"google",
 			},
+			path: lang.Path{Path: dirPath},
 			rng: hcl.Range{
 				Filename: "second.tf",
 				Start:    hcl.Pos{Line: 2, Column: 1, Byte: 1},
@@ -560,6 +600,7 @@ provider "google" {
 				&AttributeSymbol{
 					AttrName: "project",
 					ExprKind: lang.LiteralTypeKind{Type: cty.String},
+					path:     lang.Path{Path: dirPath},
 					rng: hcl.Range{
 						Filename: "second.tf",
 						Start:    hcl.Pos{Line: 3, Column: 3, Byte: 23},
@@ -570,6 +611,7 @@ provider "google" {
 				&AttributeSymbol{
 					AttrName: "region",
 					ExprKind: lang.LiteralTypeKind{Type: cty.String},
+					path:     lang.Path{Path: dirPath},
 					rng: hcl.Range{
 						Filename: "second.tf",
 						Start:    hcl.Pos{Line: 4, Column: 3, Byte: 55},
