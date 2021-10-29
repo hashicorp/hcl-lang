@@ -16,6 +16,8 @@ type PathContext struct {
 	ReferenceOrigins reference.Origins
 	ReferenceTargets reference.Targets
 	Files            map[string]*hcl.File
+
+	// TODO: Functions
 }
 
 type pathCtxKey struct{}

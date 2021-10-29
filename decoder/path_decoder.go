@@ -18,6 +18,7 @@ type PathDecoder struct {
 
 	// PrefillRequiredFields enriches label-based completion candidates
 	// with required attributes and blocks
+	// TODO: Move under DecoderContext
 	PrefillRequiredFields bool
 }
 
