@@ -24,11 +24,12 @@ type AttributeSchema struct {
 	// as key when looking up dependent schema
 	IsDepKey bool
 
+	// Address describes whether and how the attribute itself is targetable
 	Address *AttributeAddrSchema
 }
 
 type AttributeAddrSchema struct {
-	Steps []AddrStep
+	Steps Address
 
 	FriendlyName string
 	ScopeId      lang.ScopeId
@@ -68,13 +69,8 @@ func (as *AttributeSchema) Validate() error {
 			return fmt.Errorf("Address: at least one of AsExprType or AsReference must be set")
 		}
 
-		for i, step := range as.Address.Steps {
-			if _, ok := step.(LabelStep); ok {
-				return fmt.Errorf("Address[%d]: LabelStep is not valid for attribute", i)
-			}
-			if _, ok := step.(AttrValueStep); ok {
-				return fmt.Errorf("Address[%d]: AttrValueStep is not implemented for attribute", i)
-			}
+		if err := as.Address.Steps.AttributeValidate(); err != nil {
+			return err
 		}
 	}
 
@@ -111,11 +107,7 @@ func (aas *AttributeAddrSchema) Copy() *AttributeAddrSchema {
 		ScopeId:      aas.ScopeId,
 		AsExprType:   aas.AsExprType,
 		AsReference:  aas.AsReference,
-	}
-
-	newAas.Steps = make([]AddrStep, len(aas.Steps))
-	for i, step := range aas.Steps {
-		newAas.Steps[i] = step
+		Steps:        aas.Steps.Copy(),
 	}
 
 	return newAas

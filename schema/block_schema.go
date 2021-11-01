@@ -31,7 +31,7 @@ type BlockSchema struct {
 }
 
 type BlockAddrSchema struct {
-	Steps []AddrStep
+	Steps Address
 
 	FriendlyName string
 	ScopeId      lang.ScopeId
@@ -82,10 +82,8 @@ type BlockAsTypeOf struct {
 }
 
 func (bas *BlockAddrSchema) Validate() error {
-	for i, step := range bas.Steps {
-		if _, ok := step.(AttrNameStep); ok {
-			return fmt.Errorf("Steps[%d]: AttrNameStep is not valid for attribute", i)
-		}
+	if err := bas.Steps.BlockValidate(); err != nil {
+		return err
 	}
 
 	if bas.InferBody && !bas.BodyAsData {
@@ -113,11 +111,7 @@ func (bas *BlockAddrSchema) Copy() *BlockAddrSchema {
 		InferBody:           bas.InferBody,
 		DependentBodyAsData: bas.DependentBodyAsData,
 		InferDependentBody:  bas.InferDependentBody,
-	}
-
-	newBas.Steps = make([]AddrStep, len(bas.Steps))
-	for i, step := range bas.Steps {
-		newBas.Steps[i] = step
+		Steps:               bas.Steps.Copy(),
 	}
 
 	return newBas

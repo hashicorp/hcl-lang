@@ -20,7 +20,7 @@ type Origin struct {
 
 func (ro Origin) Copy() Origin {
 	return Origin{
-		Addr:        ro.Addr,
+		Addr:        ro.Addr.Copy(),
 		Range:       ro.Range,
 		Constraints: ro.Constraints.Copy(),
 	}
