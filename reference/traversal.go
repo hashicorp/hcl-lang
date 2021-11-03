@@ -6,10 +6,10 @@ import (
 	"github.com/hashicorp/hcl/v2"
 )
 
-func TraversalsToOrigins(traversals []hcl.Traversal, tes schema.TraversalExprs) Origins {
+func TraversalsToLocalOrigins(traversals []hcl.Traversal, tes schema.TraversalExprs) Origins {
 	origins := make(Origins, 0)
 	for _, traversal := range traversals {
-		origin, err := TraversalToOrigin(traversal, tes)
+		origin, err := TraversalToLocalOrigin(traversal, tes)
 		if err != nil {
 			continue
 		}
@@ -19,13 +19,13 @@ func TraversalsToOrigins(traversals []hcl.Traversal, tes schema.TraversalExprs) 
 	return origins
 }
 
-func TraversalToOrigin(traversal hcl.Traversal, tes schema.TraversalExprs) (Origin, error) {
+func TraversalToLocalOrigin(traversal hcl.Traversal, tes schema.TraversalExprs) (LocalOrigin, error) {
 	addr, err := lang.TraversalToAddress(traversal)
 	if err != nil {
-		return Origin{}, err
+		return LocalOrigin{}, err
 	}
 
-	return Origin{
+	return LocalOrigin{
 		Addr:        addr,
 		Range:       traversal.SourceRange(),
 		Constraints: traversalExpressionsToOriginConstraints(tes),

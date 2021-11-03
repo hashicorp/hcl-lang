@@ -98,26 +98,26 @@ func (ref Target) ConformsToType(typ cty.Type) bool {
 	return conformsToType || (typ == cty.NilType && ref.Type == cty.NilType)
 }
 
-func (target Target) IsTargetableBy(origin Origin) bool {
-	if len(target.Addr) > len(origin.Addr) {
+func (target Target) Matches(addr lang.Address, cons OriginConstraints) bool {
+	if len(target.Addr) > len(addr) {
 		return false
 	}
 
-	originAddr := origin.Addr
+	originAddr := addr
 
 	matchesCons := false
 
-	if len(origin.Constraints) == 0 && target.Type != cty.NilType {
+	if len(cons) == 0 && target.Type != cty.NilType {
 		matchesCons = true
 	}
 
-	for _, cons := range origin.Constraints {
+	for _, cons := range cons {
 		if !target.MatchesScopeId(cons.OfScopeId) {
 			continue
 		}
 
 		if target.Type == cty.DynamicPseudoType {
-			originAddr = origin.Addr.FirstSteps(uint(len(target.Addr)))
+			originAddr = addr.FirstSteps(uint(len(target.Addr)))
 			matchesCons = true
 			continue
 		}

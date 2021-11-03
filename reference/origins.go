@@ -1,6 +1,7 @@
 package reference
 
 import (
+	"github.com/hashicorp/hcl-lang/lang"
 	"github.com/hashicorp/hcl/v2"
 )
 
@@ -19,27 +20,35 @@ func (ro Origins) Copy() Origins {
 	return newOrigins
 }
 
-func (ro Origins) AtPos(file string, pos hcl.Pos) (*Origin, bool) {
+func (ro Origins) AtPos(file string, pos hcl.Pos) (Origins, bool) {
+	matchingOrigins := make(Origins, 0)
 	for _, origin := range ro {
-		if origin.Range.Filename == file && origin.Range.ContainsPos(pos) {
-			return &origin, true
+		if origin.OriginRange().Filename == file && origin.OriginRange().ContainsPos(pos) {
+			matchingOrigins = append(matchingOrigins, origin)
 		}
 	}
 
-	return nil, false
+	return matchingOrigins, len(matchingOrigins) > 0
 }
 
-func (ro Origins) Targeting(refTarget Target) Origins {
+func (ro Origins) Match(refTarget Target, atPath lang.Path) Origins {
 	origins := make(Origins, 0)
 
 	for _, refOrigin := range ro {
-		if refTarget.IsTargetableBy(refOrigin) {
-			origins = append(origins, refOrigin)
+		switch origin := refOrigin.(type) {
+		case LocalOrigin:
+			if refTarget.Matches(origin.Address(), origin.OriginConstraints()) {
+				origins = append(origins, refOrigin)
+			}
+		case PathOrigin:
+			if origin.TargetPath.Equals(atPath) && refTarget.Matches(origin.Address(), origin.OriginConstraints()) {
+				origins = append(origins, refOrigin)
+			}
 		}
 	}
 
 	for _, iTarget := range refTarget.NestedTargets {
-		origins = append(origins, ro.Targeting(iTarget)...)
+		origins = append(origins, ro.Match(iTarget, atPath)...)
 	}
 
 	return origins

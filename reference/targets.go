@@ -4,6 +4,7 @@ import (
 	"errors"
 	"strings"
 
+	"github.com/hashicorp/hcl-lang/lang"
 	"github.com/hashicorp/hcl-lang/schema"
 	"github.com/hashicorp/hcl/v2"
 )
@@ -100,22 +101,17 @@ func (refs Targets) containsMatch(te schema.TraversalExpr, prefix string) bool {
 	return false
 }
 
-func (refs Targets) FirstTargetableBy(origin Origin) (*Target, bool) {
-	var matchingReference *Target
+func (refs Targets) Match(addr lang.Address, cons OriginConstraints) (Targets, bool) {
+	matchingReferences := make(Targets, 0)
 
 	refs.deepWalk(func(ref Target) error {
-		if ref.IsTargetableBy(origin) {
-			matchingReference = &ref
-			return stopWalking
+		if ref.Matches(addr, cons) {
+			matchingReferences = append(matchingReferences, ref)
 		}
 		return nil
 	}, InfiniteDepth)
 
-	if matchingReference == nil {
-		return nil, false
-	}
-
-	return matchingReference, true
+	return matchingReferences, len(matchingReferences) > 0
 }
 
 func (refs Targets) OutermostInFile(file string) Targets {

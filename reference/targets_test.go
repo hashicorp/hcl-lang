@@ -12,24 +12,24 @@ import (
 	"github.com/zclconf/go-cty/cty"
 )
 
-func TestTargets_FirstTargetableBy(t *testing.T) {
+func TestTargets_Match(t *testing.T) {
 	testCases := []struct {
-		name              string
-		targets           Targets
-		origin            Origin
-		expectedRefTarget *Target
-		expectedFound     bool
+		name            string
+		targets         Targets
+		origin          Origin
+		expectedTargets Targets
+		expectedFound   bool
 	}{
 		{
 			"no targets",
 			Targets{},
-			Origin{
+			LocalOrigin{
 				Addr: lang.Address{
 					lang.RootStep{Name: "var"},
 					lang.AttrStep{Name: "test"},
 				},
 			},
-			nil,
+			Targets{},
 			false,
 		},
 		{
@@ -42,17 +42,19 @@ func TestTargets_FirstTargetableBy(t *testing.T) {
 					},
 				},
 			},
-			Origin{
+			LocalOrigin{
 				Addr: lang.Address{
 					lang.RootStep{Name: "var"},
 					lang.AttrStep{Name: "test"},
 				},
 				Constraints: OriginConstraints{{}},
 			},
-			&Target{
-				Addr: lang.Address{
-					lang.RootStep{Name: "var"},
-					lang.AttrStep{Name: "test"},
+			Targets{
+				Target{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "test"},
+					},
 				},
 			},
 			true,
@@ -82,7 +84,7 @@ func TestTargets_FirstTargetableBy(t *testing.T) {
 					ScopeId: lang.ScopeId("variable"),
 				},
 			},
-			Origin{
+			LocalOrigin{
 				Addr: lang.Address{
 					lang.RootStep{Name: "var"},
 					lang.AttrStep{Name: "test"},
@@ -91,12 +93,14 @@ func TestTargets_FirstTargetableBy(t *testing.T) {
 					{OfType: cty.Bool},
 				},
 			},
-			&Target{
-				Addr: lang.Address{
-					lang.RootStep{Name: "var"},
-					lang.AttrStep{Name: "test"},
+			Targets{
+				Target{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "test"},
+					},
+					Type: cty.Bool,
 				},
-				Type: cty.Bool,
 			},
 			true,
 		},
@@ -118,7 +122,7 @@ func TestTargets_FirstTargetableBy(t *testing.T) {
 					Type: cty.DynamicPseudoType,
 				},
 			},
-			Origin{
+			LocalOrigin{
 				Addr: lang.Address{
 					lang.RootStep{Name: "var"},
 					lang.AttrStep{Name: "foo"},
@@ -126,12 +130,14 @@ func TestTargets_FirstTargetableBy(t *testing.T) {
 				},
 				Constraints: OriginConstraints{{}},
 			},
-			&Target{
-				Addr: lang.Address{
-					lang.RootStep{Name: "var"},
-					lang.AttrStep{Name: "foo"},
+			Targets{
+				Target{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "foo"},
+					},
+					Type: cty.DynamicPseudoType,
 				},
-				Type: cty.DynamicPseudoType,
 			},
 			true,
 		},
@@ -165,7 +171,7 @@ func TestTargets_FirstTargetableBy(t *testing.T) {
 					},
 				},
 			},
-			Origin{
+			LocalOrigin{
 				Addr: lang.Address{
 					lang.RootStep{Name: "var"},
 					lang.AttrStep{Name: "foo"},
@@ -175,25 +181,27 @@ func TestTargets_FirstTargetableBy(t *testing.T) {
 					{OfType: cty.String},
 				},
 			},
-			&Target{
-				Addr: lang.Address{
-					lang.RootStep{Name: "var"},
-					lang.AttrStep{Name: "foo"},
-					lang.AttrStep{Name: "bar"},
+			Targets{
+				Target{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "foo"},
+						lang.AttrStep{Name: "bar"},
+					},
+					Type: cty.String,
 				},
-				Type: cty.String,
 			},
 			true,
 		},
 	}
 	for i, tc := range testCases {
 		t.Run(fmt.Sprintf("%d-%s", i, tc.name), func(t *testing.T) {
-			refTarget, ok := tc.targets.FirstTargetableBy(tc.origin)
+			refTarget, ok := tc.targets.Match(tc.origin.Address(), tc.origin.OriginConstraints())
 			if !ok && tc.expectedFound {
 				t.Fatalf("expected targetable to be found")
 			}
 
-			if diff := cmp.Diff(tc.expectedRefTarget, refTarget, ctydebug.CmpOptions); diff != "" {
+			if diff := cmp.Diff(tc.expectedTargets, refTarget, ctydebug.CmpOptions); diff != "" {
 				t.Fatalf("mismatch of reference target: %s", diff)
 			}
 		})
