@@ -77,6 +77,23 @@ func (d *PathDecoder) referenceOriginsInBody(body hcl.Body, bodySchema *schema.B
 			aSchema = bodySchema.AnyAttribute
 		}
 
+		if aSchema.OriginForTarget != nil {
+			targetAddr, ok := resolveAttributeAddress(attr, aSchema.OriginForTarget.Address)
+			if ok {
+				origins = append(origins, reference.PathOrigin{
+					Range:      attr.NameRange,
+					TargetAddr: targetAddr,
+					TargetPath: aSchema.OriginForTarget.Path,
+					Constraints: reference.OriginConstraints{
+						{
+							OfScopeId: aSchema.OriginForTarget.Constraints.ScopeId,
+							OfType:    aSchema.OriginForTarget.Constraints.Type,
+						},
+					},
+				})
+			}
+		}
+
 		origins = append(origins, d.findOriginsInExpression(attr.Expr, aSchema.Expr)...)
 	}
 

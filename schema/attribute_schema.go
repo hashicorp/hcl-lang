@@ -26,6 +26,11 @@ type AttributeSchema struct {
 
 	// Address describes whether and how the attribute itself is targetable
 	Address *AttributeAddrSchema
+
+	// OriginForTarget describes whether the attribute is treated
+	// as an origin for another target (e.g. module inputs,
+	// or tfvars entires in Terraform)
+	OriginForTarget *PathTarget
 }
 
 type AttributeAddrSchema struct {
@@ -74,6 +79,12 @@ func (as *AttributeSchema) Validate() error {
 		}
 	}
 
+	if as.OriginForTarget != nil {
+		if err := as.OriginForTarget.Address.AttributeValidate(); err != nil {
+			return err
+		}
+	}
+
 	return as.Expr.Validate()
 }
 
@@ -83,15 +94,16 @@ func (as *AttributeSchema) Copy() *AttributeSchema {
 	}
 
 	newAs := &AttributeSchema{
-		IsRequired:   as.IsRequired,
-		IsOptional:   as.IsOptional,
-		IsDeprecated: as.IsDeprecated,
-		IsComputed:   as.IsComputed,
-		IsSensitive:  as.IsSensitive,
-		IsDepKey:     as.IsDepKey,
-		Description:  as.Description,
-		Expr:         as.Expr.Copy(),
-		Address:      as.Address.Copy(),
+		IsRequired:      as.IsRequired,
+		IsOptional:      as.IsOptional,
+		IsDeprecated:    as.IsDeprecated,
+		IsComputed:      as.IsComputed,
+		IsSensitive:     as.IsSensitive,
+		IsDepKey:        as.IsDepKey,
+		Description:     as.Description,
+		Expr:            as.Expr.Copy(),
+		Address:         as.Address.Copy(),
+		OriginForTarget: as.OriginForTarget.Copy(),
 	}
 
 	return newAs
