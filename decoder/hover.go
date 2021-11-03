@@ -594,20 +594,21 @@ func stringValFromTemplateExpr(tplExpr *hclsyntax.TemplateExpr) (cty.Value, bool
 }
 
 func (d *PathDecoder) hoverContentForTraversalExpr(traversal hcl.Traversal, tes []schema.TraversalExpr) (string, error) {
-	origin, err := reference.TraversalToOrigin(traversal, tes)
+	origin, err := reference.TraversalToLocalOrigin(traversal, tes)
 	if err != nil {
 		return "", nil
 	}
 
-	ref, ok := d.pathCtx.ReferenceTargets.FirstTargetableBy(origin)
+	targets, ok := d.pathCtx.ReferenceTargets.Match(origin.Address(), origin.OriginConstraints())
 	if !ok {
 		return "", &reference.NoTargetFound{}
 	}
 
-	return hoverContentForReferenceTarget(ref)
+	// TODO: Reflect additional found targets here?
+	return hoverContentForReferenceTarget(targets[0])
 }
 
-func hoverContentForReferenceTarget(ref *reference.Target) (string, error) {
+func hoverContentForReferenceTarget(ref reference.Target) (string, error) {
 	content := fmt.Sprintf("`%s`", ref.Addr.String())
 
 	var friendlyName string

@@ -46,7 +46,7 @@ func TestCollectReferenceOrigins_hcl(t *testing.T) {
 			},
 			`attr = onestep`,
 			reference.Origins{
-				{
+				reference.LocalOrigin{
 					Addr: lang.Address{
 						lang.RootStep{Name: "onestep"},
 					},
@@ -92,7 +92,7 @@ func TestCollectReferenceOrigins_hcl(t *testing.T) {
 attr2 = anotherstep
 attr3 = onestep`,
 			reference.Origins{
-				{
+				reference.LocalOrigin{
 					Addr: lang.Address{
 						lang.RootStep{Name: "onestep"},
 					},
@@ -111,7 +111,7 @@ attr3 = onestep`,
 						},
 					},
 				},
-				{
+				reference.LocalOrigin{
 					Addr: lang.Address{
 						lang.RootStep{Name: "anotherstep"},
 					},
@@ -130,7 +130,7 @@ attr3 = onestep`,
 						},
 					},
 				},
-				{
+				reference.LocalOrigin{
 					Addr: lang.Address{
 						lang.RootStep{Name: "onestep"},
 					},
@@ -164,7 +164,7 @@ attr3 = onestep`,
 			},
 			`attr1 = "${onestep}-${onestep}-${another.foo.bar}"`,
 			reference.Origins{
-				{
+				reference.LocalOrigin{
 					Addr: lang.Address{
 						lang.RootStep{Name: "onestep"},
 					},
@@ -183,7 +183,7 @@ attr3 = onestep`,
 						},
 					},
 				},
-				{
+				reference.LocalOrigin{
 					Addr: lang.Address{
 						lang.RootStep{Name: "onestep"},
 					},
@@ -202,7 +202,7 @@ attr3 = onestep`,
 						},
 					},
 				},
-				{
+				reference.LocalOrigin{
 					Addr: lang.Address{
 						lang.RootStep{Name: "another"},
 						lang.AttrStep{Name: "foo"},
@@ -238,7 +238,7 @@ attr3 = onestep`,
 			},
 			`attr = one.two["key"].attr[0]`,
 			reference.Origins{
-				{
+				reference.LocalOrigin{
 					Addr: lang.Address{
 						lang.RootStep{Name: "one"},
 						lang.AttrStep{Name: "two"},
@@ -285,7 +285,7 @@ attr3 = onestep`,
 }
 `,
 			reference.Origins{
-				{
+				reference.LocalOrigin{
 					Addr: lang.Address{
 						lang.RootStep{Name: "onestep"},
 					},
@@ -326,7 +326,7 @@ attr3 = onestep`,
 }
 `,
 			reference.Origins{
-				{
+				reference.LocalOrigin{
 					Addr: lang.Address{
 						lang.RootStep{Name: "onestep"},
 					},
@@ -388,7 +388,7 @@ attr3 = onestep`,
 }
 `,
 			reference.Origins{
-				{
+				reference.LocalOrigin{
 					Addr: lang.Address{
 						lang.RootStep{Name: "var"},
 						lang.AttrStep{Name: "first"},
@@ -408,7 +408,7 @@ attr3 = onestep`,
 						},
 					},
 				},
-				{
+				reference.LocalOrigin{
 					Addr: lang.Address{
 						lang.RootStep{Name: "var"},
 						lang.AttrStep{Name: "second"},
@@ -471,7 +471,7 @@ attr3 = onestep`,
 }
 `,
 			reference.Origins{
-				{
+				reference.LocalOrigin{
 					Addr: lang.Address{
 						lang.RootStep{Name: "var"},
 						lang.AttrStep{Name: "first"},
@@ -539,7 +539,7 @@ set = [ var.second ]
 tuple = [ var.third ]
 `,
 			reference.Origins{
-				{
+				reference.LocalOrigin{
 					Addr: lang.Address{
 						lang.RootStep{Name: "var"},
 						lang.AttrStep{Name: "first"},
@@ -561,7 +561,7 @@ tuple = [ var.third ]
 						{OfScopeId: lang.ScopeId("test")},
 					},
 				},
-				{
+				reference.LocalOrigin{
 					Addr: lang.Address{
 						lang.RootStep{Name: "var"},
 						lang.AttrStep{Name: "second"},
@@ -583,7 +583,7 @@ tuple = [ var.third ]
 						{OfScopeId: lang.ScopeId("test")},
 					},
 				},
-				{
+				reference.LocalOrigin{
 					Addr: lang.Address{
 						lang.RootStep{Name: "var"},
 						lang.AttrStep{Name: "third"},
@@ -632,7 +632,7 @@ tuple = [ var.third ]
   attr = var.first
 }`,
 			reference.Origins{
-				{
+				reference.LocalOrigin{
 					Addr: lang.Address{
 						lang.RootStep{Name: "var"},
 						lang.AttrStep{Name: "first"},
@@ -677,7 +677,7 @@ tuple = [ var.third ]
   key = var.first
 }`,
 			reference.Origins{
-				{
+				reference.LocalOrigin{
 					Addr: lang.Address{
 						lang.RootStep{Name: "var"},
 						lang.AttrStep{Name: "first"},
@@ -720,7 +720,7 @@ tuple = [ var.third ]
 			},
 			`tuple_cons = [ var.one ]`,
 			reference.Origins{
-				{
+				reference.LocalOrigin{
 					Addr: lang.Address{
 						lang.RootStep{Name: "var"},
 						lang.AttrStep{Name: "one"},
@@ -784,7 +784,7 @@ obj = {
 }
 `,
 			reference.Origins{
-				{
+				reference.LocalOrigin{
 					Addr: lang.Address{
 						lang.RootStep{Name: "var"},
 						lang.AttrStep{Name: "one"},
@@ -806,7 +806,7 @@ obj = {
 						{OfType: cty.String},
 					},
 				},
-				{
+				reference.LocalOrigin{
 					Addr: lang.Address{
 						lang.RootStep{Name: "var"},
 						lang.AttrStep{Name: "two"},
@@ -873,7 +873,7 @@ set = [ var.two ]
 tup = [ var.three ]
 `,
 			reference.Origins{
-				{
+				reference.LocalOrigin{
 					Addr: lang.Address{
 						lang.RootStep{Name: "var"},
 						lang.AttrStep{Name: "one"},
@@ -895,7 +895,7 @@ tup = [ var.three ]
 						{OfType: cty.String},
 					},
 				},
-				{
+				reference.LocalOrigin{
 					Addr: lang.Address{
 						lang.RootStep{Name: "var"},
 						lang.AttrStep{Name: "two"},
@@ -917,7 +917,7 @@ tup = [ var.three ]
 						{OfType: cty.String},
 					},
 				},
-				{
+				reference.LocalOrigin{
 					Addr: lang.Address{
 						lang.RootStep{Name: "var"},
 						lang.AttrStep{Name: "three"},

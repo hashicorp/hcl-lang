@@ -2,7 +2,6 @@ package decoder
 
 import (
 	"bytes"
-	"fmt"
 	"sort"
 
 	"github.com/hashicorp/hcl-lang/lang"
@@ -15,27 +14,54 @@ import (
 	"github.com/zclconf/go-cty/cty/convert"
 )
 
-func (d *PathDecoder) ReferenceTargetForOriginAtPos(file string, pos hcl.Pos) (*ReferenceTarget, error) {
-	origin, ok := d.pathCtx.ReferenceOrigins.AtPos(file, pos)
+type ReferenceTargets []*ReferenceTarget
+
+func (d *Decoder) ReferenceTargetsForOriginAtPos(path lang.Path, file string, pos hcl.Pos) (ReferenceTargets, error) {
+	pathCtx, err := d.pathReader.PathContext(path)
+	if err != nil {
+		return nil, err
+	}
+
+	matchingTargets := make(ReferenceTargets, 0)
+
+	origins, ok := pathCtx.ReferenceOrigins.AtPos(file, pos)
 	if !ok {
-		return nil, &reference.NoOriginFound{}
+		return matchingTargets, &reference.NoOriginFound{}
 	}
 
-	target, ok := d.pathCtx.ReferenceTargets.FirstTargetableBy(*origin)
-	if !ok {
-		return nil, &reference.NoTargetFound{}
+	for _, origin := range origins {
+		targetCtx := pathCtx
+		targetPath := path
+
+		if pathOrigin, ok := origin.(reference.PathOrigin); ok {
+			ctx, err := d.pathReader.PathContext(pathOrigin.TargetPath)
+			if err != nil {
+				continue
+			}
+			targetCtx = ctx
+			targetPath = pathOrigin.TargetPath
+		}
+
+		targets, ok := targetCtx.ReferenceTargets.Match(origin.Address(), origin.OriginConstraints())
+		if !ok {
+			// target not found
+			continue
+		}
+		for _, target := range targets {
+			if target.RangePtr == nil {
+				// target is not addressable
+				continue
+			}
+			matchingTargets = append(matchingTargets, &ReferenceTarget{
+				OriginRange: origin.OriginRange(),
+				Path:        targetPath,
+				Range:       *target.RangePtr,
+				DefRangePtr: target.DefRangePtr,
+			})
+		}
 	}
 
-	if target.RangePtr == nil {
-		return nil, fmt.Errorf("target %s is not addressable", target.Addr)
-	}
-
-	return &ReferenceTarget{
-		OriginRange: origin.Range,
-		Path:        d.path,
-		Range:       *target.RangePtr,
-		DefRangePtr: target.DefRangePtr,
-	}, nil
+	return matchingTargets, nil
 }
 
 func (d *PathDecoder) CollectReferenceTargets() (reference.Targets, error) {

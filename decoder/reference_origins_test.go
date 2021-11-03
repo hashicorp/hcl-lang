@@ -110,7 +110,7 @@ func TestReferenceOriginsTargetingPos(t *testing.T) {
 				},
 			},
 			reference.Origins{
-				{
+				reference.LocalOrigin{
 					Addr: lang.Address{
 						lang.RootStep{Name: "var"},
 						lang.AttrStep{Name: "test"},
@@ -197,7 +197,7 @@ func TestReferenceOriginsTargetingPos(t *testing.T) {
 				},
 			},
 			reference.Origins{
-				{
+				reference.LocalOrigin{
 					Addr: lang.Address{
 						lang.RootStep{Name: "var"},
 						lang.AttrStep{Name: "test"},
@@ -293,7 +293,7 @@ func TestReferenceOriginsTargetingPos(t *testing.T) {
 				},
 			},
 			reference.Origins{
-				{
+				reference.LocalOrigin{
 					Addr: lang.Address{
 						lang.RootStep{Name: "aws_instance"},
 						lang.AttrStep{Name: "test"},
@@ -317,7 +317,7 @@ func TestReferenceOriginsTargetingPos(t *testing.T) {
 						},
 					},
 				},
-				{
+				reference.LocalOrigin{
 					Addr: lang.Address{
 						lang.RootStep{Name: "aws_instance"},
 						lang.AttrStep{Name: "test"},
@@ -419,7 +419,7 @@ func TestReferenceOriginsTargetingPos(t *testing.T) {
 				},
 			},
 			reference.Origins{
-				{
+				reference.LocalOrigin{
 					Addr: lang.Address{
 						lang.RootStep{Name: "module"},
 						lang.AttrStep{Name: "test"},
@@ -443,7 +443,7 @@ func TestReferenceOriginsTargetingPos(t *testing.T) {
 						},
 					},
 				},
-				{
+				reference.LocalOrigin{
 					Addr: lang.Address{
 						lang.RootStep{Name: "module"},
 						lang.AttrStep{Name: "test"},

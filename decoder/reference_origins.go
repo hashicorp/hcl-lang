@@ -19,11 +19,11 @@ func (d *PathDecoder) ReferenceOriginsTargetingPos(file string, pos hcl.Pos) Ref
 	origins := make(ReferenceOrigins, 0)
 
 	for _, target := range targets {
-		rawOrigins := d.pathCtx.ReferenceOrigins.Targeting(target)
+		rawOrigins := d.pathCtx.ReferenceOrigins.Match(target, d.path)
 		for _, origin := range rawOrigins {
 			origins = append(origins, ReferenceOrigin{
 				Path:  d.path,
-				Range: origin.Range,
+				Range: origin.OriginRange(),
 			})
 		}
 	}
@@ -51,8 +51,8 @@ func (d *PathDecoder) CollectReferenceOrigins() (reference.Origins, error) {
 	}
 
 	sort.SliceStable(refOrigins, func(i, j int) bool {
-		return refOrigins[i].Range.Filename <= refOrigins[i].Range.Filename &&
-			refOrigins[i].Range.Start.Byte < refOrigins[j].Range.Start.Byte
+		return refOrigins[i].OriginRange().Filename <= refOrigins[i].OriginRange().Filename &&
+			refOrigins[i].OriginRange().Start.Byte < refOrigins[j].OriginRange().Start.Byte
 	})
 
 	return refOrigins, nil
@@ -184,7 +184,7 @@ func (d *PathDecoder) findOriginsInExpression(expr hcl.Expression, ec schema.Exp
 		// see https://github.com/hashicorp/terraform-ls/issues/496
 		tes, ok := ExprConstraints(ec).TraversalExprs()
 		if ok {
-			origins = append(origins, reference.TraversalsToOrigins(expr.Variables(), tes)...)
+			origins = append(origins, reference.TraversalsToLocalOrigins(expr.Variables(), tes)...)
 		}
 	case *hclsyntax.LiteralValueExpr:
 		// String constant may also be a traversal in some cases, but currently not recognized
@@ -197,7 +197,7 @@ func (d *PathDecoder) findOriginsInExpression(expr hcl.Expression, ec schema.Exp
 		// This may result in less accurate decoding where even origins
 		// which do not actually conform to the constraints are recognized.
 		// TODO: https://github.com/hashicorp/terraform-ls/issues/675
-		origins = append(origins, reference.TraversalsToOrigins(expr.Variables(), schema.TraversalExprs{})...)
+		origins = append(origins, reference.TraversalsToLocalOrigins(expr.Variables(), schema.TraversalExprs{})...)
 	}
 
 	return origins
@@ -216,7 +216,7 @@ func (d *PathDecoder) referenceOriginAtPos(body *hclsyntax.Body, bodySchema *sch
 			}
 
 			for _, origin := range d.findOriginsInExpression(attr.Expr, aSchema.Expr) {
-				if origin.Range.ContainsPos(pos) {
+				if origin.OriginRange().ContainsPos(pos) {
 					return &origin, nil
 				}
 			}

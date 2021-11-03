@@ -3,6 +3,7 @@ package decoder
 import (
 	"errors"
 	"fmt"
+	"path/filepath"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -30,99 +31,251 @@ func TestReferenceTargetForOriginAtPos(t *testing.T) {
 	dirPath := t.TempDir()
 
 	testCases := []struct {
-		name           string
-		origins        reference.Origins
-		targets        reference.Targets
-		filename       string
-		pos            hcl.Pos
-		expectedTarget *ReferenceTarget
-		expectedErr    error
+		name            string
+		dirs            map[string]*PathContext
+		path            lang.Path
+		filename        string
+		pos             hcl.Pos
+		expectedTargets ReferenceTargets
+		expectedErr     error
 	}{
 		{
 			"no origins and no targets",
-			reference.Origins{},
-			reference.Targets{},
+			map[string]*PathContext{
+				dirPath: {
+					ReferenceTargets: reference.Targets{},
+					ReferenceOrigins: reference.Origins{},
+				},
+			},
+			lang.Path{Path: dirPath},
 			"test.tf",
 			hcl.InitialPos,
-			nil,
+			ReferenceTargets{},
 			&reference.NoOriginFound{},
 		},
 		{
 			"single matching origin targeting and no targets",
-			reference.Origins{
-				{
-					Addr: lang.Address{
-						lang.RootStep{Name: "one"},
+			map[string]*PathContext{
+				dirPath: {
+					ReferenceOrigins: reference.Origins{
+						reference.LocalOrigin{
+							Addr: lang.Address{
+								lang.RootStep{Name: "one"},
+							},
+							Range: hcl.Range{
+								Filename: "test.tf",
+								Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
+								End:      hcl.Pos{Line: 1, Column: 4, Byte: 3},
+							},
+						},
 					},
-					Range: hcl.Range{
-						Filename: "test.tf",
-						Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
-						End:      hcl.Pos{Line: 1, Column: 4, Byte: 3},
-					},
+					ReferenceTargets: reference.Targets{},
 				},
 			},
-			reference.Targets{},
+			lang.Path{Path: dirPath},
 			"test.tf",
 			hcl.InitialPos,
+			ReferenceTargets{},
 			nil,
-			&reference.NoTargetFound{},
 		},
 		{
 			"matching origin and target",
-			reference.Origins{
-				{
-					Addr: lang.Address{
-						lang.RootStep{Name: "one"},
-					},
-					Constraints: reference.OriginConstraints{
-						reference.OriginConstraint{
-							OfType: cty.Bool,
+			map[string]*PathContext{
+				dirPath: {
+					ReferenceOrigins: reference.Origins{
+						reference.LocalOrigin{
+							Addr: lang.Address{
+								lang.RootStep{Name: "one"},
+							},
+							Constraints: reference.OriginConstraints{
+								reference.OriginConstraint{
+									OfType: cty.Bool,
+								},
+							},
+							Range: hcl.Range{
+								Filename: "test.tf",
+								Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
+								End:      hcl.Pos{Line: 1, Column: 4, Byte: 3},
+							},
 						},
 					},
-					Range: hcl.Range{
+					ReferenceTargets: reference.Targets{
+						{
+							Addr: lang.Address{
+								lang.RootStep{Name: "one"},
+							},
+							Type: cty.Bool,
+							RangePtr: &hcl.Range{
+								Filename: "test.tf",
+								Start:    hcl.Pos{Line: 2, Column: 1, Byte: 10},
+								End:      hcl.Pos{Line: 2, Column: 4, Byte: 13},
+							},
+						},
+						{
+							Addr: lang.Address{
+								lang.RootStep{Name: "two"},
+							},
+							Type: cty.Bool,
+							RangePtr: &hcl.Range{
+								Filename: "test.tf",
+								Start:    hcl.Pos{Line: 3, Column: 1, Byte: 16},
+								End:      hcl.Pos{Line: 4, Column: 4, Byte: 19},
+							},
+						},
+					},
+				},
+			},
+			lang.Path{Path: dirPath},
+			"test.tf",
+			hcl.InitialPos,
+			ReferenceTargets{
+				&ReferenceTarget{
+					OriginRange: hcl.Range{
 						Filename: "test.tf",
 						Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
 						End:      hcl.Pos{Line: 1, Column: 4, Byte: 3},
 					},
-				},
-			},
-			reference.Targets{
-				{
-					Addr: lang.Address{
-						lang.RootStep{Name: "one"},
-					},
-					Type: cty.Bool,
-					RangePtr: &hcl.Range{
+					Path: lang.Path{Path: dirPath},
+					Range: hcl.Range{
 						Filename: "test.tf",
 						Start:    hcl.Pos{Line: 2, Column: 1, Byte: 10},
 						End:      hcl.Pos{Line: 2, Column: 4, Byte: 13},
 					},
 				},
-				{
-					Addr: lang.Address{
-						lang.RootStep{Name: "two"},
+			},
+			nil,
+		},
+		{
+			"mismatching path origin",
+			map[string]*PathContext{
+				dirPath: {
+					ReferenceOrigins: reference.Origins{
+						reference.PathOrigin{
+							Range: hcl.Range{
+								Filename: "test.tf",
+								Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
+								End:      hcl.Pos{Line: 1, Column: 6, Byte: 5},
+							},
+							TargetAddr: lang.Address{
+								lang.RootStep{Name: "var"},
+								lang.AttrStep{Name: "foo"},
+							},
+							TargetPath: lang.Path{
+								Path: filepath.Join(dirPath, "alpha"),
+							},
+							Constraints: reference.OriginConstraints{
+								reference.OriginConstraint{
+									OfScopeId: lang.ScopeId("variable"),
+									OfType:    cty.String,
+								},
+							},
+						},
 					},
-					Type: cty.Bool,
-					RangePtr: &hcl.Range{
-						Filename: "test.tf",
-						Start:    hcl.Pos{Line: 3, Column: 1, Byte: 16},
-						End:      hcl.Pos{Line: 4, Column: 4, Byte: 19},
+					ReferenceTargets: reference.Targets{},
+				},
+				filepath.Join(dirPath, "beta"): {
+					ReferenceTargets: reference.Targets{
+						reference.Target{
+							Addr: lang.Address{
+								lang.RootStep{Name: "var"},
+								lang.AttrStep{Name: "foo"},
+							},
+							ScopeId: lang.ScopeId("variable"),
+							Type:    cty.String,
+							RangePtr: &hcl.Range{
+								Filename: "test.tf",
+								Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
+								End:      hcl.Pos{Line: 3, Column: 2, Byte: 15},
+							},
+							DefRangePtr: &hcl.Range{
+								Filename: "test.tf",
+								Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
+								End:      hcl.Pos{Line: 1, Column: 10, Byte: 9},
+							},
+							Name: "variable",
+						},
 					},
 				},
 			},
+			lang.Path{Path: dirPath},
 			"test.tf",
 			hcl.InitialPos,
-			&ReferenceTarget{
-				OriginRange: hcl.Range{
-					Filename: "test.tf",
-					Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
-					End:      hcl.Pos{Line: 1, Column: 4, Byte: 3},
+			ReferenceTargets{},
+			nil,
+		},
+		{
+			"matching path origin",
+			map[string]*PathContext{
+				dirPath: {
+					ReferenceOrigins: reference.Origins{
+						reference.PathOrigin{
+							Range: hcl.Range{
+								Filename: "test.tf",
+								Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
+								End:      hcl.Pos{Line: 1, Column: 6, Byte: 5},
+							},
+							TargetAddr: lang.Address{
+								lang.RootStep{Name: "var"},
+								lang.AttrStep{Name: "foo"},
+							},
+							TargetPath: lang.Path{
+								Path: filepath.Join(dirPath, "beta"),
+							},
+							Constraints: reference.OriginConstraints{
+								reference.OriginConstraint{
+									OfScopeId: lang.ScopeId("variable"),
+									OfType:    cty.String,
+								},
+							},
+						},
+					},
+					ReferenceTargets: reference.Targets{},
 				},
-				Path: lang.Path{Path: dirPath},
-				Range: hcl.Range{
-					Filename: "test.tf",
-					Start:    hcl.Pos{Line: 2, Column: 1, Byte: 10},
-					End:      hcl.Pos{Line: 2, Column: 4, Byte: 13},
+				filepath.Join(dirPath, "beta"): {
+					ReferenceTargets: reference.Targets{
+						reference.Target{
+							Addr: lang.Address{
+								lang.RootStep{Name: "var"},
+								lang.AttrStep{Name: "foo"},
+							},
+							ScopeId: lang.ScopeId("variable"),
+							Type:    cty.String,
+							RangePtr: &hcl.Range{
+								Filename: "test.tf",
+								Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
+								End:      hcl.Pos{Line: 3, Column: 2, Byte: 15},
+							},
+							DefRangePtr: &hcl.Range{
+								Filename: "test.tf",
+								Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
+								End:      hcl.Pos{Line: 1, Column: 10, Byte: 9},
+							},
+							Name: "variable",
+						},
+					},
+				},
+			},
+			lang.Path{Path: dirPath},
+			"test.tf",
+			hcl.InitialPos,
+			ReferenceTargets{
+				{
+					OriginRange: hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
+						End:      hcl.Pos{Line: 1, Column: 6, Byte: 5},
+					},
+					Path: lang.Path{Path: filepath.Join(dirPath, "beta")},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
+						End:      hcl.Pos{Line: 3, Column: 2, Byte: 15},
+					},
+					DefRangePtr: &hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
+						End:      hcl.Pos{Line: 1, Column: 10, Byte: 9},
+					},
 				},
 			},
 			nil,
@@ -131,23 +284,11 @@ func TestReferenceTargetForOriginAtPos(t *testing.T) {
 
 	for i, tc := range testCases {
 		t.Run(fmt.Sprintf("%d-%s", i, tc.name), func(t *testing.T) {
-			dirs := map[string]*PathContext{
-				dirPath: {
-					ReferenceTargets: tc.targets,
-					ReferenceOrigins: tc.origins,
-				},
-			}
-
 			d := NewDecoder(&testPathReader{
-				paths: dirs,
+				paths: tc.dirs,
 			})
 
-			pathDecoder, err := d.Path(lang.Path{Path: dirPath})
-			if err != nil {
-				t.Fatal(err)
-			}
-
-			origins, err := pathDecoder.ReferenceTargetForOriginAtPos(tc.filename, tc.pos)
+			targets, err := d.ReferenceTargetsForOriginAtPos(tc.path, tc.filename, tc.pos)
 			if err != nil {
 				if tc.expectedErr != nil && !errors.As(err, &tc.expectedErr) {
 					t.Fatalf("unexpected error: %s\nexpected: %s\n",
@@ -159,8 +300,8 @@ func TestReferenceTargetForOriginAtPos(t *testing.T) {
 				t.Fatalf("expected error: %s", tc.expectedErr)
 			}
 
-			if diff := cmp.Diff(tc.expectedTarget, origins, ctydebug.CmpOptions); diff != "" {
-				t.Fatalf("mismatch of reference origins: %s", diff)
+			if diff := cmp.Diff(tc.expectedTargets, targets, ctydebug.CmpOptions); diff != "" {
+				t.Fatalf("mismatch of reference targets: %s", diff)
 			}
 		})
 	}
