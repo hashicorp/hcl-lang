@@ -11,19 +11,25 @@ import (
 // and returns any errors from all of them.
 // i.e. Error from an earlier lens doesn't prevent future lens
 // from being executed
-func (d *PathDecoder) CodeLensesForFile(ctx context.Context, file string) ([]lang.CodeLens, error) {
+func (d *Decoder) CodeLensesForFile(ctx context.Context, path lang.Path, file string) ([]lang.CodeLens, error) {
 	lenses := make([]lang.CodeLens, 0)
 
 	var result *multierror.Error
 
-	for _, clFunc := range d.decoderCtx.CodeLenses {
-		ctx = withPathContext(ctx, d.pathCtx)
+	pathCtx, err := d.pathReader.PathContext(path)
+	if err == nil {
+		ctx = withPathContext(ctx, pathCtx)
+	}
 
-		cls, err := clFunc(ctx, d.path, file)
+	ctx = withPathReader(ctx, d.pathReader)
+
+	for _, clFunc := range d.ctx.CodeLenses {
+		cls, err := clFunc(ctx, path, file)
 		if err != nil {
 			result = multierror.Append(result, err)
 			continue
 		}
+
 		lenses = append(lenses, cls...)
 	}
 

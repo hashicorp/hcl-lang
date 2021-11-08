@@ -1,10 +1,8 @@
 package decoder
 
 import (
-	"context"
 	"fmt"
 
-	"github.com/hashicorp/hcl-lang/lang"
 	"github.com/hashicorp/hcl-lang/schema"
 	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hclsyntax"
@@ -13,11 +11,6 @@ import (
 type Decoder struct {
 	ctx        DecoderContext
 	pathReader PathReader
-}
-
-type PathReader interface {
-	Paths(ctx context.Context) []lang.Path
-	PathContext(path lang.Path) (*PathContext, error)
 }
 
 // NewDecoder creates a new Decoder
