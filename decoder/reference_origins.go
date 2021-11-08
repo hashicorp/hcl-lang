@@ -1,8 +1,10 @@
 package decoder
 
 import (
+	"context"
 	"sort"
 
+	"github.com/hashicorp/hcl-lang/lang"
 	"github.com/hashicorp/hcl-lang/reference"
 	"github.com/hashicorp/hcl-lang/schema"
 	"github.com/hashicorp/hcl/v2"
@@ -10,21 +12,36 @@ import (
 	"github.com/zclconf/go-cty/cty"
 )
 
-func (d *PathDecoder) ReferenceOriginsTargetingPos(file string, pos hcl.Pos) ReferenceOrigins {
-	targets, ok := d.pathCtx.ReferenceTargets.InnermostAtPos(file, pos)
+func (d *Decoder) ReferenceOriginsTargetingPos(path lang.Path, file string, pos hcl.Pos) ReferenceOrigins {
+	origins := make(ReferenceOrigins, 0)
+
+	ctx := context.Background()
+
+	localCtx, err := d.pathReader.PathContext(path)
+	if err != nil {
+		return origins
+	}
+
+	targets, ok := localCtx.ReferenceTargets.InnermostAtPos(file, pos)
 	if !ok {
 		return ReferenceOrigins{}
 	}
 
-	origins := make(ReferenceOrigins, 0)
-
 	for _, target := range targets {
-		rawOrigins := d.pathCtx.ReferenceOrigins.Match(target, d.path)
-		for _, origin := range rawOrigins {
-			origins = append(origins, ReferenceOrigin{
-				Path:  d.path,
-				Range: origin.OriginRange(),
-			})
+		paths := d.pathReader.Paths(ctx)
+		for _, p := range paths {
+			pathCtx, err := d.pathReader.PathContext(p)
+			if err != nil {
+				continue
+			}
+
+			rawOrigins := pathCtx.ReferenceOrigins.Match(target, path)
+			for _, origin := range rawOrigins {
+				origins = append(origins, ReferenceOrigin{
+					Path:  p,
+					Range: origin.OriginRange(),
+				})
+			}
 		}
 	}
 
