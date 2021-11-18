@@ -2,7 +2,6 @@ package decoder
 
 import (
 	"bytes"
-	"fmt"
 	"sort"
 
 	"github.com/hashicorp/hcl-lang/lang"
@@ -15,27 +14,54 @@ import (
 	"github.com/zclconf/go-cty/cty/convert"
 )
 
-func (d *PathDecoder) ReferenceTargetForOriginAtPos(file string, pos hcl.Pos) (*ReferenceTarget, error) {
-	origin, ok := d.pathCtx.ReferenceOrigins.AtPos(file, pos)
+type ReferenceTargets []*ReferenceTarget
+
+func (d *Decoder) ReferenceTargetsForOriginAtPos(path lang.Path, file string, pos hcl.Pos) (ReferenceTargets, error) {
+	pathCtx, err := d.pathReader.PathContext(path)
+	if err != nil {
+		return nil, err
+	}
+
+	matchingTargets := make(ReferenceTargets, 0)
+
+	origins, ok := pathCtx.ReferenceOrigins.AtPos(file, pos)
 	if !ok {
-		return nil, &reference.NoOriginFound{}
+		return matchingTargets, &reference.NoOriginFound{}
 	}
 
-	target, ok := d.pathCtx.ReferenceTargets.FirstTargetableBy(*origin)
-	if !ok {
-		return nil, &reference.NoTargetFound{}
+	for _, origin := range origins {
+		targetCtx := pathCtx
+		targetPath := path
+
+		if pathOrigin, ok := origin.(reference.PathOrigin); ok {
+			ctx, err := d.pathReader.PathContext(pathOrigin.TargetPath)
+			if err != nil {
+				continue
+			}
+			targetCtx = ctx
+			targetPath = pathOrigin.TargetPath
+		}
+
+		targets, ok := targetCtx.ReferenceTargets.Match(origin.Address(), origin.OriginConstraints())
+		if !ok {
+			// target not found
+			continue
+		}
+		for _, target := range targets {
+			if target.RangePtr == nil {
+				// target is not addressable
+				continue
+			}
+			matchingTargets = append(matchingTargets, &ReferenceTarget{
+				OriginRange: origin.OriginRange(),
+				Path:        targetPath,
+				Range:       *target.RangePtr,
+				DefRangePtr: target.DefRangePtr,
+			})
+		}
 	}
 
-	if target.RangePtr == nil {
-		return nil, fmt.Errorf("target %s is not addressable", target.Addr)
-	}
-
-	return &ReferenceTarget{
-		OriginRange: origin.Range,
-		Path:        d.path,
-		Range:       *target.RangePtr,
-		DefRangePtr: target.DefRangePtr,
-	}, nil
+	return matchingTargets, nil
 }
 
 func (d *PathDecoder) CollectReferenceTargets() (reference.Targets, error) {
@@ -210,47 +236,49 @@ func decodeTargetableBody(body hcl.Body, parentBlock *blockContent, tt *schema.T
 func decodeReferenceTargetsForAttribute(attr *hcl.Attribute, attrSchema *schema.AttributeSchema) reference.Targets {
 	refs := make(reference.Targets, 0)
 
-	attrAddr, ok := resolveAttributeAddress(attr, attrSchema.Address)
-	if ok {
-		if attrSchema.Address.AsReference {
-			ref := reference.Target{
-				Addr:        attrAddr,
-				ScopeId:     attrSchema.Address.ScopeId,
-				DefRangePtr: &attr.NameRange,
-				RangePtr:    attr.Range.Ptr(),
-				Name:        attrSchema.Address.FriendlyName,
-			}
-			refs = append(refs, ref)
-		}
-
-		if attrSchema.Address.AsExprType {
-			t, ok := exprConstraintToDataType(attrSchema.Expr)
-			if ok {
-				if t == cty.DynamicPseudoType && attr.Expr != nil {
-					// attempt to make the type more specific
-					exprVal, diags := attr.Expr.Value(nil)
-					if !diags.HasErrors() {
-						t = exprVal.Type()
-					}
-				}
-
-				scopeId := attrSchema.Address.ScopeId
-
+	if attrSchema.Address != nil {
+		attrAddr, ok := resolveAttributeAddress(attr, attrSchema.Address.Steps)
+		if ok {
+			if attrSchema.Address.AsReference {
 				ref := reference.Target{
 					Addr:        attrAddr,
-					Type:        t,
-					ScopeId:     scopeId,
-					DefRangePtr: attr.NameRange.Ptr(),
+					ScopeId:     attrSchema.Address.ScopeId,
+					DefRangePtr: &attr.NameRange,
 					RangePtr:    attr.Range.Ptr(),
 					Name:        attrSchema.Address.FriendlyName,
 				}
-
-				if attr.Expr != nil && !t.IsPrimitiveType() {
-					ref.NestedTargets = make(reference.Targets, 0)
-					ref.NestedTargets = append(ref.NestedTargets, decodeReferenceTargetsForComplexTypeExpr(attrAddr, attr.Expr, t, scopeId)...)
-				}
-
 				refs = append(refs, ref)
+			}
+
+			if attrSchema.Address.AsExprType {
+				t, ok := exprConstraintToDataType(attrSchema.Expr)
+				if ok {
+					if t == cty.DynamicPseudoType && attr.Expr != nil {
+						// attempt to make the type more specific
+						exprVal, diags := attr.Expr.Value(nil)
+						if !diags.HasErrors() {
+							t = exprVal.Type()
+						}
+					}
+
+					scopeId := attrSchema.Address.ScopeId
+
+					ref := reference.Target{
+						Addr:        attrAddr,
+						Type:        t,
+						ScopeId:     scopeId,
+						DefRangePtr: attr.NameRange.Ptr(),
+						RangePtr:    attr.Range.Ptr(),
+						Name:        attrSchema.Address.FriendlyName,
+					}
+
+					if attr.Expr != nil && !t.IsPrimitiveType() {
+						ref.NestedTargets = make(reference.Targets, 0)
+						ref.NestedTargets = append(ref.NestedTargets, decodeReferenceTargetsForComplexTypeExpr(attrAddr, attr.Expr, t, scopeId)...)
+					}
+
+					refs = append(refs, ref)
+				}
 			}
 		}
 	}
@@ -867,15 +895,14 @@ func bodyToDataType(blockType schema.BlockType, body *schema.BodySchema) cty.Typ
 	return cty.Object(bodySchemaAsAttrTypes(body))
 }
 
-func resolveAttributeAddress(attr *hcl.Attribute, addr *schema.AttributeAddrSchema) (lang.Address, bool) {
+func resolveAttributeAddress(attr *hcl.Attribute, addr schema.Address) (lang.Address, bool) {
 	address := make(lang.Address, 0)
 
-	if addr == nil {
-		// attribute not addressable
+	if len(addr) == 0 {
 		return lang.Address{}, false
 	}
 
-	for i, s := range addr.Steps {
+	for i, s := range addr {
 		var stepName string
 
 		switch step := s.(type) {

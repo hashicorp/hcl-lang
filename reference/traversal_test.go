@@ -22,7 +22,7 @@ func TestTraversalToOrigin(t *testing.T) {
 		{
 			"one",
 			schema.TraversalExprs{},
-			Origin{
+			LocalOrigin{
 				Addr: lang.Address{
 					lang.RootStep{Name: "one"},
 				},
@@ -36,7 +36,7 @@ func TestTraversalToOrigin(t *testing.T) {
 		{
 			"first.second",
 			schema.TraversalExprs{},
-			Origin{
+			LocalOrigin{
 				Addr: lang.Address{
 					lang.RootStep{Name: "first"},
 					lang.AttrStep{Name: "second"},
@@ -51,7 +51,7 @@ func TestTraversalToOrigin(t *testing.T) {
 		{
 			"foo[2]",
 			schema.TraversalExprs{},
-			Origin{
+			LocalOrigin{
 				Addr: lang.Address{
 					lang.RootStep{Name: "foo"},
 					lang.IndexStep{Key: cty.NumberIntVal(2)},
@@ -66,7 +66,7 @@ func TestTraversalToOrigin(t *testing.T) {
 		{
 			`foo["bar"]`,
 			schema.TraversalExprs{},
-			Origin{
+			LocalOrigin{
 				Addr: lang.Address{
 					lang.RootStep{Name: "foo"},
 					lang.IndexStep{Key: cty.StringVal("bar")},
@@ -87,7 +87,7 @@ func TestTraversalToOrigin(t *testing.T) {
 				t.Fatal(diags)
 			}
 
-			origin, err := TraversalToOrigin(traversal, tc.traversalExprs)
+			origin, err := TraversalToLocalOrigin(traversal, tc.traversalExprs)
 			if err != nil {
 				t.Fatal(err)
 			}

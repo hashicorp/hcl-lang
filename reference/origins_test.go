@@ -13,23 +13,23 @@ import (
 
 func TestOrigins_AtPos(t *testing.T) {
 	testCases := []struct {
-		name           string
-		origins        Origins
-		pos            hcl.Pos
-		expectedOrigin *Origin
-		expectedFound  bool
+		name            string
+		origins         Origins
+		pos             hcl.Pos
+		expectedOrigins Origins
+		expectedFound   bool
 	}{
 		{
 			"no origins",
 			Origins{},
 			hcl.InitialPos,
-			nil,
+			Origins{},
 			false,
 		},
 		{
 			"single mismatching origin",
 			Origins{
-				Origin{
+				LocalOrigin{
 					Addr: lang.Address{
 						lang.RootStep{Name: "blah"},
 					},
@@ -45,13 +45,13 @@ func TestOrigins_AtPos(t *testing.T) {
 				Column: 3,
 				Byte:   2,
 			},
-			nil,
+			Origins{},
 			false,
 		},
 		{
 			"single matching origin",
 			Origins{
-				Origin{
+				LocalOrigin{
 					Addr: lang.Address{
 						lang.RootStep{Name: "blah"},
 					},
@@ -67,14 +67,16 @@ func TestOrigins_AtPos(t *testing.T) {
 				Column: 9,
 				Byte:   8,
 			},
-			&Origin{
-				Addr: lang.Address{
-					lang.RootStep{Name: "blah"},
-				},
-				Range: hcl.Range{
-					Filename: "test.tf",
-					Start:    hcl.Pos{Line: 1, Column: 8, Byte: 7},
-					End:      hcl.Pos{Line: 1, Column: 12, Byte: 11},
+			Origins{
+				LocalOrigin{
+					Addr: lang.Address{
+						lang.RootStep{Name: "blah"},
+					},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 1, Column: 8, Byte: 7},
+						End:      hcl.Pos{Line: 1, Column: 12, Byte: 11},
+					},
 				},
 			},
 			true,
@@ -82,7 +84,7 @@ func TestOrigins_AtPos(t *testing.T) {
 		{
 			"multiple origins - single match",
 			Origins{
-				Origin{
+				LocalOrigin{
 					Addr: lang.Address{
 						lang.RootStep{Name: "foo"},
 					},
@@ -92,7 +94,7 @@ func TestOrigins_AtPos(t *testing.T) {
 						End:      hcl.Pos{Line: 1, Column: 12, Byte: 11},
 					},
 				},
-				Origin{
+				LocalOrigin{
 					Addr: lang.Address{
 						lang.RootStep{Name: "var"},
 					},
@@ -102,7 +104,7 @@ func TestOrigins_AtPos(t *testing.T) {
 						End:      hcl.Pos{Line: 2, Column: 12, Byte: 18},
 					},
 				},
-				Origin{
+				LocalOrigin{
 					Addr: lang.Address{
 						lang.RootStep{Name: "bar"},
 					},
@@ -118,14 +120,16 @@ func TestOrigins_AtPos(t *testing.T) {
 				Column: 9,
 				Byte:   15,
 			},
-			&Origin{
-				Addr: lang.Address{
-					lang.RootStep{Name: "bar"},
-				},
-				Range: hcl.Range{
-					Filename: "test.tf",
-					Start:    hcl.Pos{Line: 2, Column: 8, Byte: 14},
-					End:      hcl.Pos{Line: 2, Column: 12, Byte: 18},
+			Origins{
+				LocalOrigin{
+					Addr: lang.Address{
+						lang.RootStep{Name: "bar"},
+					},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 2, Column: 8, Byte: 14},
+						End:      hcl.Pos{Line: 2, Column: 12, Byte: 18},
+					},
 				},
 			},
 			true,
@@ -134,19 +138,19 @@ func TestOrigins_AtPos(t *testing.T) {
 
 	for i, tc := range testCases {
 		t.Run(fmt.Sprintf("%d-%s", i, tc.name), func(t *testing.T) {
-			refOrigin, ok := tc.origins.AtPos("test.tf", tc.pos)
+			origins, ok := tc.origins.AtPos("test.tf", tc.pos)
 			if !ok && tc.expectedFound {
 				t.Fatal("expected origin to be found")
 			}
 
-			if diff := cmp.Diff(tc.expectedOrigin, refOrigin, ctydebug.CmpOptions); diff != "" {
+			if diff := cmp.Diff(tc.expectedOrigins, origins, ctydebug.CmpOptions); diff != "" {
 				t.Fatalf("mismatched origin: %s", diff)
 			}
 		})
 	}
 }
 
-func TestOrigins_Targeting(t *testing.T) {
+func TestOrigins_Match(t *testing.T) {
 	testCases := []struct {
 		name            string
 		origins         Origins
@@ -167,12 +171,12 @@ func TestOrigins_Targeting(t *testing.T) {
 		{
 			"exact address match",
 			Origins{
-				{
+				LocalOrigin{
 					Addr: lang.Address{
 						lang.RootStep{Name: "test"},
 					},
 				},
-				{
+				LocalOrigin{
 					Addr: lang.Address{
 						lang.RootStep{Name: "test"},
 						lang.AttrStep{Name: "secondstep"},
@@ -190,7 +194,7 @@ func TestOrigins_Targeting(t *testing.T) {
 				Type: cty.String,
 			},
 			Origins{
-				{
+				LocalOrigin{
 					Addr: lang.Address{
 						lang.RootStep{Name: "test"},
 						lang.AttrStep{Name: "secondstep"},
@@ -204,12 +208,12 @@ func TestOrigins_Targeting(t *testing.T) {
 		{
 			"no match",
 			Origins{
-				{
+				LocalOrigin{
 					Addr: lang.Address{
 						lang.RootStep{Name: "test"},
 					},
 				},
-				{
+				LocalOrigin{
 					Addr: lang.Address{
 						lang.RootStep{Name: "test"},
 						lang.AttrStep{Name: "secondstep"},
@@ -228,12 +232,12 @@ func TestOrigins_Targeting(t *testing.T) {
 		{
 			"match of nested target - two matches",
 			Origins{
-				{
+				LocalOrigin{
 					Addr: lang.Address{
 						lang.RootStep{Name: "foo"},
 					},
 				},
-				{
+				LocalOrigin{
 					Addr: lang.Address{
 						lang.RootStep{Name: "test"},
 					},
@@ -241,7 +245,7 @@ func TestOrigins_Targeting(t *testing.T) {
 						{OfType: cty.DynamicPseudoType},
 					},
 				},
-				{
+				LocalOrigin{
 					Addr: lang.Address{
 						lang.RootStep{Name: "test"},
 						lang.AttrStep{Name: "second"},
@@ -269,7 +273,7 @@ func TestOrigins_Targeting(t *testing.T) {
 				},
 			},
 			Origins{
-				{
+				LocalOrigin{
 					Addr: lang.Address{
 						lang.RootStep{Name: "test"},
 					},
@@ -277,7 +281,7 @@ func TestOrigins_Targeting(t *testing.T) {
 						{OfType: cty.DynamicPseudoType},
 					},
 				},
-				{
+				LocalOrigin{
 					Addr: lang.Address{
 						lang.RootStep{Name: "test"},
 						lang.AttrStep{Name: "second"},
@@ -291,19 +295,19 @@ func TestOrigins_Targeting(t *testing.T) {
 		{
 			"loose match of target of unknown type",
 			Origins{
-				{
+				LocalOrigin{
 					Addr: lang.Address{
 						lang.RootStep{Name: "foo"},
 					},
 					Constraints: OriginConstraints{{}},
 				},
-				{
+				LocalOrigin{
 					Addr: lang.Address{
 						lang.RootStep{Name: "test"},
 					},
 					Constraints: OriginConstraints{{}},
 				},
-				{
+				LocalOrigin{
 					Addr: lang.Address{
 						lang.RootStep{Name: "test"},
 						lang.AttrStep{Name: "second"},
@@ -318,13 +322,13 @@ func TestOrigins_Targeting(t *testing.T) {
 				Type: cty.DynamicPseudoType,
 			},
 			Origins{
-				{
+				LocalOrigin{
 					Addr: lang.Address{
 						lang.RootStep{Name: "test"},
 					},
 					Constraints: OriginConstraints{{}},
 				},
-				{
+				LocalOrigin{
 					Addr: lang.Address{
 						lang.RootStep{Name: "test"},
 						lang.AttrStep{Name: "second"},
@@ -336,7 +340,7 @@ func TestOrigins_Targeting(t *testing.T) {
 		{
 			"mismatch of target nil type",
 			Origins{
-				{
+				LocalOrigin{
 					Addr: lang.Address{
 						lang.RootStep{Name: "test"},
 					},
@@ -358,7 +362,7 @@ func TestOrigins_Targeting(t *testing.T) {
 		{
 			"constraint-less origin mismatching scope-only target",
 			Origins{
-				{
+				LocalOrigin{
 					Addr: lang.Address{
 						lang.RootStep{Name: "var"},
 						lang.AttrStep{Name: "alpha"},
@@ -379,7 +383,7 @@ func TestOrigins_Targeting(t *testing.T) {
 		{
 			"constraint-less origin matching type-aware target",
 			Origins{
-				{
+				LocalOrigin{
 					Addr: lang.Address{
 						lang.RootStep{Name: "var"},
 						lang.AttrStep{Name: "beta"},
@@ -396,7 +400,7 @@ func TestOrigins_Targeting(t *testing.T) {
 				Type:    cty.DynamicPseudoType,
 			},
 			Origins{
-				{
+				LocalOrigin{
 					Addr: lang.Address{
 						lang.RootStep{Name: "var"},
 						lang.AttrStep{Name: "beta"},
@@ -408,7 +412,8 @@ func TestOrigins_Targeting(t *testing.T) {
 	}
 	for i, tc := range testCases {
 		t.Run(fmt.Sprintf("%d-%s", i, tc.name), func(t *testing.T) {
-			origins := tc.origins.Targeting(tc.refTarget)
+			// TODO: test PathOrigins
+			origins := tc.origins.Match(tc.refTarget, lang.Path{Path: t.TempDir()})
 
 			if diff := cmp.Diff(tc.expectedOrigins, origins, ctydebug.CmpOptions); diff != "" {
 				t.Fatalf("mismatched reference origins: %s", diff)

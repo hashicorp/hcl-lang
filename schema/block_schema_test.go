@@ -23,7 +23,7 @@ func TestBlockSchema_Validate(t *testing.T) {
 					},
 				},
 			},
-			errors.New("Address: Steps[0]: AttrNameStep is not valid for attribute"),
+			errors.New("Address: Steps[0]: AttrNameStep is not valid for block"),
 		},
 		{
 			&BlockSchema{

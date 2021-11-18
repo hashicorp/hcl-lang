@@ -147,12 +147,12 @@ func (d *PathDecoder) tokensForExpression(expr hclsyntax.Expression, constraints
 		if ok && d.pathCtx.ReferenceTargets != nil {
 			traversal := eType.AsTraversal()
 
-			origin, err := reference.TraversalToOrigin(traversal, tes)
+			origin, err := reference.TraversalToLocalOrigin(traversal, tes)
 			if err != nil {
 				return tokens
 			}
 
-			_, targetFound := d.pathCtx.ReferenceTargets.FirstTargetableBy(origin)
+			_, targetFound := d.pathCtx.ReferenceTargets.Match(origin.Address(), origin.OriginConstraints())
 			if !targetFound {
 				return tokens
 			}

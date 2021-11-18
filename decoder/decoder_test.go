@@ -2,6 +2,7 @@ package decoder
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	"github.com/hashicorp/hcl-lang/lang"
@@ -24,7 +25,11 @@ func (r *testPathReader) Paths(ctx context.Context) []lang.Path {
 }
 
 func (r *testPathReader) PathContext(path lang.Path) (*PathContext, error) {
-	return r.paths[path.Path], nil
+	if ctx, ok := r.paths[path.Path]; ok {
+		return ctx, nil
+	}
+
+	return nil, fmt.Errorf("path not found: %q", path.Path)
 }
 
 func testPathDecoder(t *testing.T, pathCtx *PathContext) *PathDecoder {

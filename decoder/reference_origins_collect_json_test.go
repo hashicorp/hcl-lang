@@ -46,7 +46,7 @@ func TestCollectReferenceOrigins_json(t *testing.T) {
 			},
 			`{"attr": "${onestep}"}`,
 			reference.Origins{
-				{
+				reference.LocalOrigin{
 					Addr: lang.Address{
 						lang.RootStep{Name: "onestep"},
 					},
@@ -93,7 +93,7 @@ func TestCollectReferenceOrigins_json(t *testing.T) {
   "attr3": "${onestep}"
 }`,
 			reference.Origins{
-				{
+				reference.LocalOrigin{
 					Addr: lang.Address{
 						lang.RootStep{Name: "onestep"},
 					},
@@ -111,7 +111,7 @@ func TestCollectReferenceOrigins_json(t *testing.T) {
 						},
 					},
 				},
-				{
+				reference.LocalOrigin{
 					Addr: lang.Address{
 						lang.RootStep{Name: "anotherstep"},
 					},
@@ -129,7 +129,7 @@ func TestCollectReferenceOrigins_json(t *testing.T) {
 						},
 					},
 				},
-				{
+				reference.LocalOrigin{
 					Addr: lang.Address{
 						lang.RootStep{Name: "onestep"},
 					},
@@ -162,7 +162,7 @@ func TestCollectReferenceOrigins_json(t *testing.T) {
 			},
 			`{"attr1": "${onestep}-${onestep}-${another.foo.bar}"}`,
 			reference.Origins{
-				{
+				reference.LocalOrigin{
 					Addr: lang.Address{
 						lang.RootStep{Name: "onestep"},
 					},
@@ -180,7 +180,7 @@ func TestCollectReferenceOrigins_json(t *testing.T) {
 						},
 					},
 				},
-				{
+				reference.LocalOrigin{
 					Addr: lang.Address{
 						lang.RootStep{Name: "onestep"},
 					},
@@ -198,7 +198,7 @@ func TestCollectReferenceOrigins_json(t *testing.T) {
 						},
 					},
 				},
-				{
+				reference.LocalOrigin{
 					Addr: lang.Address{
 						lang.RootStep{Name: "another"},
 						lang.AttrStep{Name: "foo"},
@@ -233,7 +233,7 @@ func TestCollectReferenceOrigins_json(t *testing.T) {
 			},
 			`{"attr": "${one.two[\"key\"].attr[0]}"}`,
 			reference.Origins{
-				{
+				reference.LocalOrigin{
 					Addr: lang.Address{
 						lang.RootStep{Name: "one"},
 						lang.AttrStep{Name: "two"},
@@ -281,7 +281,7 @@ func TestCollectReferenceOrigins_json(t *testing.T) {
 }
 `,
 			reference.Origins{
-				{
+				reference.LocalOrigin{
 					Addr: lang.Address{
 						lang.RootStep{Name: "onestep"},
 					},
@@ -323,7 +323,7 @@ func TestCollectReferenceOrigins_json(t *testing.T) {
 }
 `,
 			reference.Origins{
-				{
+				reference.LocalOrigin{
 					Addr: lang.Address{
 						lang.RootStep{Name: "onestep"},
 					},
@@ -388,7 +388,7 @@ func TestCollectReferenceOrigins_json(t *testing.T) {
 }
 `,
 			reference.Origins{
-				{
+				reference.LocalOrigin{
 					Addr: lang.Address{
 						lang.RootStep{Name: "var"},
 						lang.AttrStep{Name: "first"},
@@ -407,7 +407,7 @@ func TestCollectReferenceOrigins_json(t *testing.T) {
 						},
 					},
 				},
-				{
+				reference.LocalOrigin{
 					Addr: lang.Address{
 						lang.RootStep{Name: "var"},
 						lang.AttrStep{Name: "second"},
@@ -473,7 +473,7 @@ func TestCollectReferenceOrigins_json(t *testing.T) {
 }
 `,
 			reference.Origins{
-				{
+				reference.LocalOrigin{
 					Addr: lang.Address{
 						lang.RootStep{Name: "var"},
 						lang.AttrStep{Name: "first"},
@@ -541,7 +541,7 @@ func TestCollectReferenceOrigins_json(t *testing.T) {
   "tuple": [ "${var.third}" ]
 }`,
 			reference.Origins{
-				{
+				reference.LocalOrigin{
 					Addr: lang.Address{
 						lang.RootStep{Name: "var"},
 						lang.AttrStep{Name: "first"},
@@ -560,7 +560,7 @@ func TestCollectReferenceOrigins_json(t *testing.T) {
 						},
 					},
 				},
-				{
+				reference.LocalOrigin{
 					Addr: lang.Address{
 						lang.RootStep{Name: "var"},
 						lang.AttrStep{Name: "second"},
@@ -579,7 +579,7 @@ func TestCollectReferenceOrigins_json(t *testing.T) {
 						},
 					},
 				},
-				{
+				reference.LocalOrigin{
 					Addr: lang.Address{
 						lang.RootStep{Name: "var"},
 						lang.AttrStep{Name: "third"},
@@ -627,7 +627,7 @@ func TestCollectReferenceOrigins_json(t *testing.T) {
   }
 }`,
 			reference.Origins{
-				{
+				reference.LocalOrigin{
 					Addr: lang.Address{
 						lang.RootStep{Name: "var"},
 						lang.AttrStep{Name: "first"},
@@ -671,7 +671,7 @@ func TestCollectReferenceOrigins_json(t *testing.T) {
   }
 }`,
 			reference.Origins{
-				{
+				reference.LocalOrigin{
 					Addr: lang.Address{
 						lang.RootStep{Name: "var"},
 						lang.AttrStep{Name: "first"},
@@ -711,7 +711,7 @@ func TestCollectReferenceOrigins_json(t *testing.T) {
 			},
 			`{"tuple_cons": [ "${var.one}" ]}`,
 			reference.Origins{
-				{
+				reference.LocalOrigin{
 					Addr: lang.Address{
 						lang.RootStep{Name: "var"},
 						lang.AttrStep{Name: "one"},
@@ -774,7 +774,7 @@ func TestCollectReferenceOrigins_json(t *testing.T) {
 }
 `,
 			reference.Origins{
-				{
+				reference.LocalOrigin{
 					Addr: lang.Address{
 						lang.RootStep{Name: "var"},
 						lang.AttrStep{Name: "one"},
@@ -793,7 +793,7 @@ func TestCollectReferenceOrigins_json(t *testing.T) {
 						},
 					},
 				},
-				{
+				reference.LocalOrigin{
 					Addr: lang.Address{
 						lang.RootStep{Name: "var"},
 						lang.AttrStep{Name: "two"},
@@ -858,7 +858,7 @@ func TestCollectReferenceOrigins_json(t *testing.T) {
   "tup": [ "${var.three}" ]
 }`,
 			reference.Origins{
-				{
+				reference.LocalOrigin{
 					Addr: lang.Address{
 						lang.RootStep{Name: "var"},
 						lang.AttrStep{Name: "one"},
@@ -877,7 +877,7 @@ func TestCollectReferenceOrigins_json(t *testing.T) {
 						},
 					},
 				},
-				{
+				reference.LocalOrigin{
 					Addr: lang.Address{
 						lang.RootStep{Name: "var"},
 						lang.AttrStep{Name: "two"},
@@ -896,7 +896,7 @@ func TestCollectReferenceOrigins_json(t *testing.T) {
 						},
 					},
 				},
-				{
+				reference.LocalOrigin{
 					Addr: lang.Address{
 						lang.RootStep{Name: "var"},
 						lang.AttrStep{Name: "three"},

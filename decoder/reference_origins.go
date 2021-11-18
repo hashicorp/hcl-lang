@@ -1,8 +1,10 @@
 package decoder
 
 import (
+	"context"
 	"sort"
 
+	"github.com/hashicorp/hcl-lang/lang"
 	"github.com/hashicorp/hcl-lang/reference"
 	"github.com/hashicorp/hcl-lang/schema"
 	"github.com/hashicorp/hcl/v2"
@@ -10,21 +12,36 @@ import (
 	"github.com/zclconf/go-cty/cty"
 )
 
-func (d *PathDecoder) ReferenceOriginsTargetingPos(file string, pos hcl.Pos) ReferenceOrigins {
-	targets, ok := d.pathCtx.ReferenceTargets.InnermostAtPos(file, pos)
+func (d *Decoder) ReferenceOriginsTargetingPos(path lang.Path, file string, pos hcl.Pos) ReferenceOrigins {
+	origins := make(ReferenceOrigins, 0)
+
+	ctx := context.Background()
+
+	localCtx, err := d.pathReader.PathContext(path)
+	if err != nil {
+		return origins
+	}
+
+	targets, ok := localCtx.ReferenceTargets.InnermostAtPos(file, pos)
 	if !ok {
 		return ReferenceOrigins{}
 	}
 
-	origins := make(ReferenceOrigins, 0)
-
 	for _, target := range targets {
-		rawOrigins := d.pathCtx.ReferenceOrigins.Targeting(target)
-		for _, origin := range rawOrigins {
-			origins = append(origins, ReferenceOrigin{
-				Path:  d.path,
-				Range: origin.Range,
-			})
+		paths := d.pathReader.Paths(ctx)
+		for _, p := range paths {
+			pathCtx, err := d.pathReader.PathContext(p)
+			if err != nil {
+				continue
+			}
+
+			rawOrigins := pathCtx.ReferenceOrigins.Match(target, path)
+			for _, origin := range rawOrigins {
+				origins = append(origins, ReferenceOrigin{
+					Path:  p,
+					Range: origin.OriginRange(),
+				})
+			}
 		}
 	}
 
@@ -51,8 +68,8 @@ func (d *PathDecoder) CollectReferenceOrigins() (reference.Origins, error) {
 	}
 
 	sort.SliceStable(refOrigins, func(i, j int) bool {
-		return refOrigins[i].Range.Filename <= refOrigins[i].Range.Filename &&
-			refOrigins[i].Range.Start.Byte < refOrigins[j].Range.Start.Byte
+		return refOrigins[i].OriginRange().Filename <= refOrigins[i].OriginRange().Filename &&
+			refOrigins[i].OriginRange().Start.Byte < refOrigins[j].OriginRange().Start.Byte
 	})
 
 	return refOrigins, nil
@@ -75,6 +92,23 @@ func (d *PathDecoder) referenceOriginsInBody(body hcl.Body, bodySchema *schema.B
 				continue
 			}
 			aSchema = bodySchema.AnyAttribute
+		}
+
+		if aSchema.OriginForTarget != nil {
+			targetAddr, ok := resolveAttributeAddress(attr, aSchema.OriginForTarget.Address)
+			if ok {
+				origins = append(origins, reference.PathOrigin{
+					Range:      attr.NameRange,
+					TargetAddr: targetAddr,
+					TargetPath: aSchema.OriginForTarget.Path,
+					Constraints: reference.OriginConstraints{
+						{
+							OfScopeId: aSchema.OriginForTarget.Constraints.ScopeId,
+							OfType:    aSchema.OriginForTarget.Constraints.Type,
+						},
+					},
+				})
+			}
 		}
 
 		origins = append(origins, d.findOriginsInExpression(attr.Expr, aSchema.Expr)...)
@@ -184,7 +218,7 @@ func (d *PathDecoder) findOriginsInExpression(expr hcl.Expression, ec schema.Exp
 		// see https://github.com/hashicorp/terraform-ls/issues/496
 		tes, ok := ExprConstraints(ec).TraversalExprs()
 		if ok {
-			origins = append(origins, reference.TraversalsToOrigins(expr.Variables(), tes)...)
+			origins = append(origins, reference.TraversalsToLocalOrigins(expr.Variables(), tes)...)
 		}
 	case *hclsyntax.LiteralValueExpr:
 		// String constant may also be a traversal in some cases, but currently not recognized
@@ -197,7 +231,7 @@ func (d *PathDecoder) findOriginsInExpression(expr hcl.Expression, ec schema.Exp
 		// This may result in less accurate decoding where even origins
 		// which do not actually conform to the constraints are recognized.
 		// TODO: https://github.com/hashicorp/terraform-ls/issues/675
-		origins = append(origins, reference.TraversalsToOrigins(expr.Variables(), schema.TraversalExprs{})...)
+		origins = append(origins, reference.TraversalsToLocalOrigins(expr.Variables(), schema.TraversalExprs{})...)
 	}
 
 	return origins
@@ -216,7 +250,7 @@ func (d *PathDecoder) referenceOriginAtPos(body *hclsyntax.Body, bodySchema *sch
 			}
 
 			for _, origin := range d.findOriginsInExpression(attr.Expr, aSchema.Expr) {
-				if origin.Range.ContainsPos(pos) {
+				if origin.OriginRange().ContainsPos(pos) {
 					return &origin, nil
 				}
 			}

@@ -14,7 +14,7 @@ import (
 	"github.com/zclconf/go-cty/cty"
 )
 
-func TestCollectReferenceOrigins_hcl(t *testing.T) {
+func TestCollectReferenceOrigins_hcl_local(t *testing.T) {
 	testCases := []struct {
 		name            string
 		schema          *schema.BodySchema
@@ -46,7 +46,7 @@ func TestCollectReferenceOrigins_hcl(t *testing.T) {
 			},
 			`attr = onestep`,
 			reference.Origins{
-				{
+				reference.LocalOrigin{
 					Addr: lang.Address{
 						lang.RootStep{Name: "onestep"},
 					},
@@ -92,7 +92,7 @@ func TestCollectReferenceOrigins_hcl(t *testing.T) {
 attr2 = anotherstep
 attr3 = onestep`,
 			reference.Origins{
-				{
+				reference.LocalOrigin{
 					Addr: lang.Address{
 						lang.RootStep{Name: "onestep"},
 					},
@@ -111,7 +111,7 @@ attr3 = onestep`,
 						},
 					},
 				},
-				{
+				reference.LocalOrigin{
 					Addr: lang.Address{
 						lang.RootStep{Name: "anotherstep"},
 					},
@@ -130,7 +130,7 @@ attr3 = onestep`,
 						},
 					},
 				},
-				{
+				reference.LocalOrigin{
 					Addr: lang.Address{
 						lang.RootStep{Name: "onestep"},
 					},
@@ -164,7 +164,7 @@ attr3 = onestep`,
 			},
 			`attr1 = "${onestep}-${onestep}-${another.foo.bar}"`,
 			reference.Origins{
-				{
+				reference.LocalOrigin{
 					Addr: lang.Address{
 						lang.RootStep{Name: "onestep"},
 					},
@@ -183,7 +183,7 @@ attr3 = onestep`,
 						},
 					},
 				},
-				{
+				reference.LocalOrigin{
 					Addr: lang.Address{
 						lang.RootStep{Name: "onestep"},
 					},
@@ -202,7 +202,7 @@ attr3 = onestep`,
 						},
 					},
 				},
-				{
+				reference.LocalOrigin{
 					Addr: lang.Address{
 						lang.RootStep{Name: "another"},
 						lang.AttrStep{Name: "foo"},
@@ -238,7 +238,7 @@ attr3 = onestep`,
 			},
 			`attr = one.two["key"].attr[0]`,
 			reference.Origins{
-				{
+				reference.LocalOrigin{
 					Addr: lang.Address{
 						lang.RootStep{Name: "one"},
 						lang.AttrStep{Name: "two"},
@@ -285,7 +285,7 @@ attr3 = onestep`,
 }
 `,
 			reference.Origins{
-				{
+				reference.LocalOrigin{
 					Addr: lang.Address{
 						lang.RootStep{Name: "onestep"},
 					},
@@ -326,7 +326,7 @@ attr3 = onestep`,
 }
 `,
 			reference.Origins{
-				{
+				reference.LocalOrigin{
 					Addr: lang.Address{
 						lang.RootStep{Name: "onestep"},
 					},
@@ -388,7 +388,7 @@ attr3 = onestep`,
 }
 `,
 			reference.Origins{
-				{
+				reference.LocalOrigin{
 					Addr: lang.Address{
 						lang.RootStep{Name: "var"},
 						lang.AttrStep{Name: "first"},
@@ -408,7 +408,7 @@ attr3 = onestep`,
 						},
 					},
 				},
-				{
+				reference.LocalOrigin{
 					Addr: lang.Address{
 						lang.RootStep{Name: "var"},
 						lang.AttrStep{Name: "second"},
@@ -471,7 +471,7 @@ attr3 = onestep`,
 }
 `,
 			reference.Origins{
-				{
+				reference.LocalOrigin{
 					Addr: lang.Address{
 						lang.RootStep{Name: "var"},
 						lang.AttrStep{Name: "first"},
@@ -539,7 +539,7 @@ set = [ var.second ]
 tuple = [ var.third ]
 `,
 			reference.Origins{
-				{
+				reference.LocalOrigin{
 					Addr: lang.Address{
 						lang.RootStep{Name: "var"},
 						lang.AttrStep{Name: "first"},
@@ -561,7 +561,7 @@ tuple = [ var.third ]
 						{OfScopeId: lang.ScopeId("test")},
 					},
 				},
-				{
+				reference.LocalOrigin{
 					Addr: lang.Address{
 						lang.RootStep{Name: "var"},
 						lang.AttrStep{Name: "second"},
@@ -583,7 +583,7 @@ tuple = [ var.third ]
 						{OfScopeId: lang.ScopeId("test")},
 					},
 				},
-				{
+				reference.LocalOrigin{
 					Addr: lang.Address{
 						lang.RootStep{Name: "var"},
 						lang.AttrStep{Name: "third"},
@@ -632,7 +632,7 @@ tuple = [ var.third ]
   attr = var.first
 }`,
 			reference.Origins{
-				{
+				reference.LocalOrigin{
 					Addr: lang.Address{
 						lang.RootStep{Name: "var"},
 						lang.AttrStep{Name: "first"},
@@ -677,7 +677,7 @@ tuple = [ var.third ]
   key = var.first
 }`,
 			reference.Origins{
-				{
+				reference.LocalOrigin{
 					Addr: lang.Address{
 						lang.RootStep{Name: "var"},
 						lang.AttrStep{Name: "first"},
@@ -720,7 +720,7 @@ tuple = [ var.third ]
 			},
 			`tuple_cons = [ var.one ]`,
 			reference.Origins{
-				{
+				reference.LocalOrigin{
 					Addr: lang.Address{
 						lang.RootStep{Name: "var"},
 						lang.AttrStep{Name: "one"},
@@ -784,7 +784,7 @@ obj = {
 }
 `,
 			reference.Origins{
-				{
+				reference.LocalOrigin{
 					Addr: lang.Address{
 						lang.RootStep{Name: "var"},
 						lang.AttrStep{Name: "one"},
@@ -806,7 +806,7 @@ obj = {
 						{OfType: cty.String},
 					},
 				},
-				{
+				reference.LocalOrigin{
 					Addr: lang.Address{
 						lang.RootStep{Name: "var"},
 						lang.AttrStep{Name: "two"},
@@ -873,7 +873,7 @@ set = [ var.two ]
 tup = [ var.three ]
 `,
 			reference.Origins{
-				{
+				reference.LocalOrigin{
 					Addr: lang.Address{
 						lang.RootStep{Name: "var"},
 						lang.AttrStep{Name: "one"},
@@ -895,7 +895,7 @@ tup = [ var.three ]
 						{OfType: cty.String},
 					},
 				},
-				{
+				reference.LocalOrigin{
 					Addr: lang.Address{
 						lang.RootStep{Name: "var"},
 						lang.AttrStep{Name: "two"},
@@ -917,7 +917,7 @@ tup = [ var.three ]
 						{OfType: cty.String},
 					},
 				},
-				{
+				reference.LocalOrigin{
 					Addr: lang.Address{
 						lang.RootStep{Name: "var"},
 						lang.AttrStep{Name: "three"},
@@ -937,6 +937,167 @@ tup = [ var.three ]
 					},
 					Constraints: reference.OriginConstraints{
 						{OfType: cty.String},
+					},
+				},
+			},
+		},
+	}
+	for i, tc := range testCases {
+		t.Run(fmt.Sprintf("%d/%s", i, tc.name), func(t *testing.T) {
+			f, _ := hclsyntax.ParseConfig([]byte(tc.cfg), "test.tf", hcl.InitialPos)
+
+			d := testPathDecoder(t, &PathContext{
+				Schema: tc.schema,
+				Files: map[string]*hcl.File{
+					"test.tf": f,
+				},
+			})
+
+			origins, err := d.CollectReferenceOrigins()
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			if diff := cmp.Diff(tc.expectedOrigins, origins, ctydebug.CmpOptions); diff != "" {
+				t.Fatalf("mismatched reference origins: %s", diff)
+			}
+		})
+	}
+}
+
+func TestCollectReferenceOrigins_hcl_path(t *testing.T) {
+	testCases := []struct {
+		name            string
+		schema          *schema.BodySchema
+		cfg             string
+		expectedOrigins reference.Origins
+	}{
+		{
+			"attribute with path target",
+			&schema.BodySchema{
+				Attributes: map[string]*schema.AttributeSchema{
+					"attr": {
+						Expr: schema.ExprConstraints{
+							schema.TraversalExpr{OfType: cty.String},
+							schema.LiteralTypeExpr{Type: cty.String},
+						},
+						OriginForTarget: &schema.PathTarget{
+							Address: schema.Address{
+								schema.StaticStep{Name: "var"},
+								schema.AttrNameStep{},
+							},
+							Path: lang.Path{
+								Path:       "another-path",
+								LanguageID: "terraform",
+							},
+						},
+					},
+				},
+			},
+			`attr = "test"`,
+			reference.Origins{
+				reference.PathOrigin{
+					TargetAddr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "attr"},
+					},
+					TargetPath: lang.Path{
+						Path:       "another-path",
+						LanguageID: "terraform",
+					},
+					Constraints: reference.OriginConstraints{{}},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   1,
+							Column: 1,
+							Byte:   0,
+						},
+						End: hcl.Pos{
+							Line:   1,
+							Column: 5,
+							Byte:   4,
+						},
+					},
+				},
+			},
+		},
+		{
+			"dependent attribute with path target",
+			&schema.BodySchema{
+				Blocks: map[string]*schema.BlockSchema{
+					"module": {
+						Body: &schema.BodySchema{
+							Attributes: map[string]*schema.AttributeSchema{
+								"source": {
+									Expr: schema.ExprConstraints{
+										schema.LiteralTypeExpr{Type: cty.String},
+									},
+									IsDepKey: true,
+								},
+							},
+						},
+						DependentBody: map[schema.SchemaKey]*schema.BodySchema{
+							schema.NewSchemaKey(schema.DependencyKeys{
+								Attributes: []schema.AttributeDependent{
+									{
+										Name: "source",
+										Expr: schema.ExpressionValue{
+											Static: cty.StringVal("./submodule"),
+										},
+									},
+								},
+							}): {
+								Attributes: map[string]*schema.AttributeSchema{
+									"attr": {
+										Expr: schema.ExprConstraints{
+											schema.TraversalExpr{OfType: cty.String},
+											schema.LiteralTypeExpr{Type: cty.String},
+										},
+										OriginForTarget: &schema.PathTarget{
+											Address: schema.Address{
+												schema.StaticStep{Name: "var"},
+												schema.AttrNameStep{},
+											},
+											Path: lang.Path{
+												Path:       "./submodule",
+												LanguageID: "terraform",
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			`module "test" {
+  source = "./submodule"
+  attr = "test"
+}`,
+			reference.Origins{
+				reference.PathOrigin{
+					TargetAddr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "attr"},
+					},
+					TargetPath: lang.Path{
+						Path:       "./submodule",
+						LanguageID: "terraform",
+					},
+					Constraints: reference.OriginConstraints{{}},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   3,
+							Column: 3,
+							Byte:   43,
+						},
+						End: hcl.Pos{
+							Line:   3,
+							Column: 7,
+							Byte:   47,
+						},
 					},
 				},
 			},
