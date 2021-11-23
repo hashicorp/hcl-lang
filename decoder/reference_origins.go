@@ -35,7 +35,7 @@ func (d *Decoder) ReferenceOriginsTargetingPos(path lang.Path, file string, pos 
 				continue
 			}
 
-			rawOrigins := pathCtx.ReferenceOrigins.Match(target, path)
+			rawOrigins := pathCtx.ReferenceOrigins.Match(p, target, path)
 			for _, origin := range rawOrigins {
 				origins = append(origins, ReferenceOrigin{
 					Path:  p,

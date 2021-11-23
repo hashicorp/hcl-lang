@@ -31,24 +31,24 @@ func (ro Origins) AtPos(file string, pos hcl.Pos) (Origins, bool) {
 	return matchingOrigins, len(matchingOrigins) > 0
 }
 
-func (ro Origins) Match(refTarget Target, atPath lang.Path) Origins {
+func (ro Origins) Match(localPath lang.Path, target Target, targetPath lang.Path) Origins {
 	origins := make(Origins, 0)
 
 	for _, refOrigin := range ro {
 		switch origin := refOrigin.(type) {
 		case LocalOrigin:
-			if refTarget.Matches(origin.Address(), origin.OriginConstraints()) {
+			if localPath.Equals(targetPath) && target.Matches(origin.Address(), origin.OriginConstraints()) {
 				origins = append(origins, refOrigin)
 			}
 		case PathOrigin:
-			if origin.TargetPath.Equals(atPath) && refTarget.Matches(origin.Address(), origin.OriginConstraints()) {
+			if origin.TargetPath.Equals(targetPath) && target.Matches(origin.Address(), origin.OriginConstraints()) {
 				origins = append(origins, refOrigin)
 			}
 		}
 	}
 
-	for _, iTarget := range refTarget.NestedTargets {
-		origins = append(origins, ro.Match(iTarget, atPath)...)
+	for _, iTarget := range target.NestedTargets {
+		origins = append(origins, ro.Match(localPath, iTarget, targetPath)...)
 	}
 
 	return origins

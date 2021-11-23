@@ -151,15 +151,22 @@ func TestOrigins_AtPos(t *testing.T) {
 }
 
 func TestOrigins_Match(t *testing.T) {
+	alphaPath := lang.Path{Path: t.TempDir()}
+	betaPath := lang.Path{Path: t.TempDir()}
+
 	testCases := []struct {
 		name            string
+		localPath       lang.Path
 		origins         Origins
-		refTarget       Target
+		targetPath      lang.Path
+		target          Target
 		expectedOrigins Origins
 	}{
 		{
 			"no origins",
+			alphaPath,
 			Origins{},
+			alphaPath,
 			Target{
 				Addr: lang.Address{
 					lang.RootStep{Name: "test"},
@@ -170,6 +177,7 @@ func TestOrigins_Match(t *testing.T) {
 		},
 		{
 			"exact address match",
+			alphaPath,
 			Origins{
 				LocalOrigin{
 					Addr: lang.Address{
@@ -186,6 +194,7 @@ func TestOrigins_Match(t *testing.T) {
 					},
 				},
 			},
+			alphaPath,
 			Target{
 				Addr: lang.Address{
 					lang.RootStep{Name: "test"},
@@ -207,6 +216,7 @@ func TestOrigins_Match(t *testing.T) {
 		},
 		{
 			"no match",
+			alphaPath,
 			Origins{
 				LocalOrigin{
 					Addr: lang.Address{
@@ -220,6 +230,7 @@ func TestOrigins_Match(t *testing.T) {
 					},
 				},
 			},
+			alphaPath,
 			Target{
 				Addr: lang.Address{
 					lang.RootStep{Name: "test"},
@@ -231,6 +242,7 @@ func TestOrigins_Match(t *testing.T) {
 		},
 		{
 			"match of nested target - two matches",
+			alphaPath,
 			Origins{
 				LocalOrigin{
 					Addr: lang.Address{
@@ -255,6 +267,7 @@ func TestOrigins_Match(t *testing.T) {
 					},
 				},
 			},
+			alphaPath,
 			Target{
 				Addr: lang.Address{
 					lang.RootStep{Name: "test"},
@@ -294,6 +307,7 @@ func TestOrigins_Match(t *testing.T) {
 		},
 		{
 			"loose match of target of unknown type",
+			alphaPath,
 			Origins{
 				LocalOrigin{
 					Addr: lang.Address{
@@ -315,6 +329,7 @@ func TestOrigins_Match(t *testing.T) {
 					Constraints: OriginConstraints{{}},
 				},
 			},
+			alphaPath,
 			Target{
 				Addr: lang.Address{
 					lang.RootStep{Name: "test"},
@@ -339,6 +354,7 @@ func TestOrigins_Match(t *testing.T) {
 		},
 		{
 			"mismatch of target nil type",
+			alphaPath,
 			Origins{
 				LocalOrigin{
 					Addr: lang.Address{
@@ -349,6 +365,7 @@ func TestOrigins_Match(t *testing.T) {
 					},
 				},
 			},
+			alphaPath,
 			Target{
 				Addr: lang.Address{
 					lang.RootStep{Name: "test"},
@@ -361,6 +378,7 @@ func TestOrigins_Match(t *testing.T) {
 		// JSON edge cases
 		{
 			"constraint-less origin mismatching scope-only target",
+			alphaPath,
 			Origins{
 				LocalOrigin{
 					Addr: lang.Address{
@@ -370,6 +388,7 @@ func TestOrigins_Match(t *testing.T) {
 					Constraints: nil,
 				},
 			},
+			alphaPath,
 			Target{
 				Addr: lang.Address{
 					lang.RootStep{Name: "var"},
@@ -382,6 +401,7 @@ func TestOrigins_Match(t *testing.T) {
 		},
 		{
 			"constraint-less origin matching type-aware target",
+			alphaPath,
 			Origins{
 				LocalOrigin{
 					Addr: lang.Address{
@@ -391,6 +411,7 @@ func TestOrigins_Match(t *testing.T) {
 					Constraints: nil,
 				},
 			},
+			alphaPath,
 			Target{
 				Addr: lang.Address{
 					lang.RootStep{Name: "var"},
@@ -409,11 +430,81 @@ func TestOrigins_Match(t *testing.T) {
 				},
 			},
 		},
+		{
+			"cross-path mis-match",
+			alphaPath,
+			Origins{
+				LocalOrigin{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "beta"},
+					},
+					Constraints: OriginConstraints{
+						{OfType: cty.String},
+					},
+				},
+			},
+			betaPath,
+			Target{
+				Addr: lang.Address{
+					lang.RootStep{Name: "var"},
+					lang.AttrStep{Name: "beta"},
+				},
+				ScopeId: "variable",
+				Type:    cty.String,
+			},
+			Origins{},
+		},
+		{
+			"cross-path match",
+			alphaPath,
+			Origins{
+				LocalOrigin{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "beta"},
+					},
+					Constraints: OriginConstraints{
+						{OfType: cty.String},
+					},
+				},
+				PathOrigin{
+					TargetAddr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "beta"},
+					},
+					TargetPath: betaPath,
+					Constraints: OriginConstraints{
+						{OfType: cty.String},
+					},
+				},
+			},
+			betaPath,
+			Target{
+				Addr: lang.Address{
+					lang.RootStep{Name: "var"},
+					lang.AttrStep{Name: "beta"},
+				},
+				ScopeId: "variable",
+				Type:    cty.String,
+			},
+			Origins{
+				PathOrigin{
+					TargetAddr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "beta"},
+					},
+					TargetPath: betaPath,
+					Constraints: OriginConstraints{
+						{OfType: cty.String},
+					},
+				},
+			},
+		},
 	}
 	for i, tc := range testCases {
 		t.Run(fmt.Sprintf("%d-%s", i, tc.name), func(t *testing.T) {
-			// TODO: test PathOrigins
-			origins := tc.origins.Match(tc.refTarget, lang.Path{Path: t.TempDir()})
+			origins := tc.origins.Match(tc.localPath, tc.target, tc.targetPath)
 
 			if diff := cmp.Diff(tc.expectedOrigins, origins, ctydebug.CmpOptions); diff != "" {
 				t.Fatalf("mismatched reference origins: %s", diff)
