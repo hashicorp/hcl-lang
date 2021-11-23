@@ -504,7 +504,7 @@ func TestOrigins_Match(t *testing.T) {
 	}
 	for i, tc := range testCases {
 		t.Run(fmt.Sprintf("%d-%s", i, tc.name), func(t *testing.T) {
-			origins := tc.origins.Match(tc.target, tc.targetPath)
+			origins := tc.origins.Match(tc.localPath, tc.target, tc.targetPath)
 
 			if diff := cmp.Diff(tc.expectedOrigins, origins, ctydebug.CmpOptions); diff != "" {
 				t.Fatalf("mismatched reference origins: %s", diff)
