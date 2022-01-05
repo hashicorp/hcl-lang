@@ -273,7 +273,7 @@ func isPosOutsideBody(block *hclsyntax.Block, pos hcl.Pos) bool {
 		return true
 	}
 
-	if block.DefRange().ContainsPos(pos) {
+	if hcl.RangeBetween(block.TypeRange, block.OpenBraceRange).ContainsPos(pos) {
 		return true
 	}
 
