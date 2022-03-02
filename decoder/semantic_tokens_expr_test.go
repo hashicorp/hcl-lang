@@ -1997,6 +1997,34 @@ func TestDecoder_SemanticTokensInFile_typeDeclaration(t *testing.T) {
 			},
 		},
 		{
+			"unknown primitive type",
+			map[string]*schema.AttributeSchema{
+				"type": {
+					Expr: schema.ExprConstraints{schema.TypeDeclarationExpr{}},
+				},
+			},
+			`type = foobar`,
+			[]lang.SemanticToken{
+				{
+					Type:      lang.TokenAttrName,
+					Modifiers: []lang.SemanticTokenModifier{},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   1,
+							Column: 1,
+							Byte:   0,
+						},
+						End: hcl.Pos{
+							Line:   1,
+							Column: 5,
+							Byte:   4,
+						},
+					},
+				},
+			},
+		},
+		{
 			"known collection type",
 			map[string]*schema.AttributeSchema{
 				"type": {
@@ -2053,6 +2081,34 @@ func TestDecoder_SemanticTokensInFile_typeDeclaration(t *testing.T) {
 							Line:   1,
 							Column: 16,
 							Byte:   15,
+						},
+					},
+				},
+			},
+		},
+		{
+			"unknown collection type",
+			map[string]*schema.AttributeSchema{
+				"type": {
+					Expr: schema.ExprConstraints{schema.TypeDeclarationExpr{}},
+				},
+			},
+			`type = foobar(any)`,
+			[]lang.SemanticToken{
+				{
+					Type:      lang.TokenAttrName,
+					Modifiers: []lang.SemanticTokenModifier{},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   1,
+							Column: 1,
+							Byte:   0,
+						},
+						End: hcl.Pos{
+							Line:   1,
+							Column: 5,
+							Byte:   4,
 						},
 					},
 				},
@@ -2134,6 +2190,36 @@ func TestDecoder_SemanticTokensInFile_typeDeclaration(t *testing.T) {
 							Line:   2,
 							Column: 17,
 							Byte:   32,
+						},
+					},
+				},
+			},
+		},
+		{
+			"unknown object type",
+			map[string]*schema.AttributeSchema{
+				"type": {
+					Expr: schema.ExprConstraints{schema.TypeDeclarationExpr{}},
+				},
+			},
+			`type = foobar({
+  enabled = bool
+})`,
+			[]lang.SemanticToken{
+				{
+					Type:      lang.TokenAttrName,
+					Modifiers: []lang.SemanticTokenModifier{},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   1,
+							Column: 1,
+							Byte:   0,
+						},
+						End: hcl.Pos{
+							Line:   1,
+							Column: 5,
+							Byte:   4,
 						},
 					},
 				},
