@@ -223,7 +223,7 @@ func (d *PathDecoder) tokensForExpression(expr hclsyntax.Expression, constraints
 			}
 		}
 		_, ok = constraints.TypeDeclarationExpr()
-		if ok {
+		if ok && isPrimitiveTypeDeclaration(exprKeyword) {
 			tokens = append(tokens, lang.SemanticToken{
 				Type:      lang.TokenTypePrimitive,
 				Modifiers: []lang.SemanticTokenModifier{},
@@ -232,7 +232,7 @@ func (d *PathDecoder) tokensForExpression(expr hclsyntax.Expression, constraints
 		}
 	case *hclsyntax.FunctionCallExpr:
 		_, ok := constraints.TypeDeclarationExpr()
-		if ok {
+		if ok && isComplexTypeDeclaration(eType.Name) {
 			tokens = append(tokens, lang.SemanticToken{
 				Type:      lang.TokenTypeCapsule,
 				Modifiers: []lang.SemanticTokenModifier{},
@@ -363,6 +363,38 @@ func (d *PathDecoder) tokensForExpression(expr hclsyntax.Expression, constraints
 		}
 	}
 	return tokens
+}
+
+func isPrimitiveTypeDeclaration(kw string) bool {
+	switch kw {
+	case "bool":
+		return true
+	case "number":
+		return true
+	case "string":
+		return true
+	case "null":
+		return true
+	case "any":
+		return true
+	}
+	return false
+}
+
+func isComplexTypeDeclaration(funcName string) bool {
+	switch funcName {
+	case "list":
+		return true
+	case "set":
+		return true
+	case "tuple":
+		return true
+	case "map":
+		return true
+	case "object":
+		return true
+	}
+	return false
 }
 
 func (d *PathDecoder) tokensForObjectConsTypeDeclarationExpr(expr *hclsyntax.ObjectConsExpr, constraints ExprConstraints) []lang.SemanticToken {
