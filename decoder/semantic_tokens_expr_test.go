@@ -1943,3 +1943,317 @@ func TestDecoder_SemanticTokensInFile_traversalExpression(t *testing.T) {
 		})
 	}
 }
+
+func TestDecoder_SemanticTokensInFile_typeDeclaration(t *testing.T) {
+	testCases := []struct {
+		name           string
+		attrSchema     map[string]*schema.AttributeSchema
+		cfg            string
+		expectedTokens []lang.SemanticToken
+	}{
+		{
+			"known primitive type",
+			map[string]*schema.AttributeSchema{
+				"type": {
+					Expr: schema.ExprConstraints{schema.TypeDeclarationExpr{}},
+				},
+			},
+			`type = string`,
+			[]lang.SemanticToken{
+				{
+					Type:      lang.TokenAttrName,
+					Modifiers: []lang.SemanticTokenModifier{},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   1,
+							Column: 1,
+							Byte:   0,
+						},
+						End: hcl.Pos{
+							Line:   1,
+							Column: 5,
+							Byte:   4,
+						},
+					},
+				},
+				{
+					Type:      lang.TokenTypePrimitive,
+					Modifiers: []lang.SemanticTokenModifier{},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   1,
+							Column: 8,
+							Byte:   7,
+						},
+						End: hcl.Pos{
+							Line:   1,
+							Column: 14,
+							Byte:   13,
+						},
+					},
+				},
+			},
+		},
+		{
+			"unknown primitive type",
+			map[string]*schema.AttributeSchema{
+				"type": {
+					Expr: schema.ExprConstraints{schema.TypeDeclarationExpr{}},
+				},
+			},
+			`type = foobar`,
+			[]lang.SemanticToken{
+				{
+					Type:      lang.TokenAttrName,
+					Modifiers: []lang.SemanticTokenModifier{},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   1,
+							Column: 1,
+							Byte:   0,
+						},
+						End: hcl.Pos{
+							Line:   1,
+							Column: 5,
+							Byte:   4,
+						},
+					},
+				},
+			},
+		},
+		{
+			"known collection type",
+			map[string]*schema.AttributeSchema{
+				"type": {
+					Expr: schema.ExprConstraints{schema.TypeDeclarationExpr{}},
+				},
+			},
+			`type = list(any)`,
+			[]lang.SemanticToken{
+				{
+					Type:      lang.TokenAttrName,
+					Modifiers: []lang.SemanticTokenModifier{},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   1,
+							Column: 1,
+							Byte:   0,
+						},
+						End: hcl.Pos{
+							Line:   1,
+							Column: 5,
+							Byte:   4,
+						},
+					},
+				},
+				{
+					Type:      lang.TokenTypeCapsule,
+					Modifiers: []lang.SemanticTokenModifier{},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   1,
+							Column: 8,
+							Byte:   7,
+						},
+						End: hcl.Pos{
+							Line:   1,
+							Column: 12,
+							Byte:   11,
+						},
+					},
+				},
+				{
+					Type:      lang.TokenTypePrimitive,
+					Modifiers: []lang.SemanticTokenModifier{},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   1,
+							Column: 13,
+							Byte:   12,
+						},
+						End: hcl.Pos{
+							Line:   1,
+							Column: 16,
+							Byte:   15,
+						},
+					},
+				},
+			},
+		},
+		{
+			"unknown collection type",
+			map[string]*schema.AttributeSchema{
+				"type": {
+					Expr: schema.ExprConstraints{schema.TypeDeclarationExpr{}},
+				},
+			},
+			`type = foobar(any)`,
+			[]lang.SemanticToken{
+				{
+					Type:      lang.TokenAttrName,
+					Modifiers: []lang.SemanticTokenModifier{},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   1,
+							Column: 1,
+							Byte:   0,
+						},
+						End: hcl.Pos{
+							Line:   1,
+							Column: 5,
+							Byte:   4,
+						},
+					},
+				},
+			},
+		},
+		{
+			"known object type",
+			map[string]*schema.AttributeSchema{
+				"type": {
+					Expr: schema.ExprConstraints{schema.TypeDeclarationExpr{}},
+				},
+			},
+			`type = object({
+  enabled = bool
+})`,
+			[]lang.SemanticToken{
+				{
+					Type:      lang.TokenAttrName,
+					Modifiers: []lang.SemanticTokenModifier{},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   1,
+							Column: 1,
+							Byte:   0,
+						},
+						End: hcl.Pos{
+							Line:   1,
+							Column: 5,
+							Byte:   4,
+						},
+					},
+				},
+				{
+					Type:      lang.TokenTypeCapsule,
+					Modifiers: []lang.SemanticTokenModifier{},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   1,
+							Column: 8,
+							Byte:   7,
+						},
+						End: hcl.Pos{
+							Line:   1,
+							Column: 14,
+							Byte:   13,
+						},
+					},
+				},
+				{
+					Type:      lang.TokenAttrName,
+					Modifiers: []lang.SemanticTokenModifier{},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   2,
+							Column: 3,
+							Byte:   18,
+						},
+						End: hcl.Pos{
+							Line:   2,
+							Column: 10,
+							Byte:   25,
+						},
+					},
+				},
+				{
+					Type:      lang.TokenTypePrimitive,
+					Modifiers: []lang.SemanticTokenModifier{},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   2,
+							Column: 13,
+							Byte:   28,
+						},
+						End: hcl.Pos{
+							Line:   2,
+							Column: 17,
+							Byte:   32,
+						},
+					},
+				},
+			},
+		},
+		{
+			"unknown object type",
+			map[string]*schema.AttributeSchema{
+				"type": {
+					Expr: schema.ExprConstraints{schema.TypeDeclarationExpr{}},
+				},
+			},
+			`type = foobar({
+  enabled = bool
+})`,
+			[]lang.SemanticToken{
+				{
+					Type:      lang.TokenAttrName,
+					Modifiers: []lang.SemanticTokenModifier{},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   1,
+							Column: 1,
+							Byte:   0,
+						},
+						End: hcl.Pos{
+							Line:   1,
+							Column: 5,
+							Byte:   4,
+						},
+					},
+				},
+			},
+		},
+	}
+
+	for i, tc := range testCases {
+		t.Run(fmt.Sprintf("%d-%s", i, tc.name), func(t *testing.T) {
+			bodySchema := &schema.BodySchema{
+				Attributes: tc.attrSchema,
+			}
+
+			f, pDiags := hclsyntax.ParseConfig([]byte(tc.cfg), "test.tf", hcl.InitialPos)
+			if len(pDiags) > 0 {
+				t.Fatal(pDiags)
+			}
+
+			d := testPathDecoder(t, &PathContext{
+				Schema: bodySchema,
+				Files: map[string]*hcl.File{
+					"test.tf": f,
+				},
+			})
+
+			tokens, err := d.SemanticTokensInFile("test.tf")
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			diff := cmp.Diff(tc.expectedTokens, tokens)
+			if diff != "" {
+				t.Fatalf("unexpected tokens: %s", diff)
+			}
+		})
+	}
+}
