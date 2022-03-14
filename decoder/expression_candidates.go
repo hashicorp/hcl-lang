@@ -331,7 +331,7 @@ func (d *PathDecoder) candidatesForTraversalConstraint(tc schema.TraversalExpr, 
 
 	d.pathCtx.ReferenceTargets.MatchWalk(tc, string(prefix), func(ref reference.Target) error {
 		// avoid suggesting references to block's own fields from within (for now)
-		if ref.RangePtr != nil &&
+		if ref.RangePtr != nil && outerBodyRng.Filename == ref.RangePtr.Filename &&
 			(outerBodyRng.ContainsPos(ref.RangePtr.Start) ||
 				posEqual(outerBodyRng.End, ref.RangePtr.End)) {
 			return nil
