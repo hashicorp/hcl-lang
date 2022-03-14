@@ -10,6 +10,7 @@ import (
 	"github.com/hashicorp/hcl-lang/schema"
 	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hclsyntax"
+	"github.com/zclconf/go-cty-debug/ctydebug"
 	"github.com/zclconf/go-cty/cty"
 )
 
@@ -2564,5 +2565,183 @@ another_block "meh" {
 				t.Fatalf("unexpected candidates: %s", diff)
 			}
 		})
+	}
+}
+
+func TestDecoder_CandidateAtPos_expressions_crossFileTraversal(t *testing.T) {
+	f1, _ := hclsyntax.ParseConfig([]byte(`variable "aaa" {}
+variable "bbb" {}
+variable "ccc" {}
+`), "test1.tf", hcl.InitialPos)
+	f2, _ := hclsyntax.ParseConfig([]byte(`value = 
+`), "test2.tf", hcl.InitialPos)
+
+	bodySchema := &schema.BodySchema{
+		Attributes: map[string]*schema.AttributeSchema{
+			"value": {
+				IsOptional: true,
+				Expr: schema.ExprConstraints{
+					schema.TraversalExpr{
+						OfScopeId: lang.ScopeId("variable"),
+						OfType:    cty.DynamicPseudoType,
+					},
+				},
+			},
+		},
+		Blocks: map[string]*schema.BlockSchema{
+			"variable": {
+				Labels: []*schema.LabelSchema{
+					{Name: "name"},
+				},
+				Address: &schema.BlockAddrSchema{
+					Steps: []schema.AddrStep{
+						schema.StaticStep{Name: "var"},
+						schema.LabelStep{Index: 0},
+					},
+					FriendlyName: "variable",
+					ScopeId:      lang.ScopeId("variable"),
+					AsTypeOf: &schema.BlockAsTypeOf{
+						AttributeExpr:  "type",
+						AttributeValue: "default",
+					},
+				},
+			},
+		},
+	}
+
+	testDir := t.TempDir()
+	dirReader := &testPathReader{
+		paths: map[string]*PathContext{
+			testDir: {
+				Schema: bodySchema,
+				Files: map[string]*hcl.File{
+					"test1.tf": f1,
+					"test2.tf": f2,
+				},
+				ReferenceTargets: reference.Targets{},
+			},
+		},
+	}
+	decoder := NewDecoder(dirReader)
+	d, err := decoder.Path(lang.Path{Path: testDir})
+	if err != nil {
+		t.Fatal(err)
+	}
+	refTargets, err := d.CollectReferenceTargets()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	expectedTargets := reference.Targets{
+		{
+			Addr:    lang.Address{lang.RootStep{Name: "var"}, lang.AttrStep{Name: "aaa"}},
+			ScopeId: lang.ScopeId("variable"),
+			RangePtr: &hcl.Range{
+				Filename: "test1.tf",
+				Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
+				End:      hcl.Pos{Line: 1, Column: 18, Byte: 17},
+			},
+			DefRangePtr: &hcl.Range{
+				Filename: "test1.tf",
+				Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
+				End:      hcl.Pos{Line: 1, Column: 15, Byte: 14},
+			},
+			Type: cty.DynamicPseudoType,
+		},
+		{
+			Addr:    lang.Address{lang.RootStep{Name: "var"}, lang.AttrStep{Name: "bbb"}},
+			ScopeId: lang.ScopeId("variable"),
+			RangePtr: &hcl.Range{
+				Filename: "test1.tf",
+				Start:    hcl.Pos{Line: 2, Column: 1, Byte: 18},
+				End:      hcl.Pos{Line: 2, Column: 18, Byte: 35},
+			},
+			DefRangePtr: &hcl.Range{
+				Filename: "test1.tf",
+				Start:    hcl.Pos{Line: 2, Column: 1, Byte: 18},
+				End:      hcl.Pos{Line: 2, Column: 15, Byte: 32},
+			},
+			Type: cty.DynamicPseudoType,
+		},
+		{
+			Addr:    lang.Address{lang.RootStep{Name: "var"}, lang.AttrStep{Name: "ccc"}},
+			ScopeId: lang.ScopeId("variable"),
+			RangePtr: &hcl.Range{
+				Filename: "test1.tf",
+				Start:    hcl.Pos{Line: 3, Column: 1, Byte: 36},
+				End:      hcl.Pos{Line: 3, Column: 18, Byte: 53},
+			},
+			DefRangePtr: &hcl.Range{
+				Filename: "test1.tf",
+				Start:    hcl.Pos{Line: 3, Column: 1, Byte: 36},
+				End:      hcl.Pos{Line: 3, Column: 15, Byte: 50},
+			},
+			Type: cty.DynamicPseudoType,
+		},
+	}
+	if diff := cmp.Diff(expectedTargets, refTargets, ctydebug.CmpOptions); diff != "" {
+		t.Fatalf("unexpected targets: %s", diff)
+	}
+
+	dirReader.paths[testDir].ReferenceTargets = refTargets
+
+	candidates, err := d.CandidatesAtPos("test2.tf", hcl.Pos{
+		Line:   1,
+		Column: 9,
+		Byte:   8,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	expectedCandidates := lang.Candidates{
+		List: []lang.Candidate{
+			{
+				Label:  "var.aaa",
+				Detail: "dynamic",
+				TextEdit: lang.TextEdit{
+					Range: hcl.Range{
+						Filename: "test2.tf",
+						Start:    hcl.Pos{Line: 1, Column: 9, Byte: 8},
+						End:      hcl.Pos{Line: 1, Column: 9, Byte: 8},
+					},
+					NewText: "var.aaa",
+					Snippet: "var.aaa",
+				},
+				Kind: lang.TraversalCandidateKind,
+			},
+			{
+				Label:  "var.bbb",
+				Detail: "dynamic",
+				TextEdit: lang.TextEdit{
+					Range: hcl.Range{
+						Filename: "test2.tf",
+						Start:    hcl.Pos{Line: 1, Column: 9, Byte: 8},
+						End:      hcl.Pos{Line: 1, Column: 9, Byte: 8},
+					},
+					NewText: "var.bbb",
+					Snippet: "var.bbb",
+				},
+				Kind: lang.TraversalCandidateKind,
+			},
+			{
+				Label:  "var.ccc",
+				Detail: "dynamic",
+				TextEdit: lang.TextEdit{
+					Range: hcl.Range{
+						Filename: "test2.tf",
+						Start:    hcl.Pos{Line: 1, Column: 9, Byte: 8},
+						End:      hcl.Pos{Line: 1, Column: 9, Byte: 8},
+					},
+					NewText: "var.ccc",
+					Snippet: "var.ccc",
+				},
+				Kind: lang.TraversalCandidateKind,
+			},
+		},
+		IsComplete: true,
+	}
+	if diff := cmp.Diff(expectedCandidates, candidates); diff != "" {
+		t.Fatalf("unexpected candidates: %s", diff)
 	}
 }
