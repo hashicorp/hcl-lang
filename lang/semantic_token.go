@@ -45,7 +45,6 @@ type SemanticTokenModifier uint
 const (
 	TokenModifierNil SemanticTokenModifier = iota
 	TokenModifierDependent
-	TokenModifierDeprecated
 )
 
 func (m SemanticTokenModifier) GoString() string {

@@ -58,9 +58,6 @@ func (d *PathDecoder) tokensForBody(body *hclsyntax.Body, bodySchema *schema.Bod
 		if isDependent {
 			modifiers = append(modifiers, lang.TokenModifierDependent)
 		}
-		if attrSchema.IsDeprecated {
-			modifiers = append(modifiers, lang.TokenModifierDeprecated)
-		}
 
 		tokens = append(tokens, lang.SemanticToken{
 			Type:      lang.TokenAttrName,
@@ -82,9 +79,6 @@ func (d *PathDecoder) tokensForBody(body *hclsyntax.Body, bodySchema *schema.Bod
 		modifiers := make([]lang.SemanticTokenModifier, 0)
 		if isDependent {
 			modifiers = append(modifiers, lang.TokenModifierDependent)
-		}
-		if blockSchema.IsDeprecated {
-			modifiers = append(modifiers, lang.TokenModifierDeprecated)
 		}
 
 		tokens = append(tokens, lang.SemanticToken{

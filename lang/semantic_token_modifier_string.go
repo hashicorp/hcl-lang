@@ -10,12 +10,11 @@ func _() {
 	var x [1]struct{}
 	_ = x[TokenModifierNil-0]
 	_ = x[TokenModifierDependent-1]
-	_ = x[TokenModifierDeprecated-2]
 }
 
-const _SemanticTokenModifier_name = "TokenModifierNilTokenModifierDependentTokenModifierDeprecated"
+const _SemanticTokenModifier_name = "TokenModifierNilTokenModifierDependent"
 
-var _SemanticTokenModifier_index = [...]uint8{0, 16, 38, 61}
+var _SemanticTokenModifier_index = [...]uint8{0, 16, 38}
 
 func (i SemanticTokenModifier) String() string {
 	if i >= SemanticTokenModifier(len(_SemanticTokenModifier_index)-1) {

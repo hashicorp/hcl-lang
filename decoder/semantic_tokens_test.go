@@ -165,9 +165,7 @@ resource "vault_auth_backend" "blah" {
 		},
 		{ // source
 			Type: lang.TokenAttrName,
-			Modifiers: []lang.SemanticTokenModifier{
-				lang.TokenModifierDeprecated,
-			},
+			Modifiers: []lang.SemanticTokenModifier{},
 			Range: hcl.Range{
 				Filename: "test.tf",
 				Start: hcl.Pos{
