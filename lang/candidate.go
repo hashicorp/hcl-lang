@@ -25,7 +25,7 @@ const (
 	TraversalCandidateKind
 )
 
-//go:generate stringer -type=CandidateKind -output=candidate_kind_string.go
+//go:generate go run golang.org/x/tools/cmd/stringer -type=CandidateKind -output=candidate_kind_string.go
 type CandidateKind uint
 
 // Candidate represents a completion candidate in the form of

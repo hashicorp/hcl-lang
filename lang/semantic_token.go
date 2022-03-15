@@ -12,7 +12,7 @@ type SemanticToken struct {
 	Range     hcl.Range
 }
 
-//go:generate stringer -type=SemanticTokenType -output=semantic_token_type_string.go
+//go:generate go run golang.org/x/tools/cmd/stringer -type=SemanticTokenType -output=semantic_token_type_string.go
 type SemanticTokenType uint
 
 const (
@@ -39,7 +39,7 @@ func (t SemanticTokenType) GoString() string {
 	return fmt.Sprintf("lang.%s", t.String())
 }
 
-//go:generate stringer -type=SemanticTokenModifier -output=semantic_token_modifier_string.go
+//go:generate go run golang.org/x/tools/cmd/stringer -type=SemanticTokenModifier -output=semantic_token_modifier_string.go
 type SemanticTokenModifier uint
 
 const (
