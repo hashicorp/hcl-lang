@@ -39,14 +39,8 @@ func (t SemanticTokenType) GoString() string {
 	return fmt.Sprintf("lang.%s", t.String())
 }
 
-//go:generate go run golang.org/x/tools/cmd/stringer -type=SemanticTokenModifier -output=semantic_token_modifier_string.go
-type SemanticTokenModifier uint
+type SemanticTokenModifier string
 
 const (
-	TokenModifierNil SemanticTokenModifier = iota
-	TokenModifierDependent
+	TokenModifierDependent = SemanticTokenModifier("hcl-dependent")
 )
-
-func (m SemanticTokenModifier) GoString() string {
-	return fmt.Sprintf("lang.%s", m.String())
-}
