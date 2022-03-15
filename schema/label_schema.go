@@ -9,6 +9,10 @@ type LabelSchema struct {
 	Name        string
 	Description lang.MarkupContent
 
+	// SemanticTokenModifier represents the semantic token modifier
+	// (if any) to report for the label (in addition to any block modifiers)
+	SemanticTokenModifier lang.SemanticTokenModifier
+
 	// IsDepKey describes whether to use this label as key
 	// when looking up dependent schema
 	IsDepKey bool
@@ -29,9 +33,10 @@ func (ls *LabelSchema) Copy() *LabelSchema {
 	}
 
 	return &LabelSchema{
-		Name:        ls.Name,
-		Completable: ls.Completable,
-		Description: ls.Description,
-		IsDepKey:    ls.IsDepKey,
+		Name:                  ls.Name,
+		SemanticTokenModifier: ls.SemanticTokenModifier,
+		Completable:           ls.Completable,
+		Description:           ls.Description,
+		IsDepKey:              ls.IsDepKey,
 	}
 }
