@@ -14,6 +14,11 @@ type BlockSchema struct {
 	Labels []*LabelSchema
 	Type   BlockType
 
+	// SemanticTokenModifier represents the semantic token modifier
+	// to report for the block's type and labels
+	// (in addition to any modifiers of any parent blocks)
+	SemanticTokenModifier lang.SemanticTokenModifier
+
 	// Body represents the body within block
 	// such as attributes and nested blocks
 	Body *BodySchema
@@ -162,13 +167,14 @@ func (bs *BlockSchema) Copy() *BlockSchema {
 	}
 
 	newBs := &BlockSchema{
-		Type:         bs.Type,
-		IsDeprecated: bs.IsDeprecated,
-		MinItems:     bs.MinItems,
-		MaxItems:     bs.MaxItems,
-		Description:  bs.Description,
-		Body:         bs.Body.Copy(),
-		Address:      bs.Address.Copy(),
+		Type:                  bs.Type,
+		SemanticTokenModifier: bs.SemanticTokenModifier,
+		IsDeprecated:          bs.IsDeprecated,
+		MinItems:              bs.MinItems,
+		MaxItems:              bs.MaxItems,
+		Description:           bs.Description,
+		Body:                  bs.Body.Copy(),
+		Address:               bs.Address.Copy(),
 	}
 
 	if bs.Labels != nil {

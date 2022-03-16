@@ -6,7 +6,7 @@ const (
 	MarkdownKind
 )
 
-//go:generate stringer -type=MarkupKind -output=markup_kind_string.go
+//go:generate go run golang.org/x/tools/cmd/stringer -type=MarkupKind -output=markup_kind_string.go
 type MarkupKind uint
 
 // MarkupContent represents human-readable content

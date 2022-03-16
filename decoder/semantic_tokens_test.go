@@ -164,10 +164,8 @@ resource "vault_auth_backend" "blah" {
 			},
 		},
 		{ // source
-			Type: lang.TokenAttrName,
-			Modifiers: []lang.SemanticTokenModifier{
-				lang.TokenModifierDeprecated,
-			},
+			Type:      lang.TokenAttrName,
+			Modifiers: []lang.SemanticTokenModifier{},
 			Range: hcl.Range{
 				Filename: "test.tf",
 				Start: hcl.Pos{
@@ -528,6 +526,288 @@ resource "aws_instance" "beta" {
 					Column: 20,
 					Byte:   155,
 				},
+			},
+		},
+	}
+
+	diff := cmp.Diff(expectedTokens, tokens)
+	if diff != "" {
+		t.Fatalf("unexpected tokens: %s", diff)
+	}
+}
+
+func TestDecoder_SemanticTokensInFile_customModifiers(t *testing.T) {
+	bodySchema := &schema.BodySchema{
+		Blocks: map[string]*schema.BlockSchema{
+			"module": {
+				SemanticTokenModifier: lang.SemanticTokenModifier("module"),
+				Labels: []*schema.LabelSchema{
+					{
+						Name:                  "name",
+						SemanticTokenModifier: lang.SemanticTokenModifier("name"),
+					},
+				},
+				Body: &schema.BodySchema{
+					Attributes: map[string]*schema.AttributeSchema{
+						"count": {
+							Expr: schema.LiteralTypeOnly(cty.Number),
+						},
+						"source": {
+							Expr:         schema.LiteralTypeOnly(cty.String),
+							IsDeprecated: true,
+						},
+					},
+				},
+			},
+			"resource": {
+				SemanticTokenModifier: lang.SemanticTokenModifier("resource"),
+				Labels: []*schema.LabelSchema{
+					{
+						Name:                  "type",
+						IsDepKey:              true,
+						SemanticTokenModifier: lang.SemanticTokenModifier("type"),
+					},
+					{
+						Name:                  "name",
+						SemanticTokenModifier: lang.SemanticTokenModifier("name"),
+					},
+				},
+				Body: &schema.BodySchema{
+					Blocks: map[string]*schema.BlockSchema{
+						"provisioner": {
+							SemanticTokenModifier: lang.SemanticTokenModifier("provisioner"),
+							Labels: []*schema.LabelSchema{
+								{
+									Name:                  "type",
+									SemanticTokenModifier: lang.SemanticTokenModifier("type"),
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testCfg := []byte(`module "ref" {
+  source = "./sub"
+  count  = 1
+}
+resource "vault_auth_backend" "blah" {
+  provisioner "inner" {
+  	test = 42
+  }
+}
+`)
+
+	f, pDiags := hclsyntax.ParseConfig(testCfg, "test.tf", hcl.InitialPos)
+	if len(pDiags) > 0 {
+		t.Fatal(pDiags)
+	}
+
+	d := testPathDecoder(t, &PathContext{
+		Schema: bodySchema,
+		Files: map[string]*hcl.File{
+			"test.tf": f,
+		},
+	})
+
+	tokens, err := d.SemanticTokensInFile("test.tf")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	expectedTokens := []lang.SemanticToken{
+		{ // module
+			Type: lang.TokenBlockType,
+			Modifiers: []lang.SemanticTokenModifier{
+				lang.SemanticTokenModifier("module"),
+			},
+			Range: hcl.Range{
+				Filename: "test.tf",
+				Start: hcl.Pos{
+					Line:   1,
+					Column: 1,
+					Byte:   0,
+				},
+				End: hcl.Pos{
+					Line:   1,
+					Column: 7,
+					Byte:   6,
+				},
+			},
+		},
+		{ // "ref"
+			Type: lang.TokenBlockLabel,
+			Modifiers: []lang.SemanticTokenModifier{
+				lang.SemanticTokenModifier("module"),
+				lang.SemanticTokenModifier("name"),
+			},
+			Range: hcl.Range{
+				Filename: "test.tf",
+				Start: hcl.Pos{
+					Line:   1,
+					Column: 8,
+					Byte:   7,
+				},
+				End: hcl.Pos{
+					Line:   1,
+					Column: 13,
+					Byte:   12,
+				},
+			},
+		},
+		{ // source
+			Type:      lang.TokenAttrName,
+			Modifiers: []lang.SemanticTokenModifier{},
+			Range: hcl.Range{
+				Filename: "test.tf",
+				Start: hcl.Pos{
+					Line:   2,
+					Column: 3,
+					Byte:   17,
+				},
+				End: hcl.Pos{
+					Line:   2,
+					Column: 9,
+					Byte:   23,
+				},
+			},
+		},
+		{ // "./sub"
+			Type:      lang.TokenString,
+			Modifiers: []lang.SemanticTokenModifier{},
+			Range: hcl.Range{
+				Filename: "test.tf",
+				Start: hcl.Pos{
+					Line:   2,
+					Column: 12,
+					Byte:   26,
+				},
+				End: hcl.Pos{
+					Line:   2,
+					Column: 19,
+					Byte:   33,
+				},
+			},
+		},
+		{ // count
+			Type:      lang.TokenAttrName,
+			Modifiers: []lang.SemanticTokenModifier{},
+			Range: hcl.Range{
+				Filename: "test.tf",
+				Start: hcl.Pos{
+					Line:   3,
+					Column: 3,
+					Byte:   36,
+				},
+				End: hcl.Pos{
+					Line:   3,
+					Column: 8,
+					Byte:   41,
+				},
+			},
+		},
+		{ // 1
+			Type:      lang.TokenNumber,
+			Modifiers: []lang.SemanticTokenModifier{},
+			Range: hcl.Range{
+				Filename: "test.tf",
+				Start: hcl.Pos{
+					Line:   3,
+					Column: 12,
+					Byte:   45,
+				},
+				End: hcl.Pos{
+					Line:   3,
+					Column: 13,
+					Byte:   46,
+				},
+			},
+		},
+		{ // resource
+			Type: lang.TokenBlockType,
+			Modifiers: []lang.SemanticTokenModifier{
+				lang.SemanticTokenModifier("resource"),
+			},
+			Range: hcl.Range{
+				Filename: "test.tf",
+				Start: hcl.Pos{
+					Line:   5,
+					Column: 1,
+					Byte:   49,
+				},
+				End: hcl.Pos{
+					Line:   5,
+					Column: 9,
+					Byte:   57,
+				},
+			},
+		},
+		{ // vault_auth_backend
+			Type: lang.TokenBlockLabel,
+			Modifiers: []lang.SemanticTokenModifier{
+				lang.TokenModifierDependent,
+				lang.SemanticTokenModifier("resource"),
+				lang.SemanticTokenModifier("type"),
+			},
+			Range: hcl.Range{
+				Filename: "test.tf",
+				Start: hcl.Pos{
+					Line:   5,
+					Column: 10,
+					Byte:   58,
+				},
+				End: hcl.Pos{
+					Line:   5,
+					Column: 30,
+					Byte:   78,
+				},
+			},
+		},
+		{ // blah
+			Type: lang.TokenBlockLabel,
+			Modifiers: []lang.SemanticTokenModifier{
+				lang.SemanticTokenModifier("resource"),
+				lang.SemanticTokenModifier("name"),
+			},
+			Range: hcl.Range{
+				Filename: "test.tf",
+				Start: hcl.Pos{
+					Line:   5,
+					Column: 31,
+					Byte:   79,
+				},
+				End: hcl.Pos{
+					Line:   5,
+					Column: 37,
+					Byte:   85,
+				},
+			},
+		},
+		{ // provisioner
+			Type: lang.TokenBlockType,
+			Modifiers: []lang.SemanticTokenModifier{
+				lang.SemanticTokenModifier("resource"),
+				lang.SemanticTokenModifier("provisioner"),
+			},
+			Range: hcl.Range{
+				Filename: "test.tf",
+				Start:    hcl.Pos{Line: 6, Column: 3, Byte: 90},
+				End:      hcl.Pos{Line: 6, Column: 14, Byte: 101},
+			},
+		},
+		{ // "inner"
+			Type: lang.TokenBlockLabel,
+			Modifiers: []lang.SemanticTokenModifier{
+				lang.SemanticTokenModifier("resource"),
+				lang.SemanticTokenModifier("provisioner"),
+				lang.SemanticTokenModifier("type"),
+			},
+			Range: hcl.Range{
+				Filename: "test.tf",
+				Start:    hcl.Pos{Line: 6, Column: 15, Byte: 102},
+				End:      hcl.Pos{Line: 6, Column: 22, Byte: 109},
 			},
 		},
 	}
