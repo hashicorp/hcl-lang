@@ -1,8 +1,6 @@
 package lang
 
 import (
-	"fmt"
-
 	"github.com/hashicorp/hcl/v2"
 )
 
@@ -12,31 +10,41 @@ type SemanticToken struct {
 	Range     hcl.Range
 }
 
-//go:generate go run golang.org/x/tools/cmd/stringer -type=SemanticTokenType -output=semantic_token_type_string.go
-type SemanticTokenType uint
+type SemanticTokenType string
+
+type SemanticTokenTypes []SemanticTokenType
 
 const (
-	TokenNil SemanticTokenType = iota
-
 	// structural tokens
-	TokenAttrName
-	TokenBlockType
-	TokenBlockLabel
+	TokenAttrName   SemanticTokenType = "hcl-attrName"
+	TokenBlockType  SemanticTokenType = "hcl-blockType"
+	TokenBlockLabel SemanticTokenType = "hcl-blockLabel"
 
 	// expressions
-	TokenBool
-	TokenString
-	TokenNumber
-	TokenObjectKey
-	TokenMapKey
-	TokenKeyword
-	TokenTraversalStep
-	TokenTypeCapsule
-	TokenTypePrimitive
+	TokenBool          SemanticTokenType = "hcl-bool"
+	TokenString        SemanticTokenType = "hcl-string"
+	TokenNumber        SemanticTokenType = "hcl-number"
+	TokenObjectKey     SemanticTokenType = "hcl-objectKey"
+	TokenMapKey        SemanticTokenType = "hcl-mapKey"
+	TokenKeyword       SemanticTokenType = "hcl-keyword"
+	TokenTraversalStep SemanticTokenType = "hcl-traversalStep"
+	TokenTypeCapsule   SemanticTokenType = "hcl-typeCapsule"
+	TokenTypePrimitive SemanticTokenType = "hcl-typePrimitive"
 )
 
-func (t SemanticTokenType) GoString() string {
-	return fmt.Sprintf("lang.%s", t.String())
+var SupportedSemanticTokenTypes = SemanticTokenTypes{
+	TokenAttrName,
+	TokenBlockType,
+	TokenBlockLabel,
+	TokenBool,
+	TokenString,
+	TokenNumber,
+	TokenObjectKey,
+	TokenMapKey,
+	TokenKeyword,
+	TokenTraversalStep,
+	TokenTypeCapsule,
+	TokenTypePrimitive,
 }
 
 type SemanticTokenModifier string
