@@ -127,7 +127,7 @@ func (d *PathDecoder) tokensForBody(body *hclsyntax.Body, bodySchema *schema.Bod
 
 		depSchema, _, ok := NewBlockSchema(blockSchema).DependentBodySchema(block.AsHCLBlock())
 		if ok {
-			tokens = append(tokens, d.tokensForBody(block.Body, depSchema, true, blockModifiers)...)
+			tokens = append(tokens, d.tokensForBody(block.Body, depSchema, true, []lang.SemanticTokenModifier{})...)
 		}
 	}
 
