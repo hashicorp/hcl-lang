@@ -658,8 +658,10 @@ resource "vault_auth_backend" "blah" {
 			},
 		},
 		{ // source
-			Type:      lang.TokenAttrName,
-			Modifiers: []lang.SemanticTokenModifier{},
+			Type: lang.TokenAttrName,
+			Modifiers: []lang.SemanticTokenModifier{
+				lang.SemanticTokenModifier("module"),
+			},
 			Range: hcl.Range{
 				Filename: "test.tf",
 				Start: hcl.Pos{
@@ -692,8 +694,10 @@ resource "vault_auth_backend" "blah" {
 			},
 		},
 		{ // count
-			Type:      lang.TokenAttrName,
-			Modifiers: []lang.SemanticTokenModifier{},
+			Type: lang.TokenAttrName,
+			Modifiers: []lang.SemanticTokenModifier{
+				lang.SemanticTokenModifier("module"),
+			},
 			Range: hcl.Range{
 				Filename: "test.tf",
 				Start: hcl.Pos{

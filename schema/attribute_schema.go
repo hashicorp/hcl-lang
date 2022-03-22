@@ -31,6 +31,11 @@ type AttributeSchema struct {
 	// as an origin for another target (e.g. module inputs,
 	// or tfvars entires in Terraform)
 	OriginForTarget *PathTarget
+
+	// SemanticTokenModifiers represents the semantic token modifiers
+	// to report for the attribute name
+	// (in addition to any modifiers of any parent blocks)
+	SemanticTokenModifiers lang.SemanticTokenModifiers
 }
 
 type AttributeAddrSchema struct {
@@ -94,16 +99,17 @@ func (as *AttributeSchema) Copy() *AttributeSchema {
 	}
 
 	newAs := &AttributeSchema{
-		IsRequired:      as.IsRequired,
-		IsOptional:      as.IsOptional,
-		IsDeprecated:    as.IsDeprecated,
-		IsComputed:      as.IsComputed,
-		IsSensitive:     as.IsSensitive,
-		IsDepKey:        as.IsDepKey,
-		Description:     as.Description,
-		Expr:            as.Expr.Copy(),
-		Address:         as.Address.Copy(),
-		OriginForTarget: as.OriginForTarget.Copy(),
+		IsRequired:             as.IsRequired,
+		IsOptional:             as.IsOptional,
+		IsDeprecated:           as.IsDeprecated,
+		IsComputed:             as.IsComputed,
+		IsSensitive:            as.IsSensitive,
+		IsDepKey:               as.IsDepKey,
+		Description:            as.Description,
+		Expr:                   as.Expr.Copy(),
+		Address:                as.Address.Copy(),
+		OriginForTarget:        as.OriginForTarget.Copy(),
+		SemanticTokenModifiers: as.SemanticTokenModifiers.Copy(),
 	}
 
 	return newAs

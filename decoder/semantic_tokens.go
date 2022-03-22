@@ -56,14 +56,16 @@ func (d *PathDecoder) tokensForBody(body *hclsyntax.Body, bodySchema *schema.Bod
 			attrSchema = bodySchema.AnyAttribute
 		}
 
-		modifiers := make([]lang.SemanticTokenModifier, 0)
+		attrModifiers := make([]lang.SemanticTokenModifier, 0)
+		attrModifiers = append(attrModifiers, parentModifiers...)
 		if isDependent {
-			modifiers = append(modifiers, lang.TokenModifierDependent)
+			attrModifiers = append(attrModifiers, lang.TokenModifierDependent)
 		}
+		attrModifiers = append(attrModifiers, attrSchema.SemanticTokenModifiers...)
 
 		tokens = append(tokens, lang.SemanticToken{
 			Type:      lang.TokenAttrName,
-			Modifiers: modifiers,
+			Modifiers: attrModifiers,
 			Range:     attr.NameRange,
 		})
 
