@@ -540,7 +540,7 @@ func TestDecoder_SemanticTokensInFile_customModifiers(t *testing.T) {
 	bodySchema := &schema.BodySchema{
 		Blocks: map[string]*schema.BlockSchema{
 			"module": {
-				SemanticTokenModifier: lang.SemanticTokenModifier("module"),
+				SemanticTokenModifiers: lang.SemanticTokenModifiers{"module"},
 				Labels: []*schema.LabelSchema{
 					{
 						Name:                   "name",
@@ -560,7 +560,7 @@ func TestDecoder_SemanticTokensInFile_customModifiers(t *testing.T) {
 				},
 			},
 			"resource": {
-				SemanticTokenModifier: lang.SemanticTokenModifier("resource"),
+				SemanticTokenModifiers: lang.SemanticTokenModifiers{"resource"},
 				Labels: []*schema.LabelSchema{
 					{
 						Name:                   "type",
@@ -575,7 +575,7 @@ func TestDecoder_SemanticTokensInFile_customModifiers(t *testing.T) {
 				Body: &schema.BodySchema{
 					Blocks: map[string]*schema.BlockSchema{
 						"provisioner": {
-							SemanticTokenModifier: lang.SemanticTokenModifier("provisioner"),
+							SemanticTokenModifiers: lang.SemanticTokenModifiers{"provisioner"},
 							Labels: []*schema.LabelSchema{
 								{
 									Name:                   "type",

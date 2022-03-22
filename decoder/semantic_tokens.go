@@ -84,9 +84,7 @@ func (d *PathDecoder) tokensForBody(body *hclsyntax.Body, bodySchema *schema.Bod
 		if isDependent {
 			blockModifiers = append(blockModifiers, lang.TokenModifierDependent)
 		}
-		if blockSchema.SemanticTokenModifier != "" {
-			blockModifiers = append(blockModifiers, blockSchema.SemanticTokenModifier)
-		}
+		blockModifiers = append(blockModifiers, blockSchema.SemanticTokenModifiers...)
 
 		tokens = append(tokens, lang.SemanticToken{
 			Type:      lang.TokenBlockType,
@@ -107,9 +105,7 @@ func (d *PathDecoder) tokensForBody(body *hclsyntax.Body, bodySchema *schema.Bod
 			if labelSchema.IsDepKey {
 				labelModifiers = append(labelModifiers, lang.TokenModifierDependent)
 			}
-			if blockSchema.SemanticTokenModifier != "" {
-				labelModifiers = append(labelModifiers, blockSchema.SemanticTokenModifier)
-			}
+			labelModifiers = append(labelModifiers, blockSchema.SemanticTokenModifiers...)
 			labelModifiers = append(labelModifiers, labelSchema.SemanticTokenModifiers...)
 
 			tokens = append(tokens, lang.SemanticToken{
