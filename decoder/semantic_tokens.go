@@ -110,9 +110,7 @@ func (d *PathDecoder) tokensForBody(body *hclsyntax.Body, bodySchema *schema.Bod
 			if blockSchema.SemanticTokenModifier != "" {
 				labelModifiers = append(labelModifiers, blockSchema.SemanticTokenModifier)
 			}
-			if labelSchema.SemanticTokenModifier != "" {
-				labelModifiers = append(labelModifiers, labelSchema.SemanticTokenModifier)
-			}
+			labelModifiers = append(labelModifiers, labelSchema.SemanticTokenModifiers...)
 
 			tokens = append(tokens, lang.SemanticToken{
 				Type:      lang.TokenBlockLabel,

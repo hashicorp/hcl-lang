@@ -543,8 +543,8 @@ func TestDecoder_SemanticTokensInFile_customModifiers(t *testing.T) {
 				SemanticTokenModifier: lang.SemanticTokenModifier("module"),
 				Labels: []*schema.LabelSchema{
 					{
-						Name:                  "name",
-						SemanticTokenModifier: lang.SemanticTokenModifier("name"),
+						Name:                   "name",
+						SemanticTokenModifiers: lang.SemanticTokenModifiers{"name"},
 					},
 				},
 				Body: &schema.BodySchema{
@@ -563,13 +563,13 @@ func TestDecoder_SemanticTokensInFile_customModifiers(t *testing.T) {
 				SemanticTokenModifier: lang.SemanticTokenModifier("resource"),
 				Labels: []*schema.LabelSchema{
 					{
-						Name:                  "type",
-						IsDepKey:              true,
-						SemanticTokenModifier: lang.SemanticTokenModifier("type"),
+						Name:                   "type",
+						IsDepKey:               true,
+						SemanticTokenModifiers: lang.SemanticTokenModifiers{"type"},
 					},
 					{
-						Name:                  "name",
-						SemanticTokenModifier: lang.SemanticTokenModifier("name"),
+						Name:                   "name",
+						SemanticTokenModifiers: lang.SemanticTokenModifiers{"name"},
 					},
 				},
 				Body: &schema.BodySchema{
@@ -578,8 +578,8 @@ func TestDecoder_SemanticTokensInFile_customModifiers(t *testing.T) {
 							SemanticTokenModifier: lang.SemanticTokenModifier("provisioner"),
 							Labels: []*schema.LabelSchema{
 								{
-									Name:                  "type",
-									SemanticTokenModifier: lang.SemanticTokenModifier("type"),
+									Name:                   "type",
+									SemanticTokenModifiers: lang.SemanticTokenModifiers{"type"},
 								},
 							},
 						},
