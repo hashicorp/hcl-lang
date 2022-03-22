@@ -28,7 +28,7 @@ func (d *PathDecoder) SemanticTokensInFile(filename string) ([]lang.SemanticToke
 		return []lang.SemanticToken{}, nil
 	}
 
-	tokens := d.tokensForBody(body, d.pathCtx.Schema, false, []lang.SemanticTokenModifier{})
+	tokens := d.tokensForBody(body, d.pathCtx.Schema, []lang.SemanticTokenModifier{})
 
 	sort.Slice(tokens, func(i, j int) bool {
 		return tokens[i].Range.Start.Byte < tokens[j].Range.Start.Byte
@@ -37,9 +37,7 @@ func (d *PathDecoder) SemanticTokensInFile(filename string) ([]lang.SemanticToke
 	return tokens, nil
 }
 
-func (d *PathDecoder) tokensForBody(body *hclsyntax.Body, bodySchema *schema.BodySchema,
-	isDependent bool, parentModifiers []lang.SemanticTokenModifier) []lang.SemanticToken {
-
+func (d *PathDecoder) tokensForBody(body *hclsyntax.Body, bodySchema *schema.BodySchema, parentModifiers []lang.SemanticTokenModifier) []lang.SemanticToken {
 	tokens := make([]lang.SemanticToken, 0)
 
 	if bodySchema == nil {
@@ -56,14 +54,13 @@ func (d *PathDecoder) tokensForBody(body *hclsyntax.Body, bodySchema *schema.Bod
 			attrSchema = bodySchema.AnyAttribute
 		}
 
-		modifiers := make([]lang.SemanticTokenModifier, 0)
-		if isDependent {
-			modifiers = append(modifiers, lang.TokenModifierDependent)
-		}
+		attrModifiers := make([]lang.SemanticTokenModifier, 0)
+		attrModifiers = append(attrModifiers, parentModifiers...)
+		attrModifiers = append(attrModifiers, attrSchema.SemanticTokenModifiers...)
 
 		tokens = append(tokens, lang.SemanticToken{
 			Type:      lang.TokenAttrName,
-			Modifiers: modifiers,
+			Modifiers: attrModifiers,
 			Range:     attr.NameRange,
 		})
 
@@ -80,13 +77,7 @@ func (d *PathDecoder) tokensForBody(body *hclsyntax.Body, bodySchema *schema.Bod
 
 		blockModifiers := make([]lang.SemanticTokenModifier, 0)
 		blockModifiers = append(blockModifiers, parentModifiers...)
-
-		if isDependent {
-			blockModifiers = append(blockModifiers, lang.TokenModifierDependent)
-		}
-		if blockSchema.SemanticTokenModifier != "" {
-			blockModifiers = append(blockModifiers, blockSchema.SemanticTokenModifier)
-		}
+		blockModifiers = append(blockModifiers, blockSchema.SemanticTokenModifiers...)
 
 		tokens = append(tokens, lang.SemanticToken{
 			Type:      lang.TokenBlockType,
@@ -104,15 +95,8 @@ func (d *PathDecoder) tokensForBody(body *hclsyntax.Body, bodySchema *schema.Bod
 
 			labelModifiers := make([]lang.SemanticTokenModifier, 0)
 			labelModifiers = append(labelModifiers, parentModifiers...)
-			if labelSchema.IsDepKey {
-				labelModifiers = append(labelModifiers, lang.TokenModifierDependent)
-			}
-			if blockSchema.SemanticTokenModifier != "" {
-				labelModifiers = append(labelModifiers, blockSchema.SemanticTokenModifier)
-			}
-			if labelSchema.SemanticTokenModifier != "" {
-				labelModifiers = append(labelModifiers, labelSchema.SemanticTokenModifier)
-			}
+			labelModifiers = append(labelModifiers, blockSchema.SemanticTokenModifiers...)
+			labelModifiers = append(labelModifiers, labelSchema.SemanticTokenModifiers...)
 
 			tokens = append(tokens, lang.SemanticToken{
 				Type:      lang.TokenBlockLabel,
@@ -122,12 +106,12 @@ func (d *PathDecoder) tokensForBody(body *hclsyntax.Body, bodySchema *schema.Bod
 		}
 
 		if block.Body != nil {
-			tokens = append(tokens, d.tokensForBody(block.Body, blockSchema.Body, false, blockModifiers)...)
+			tokens = append(tokens, d.tokensForBody(block.Body, blockSchema.Body, blockModifiers)...)
 		}
 
 		depSchema, _, ok := NewBlockSchema(blockSchema).DependentBodySchema(block.AsHCLBlock())
 		if ok {
-			tokens = append(tokens, d.tokensForBody(block.Body, depSchema, true, []lang.SemanticTokenModifier{})...)
+			tokens = append(tokens, d.tokensForBody(block.Body, depSchema, []lang.SemanticTokenModifier{})...)
 		}
 	}
 

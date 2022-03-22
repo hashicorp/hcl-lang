@@ -111,17 +111,22 @@ func TestBodySchema_DependentBodySchema_dependentAttr(t *testing.T) {
 	firstDepBody := &schema.BodySchema{
 		Attributes: map[string]*schema.AttributeSchema{
 			"backend": {
-				Expr:     schema.LiteralTypeOnly(cty.String),
-				IsDepKey: true,
+				Expr:                   schema.LiteralTypeOnly(cty.String),
+				IsDepKey:               true,
+				SemanticTokenModifiers: lang.SemanticTokenModifiers{},
 			},
 		},
 	}
 	secondDepBody := &schema.BodySchema{
 		Attributes: map[string]*schema.AttributeSchema{
-			"extra": {Expr: schema.LiteralTypeOnly(cty.Number)},
+			"extra": {
+				Expr:                   schema.LiteralTypeOnly(cty.Number),
+				SemanticTokenModifiers: lang.SemanticTokenModifiers{},
+			},
 			"backend": {
-				Expr:     schema.LiteralTypeOnly(cty.String),
-				IsDepKey: true,
+				Expr:                   schema.LiteralTypeOnly(cty.String),
+				IsDepKey:               true,
+				SemanticTokenModifiers: lang.SemanticTokenModifiers{},
 			},
 		},
 	}

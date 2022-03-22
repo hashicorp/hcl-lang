@@ -6,7 +6,7 @@ import (
 
 type SemanticToken struct {
 	Type      SemanticTokenType
-	Modifiers []SemanticTokenModifier
+	Modifiers SemanticTokenModifiers
 	Range     hcl.Range
 }
 
@@ -48,6 +48,18 @@ var SupportedSemanticTokenTypes = SemanticTokenTypes{
 }
 
 type SemanticTokenModifier string
+
+type SemanticTokenModifiers []SemanticTokenModifier
+
+func (stm SemanticTokenModifiers) Copy() SemanticTokenModifiers {
+	if stm == nil {
+		return nil
+	}
+
+	modifiersCopy := make(SemanticTokenModifiers, len(stm))
+	copy(modifiersCopy, stm)
+	return modifiersCopy
+}
 
 const (
 	TokenModifierDependent = SemanticTokenModifier("hcl-dependent")

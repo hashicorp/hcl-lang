@@ -106,13 +106,22 @@ func TestDecoder_SemanticTokensInFile_basic(t *testing.T) {
 						"source": {
 							Expr:         schema.LiteralTypeOnly(cty.String),
 							IsDeprecated: true,
+							SemanticTokenModifiers: lang.SemanticTokenModifiers{
+								lang.TokenModifierDependent,
+							},
 						},
 					},
 				},
 			},
 			"resource": {
 				Labels: []*schema.LabelSchema{
-					{Name: "type", IsDepKey: true},
+					{
+						Name:     "type",
+						IsDepKey: true,
+						SemanticTokenModifiers: lang.SemanticTokenModifiers{
+							lang.TokenModifierDependent,
+						},
+					},
 					{Name: "name"},
 				},
 			},
@@ -164,8 +173,10 @@ resource "vault_auth_backend" "blah" {
 			},
 		},
 		{ // source
-			Type:      lang.TokenAttrName,
-			Modifiers: []lang.SemanticTokenModifier{},
+			Type: lang.TokenAttrName,
+			Modifiers: []lang.SemanticTokenModifier{
+				lang.TokenModifierDependent,
+			},
 			Range: hcl.Range{
 				Filename: "test.tf",
 				Start: hcl.Pos{
@@ -297,7 +308,13 @@ func TestDecoder_SemanticTokensInFile_dependentSchema(t *testing.T) {
 		Blocks: map[string]*schema.BlockSchema{
 			"resource": {
 				Labels: []*schema.LabelSchema{
-					{Name: "type", IsDepKey: true},
+					{
+						Name:     "type",
+						IsDepKey: true,
+						SemanticTokenModifiers: lang.SemanticTokenModifiers{
+							lang.TokenModifierDependent,
+						},
+					},
 					{Name: "name"},
 				},
 				DependentBody: map[schema.SchemaKey]*schema.BodySchema{
@@ -457,10 +474,8 @@ resource "aws_instance" "beta" {
 			},
 		},
 		{ // instance_type
-			Type: lang.TokenAttrName,
-			Modifiers: []lang.SemanticTokenModifier{
-				lang.TokenModifierDependent,
-			},
+			Type:      lang.TokenAttrName,
+			Modifiers: []lang.SemanticTokenModifier{},
 			Range: hcl.Range{
 				Filename: "test.tf",
 				Start: hcl.Pos{
@@ -493,10 +508,8 @@ resource "aws_instance" "beta" {
 			},
 		},
 		{ // deprecated
-			Type: lang.TokenAttrName,
-			Modifiers: []lang.SemanticTokenModifier{
-				lang.TokenModifierDependent,
-			},
+			Type:      lang.TokenAttrName,
+			Modifiers: []lang.SemanticTokenModifier{},
 			Range: hcl.Range{
 				Filename: "test.tf",
 				Start: hcl.Pos{
@@ -540,11 +553,11 @@ func TestDecoder_SemanticTokensInFile_customModifiers(t *testing.T) {
 	bodySchema := &schema.BodySchema{
 		Blocks: map[string]*schema.BlockSchema{
 			"module": {
-				SemanticTokenModifier: lang.SemanticTokenModifier("module"),
+				SemanticTokenModifiers: lang.SemanticTokenModifiers{"module"},
 				Labels: []*schema.LabelSchema{
 					{
-						Name:                  "name",
-						SemanticTokenModifier: lang.SemanticTokenModifier("name"),
+						Name:                   "name",
+						SemanticTokenModifiers: lang.SemanticTokenModifiers{"name"},
 					},
 				},
 				Body: &schema.BodySchema{
@@ -553,33 +566,34 @@ func TestDecoder_SemanticTokensInFile_customModifiers(t *testing.T) {
 							Expr: schema.LiteralTypeOnly(cty.Number),
 						},
 						"source": {
-							Expr:         schema.LiteralTypeOnly(cty.String),
-							IsDeprecated: true,
+							Expr:                   schema.LiteralTypeOnly(cty.String),
+							IsDeprecated:           true,
+							SemanticTokenModifiers: lang.SemanticTokenModifiers{lang.TokenModifierDependent},
 						},
 					},
 				},
 			},
 			"resource": {
-				SemanticTokenModifier: lang.SemanticTokenModifier("resource"),
+				SemanticTokenModifiers: lang.SemanticTokenModifiers{"resource"},
 				Labels: []*schema.LabelSchema{
 					{
-						Name:                  "type",
-						IsDepKey:              true,
-						SemanticTokenModifier: lang.SemanticTokenModifier("type"),
+						Name:                   "type",
+						IsDepKey:               true,
+						SemanticTokenModifiers: lang.SemanticTokenModifiers{"type", lang.TokenModifierDependent},
 					},
 					{
-						Name:                  "name",
-						SemanticTokenModifier: lang.SemanticTokenModifier("name"),
+						Name:                   "name",
+						SemanticTokenModifiers: lang.SemanticTokenModifiers{"name"},
 					},
 				},
 				Body: &schema.BodySchema{
 					Blocks: map[string]*schema.BlockSchema{
 						"provisioner": {
-							SemanticTokenModifier: lang.SemanticTokenModifier("provisioner"),
+							SemanticTokenModifiers: lang.SemanticTokenModifiers{"provisioner"},
 							Labels: []*schema.LabelSchema{
 								{
-									Name:                  "type",
-									SemanticTokenModifier: lang.SemanticTokenModifier("type"),
+									Name:                   "type",
+									SemanticTokenModifiers: lang.SemanticTokenModifiers{"type"},
 								},
 							},
 						},
@@ -658,8 +672,11 @@ resource "vault_auth_backend" "blah" {
 			},
 		},
 		{ // source
-			Type:      lang.TokenAttrName,
-			Modifiers: []lang.SemanticTokenModifier{},
+			Type: lang.TokenAttrName,
+			Modifiers: []lang.SemanticTokenModifier{
+				lang.SemanticTokenModifier("module"),
+				lang.TokenModifierDependent,
+			},
 			Range: hcl.Range{
 				Filename: "test.tf",
 				Start: hcl.Pos{
@@ -692,8 +709,10 @@ resource "vault_auth_backend" "blah" {
 			},
 		},
 		{ // count
-			Type:      lang.TokenAttrName,
-			Modifiers: []lang.SemanticTokenModifier{},
+			Type: lang.TokenAttrName,
+			Modifiers: []lang.SemanticTokenModifier{
+				lang.SemanticTokenModifier("module"),
+			},
 			Range: hcl.Range{
 				Filename: "test.tf",
 				Start: hcl.Pos{
@@ -747,9 +766,9 @@ resource "vault_auth_backend" "blah" {
 		{ // vault_auth_backend
 			Type: lang.TokenBlockLabel,
 			Modifiers: []lang.SemanticTokenModifier{
-				lang.TokenModifierDependent,
 				lang.SemanticTokenModifier("resource"),
 				lang.SemanticTokenModifier("type"),
+				lang.TokenModifierDependent,
 			},
 			Range: hcl.Range{
 				Filename: "test.tf",
