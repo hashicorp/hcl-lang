@@ -31,11 +31,20 @@ type BodySchema struct {
 	// TargetableAs represents how else the body may be targeted
 	// if not by its declarable attributes or blocks.
 	TargetableAs Targetables
+
+	// Targets indicates whether the something inside the body is
+	// targeting another location
+	Targets *Target
 }
 
 type DocsLink struct {
 	URL     string
 	Tooltip string
+}
+
+type Target struct {
+	Path  lang.Path
+	Range hcl.Range
 }
 
 func (*BodySchema) isSchemaImpl() schemaImplSigil {
@@ -137,6 +146,7 @@ func (bs *BodySchema) Copy() *BodySchema {
 		AnyAttribute: bs.AnyAttribute.Copy(),
 		HoverURL:     bs.HoverURL,
 		DocsLink:     bs.DocsLink.Copy(),
+		Targets:      bs.Targets.Copy(),
 	}
 
 	if bs.TargetableAs != nil {
@@ -171,5 +181,16 @@ func (dl *DocsLink) Copy() *DocsLink {
 	return &DocsLink{
 		URL:     dl.URL,
 		Tooltip: dl.Tooltip,
+	}
+}
+
+func (t *Target) Copy() *Target {
+	if t == nil {
+		return nil
+	}
+
+	return &Target{
+		Path:  t.Path,
+		Range: t.Range,
 	}
 }
