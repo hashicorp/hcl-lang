@@ -501,6 +501,33 @@ func TestOrigins_Match(t *testing.T) {
 				},
 			},
 		},
+		{
+			"direct origin cant be matched",
+			alphaPath,
+			Origins{
+				DirectOrigin{
+					Range: hcl.Range{
+						Filename: "origin.tf",
+						Start:    hcl.InitialPos,
+						End:      hcl.InitialPos,
+					},
+					TargetPath: betaPath,
+					TargetRange: hcl.Range{
+						Filename: "target.tf",
+						Start:    hcl.InitialPos,
+						End:      hcl.InitialPos,
+					},
+				},
+			},
+			alphaPath,
+			Target{
+				Addr: lang.Address{
+					lang.RootStep{Name: "test"},
+				},
+				Type: cty.String,
+			},
+			Origins{},
+		},
 	}
 	for i, tc := range testCases {
 		t.Run(fmt.Sprintf("%d-%s", i, tc.name), func(t *testing.T) {

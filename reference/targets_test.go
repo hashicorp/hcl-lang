@@ -16,7 +16,7 @@ func TestTargets_Match(t *testing.T) {
 	testCases := []struct {
 		name            string
 		targets         Targets
-		origin          Origin
+		origin          MatchableOrigin
 		expectedTargets Targets
 		expectedFound   bool
 	}{

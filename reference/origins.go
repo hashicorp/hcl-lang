@@ -44,6 +44,8 @@ func (ro Origins) Match(localPath lang.Path, target Target, targetPath lang.Path
 			if origin.TargetPath.Equals(targetPath) && target.Matches(origin.Address(), origin.OriginConstraints()) {
 				origins = append(origins, refOrigin)
 			}
+		case DirectOrigin:
+			continue
 		}
 	}
 
