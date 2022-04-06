@@ -11,6 +11,10 @@ type Origin interface {
 	isOriginImpl() originSigil
 	Copy() Origin
 	OriginRange() hcl.Range
+}
+
+type MatchableOrigin interface {
+	Origin
 	OriginConstraints() OriginConstraints
 	Address() lang.Address
 }

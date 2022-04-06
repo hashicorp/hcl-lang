@@ -33,6 +33,15 @@ func (d *Decoder) ReferenceTargetsForOriginAtPos(path lang.Path, file string, po
 		targetCtx := pathCtx
 		targetPath := path
 
+		if directOrigin, ok := origin.(reference.DirectOrigin); ok {
+			matchingTargets = append(matchingTargets, &ReferenceTarget{
+				OriginRange: origin.OriginRange(),
+				Path:        directOrigin.TargetPath,
+				Range:       directOrigin.TargetRange,
+				DefRangePtr: nil,
+			})
+			continue
+		}
 		if pathOrigin, ok := origin.(reference.PathOrigin); ok {
 			ctx, err := d.pathReader.PathContext(pathOrigin.TargetPath)
 			if err != nil {
@@ -42,7 +51,11 @@ func (d *Decoder) ReferenceTargetsForOriginAtPos(path lang.Path, file string, po
 			targetPath = pathOrigin.TargetPath
 		}
 
-		targets, ok := targetCtx.ReferenceTargets.Match(origin.Address(), origin.OriginConstraints())
+		matchableOrigin, ok := origin.(reference.MatchableOrigin)
+		if !ok {
+			continue
+		}
+		targets, ok := targetCtx.ReferenceTargets.Match(matchableOrigin.Address(), matchableOrigin.OriginConstraints())
 		if !ok {
 			// target not found
 			continue

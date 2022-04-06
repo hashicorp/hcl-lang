@@ -69,6 +69,8 @@ func mergeBlockBodySchemas(block *hcl.Block, blockSchema *schema.BlockSchema) (*
 		for _, tBody := range depSchema.TargetableAs {
 			mergedSchema.TargetableAs = append(mergedSchema.TargetableAs, tBody)
 		}
+
+		mergedSchema.Targets = depSchema.Targets.Copy()
 	}
 
 	return mergedSchema, nil

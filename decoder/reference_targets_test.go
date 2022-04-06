@@ -280,6 +280,49 @@ func TestReferenceTargetForOriginAtPos(t *testing.T) {
 			},
 			nil,
 		},
+		{
+			"direct origin target",
+			map[string]*PathContext{
+				dirPath: {
+					ReferenceTargets: reference.Targets{},
+					ReferenceOrigins: reference.Origins{
+						reference.DirectOrigin{
+							Range: hcl.Range{
+								Filename: "test.tf",
+								Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
+								End:      hcl.Pos{Line: 1, Column: 6, Byte: 5},
+							},
+							TargetPath: lang.Path{Path: dirPath, LanguageID: "terraform"},
+							TargetRange: hcl.Range{
+								Filename: "target.tf",
+								Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
+								End:      hcl.Pos{Line: 3, Column: 2, Byte: 15},
+							},
+						},
+					},
+				},
+			},
+			lang.Path{Path: dirPath},
+			"test.tf",
+			hcl.InitialPos,
+			ReferenceTargets{
+				{
+					OriginRange: hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
+						End:      hcl.Pos{Line: 1, Column: 6, Byte: 5},
+					},
+					Path: lang.Path{Path: dirPath, LanguageID: "terraform"},
+					Range: hcl.Range{
+						Filename: "target.tf",
+						Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
+						End:      hcl.Pos{Line: 3, Column: 2, Byte: 15},
+					},
+					DefRangePtr: nil,
+				},
+			},
+			nil,
+		},
 	}
 
 	for i, tc := range testCases {
