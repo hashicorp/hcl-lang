@@ -8,10 +8,10 @@ import (
 // DirectOrigin represents an origin which directly targets a file
 // and doesn't need a matching target
 type DirectOrigin struct {
-	// Range represents a range of a local traversal or an attribute
+	// Range represents a range of a local traversal, attribute, or an expression
 	Range hcl.Range
 
-	// TargetPath represents what Path does the origin targets
+	// TargetPath represents what (directory) Path does the origin targets
 	TargetPath lang.Path
 
 	// TargetRange represents which file and line the origin targets

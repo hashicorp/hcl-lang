@@ -502,7 +502,7 @@ func TestOrigins_Match(t *testing.T) {
 			},
 		},
 		{
-			"direct origin cant be matched",
+			"direct origin cannot be matched",
 			alphaPath,
 			Origins{
 				DirectOrigin{

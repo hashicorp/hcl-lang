@@ -32,8 +32,8 @@ type BodySchema struct {
 	// if not by its declarable attributes or blocks.
 	TargetableAs Targetables
 
-	// Targets indicates whether the something inside the body is
-	// targeting another location
+	// Targets represents a location targeted by the body, when used as a body
+	// dependent on an attribute (e.g. Terraform module source)
 	Targets *Target
 }
 
