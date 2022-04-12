@@ -20,6 +20,10 @@ type AttributeSchema struct {
 	// expressions are expected for the attribute
 	Expr ExprConstraints
 
+	// CompletionHookNames represents names of hooks which provide
+	// additional completion items for the attribute dynamically
+	CompletionHookNames []string
+
 	// IsDepKey describes whether to use this attribute (and its value)
 	// as key when looking up dependent schema
 	IsDepKey bool

@@ -13,7 +13,7 @@ import (
 //
 // Schema is required in order to return any candidates and method will return
 // error if there isn't one.
-func (d *PathDecoder) CandidatesAtPos(filename string, pos hcl.Pos) (lang.Candidates, error) {
+func (d *PathDecoder) CandidatesAtPos(ctx context.Context, filename string, pos hcl.Pos) (lang.Candidates, error) {
 	f, err := d.fileByName(filename)
 	if err != nil {
 		return lang.ZeroCandidates(), err

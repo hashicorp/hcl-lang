@@ -1,16 +1,50 @@
 package decoder
 
 import (
+	"context"
 	"fmt"
 
+	"github.com/hashicorp/hcl-lang/lang"
 	"github.com/hashicorp/hcl-lang/schema"
 	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hclsyntax"
+	"github.com/zclconf/go-cty/cty"
 )
 
 type Decoder struct {
 	ctx        DecoderContext
 	pathReader PathReader
+
+	CompletionHooks        map[string]CompletionFunc
+	CompletionResolveHooks map[string]CompletionResolveFunc
+}
+
+// TODO: We need context of other fields, like "source" for completing "version"
+type CompletionFunc func(ctx context.Context, value cty.Value) ([]Candidate, error)
+
+type CompletionResolveFunc func(ctx context.Context, candidate lang.Candidate, meta interface{}) (ResolvedCandidate, error)
+
+type Candidate struct {
+	// Value represents the value to be inserted
+	Value cty.Value
+
+	// Label represents a human-readable name of the candidate
+	// if one exists (otherwise Value is used)
+	Label string
+
+	// Description represents human-readable description
+	// of the candidate
+	Description lang.MarkupContent
+
+	// IsDeprecated indicates whether the candidate is deprecated
+	IsDeprecated bool
+
+	// ResolveHookMeta is arbitrary data to pass to the resolve the candidate
+	ResolveHookMeta interface{}
+}
+
+type ResolvedCandidate struct {
+	Description lang.MarkupContent
 }
 
 // NewDecoder creates a new Decoder
