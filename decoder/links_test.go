@@ -117,6 +117,7 @@ func TestLinksInFile_json(t *testing.T) {
 		},
 	})
 
+	// We never want to provide links in JSON configs
 	_, err := d.LinksInFile("test.tf.json")
 	unknownFormatErr := &UnknownFileFormatError{}
 	if !errors.As(err, &unknownFormatErr) {
