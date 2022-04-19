@@ -71,6 +71,7 @@ func mergeBlockBodySchemas(block *hcl.Block, blockSchema *schema.BlockSchema) (*
 		}
 
 		mergedSchema.Targets = depSchema.Targets.Copy()
+		mergedSchema.DocsLink = depSchema.DocsLink.Copy()
 	}
 
 	return mergedSchema, nil
