@@ -44,16 +44,24 @@ func (d *PathDecoder) linksInBody(body *hclsyntax.Body, bodySchema *schema.BodyS
 		if block.Body != nil {
 			depSchema, dk, ok := NewBlockSchema(blockSchema).DependentBodySchema(block.AsHCLBlock())
 			if ok && depSchema.DocsLink != nil {
+				link := depSchema.DocsLink
+				u, err := d.docsURL(link.URL, "documentLink")
+				if err != nil {
+					continue
+				}
 				for _, labelDep := range dk.Labels {
-					link := depSchema.DocsLink
-					u, err := d.docsURL(link.URL, "documentLink")
-					if err == nil {
-						links = append(links, lang.Link{
-							URI:     u.String(),
-							Tooltip: link.Tooltip,
-							Range:   block.LabelRanges[labelDep.Index],
-						})
-					}
+					links = append(links, lang.Link{
+						URI:     u.String(),
+						Tooltip: link.Tooltip,
+						Range:   block.LabelRanges[labelDep.Index],
+					})
+				}
+				for _, attrDep := range dk.Attributes {
+					links = append(links, lang.Link{
+						URI:     u.String(),
+						Tooltip: link.Tooltip,
+						Range:   block.Body.Attributes[attrDep.Name].Expr.Range(),
+					})
 				}
 			}
 		}

@@ -13,7 +13,7 @@ import (
 	"github.com/zclconf/go-cty/cty"
 )
 
-func TestLinksInFile(t *testing.T) {
+func TestLinksInFileBlock(t *testing.T) {
 	resourceLabelSchema := []*schema.LabelSchema{
 		{Name: "type", IsDepKey: true},
 		{Name: "name"},
@@ -101,6 +101,91 @@ func TestLinksInFile(t *testing.T) {
 	}
 }
 
+func TestLinksInFileAttribute(t *testing.T) {
+	resourceLabelSchema := []*schema.LabelSchema{
+		{Name: "name"},
+	}
+	blockSchema := &schema.BlockSchema{
+		Labels:      resourceLabelSchema,
+		Description: lang.Markdown("My special block"),
+		Body: &schema.BodySchema{
+			Attributes: map[string]*schema.AttributeSchema{
+				"num_attr": {Expr: schema.LiteralTypeOnly(cty.Number)},
+				"source": {
+					Expr:        schema.LiteralTypeOnly(cty.String),
+					Description: lang.PlainText("Special attribute"),
+					IsDepKey:    true,
+				},
+			},
+		},
+		DependentBody: map[schema.SchemaKey]*schema.BodySchema{
+			schema.NewSchemaKey(schema.DependencyKeys{
+				Attributes: []schema.AttributeDependent{
+					{
+						Name: "source",
+						Expr: schema.ExpressionValue{
+							Static: cty.StringVal("example.com/source"),
+						},
+					},
+				},
+			}): {
+				DocsLink: &schema.DocsLink{URL: "https://example.com/some/source"},
+			},
+		},
+	}
+	bodySchema := &schema.BodySchema{
+		Blocks: map[string]*schema.BlockSchema{
+			"myblock": blockSchema,
+		},
+	}
+	testConfig := []byte(`myblock "example" {
+  source = "example.com/source"
+  num_attr = 4
+}
+`)
+
+	f, pDiags := hclsyntax.ParseConfig(testConfig, "test.tf", hcl.InitialPos)
+	if len(pDiags) > 0 {
+		t.Fatal(pDiags)
+	}
+
+	d := testPathDecoder(t, &PathContext{
+		Schema: bodySchema,
+		Files: map[string]*hcl.File{
+			"test.tf": f,
+		},
+	})
+
+	links, err := d.LinksInFile("test.tf")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	expectedLinks := []lang.Link{
+		{
+			URI: "https://example.com/some/source",
+			Range: hcl.Range{
+				Filename: "test.tf",
+				Start: hcl.Pos{
+					Line:   2,
+					Column: 12,
+					Byte:   31,
+				},
+				End: hcl.Pos{
+					Line:   2,
+					Column: 32,
+					Byte:   51,
+				},
+			},
+		},
+	}
+
+	diff := cmp.Diff(expectedLinks, links)
+	if diff != "" {
+		t.Fatalf("unexpected links: %s", diff)
+	}
+}
+
 func TestLinksInFile_json(t *testing.T) {
 	f, pDiags := json.Parse([]byte(`{
 	"customblock": {
@@ -117,6 +202,7 @@ func TestLinksInFile_json(t *testing.T) {
 		},
 	})
 
+	// We never want to provide links in JSON configs
 	_, err := d.LinksInFile("test.tf.json")
 	unknownFormatErr := &UnknownFileFormatError{}
 	if !errors.As(err, &unknownFormatErr) {
