@@ -119,7 +119,6 @@ func TestLinksInFileAttribute(t *testing.T) {
 			},
 		},
 		DependentBody: map[schema.SchemaKey]*schema.BodySchema{
-
 			schema.NewSchemaKey(schema.DependencyKeys{
 				Attributes: []schema.AttributeDependent{
 					{
