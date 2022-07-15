@@ -50,6 +50,7 @@ func (d *Decoder) ReferenceOriginsTargetingPos(path lang.Path, file string, pos 
 
 func (d *PathDecoder) CollectReferenceOrigins() (reference.Origins, error) {
 	refOrigins := make(reference.Origins, 0)
+	impliedOrigins := make([]schema.ImpliedOrigin, 0)
 
 	if d.pathCtx.Schema == nil {
 		// unable to collect reference origins without schema
@@ -64,7 +65,29 @@ func (d *PathDecoder) CollectReferenceOrigins() (reference.Origins, error) {
 			continue
 		}
 
-		refOrigins = append(refOrigins, d.referenceOriginsInBody(f.Body, d.pathCtx.Schema)...)
+		os, ios := d.referenceOriginsInBody(f.Body, d.pathCtx.Schema)
+		refOrigins = append(refOrigins, os...)
+		impliedOrigins = append(impliedOrigins, ios...)
+	}
+
+	for _, impliedOrigin := range impliedOrigins {
+		for _, origin := range refOrigins {
+			localOrigin, ok := origin.(reference.LocalOrigin)
+
+			if ok && localOrigin.Addr.Equals(impliedOrigin.OriginAddress) {
+				refOrigins = append(refOrigins, reference.PathOrigin{
+					Range:      origin.OriginRange(),
+					TargetAddr: impliedOrigin.TargetAddress,
+					TargetPath: impliedOrigin.Path,
+					Constraints: reference.OriginConstraints{
+						{
+							OfScopeId: impliedOrigin.Constraints.ScopeId,
+							OfType:    impliedOrigin.Constraints.Type,
+						},
+					},
+				})
+			}
+		}
 	}
 
 	sort.SliceStable(refOrigins, func(i, j int) bool {
@@ -75,13 +98,15 @@ func (d *PathDecoder) CollectReferenceOrigins() (reference.Origins, error) {
 	return refOrigins, nil
 }
 
-func (d *PathDecoder) referenceOriginsInBody(body hcl.Body, bodySchema *schema.BodySchema) reference.Origins {
+func (d *PathDecoder) referenceOriginsInBody(body hcl.Body, bodySchema *schema.BodySchema) (reference.Origins, []schema.ImpliedOrigin) {
 	origins := make(reference.Origins, 0)
+	impliedOrigins := make([]schema.ImpliedOrigin, 0)
 
 	if bodySchema == nil {
-		return origins
+		return origins, impliedOrigins
 	}
 
+	impliedOrigins = append(impliedOrigins, bodySchema.AdditionalOrigins...)
 	content := decodeBody(body, bodySchema)
 
 	for _, attr := range content.Attributes {
@@ -133,11 +158,14 @@ func (d *PathDecoder) referenceOriginsInBody(body hcl.Body, bodySchema *schema.B
 			if err != nil {
 				continue
 			}
-			origins = append(origins, d.referenceOriginsInBody(block.Body, mergedSchema)...)
+
+			os, ios := d.referenceOriginsInBody(block.Body, mergedSchema)
+			origins = append(origins, os...)
+			impliedOrigins = append(impliedOrigins, ios...)
 		}
 	}
 
-	return origins
+	return origins, impliedOrigins
 }
 
 func (d *PathDecoder) findOriginsInExpression(expr hcl.Expression, ec schema.ExprConstraints) reference.Origins {
