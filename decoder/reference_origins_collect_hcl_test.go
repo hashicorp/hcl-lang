@@ -941,6 +941,80 @@ tup = [ var.three ]
 				},
 			},
 		},
+		{
+			"schema with implied origin",
+			&schema.BodySchema{
+				Attributes: map[string]*schema.AttributeSchema{
+					"attr": {
+						Expr: schema.ExprConstraints{
+							schema.TraversalExpr{},
+						},
+					},
+				},
+				AdditionalOrigins: schema.ImpliedOrigins{
+					{
+						OriginAddress: lang.Address{
+							lang.RootStep{Name: "module"},
+							lang.AttrStep{Name: "refname"},
+							lang.AttrStep{Name: "outname"},
+						},
+						TargetAddress: lang.Address{
+							lang.RootStep{Name: "output"},
+							lang.AttrStep{Name: "outname"},
+						},
+						Path:        lang.Path{Path: "./local", LanguageID: "terraform"},
+						Constraints: schema.Constraints{ScopeId: "output"},
+					},
+				},
+			},
+			`attr = module.refname.outname`,
+			reference.Origins{
+				reference.LocalOrigin{
+					Addr: lang.Address{
+						lang.RootStep{Name: "module"},
+						lang.AttrStep{Name: "refname"},
+						lang.AttrStep{Name: "outname"},
+					},
+					Constraints: reference.OriginConstraints{{}},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   1,
+							Column: 8,
+							Byte:   7,
+						},
+						End: hcl.Pos{
+							Line:   1,
+							Column: 30,
+							Byte:   29,
+						},
+					},
+				},
+				reference.PathOrigin{
+					TargetAddr: lang.Address{
+						lang.RootStep{Name: "output"},
+						lang.AttrStep{Name: "outname"},
+					},
+					TargetPath: lang.Path{Path: "./local", LanguageID: "terraform"},
+					Constraints: reference.OriginConstraints{{
+						OfScopeId: "output",
+					}},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   1,
+							Column: 8,
+							Byte:   7,
+						},
+						End: hcl.Pos{
+							Line:   1,
+							Column: 30,
+							Byte:   29,
+						},
+					},
+				},
+			},
+		},
 	}
 	for i, tc := range testCases {
 		t.Run(fmt.Sprintf("%d/%s", i, tc.name), func(t *testing.T) {
