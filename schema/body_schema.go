@@ -32,9 +32,34 @@ type BodySchema struct {
 	// if not by its declarable attributes or blocks.
 	TargetableAs Targetables
 
-	// Targets represents a location targeted by the body, when used as a body
-	// dependent on an attribute (e.g. Terraform module source)
+	// Targets represent a location targeted by the body; when used as a body
+	// dependent on an attribute (e.g., Terraform module source)
 	Targets *Target
+
+	// ImpliedOrigins represent a list of origins we should revisit during
+	// reference origin collection. For example, module outputs can be
+	// referenced from still unknown locations during the build of the module
+	// schema.
+	ImpliedOrigins ImpliedOrigins
+}
+
+type ImpliedOrigins []ImpliedOrigin
+
+type ImpliedOrigin struct {
+	OriginAddress lang.Address
+
+	TargetAddress lang.Address
+	Path          lang.Path
+	Constraints   Constraints
+}
+
+func (io ImpliedOrigin) Copy() ImpliedOrigin {
+	return ImpliedOrigin{
+		OriginAddress: io.OriginAddress,
+		TargetAddress: io.TargetAddress,
+		Path:          io.Path,
+		Constraints:   io.Constraints,
+	}
 }
 
 type DocsLink struct {
@@ -167,6 +192,13 @@ func (bs *BodySchema) Copy() *BodySchema {
 		newBs.Blocks = make(map[string]*BlockSchema, len(bs.Blocks))
 		for name, block := range bs.Blocks {
 			newBs.Blocks[name] = block.Copy()
+		}
+	}
+
+	if bs.ImpliedOrigins != nil {
+		newBs.ImpliedOrigins = make(ImpliedOrigins, len(bs.ImpliedOrigins))
+		for id, impliedOrigin := range bs.ImpliedOrigins {
+			newBs.ImpliedOrigins[id] = impliedOrigin.Copy()
 		}
 	}
 
