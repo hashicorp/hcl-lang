@@ -106,7 +106,7 @@ func (d *PathDecoder) referenceOriginsInBody(body hcl.Body, bodySchema *schema.B
 		return origins, impliedOrigins
 	}
 
-	impliedOrigins = append(impliedOrigins, bodySchema.AdditionalOrigins...)
+	impliedOrigins = append(impliedOrigins, bodySchema.ImpliedOrigins...)
 	content := decodeBody(body, bodySchema)
 
 	for _, attr := range content.Attributes {

@@ -36,11 +36,11 @@ type BodySchema struct {
 	// dependent on an attribute (e.g., Terraform module source)
 	Targets *Target
 
-	// AdditionalOrigins represent a list of origins we should revisit during
+	// ImpliedOrigins represent a list of origins we should revisit during
 	// reference origin collection. For example, module outputs can be
 	// referenced from still unknown locations during the build of the module
 	// schema.
-	AdditionalOrigins ImpliedOrigins
+	ImpliedOrigins ImpliedOrigins
 }
 
 type ImpliedOrigins []ImpliedOrigin
@@ -195,10 +195,10 @@ func (bs *BodySchema) Copy() *BodySchema {
 		}
 	}
 
-	if bs.AdditionalOrigins != nil {
-		newBs.AdditionalOrigins = make(ImpliedOrigins, len(bs.AdditionalOrigins))
-		for id, impliedOrigin := range bs.AdditionalOrigins {
-			newBs.AdditionalOrigins[id] = impliedOrigin.Copy()
+	if bs.ImpliedOrigins != nil {
+		newBs.ImpliedOrigins = make(ImpliedOrigins, len(bs.ImpliedOrigins))
+		for id, impliedOrigin := range bs.ImpliedOrigins {
+			newBs.ImpliedOrigins[id] = impliedOrigin.Copy()
 		}
 	}
 

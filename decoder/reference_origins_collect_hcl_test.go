@@ -951,7 +951,7 @@ tup = [ var.three ]
 						},
 					},
 				},
-				AdditionalOrigins: schema.ImpliedOrigins{
+				ImpliedOrigins: schema.ImpliedOrigins{
 					{
 						OriginAddress: lang.Address{
 							lang.RootStep{Name: "module"},

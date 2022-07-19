@@ -47,8 +47,8 @@ func mergeBlockBodySchemas(block *hcl.Block, blockSchema *schema.BlockSchema) (*
 	if mergedSchema.TargetableAs == nil {
 		mergedSchema.TargetableAs = make([]*schema.Targetable, 0)
 	}
-	if mergedSchema.AdditionalOrigins == nil {
-		mergedSchema.AdditionalOrigins = make([]schema.ImpliedOrigin, 0)
+	if mergedSchema.ImpliedOrigins == nil {
+		mergedSchema.ImpliedOrigins = make([]schema.ImpliedOrigin, 0)
 	}
 
 	depSchema, _, ok := NewBlockSchema(blockSchema).DependentBodySchema(block)
@@ -71,7 +71,7 @@ func mergeBlockBodySchemas(block *hcl.Block, blockSchema *schema.BlockSchema) (*
 		}
 
 		mergedSchema.TargetableAs = append(mergedSchema.TargetableAs, depSchema.TargetableAs...)
-		mergedSchema.AdditionalOrigins = append(mergedSchema.AdditionalOrigins, depSchema.AdditionalOrigins...)
+		mergedSchema.ImpliedOrigins = append(mergedSchema.ImpliedOrigins, depSchema.ImpliedOrigins...)
 		mergedSchema.Targets = depSchema.Targets.Copy()
 		mergedSchema.DocsLink = depSchema.DocsLink.Copy()
 	}
