@@ -36,6 +36,10 @@ type AttributeSchema struct {
 	// to report for the attribute name
 	// (in addition to any modifiers of any parent blocks)
 	SemanticTokenModifiers lang.SemanticTokenModifiers
+
+	// CompletionHooks represents any hooks which provide
+	// additional completion candidates for the attribute dynamically
+	CompletionHooks lang.CompletionHooks
 }
 
 type AttributeAddrSchema struct {
@@ -110,6 +114,7 @@ func (as *AttributeSchema) Copy() *AttributeSchema {
 		Address:                as.Address.Copy(),
 		OriginForTarget:        as.OriginForTarget.Copy(),
 		SemanticTokenModifiers: as.SemanticTokenModifiers.Copy(),
+		CompletionHooks:        as.CompletionHooks.Copy(),
 	}
 
 	return newAs
