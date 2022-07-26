@@ -42,6 +42,8 @@ type Candidate struct {
 	// TriggerSuggest allows server to instruct the client whether
 	// to reopen candidate suggestion popup after insertion
 	TriggerSuggest bool
+
+	ResolveHook *ResolveHook
 }
 
 // TextEdit represents a change (edit) of an HCL config file
