@@ -12,8 +12,11 @@ import (
 // BodySchema describes schema of a body comprised of blocks or attributes
 // (if any), where body can be root or body of any block in the hierarchy.
 type BodySchema struct {
-	Blocks       map[string]*BlockSchema
-	Attributes   map[string]*AttributeSchema
+	Blocks     map[string]*BlockSchema
+	Attributes map[string]*AttributeSchema
+	// AnyAttribute represents an attribute where a user can pick any arbitrary
+	// name, but the attributes have the same schema
+	// e.g. `required_providers` block in Terraform
 	AnyAttribute *AttributeSchema
 	IsDeprecated bool
 	Detail       string
