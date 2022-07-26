@@ -1,6 +1,7 @@
 package decoder
 
 import (
+	"context"
 	"fmt"
 	"sort"
 	"strconv"
@@ -14,14 +15,26 @@ import (
 	"github.com/zclconf/go-cty/cty"
 )
 
-func (d *PathDecoder) attrValueCandidatesAtPos(attr *hclsyntax.Attribute, schema *schema.AttributeSchema, outerBodyRng hcl.Range, pos hcl.Pos) (lang.Candidates, error) {
+func (d *PathDecoder) attrValueCandidatesAtPos(ctx context.Context, attr *hclsyntax.Attribute, schema *schema.AttributeSchema, outerBodyRng hcl.Range, pos hcl.Pos) (lang.Candidates, error) {
 	constraints, editRng := constraintsAtPos(attr.Expr, ExprConstraints(schema.Expr), pos)
+	candidates := lang.NewCandidates()
+	candidates.IsComplete = true
+
+	if len(schema.CompletionHooks) > 0 {
+		candidates.IsComplete = false
+		candidates.List = append(candidates.List, d.candidatesFromHooks(ctx, attr, schema, outerBodyRng, pos)...)
+	}
+
 	if len(constraints) > 0 {
 		prefixRng := editRng
 		prefixRng.End = pos
-		return d.expressionCandidatesAtPos(constraints, outerBodyRng, prefixRng, editRng)
+
+		for _, c := range constraints {
+			candidates.List = append(candidates.List, d.constraintToCandidates(c, outerBodyRng, prefixRng, editRng)...)
+		}
 	}
-	return lang.ZeroCandidates(), nil
+
+	return candidates, nil
 }
 
 func constraintsAtPos(expr hcl.Expression, constraints ExprConstraints, pos hcl.Pos) (ExprConstraints, hcl.Range) {
@@ -152,15 +165,86 @@ func constraintsAtPos(expr hcl.Expression, constraints ExprConstraints, pos hcl.
 	return ExprConstraints{}, expr.Range()
 }
 
-func (d *PathDecoder) expressionCandidatesAtPos(constraints ExprConstraints, outerBodyRng, prefixRng, editRng hcl.Range) (lang.Candidates, error) {
-	candidates := lang.NewCandidates()
+type pathKey struct{}
 
-	for _, c := range constraints {
-		candidates.List = append(candidates.List, d.constraintToCandidates(c, outerBodyRng, prefixRng, editRng)...)
+func PathFromContext(ctx context.Context) (lang.Path, bool) {
+	p, ok := ctx.Value(pathKey{}).(lang.Path)
+	return p, ok
+}
+
+type posKey struct{}
+
+func PosFromContext(ctx context.Context) (hcl.Pos, bool) {
+	p, ok := ctx.Value(posKey{}).(hcl.Pos)
+	return p, ok
+}
+
+type filenameKey struct{}
+
+func FilenameFromContext(ctx context.Context) (string, bool) {
+	f, ok := ctx.Value(filenameKey{}).(string)
+	return f, ok
+}
+
+func isEmptyExpr(expr hclsyntax.Expression) bool {
+	l, ok := expr.(*hclsyntax.LiteralValueExpr)
+	if !ok {
+		return false
+	}
+	if l.Val != cty.DynamicVal {
+		return false
+	}
+	// TODO ask for more checks
+
+	return true
+}
+
+func (d *PathDecoder) candidatesFromHooks(ctx context.Context, attr *hclsyntax.Attribute, schema *schema.AttributeSchema, outerBodyRng hcl.Range, pos hcl.Pos) []lang.Candidate {
+	candidates := make([]lang.Candidate, 0)
+	expr := ExprConstraints(schema.Expr)
+	exprType, ok := expr.LiteralType()
+	if !ok && exprType != cty.String {
+		// Return early as we only support string values for now
+		return candidates
 	}
 
-	candidates.IsComplete = true
-	return candidates, nil
+	editRng := attr.Expr.Range()
+	if isEmptyExpr(attr.Expr) { // TODO improve quoting and range
+		editRng.End = pos
+	}
+	prefixRng := attr.Expr.Range()
+	prefixRng.End = pos
+	prefixBytes, _ := d.bytesFromRange(prefixRng)
+	prefix := string(prefixBytes)
+	prefix = strings.TrimLeft(prefix, `"`)
+
+	ctx = context.WithValue(ctx, pathKey{}, d.path)
+	ctx = context.WithValue(ctx, filenameKey{}, attr.Expr.Range().Filename)
+	ctx = context.WithValue(ctx, posKey{}, pos)
+
+	for _, hook := range schema.CompletionHooks {
+		if completionFunc, ok := d.decoderCtx.CompletionHooks[hook.Name]; ok {
+			res, _ := completionFunc(ctx, cty.StringVal(prefix))
+
+			for _, c := range res {
+				candidates = append(candidates, lang.Candidate{
+					Label:       c.Label,
+					Detail:      c.Detail,
+					Description: c.Description,
+					Kind:        c.Kind,
+					TextEdit: lang.TextEdit{
+						NewText: fmt.Sprintf("%q", c.RawInsertText),
+						Snippet: fmt.Sprintf("%q", c.RawInsertText),
+						Range:   editRng,
+					},
+					ResolveHook: c.ResolveHook,
+				})
+			}
+
+		}
+	}
+
+	return candidates
 }
 
 func (d *PathDecoder) constraintToCandidates(constraint schema.ExprConstraint, outerBodyRng, prefixRng, editRng hcl.Range) []lang.Candidate {
