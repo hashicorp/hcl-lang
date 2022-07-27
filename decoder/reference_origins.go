@@ -101,8 +101,10 @@ func (d *PathDecoder) CollectReferenceOrigins() (reference.Origins, error) {
 	}
 
 	sort.SliceStable(refOrigins, func(i, j int) bool {
-		return refOrigins[i].OriginRange().Filename <= refOrigins[j].OriginRange().Filename &&
-			refOrigins[i].OriginRange().Start.Byte < refOrigins[j].OriginRange().Start.Byte
+		if refOrigins[i].OriginRange().Filename != refOrigins[j].OriginRange().Filename {
+			return refOrigins[i].OriginRange().Filename < refOrigins[j].OriginRange().Filename
+		}
+		return refOrigins[i].OriginRange().Start.Byte < refOrigins[j].OriginRange().Start.Byte
 	})
 
 	return refOrigins, nil
