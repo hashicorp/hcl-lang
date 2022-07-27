@@ -194,9 +194,17 @@ func isEmptyExpr(expr hclsyntax.Expression) bool {
 	if l.Val != cty.DynamicVal {
 		return false
 	}
-	// TODO ask for more checks
+	// TODO? more checks
 
 	return true
+}
+
+func isMultilineTemplateExpr(expr hclsyntax.Expression) bool {
+	t, ok := expr.(*hclsyntax.TemplateExpr)
+	if !ok {
+		return false
+	}
+	return t.Range().Start.Line != t.Range().End.Line
 }
 
 func (d *PathDecoder) candidatesFromHooks(ctx context.Context, attr *hclsyntax.Attribute, schema *schema.AttributeSchema, outerBodyRng hcl.Range, pos hcl.Pos) []lang.Candidate {
@@ -209,7 +217,11 @@ func (d *PathDecoder) candidatesFromHooks(ctx context.Context, attr *hclsyntax.A
 	}
 
 	editRng := attr.Expr.Range()
-	if isEmptyExpr(attr.Expr) { // TODO improve quoting and range
+	if isEmptyExpr(attr.Expr) || isMultilineTemplateExpr(attr.Expr) {
+		// An empty expression or a string without a closing quote will lead to
+		// an attribute expression spanning multiple lines.
+		// Since text edits only support a single line, we're resetting the End
+		// position here.
 		editRng.End = pos
 	}
 	prefixRng := attr.Expr.Range()
@@ -227,14 +239,19 @@ func (d *PathDecoder) candidatesFromHooks(ctx context.Context, attr *hclsyntax.A
 			res, _ := completionFunc(ctx, cty.StringVal(prefix))
 
 			for _, c := range res {
+				// We're adding quotes to the string here, as we're always
+				// replacing the whole edit range
+				text := fmt.Sprintf("%q", c.RawInsertText)
+
 				candidates = append(candidates, lang.Candidate{
-					Label:       c.Label,
-					Detail:      c.Detail,
-					Description: c.Description,
-					Kind:        c.Kind,
+					Label:        text,
+					Detail:       c.Detail,
+					Description:  c.Description,
+					Kind:         c.Kind,
+					IsDeprecated: c.IsDeprecated,
 					TextEdit: lang.TextEdit{
-						NewText: fmt.Sprintf("%q", c.RawInsertText),
-						Snippet: fmt.Sprintf("%q", c.RawInsertText),
+						NewText: text,
+						Snippet: text,
 						Range:   editRng,
 					},
 					ResolveHook: c.ResolveHook,
