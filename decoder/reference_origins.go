@@ -45,6 +45,16 @@ func (d *Decoder) ReferenceOriginsTargetingPos(path lang.Path, file string, pos 
 		}
 	}
 
+	sort.SliceStable(origins, func(i, j int) bool {
+		if origins[i].Path.Path != origins[j].Path.Path {
+			return origins[i].Path.Path < origins[j].Path.Path
+		}
+		if origins[i].Range.Filename != origins[j].Range.Filename {
+			return origins[i].Range.Filename < origins[j].Range.Filename
+		}
+		return origins[i].Range.Start.Byte < origins[j].Range.Start.Byte
+	})
+
 	return origins
 }
 
