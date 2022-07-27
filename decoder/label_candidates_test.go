@@ -1,6 +1,7 @@
 package decoder
 
 import (
+	"context"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -12,6 +13,7 @@ import (
 )
 
 func TestDecoder_CandidateAtPos_incompleteLabels(t *testing.T) {
+	ctx := context.Background()
 	bodySchema := &schema.BodySchema{
 		Blocks: map[string]*schema.BlockSchema{
 			"customblock": {
@@ -64,7 +66,7 @@ func TestDecoder_CandidateAtPos_incompleteLabels(t *testing.T) {
 	})
 	d.maxCandidates = 1
 
-	candidates, err := d.CandidatesAtPos("test.tf", hcl.Pos{
+	candidates, err := d.CandidatesAtPos(ctx, "test.tf", hcl.Pos{
 		Line:   1,
 		Column: 14,
 		Byte:   13,
@@ -104,6 +106,7 @@ func TestDecoder_CandidateAtPos_incompleteLabels(t *testing.T) {
 }
 
 func TestCandidatesAtPos_prefillRequiredFields(t *testing.T) {
+	ctx := context.Background()
 	startingConfig := "resource \"\" {\n}"
 	startingPos := hcl.Pos{
 		Line:   1,
@@ -614,7 +617,7 @@ func TestCandidatesAtPos_prefillRequiredFields(t *testing.T) {
 			d.maxCandidates = 1
 			d.PrefillRequiredFields = tt.prefill
 
-			got, err := d.CandidatesAtPos("test.tf", startingPos)
+			got, err := d.CandidatesAtPos(ctx, "test.tf", startingPos)
 			if err != nil {
 				t.Fatal(err)
 			}

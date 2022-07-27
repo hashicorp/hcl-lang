@@ -1,6 +1,7 @@
 package decoder
 
 import (
+	"context"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -12,6 +13,7 @@ import (
 )
 
 func TestDecoder_CandidateAtPos_incompleteAttributes(t *testing.T) {
+	ctx := context.Background()
 	bodySchema := &schema.BodySchema{
 		Blocks: map[string]*schema.BlockSchema{
 			"customblock": {
@@ -43,7 +45,7 @@ func TestDecoder_CandidateAtPos_incompleteAttributes(t *testing.T) {
 	})
 	d.maxCandidates = 1
 
-	candidates, err := d.CandidatesAtPos("test.tf", hcl.Pos{
+	candidates, err := d.CandidatesAtPos(ctx, "test.tf", hcl.Pos{
 		Line:   2,
 		Column: 7,
 		Byte:   29,
@@ -84,6 +86,7 @@ func TestDecoder_CandidateAtPos_incompleteAttributes(t *testing.T) {
 }
 
 func TestDecoder_CandidateAtPos_computedAttributes(t *testing.T) {
+	ctx := context.Background()
 	bodySchema := &schema.BodySchema{
 		Blocks: map[string]*schema.BlockSchema{
 			"customblock": {
@@ -113,7 +116,7 @@ func TestDecoder_CandidateAtPos_computedAttributes(t *testing.T) {
 		},
 	})
 
-	candidates, err := d.CandidatesAtPos("test.tf", hcl.Pos{
+	candidates, err := d.CandidatesAtPos(ctx, "test.tf", hcl.Pos{
 		Line:   2,
 		Column: 7,
 		Byte:   29,
@@ -154,6 +157,7 @@ func TestDecoder_CandidateAtPos_computedAttributes(t *testing.T) {
 }
 
 func TestDecoder_CandidateAtPos_incompleteBlocks(t *testing.T) {
+	ctx := context.Background()
 	bodySchema := &schema.BodySchema{
 		Blocks: map[string]*schema.BlockSchema{
 			"customblock": {
@@ -186,7 +190,7 @@ func TestDecoder_CandidateAtPos_incompleteBlocks(t *testing.T) {
 	})
 	d.maxCandidates = 1
 
-	candidates, err := d.CandidatesAtPos("test.tf", hcl.Pos{
+	candidates, err := d.CandidatesAtPos(ctx, "test.tf", hcl.Pos{
 		Line:   3,
 		Column: 8,
 		Byte:   42,
@@ -227,6 +231,7 @@ func TestDecoder_CandidateAtPos_incompleteBlocks(t *testing.T) {
 }
 
 func TestDecoder_CandidateAtPos_duplicateNames(t *testing.T) {
+	ctx := context.Background()
 	bodySchema := &schema.BodySchema{
 		Attributes: map[string]*schema.AttributeSchema{
 			"ingress": {
@@ -258,7 +263,7 @@ func TestDecoder_CandidateAtPos_duplicateNames(t *testing.T) {
 		},
 	})
 
-	candidates, err := d.CandidatesAtPos("test.tf", hcl.InitialPos)
+	candidates, err := d.CandidatesAtPos(ctx, "test.tf", hcl.InitialPos)
 	if err != nil {
 		t.Fatal(err)
 	}

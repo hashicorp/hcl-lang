@@ -1,6 +1,7 @@
 package decoder
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
@@ -15,6 +16,7 @@ import (
 )
 
 func TestDecoder_CandidateAtPos_expressions(t *testing.T) {
+	ctx := context.Background()
 	testCases := []struct {
 		testName           string
 		attrSchema         map[string]*schema.AttributeSchema
@@ -1518,7 +1520,7 @@ func TestDecoder_CandidateAtPos_expressions(t *testing.T) {
 				},
 			})
 
-			candidates, err := d.CandidatesAtPos("test.tf", tc.pos)
+			candidates, err := d.CandidatesAtPos(ctx, "test.tf", tc.pos)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -1531,6 +1533,7 @@ func TestDecoder_CandidateAtPos_expressions(t *testing.T) {
 }
 
 func TestDecoder_CandidateAtPos_traversalExpressions(t *testing.T) {
+	ctx := context.Background()
 	testCases := []struct {
 		testName           string
 		bodySchema         *schema.BodySchema
@@ -2556,7 +2559,7 @@ another_block "meh" {
 
 			dirReader.paths[testDir].ReferenceTargets = append(dirReader.paths[testDir].ReferenceTargets, refTargets...)
 
-			candidates, err := d.CandidatesAtPos("test.tf", tc.pos)
+			candidates, err := d.CandidatesAtPos(ctx, "test.tf", tc.pos)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -2569,6 +2572,7 @@ another_block "meh" {
 }
 
 func TestDecoder_CandidateAtPos_expressions_crossFileTraversal(t *testing.T) {
+	ctx := context.Background()
 	f1, _ := hclsyntax.ParseConfig([]byte(`variable "aaa" {}
 variable "bbb" {}
 variable "ccc" {}
@@ -2685,7 +2689,7 @@ variable "ccc" {}
 
 	dirReader.paths[testDir].ReferenceTargets = refTargets
 
-	candidates, err := d.CandidatesAtPos("test2.tf", hcl.Pos{
+	candidates, err := d.CandidatesAtPos(ctx, "test2.tf", hcl.Pos{
 		Line:   1,
 		Column: 9,
 		Byte:   8,
