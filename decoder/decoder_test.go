@@ -41,6 +41,10 @@ func testPathDecoder(t *testing.T, pathCtx *PathContext) *PathDecoder {
 	d := NewDecoder(&testPathReader{
 		paths: dirs,
 	})
+	d.SetContext(DecoderContext{
+		CompletionHooks:        make(CompletionFuncMap),
+		CompletionResolveHooks: make(CompletionResolveFuncMap),
+	})
 
 	pathDecoder, err := d.Path(lang.Path{Path: dirPath})
 	if err != nil {

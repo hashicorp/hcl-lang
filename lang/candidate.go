@@ -109,3 +109,14 @@ func CompleteCandidates(list []Candidate) Candidates {
 		IsComplete: true,
 	}
 }
+
+// IncompleteCandidates creates a static list of candidates
+//
+// NewCandidates should be used at runtime instead, but IncompleteCandidates
+// provides a syntactic sugar useful in tests.
+func IncompleteCandidates(list []Candidate) Candidates {
+	return Candidates{
+		List:       list,
+		IsComplete: false,
+	}
+}
