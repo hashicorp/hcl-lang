@@ -2,7 +2,6 @@ package decoder
 
 import (
 	"context"
-	"errors"
 )
 
 // ResolveCandidate gathers more information for a completion candidate
