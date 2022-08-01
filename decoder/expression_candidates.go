@@ -239,19 +239,15 @@ func (d *PathDecoder) candidatesFromHooks(ctx context.Context, attr *hclsyntax.A
 			res, _ := completionFunc(ctx, cty.StringVal(prefix))
 
 			for _, c := range res {
-				// We're adding quotes to the string here, as we're always
-				// replacing the whole edit range
-				text := fmt.Sprintf("%q", c.RawInsertText)
-
 				candidates = append(candidates, lang.Candidate{
-					Label:        text,
+					Label:        c.Label,
 					Detail:       c.Detail,
 					Description:  c.Description,
 					Kind:         c.Kind,
 					IsDeprecated: c.IsDeprecated,
 					TextEdit: lang.TextEdit{
-						NewText: text,
-						Snippet: text,
+						NewText: c.RawInsertText,
+						Snippet: c.RawInsertText,
 						Range:   editRng,
 					},
 					ResolveHook: c.ResolveHook,

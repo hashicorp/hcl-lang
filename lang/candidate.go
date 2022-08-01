@@ -43,6 +43,8 @@ type Candidate struct {
 	// to reopen candidate suggestion popup after insertion
 	TriggerSuggest bool
 
+	// ResolveHook allows the async resolution of additional information
+	// for a completion candidate via ResolveCandidate.
 	ResolveHook *ResolveHook
 }
 

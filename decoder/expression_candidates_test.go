@@ -2779,11 +2779,11 @@ func TestDecoder_CandidateAtPos_expressions_Hooks(t *testing.T) {
 				"TestCompletionHook": func(ctx context.Context, value cty.Value) ([]Candidate, error) {
 					candidates := []Candidate{
 						{
-							Label:         "label",
+							Label:         "\"label\"",
 							Detail:        "detail",
 							Kind:          lang.StringCandidateKind,
 							Description:   lang.PlainText("description"),
-							RawInsertText: "insertText",
+							RawInsertText: "\"insertText\"",
 						},
 					}
 					return candidates, nil
@@ -2791,7 +2791,7 @@ func TestDecoder_CandidateAtPos_expressions_Hooks(t *testing.T) {
 			},
 			lang.IncompleteCandidates([]lang.Candidate{
 				{
-					Label:       "\"insertText\"",
+					Label:       "\"label\"",
 					Detail:      "detail",
 					Kind:        lang.StringCandidateKind,
 					Description: lang.PlainText("description"),
@@ -2836,11 +2836,11 @@ func TestDecoder_CandidateAtPos_expressions_Hooks(t *testing.T) {
 			},
 			lang.IncompleteCandidates([]lang.Candidate{
 				{
-					Label: "\"pa\"",
+					Label: "pa",
 					Kind:  lang.StringCandidateKind,
 					TextEdit: lang.TextEdit{
-						NewText: "\"pa\"",
-						Snippet: "\"pa\"",
+						NewText: "pa",
+						Snippet: "pa",
 						Range: hcl.Range{
 							Filename: "test.tf",
 							Start:    hcl.Pos{Line: 1, Column: 8, Byte: 7},
@@ -2880,11 +2880,11 @@ func TestDecoder_CandidateAtPos_expressions_Hooks(t *testing.T) {
 			},
 			lang.IncompleteCandidates([]lang.Candidate{
 				{
-					Label: "\"pa\"",
+					Label: "pa",
 					Kind:  lang.StringCandidateKind,
 					TextEdit: lang.TextEdit{
-						NewText: "\"pa\"",
-						Snippet: "\"pa\"",
+						NewText: "pa",
+						Snippet: "pa",
 						Range: hcl.Range{
 							Filename: "test.tf",
 							Start:    hcl.Pos{Line: 1, Column: 8, Byte: 7},
@@ -2902,6 +2902,7 @@ func TestDecoder_CandidateAtPos_expressions_Hooks(t *testing.T) {
 				Attributes: tc.attrSchema,
 			}
 
+			// We're ignoring diagnostics here, since some test cases may contain invalid HCL
 			f, _ := hclsyntax.ParseConfig([]byte(tc.cfg), "test.tf", hcl.InitialPos)
 			d := testPathDecoder(t, &PathContext{
 				Schema: bodySchema,
