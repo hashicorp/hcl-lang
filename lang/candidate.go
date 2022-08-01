@@ -42,6 +42,10 @@ type Candidate struct {
 	// TriggerSuggest allows server to instruct the client whether
 	// to reopen candidate suggestion popup after insertion
 	TriggerSuggest bool
+
+	// ResolveHook allows resolution of additional information
+	// for a completion candidate via ResolveCandidate.
+	ResolveHook *ResolveHook
 }
 
 // TextEdit represents a change (edit) of an HCL config file
@@ -105,5 +109,16 @@ func CompleteCandidates(list []Candidate) Candidates {
 	return Candidates{
 		List:       list,
 		IsComplete: true,
+	}
+}
+
+// IncompleteCandidates creates a static list of candidates
+//
+// NewCandidates should be used at runtime instead, but IncompleteCandidates
+// provides a syntactic sugar useful in tests.
+func IncompleteCandidates(list []Candidate) Candidates {
+	return Candidates{
+		List:       list,
+		IsComplete: false,
 	}
 }

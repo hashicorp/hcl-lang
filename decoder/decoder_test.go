@@ -41,6 +41,7 @@ func testPathDecoder(t *testing.T, pathCtx *PathContext) *PathDecoder {
 	d := NewDecoder(&testPathReader{
 		paths: dirs,
 	})
+	d.SetContext(NewDecoderContext())
 
 	pathDecoder, err := d.Path(lang.Path{Path: dirPath})
 	if err != nil {
