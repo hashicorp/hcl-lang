@@ -28,6 +28,7 @@ type DecoderContext struct {
 	// attribute schema, one can refer to the hooks map key to enable the hook
 	// execution on CompletionAtPos.
 	CompletionHooks CompletionFuncMap
+
 	// CompletionResolveHooks represents a map of available hooks for
 	// completion candidate resolving. One can register new hooks by adding an
 	// entry to this map. On completion candidate creation, one can specify a
@@ -48,11 +49,18 @@ func (d *Decoder) SetContext(ctx DecoderContext) {
 	d.ctx = ctx
 }
 
+// CompletionFunc is the function signature for completion hooks.
+//
+// The completion func has access to path, filename and pos via context:
+//  path, ok := decoder.PathFromContext(ctx)
+//  filename, ok := decoder.FilenameFromContext(ctx)
+//  pos, ok := decoder.PosFromContext(ctx)
 type CompletionFunc func(ctx context.Context, value cty.Value) ([]Candidate, error)
 type CompletionFuncMap map[string]CompletionFunc
 
-type CompletionResolveFuncMap map[string]CompletionResolveFunc
+// CompletionResolveFunc is the function signature for resolve hooks.
 type CompletionResolveFunc func(ctx context.Context, unresolvedCandidate UnresolvedCandidate) (*ResolvedCandidate, error)
+type CompletionResolveFuncMap map[string]CompletionResolveFunc
 
 // Candidate represents a completion candidate created and returned from a
 // completion hook.
