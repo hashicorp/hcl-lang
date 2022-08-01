@@ -32,8 +32,8 @@ type DecoderContext struct {
 	// completion candidate resolving. One can register new hooks by adding an
 	// entry to this map. On completion candidate creation, one can specify a
 	// resolve hook by using the map key string. If a completion candidate has
-	// a resolve hook, ResolveCandidate will execute the hook and update the
-	// completion item.
+	// a resolve hook, ResolveCandidate will execute the hook and return
+	// additional (resolved) data for the completion item.
 	CompletionResolveHooks CompletionResolveFuncMap
 }
 

@@ -37,7 +37,7 @@ type AttributeSchema struct {
 	// (in addition to any modifiers of any parent blocks)
 	SemanticTokenModifiers lang.SemanticTokenModifiers
 
-	// CompletionHooks represents any hooks which provide
+	// CompletionHooks represent any hooks which provide
 	// additional completion candidates for the attribute.
 	// These are typically candidates which cannot be provided
 	// via schema and come from external APIs or other sources.
