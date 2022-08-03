@@ -195,8 +195,8 @@ func FilenameFromContext(ctx context.Context) (string, bool) {
 type maxCandidatesKey struct{}
 
 func MaxCandidatesFromContext(ctx context.Context) (uint, bool) {
-	f, ok := ctx.Value(maxCandidatesKey{}).(uint)
-	return f, ok
+	mc, ok := ctx.Value(maxCandidatesKey{}).(uint)
+	return mc, ok
 }
 
 func isEmptyExpr(expr hclsyntax.Expression) bool {
