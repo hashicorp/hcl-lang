@@ -251,6 +251,7 @@ func (d *PathDecoder) candidatesFromHooks(ctx context.Context, attr *hclsyntax.A
 						Range:   editRng,
 					},
 					ResolveHook: c.ResolveHook,
+					SortText:    c.SortText,
 				})
 			}
 

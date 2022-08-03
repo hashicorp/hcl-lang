@@ -90,6 +90,10 @@ type Candidate struct {
 	// ResolveHook represents a resolve hook to call
 	// and any arguments to pass to it
 	ResolveHook *lang.ResolveHook
+
+	// SortText is an optional string that will be used when comparing this
+	// candidate with other candidates
+	SortText string
 }
 
 // ExpressionCandidate is a simplified version of Candidate and the preferred
