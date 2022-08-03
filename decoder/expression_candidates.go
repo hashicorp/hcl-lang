@@ -25,12 +25,18 @@ func (d *PathDecoder) attrValueCandidatesAtPos(ctx context.Context, attr *hclsyn
 		candidates.List = append(candidates.List, d.candidatesFromHooks(ctx, attr, schema, outerBodyRng, pos)...)
 	}
 
-	if len(constraints) > 0 {
+	count := len(candidates.List)
+	if len(constraints) > 0 && uint(count) < d.maxCandidates {
 		prefixRng := editRng
 		prefixRng.End = pos
 
 		for _, c := range constraints {
+			if uint(count) >= d.maxCandidates {
+				return candidates, nil
+			}
+
 			candidates.List = append(candidates.List, d.constraintToCandidates(c, outerBodyRng, prefixRng, editRng)...)
+			count++
 		}
 	}
 
@@ -186,6 +192,13 @@ func FilenameFromContext(ctx context.Context) (string, bool) {
 	return f, ok
 }
 
+type maxCandidatesKey struct{}
+
+func MaxCandidatesFromContext(ctx context.Context) (uint, bool) {
+	mc, ok := ctx.Value(maxCandidatesKey{}).(uint)
+	return mc, ok
+}
+
 func isEmptyExpr(expr hclsyntax.Expression) bool {
 	l, ok := expr.(*hclsyntax.LiteralValueExpr)
 	if !ok {
@@ -233,12 +246,18 @@ func (d *PathDecoder) candidatesFromHooks(ctx context.Context, attr *hclsyntax.A
 	ctx = context.WithValue(ctx, pathKey{}, d.path)
 	ctx = context.WithValue(ctx, filenameKey{}, attr.Expr.Range().Filename)
 	ctx = context.WithValue(ctx, posKey{}, pos)
+	ctx = context.WithValue(ctx, maxCandidatesKey{}, d.maxCandidates)
 
+	count := 0
 	for _, hook := range schema.CompletionHooks {
 		if completionFunc, ok := d.decoderCtx.CompletionHooks[hook.Name]; ok {
 			res, _ := completionFunc(ctx, cty.StringVal(prefix))
 
 			for _, c := range res {
+				if uint(count) >= d.maxCandidates {
+					return candidates
+				}
+
 				candidates = append(candidates, lang.Candidate{
 					Label:        c.Label,
 					Detail:       c.Detail,
@@ -251,7 +270,9 @@ func (d *PathDecoder) candidatesFromHooks(ctx context.Context, attr *hclsyntax.A
 						Range:   editRng,
 					},
 					ResolveHook: c.ResolveHook,
+					SortText:    c.SortText,
 				})
+				count++
 			}
 
 		}

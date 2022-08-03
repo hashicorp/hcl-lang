@@ -2925,3 +2925,61 @@ func TestDecoder_CandidateAtPos_expressions_Hooks(t *testing.T) {
 		})
 	}
 }
+
+func TestDecoder_CandidateAtPos_maxCandidates(t *testing.T) {
+	ctx := context.Background()
+	bodySchema := &schema.BodySchema{
+		Attributes: map[string]*schema.AttributeSchema{
+			"attr": {
+				Expr: schema.LiteralTypeOnly(cty.String),
+				CompletionHooks: lang.CompletionHooks{
+					{
+						Name: "TestCompletionHook50",
+					},
+					{
+						Name: "TestCompletionHook70",
+					},
+				},
+			},
+		},
+	}
+
+	// We're ignoring diagnostics here, since our config contains invalid HCL
+	f, _ := hclsyntax.ParseConfig([]byte(`attr = `), "test.tf", hcl.InitialPos)
+	d := testPathDecoder(t, &PathContext{
+		Schema: bodySchema,
+		Files: map[string]*hcl.File{
+			"test.tf": f,
+		},
+	})
+	d.decoderCtx.CompletionHooks["TestCompletionHook50"] = func(ctx context.Context, value cty.Value) ([]Candidate, error) {
+		candidates := make([]Candidate, 0)
+		for i := 0; i < 50; i++ {
+			candidates = append(candidates, Candidate{
+				Label: fmt.Sprintf("\"Label %d\"", i),
+				Kind:  lang.StringCandidateKind,
+			})
+		}
+		return candidates, nil
+	}
+	d.decoderCtx.CompletionHooks["TestCompletionHook70"] = func(ctx context.Context, value cty.Value) ([]Candidate, error) {
+		candidates := make([]Candidate, 0)
+		for i := 0; i < 70; i++ {
+			candidates = append(candidates, Candidate{
+				Label: fmt.Sprintf("\"Label %d\"", i),
+				Kind:  lang.StringCandidateKind,
+			})
+		}
+		return candidates, nil
+	}
+
+	candidates, err := d.CandidatesAtPos(ctx, "test.tf", hcl.Pos{Line: 1, Column: 8, Byte: 7})
+	if err != nil {
+		t.Fatal(err)
+	}
+	count := len(candidates.List)
+
+	if uint(count) != d.maxCandidates {
+		t.Fatalf("unexpected candidates count: %d", count)
+	}
+}

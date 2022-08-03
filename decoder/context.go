@@ -51,10 +51,12 @@ func (d *Decoder) SetContext(ctx DecoderContext) {
 
 // CompletionFunc is the function signature for completion hooks.
 //
-// The completion func has access to path, filename and pos via context:
+// The completion func has access to path, filename, pos and maximum
+// candidate count via context:
 //  path, ok := decoder.PathFromContext(ctx)
 //  filename, ok := decoder.FilenameFromContext(ctx)
 //  pos, ok := decoder.PosFromContext(ctx)
+//  maxCandidates, ok := decoder.MaxCandidatesFromContext(ctx)
 type CompletionFunc func(ctx context.Context, value cty.Value) ([]Candidate, error)
 type CompletionFuncMap map[string]CompletionFunc
 
@@ -90,6 +92,10 @@ type Candidate struct {
 	// ResolveHook represents a resolve hook to call
 	// and any arguments to pass to it
 	ResolveHook *lang.ResolveHook
+
+	// SortText is an optional string that will be used when comparing this
+	// candidate with other candidates
+	SortText string
 }
 
 // ExpressionCandidate is a simplified version of Candidate and the preferred

@@ -46,6 +46,10 @@ type Candidate struct {
 	// ResolveHook allows resolution of additional information
 	// for a completion candidate via ResolveCandidate.
 	ResolveHook *ResolveHook
+
+	// SortText is an optional string that will be used when comparing this
+	// candidate with other candidates
+	SortText string
 }
 
 // TextEdit represents a change (edit) of an HCL config file
