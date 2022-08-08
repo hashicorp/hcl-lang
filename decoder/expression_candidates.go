@@ -173,12 +173,24 @@ func constraintsAtPos(expr hcl.Expression, constraints ExprConstraints, pos hcl.
 
 type pathKey struct{}
 
+// WithPath is not intended to be used outside this package.
+// It's public for testing hooks downstream.
+func WithPath(ctx context.Context, path lang.Path) context.Context {
+	return context.WithValue(ctx, pathKey{}, path)
+}
+
 func PathFromContext(ctx context.Context) (lang.Path, bool) {
 	p, ok := ctx.Value(pathKey{}).(lang.Path)
 	return p, ok
 }
 
 type posKey struct{}
+
+// WithPos is not intended to be used outside this package.
+// It's public for testing hooks downstream.
+func WithPos(ctx context.Context, pos hcl.Pos) context.Context {
+	return context.WithValue(ctx, posKey{}, pos)
+}
 
 func PosFromContext(ctx context.Context) (hcl.Pos, bool) {
 	p, ok := ctx.Value(posKey{}).(hcl.Pos)
@@ -187,12 +199,24 @@ func PosFromContext(ctx context.Context) (hcl.Pos, bool) {
 
 type filenameKey struct{}
 
+// WithFilename is not intended to be used outside this package.
+// It's public for testing hooks downstream.
+func WithFilename(ctx context.Context, filename string) context.Context {
+	return context.WithValue(ctx, filenameKey{}, filename)
+}
+
 func FilenameFromContext(ctx context.Context) (string, bool) {
 	f, ok := ctx.Value(filenameKey{}).(string)
 	return f, ok
 }
 
 type maxCandidatesKey struct{}
+
+// WithMaxCandidates is not intended to be used outside this package.
+// It's public for testing hooks downstream.
+func WithMaxCandidates(ctx context.Context, maxCandidates uint) context.Context {
+	return context.WithValue(ctx, maxCandidatesKey{}, maxCandidates)
+}
 
 func MaxCandidatesFromContext(ctx context.Context) (uint, bool) {
 	mc, ok := ctx.Value(maxCandidatesKey{}).(uint)
@@ -243,10 +267,10 @@ func (d *PathDecoder) candidatesFromHooks(ctx context.Context, attr *hclsyntax.A
 	prefix := string(prefixBytes)
 	prefix = strings.TrimLeft(prefix, `"`)
 
-	ctx = context.WithValue(ctx, pathKey{}, d.path)
-	ctx = context.WithValue(ctx, filenameKey{}, attr.Expr.Range().Filename)
-	ctx = context.WithValue(ctx, posKey{}, pos)
-	ctx = context.WithValue(ctx, maxCandidatesKey{}, d.maxCandidates)
+	ctx = WithPath(ctx, d.path)
+	ctx = WithFilename(ctx, attr.Expr.Range().Filename)
+	ctx = WithPos(ctx, pos)
+	ctx = WithMaxCandidates(ctx, d.maxCandidates)
 
 	count := 0
 	for _, hook := range schema.CompletionHooks {
