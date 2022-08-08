@@ -173,8 +173,8 @@ func constraintsAtPos(expr hcl.Expression, constraints ExprConstraints, pos hcl.
 
 type pathKey struct{}
 
-// WithPath is not intended to be used outside this package.
-// It's public for testing hooks downstream.
+// WithPath is not intended to be used outside this package
+// except for testing hooks downstream.
 func WithPath(ctx context.Context, path lang.Path) context.Context {
 	return context.WithValue(ctx, pathKey{}, path)
 }
@@ -186,8 +186,8 @@ func PathFromContext(ctx context.Context) (lang.Path, bool) {
 
 type posKey struct{}
 
-// WithPos is not intended to be used outside this package.
-// It's public for testing hooks downstream.
+// WithPos is not intended to be used outside this package
+// except for testing hooks downstream.
 func WithPos(ctx context.Context, pos hcl.Pos) context.Context {
 	return context.WithValue(ctx, posKey{}, pos)
 }
@@ -199,8 +199,8 @@ func PosFromContext(ctx context.Context) (hcl.Pos, bool) {
 
 type filenameKey struct{}
 
-// WithFilename is not intended to be used outside this package.
-// It's public for testing hooks downstream.
+// WithFilename is not intended to be used outside this package
+// except for testing hooks downstream.
 func WithFilename(ctx context.Context, filename string) context.Context {
 	return context.WithValue(ctx, filenameKey{}, filename)
 }
@@ -212,8 +212,8 @@ func FilenameFromContext(ctx context.Context) (string, bool) {
 
 type maxCandidatesKey struct{}
 
-// WithMaxCandidates is not intended to be used outside this package.
-// It's public for testing hooks downstream.
+// WithMaxCandidates is not intended to be used outside this package
+// except for testing hooks downstream.
 func WithMaxCandidates(ctx context.Context, maxCandidates uint) context.Context {
 	return context.WithValue(ctx, maxCandidatesKey{}, maxCandidates)
 }
