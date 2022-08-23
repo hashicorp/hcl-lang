@@ -53,10 +53,11 @@ func (d *Decoder) SetContext(ctx DecoderContext) {
 //
 // The completion func has access to path, filename, pos and maximum
 // candidate count via context:
-//  path, ok := decoder.PathFromContext(ctx)
-//  filename, ok := decoder.FilenameFromContext(ctx)
-//  pos, ok := decoder.PosFromContext(ctx)
-//  maxCandidates, ok := decoder.MaxCandidatesFromContext(ctx)
+//
+//	path, ok := decoder.PathFromContext(ctx)
+//	filename, ok := decoder.FilenameFromContext(ctx)
+//	pos, ok := decoder.PosFromContext(ctx)
+//	maxCandidates, ok := decoder.MaxCandidatesFromContext(ctx)
 type CompletionFunc func(ctx context.Context, value cty.Value) ([]Candidate, error)
 type CompletionFuncMap map[string]CompletionFunc
 
