@@ -22,7 +22,7 @@ func TestDecoder_HoverAtPos_expressions(t *testing.T) {
 		cfg          string
 		pos          hcl.Pos
 		expectedData *lang.HoverData
-		expectedErr  error
+		expectedErr  interface{} // TODO current comparison with errors.As ins't working as intended
 	}{
 		{
 			"string as type",
@@ -1310,7 +1310,7 @@ func TestDecoder_HoverAtPos_traversalExpressions(t *testing.T) {
 		cfg          string
 		pos          hcl.Pos
 		expectedData *lang.HoverData
-		expectedErr  error
+		expectedErr  interface{} // TODO current comparison with errors.As ins't working as intended
 	}{
 		{
 			"unknown traversal",
