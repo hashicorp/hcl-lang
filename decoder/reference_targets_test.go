@@ -37,7 +37,7 @@ func TestReferenceTargetForOriginAtPos(t *testing.T) {
 		filename        string
 		pos             hcl.Pos
 		expectedTargets ReferenceTargets
-		expectedErr     error
+		expectedErr     interface{} // TODO current comparison with errors.As will assume any not-nil error matches
 	}{
 		{
 			"no origins and no targets",
