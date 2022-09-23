@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	icontext "github.com/hashicorp/hcl-lang/context"
 	"github.com/hashicorp/hcl-lang/lang"
 	"github.com/hashicorp/hcl-lang/schema"
 	"github.com/hashicorp/hcl/v2"
@@ -47,6 +48,16 @@ func (d *PathDecoder) candidatesAtPos(ctx context.Context, body *hclsyntax.Body,
 	}
 
 	filename := body.Range().Filename
+
+	if bodySchema.Extensions != nil {
+		ctx = icontext.WithExtensions(ctx, bodySchema.Extensions)
+		if bodySchema.Extensions.Count {
+			if _, ok := body.Attributes["count"]; ok {
+				// append to context we need count completed
+				ctx = icontext.WithActiveCount(ctx)
+			}
+		}
+	}
 
 	for _, attr := range body.Attributes {
 		if d.isPosInsideAttrExpr(attr, pos) {

@@ -17,6 +17,17 @@ func (d *PathDecoder) bodySchemaCandidates(body *hclsyntax.Body, schema *schema.
 	candidates := lang.NewCandidates()
 	count := 0
 
+	if schema.Extensions != nil {
+		// check if this schema supports Count attribute
+		if schema.Extensions.Count {
+			// check if Count is already used inside this body, so we don't
+			// suggest a duplicate
+			if _, ok := body.Attributes["count"]; !ok {
+				candidates.List = append(candidates.List, countAttributeCandidate(editRng))
+			}
+		}
+	}
+
 	if len(schema.Attributes) > 0 {
 		attrNames := sortedAttributeNames(schema.Attributes)
 		for _, name := range attrNames {
@@ -134,4 +145,18 @@ func isBlockDeclarable(body *hclsyntax.Body, blockType string, bSchema *schema.B
 		}
 	}
 	return true
+}
+
+func countAttributeCandidate(editRng hcl.Range) lang.Candidate {
+	return lang.Candidate{
+		Label:       "count",
+		Detail:      "optional, number",
+		Description: lang.PlainText("The distinct index number (starting with 0) corresponding to the instance"),
+		Kind:        lang.AttributeCandidateKind,
+		TextEdit: lang.TextEdit{
+			NewText: "count",
+			Snippet: "count = ${1:1}",
+			Range:   editRng,
+		},
+	}
 }

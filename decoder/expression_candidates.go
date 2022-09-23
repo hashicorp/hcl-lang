@@ -7,12 +7,14 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/zclconf/go-cty/cty"
+
+	icontext "github.com/hashicorp/hcl-lang/context"
 	"github.com/hashicorp/hcl-lang/lang"
 	"github.com/hashicorp/hcl-lang/reference"
 	"github.com/hashicorp/hcl-lang/schema"
 	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hclsyntax"
-	"github.com/zclconf/go-cty/cty"
 )
 
 func (d *PathDecoder) attrValueCandidatesAtPos(ctx context.Context, attr *hclsyntax.Attribute, schema *schema.AttributeSchema, outerBodyRng hcl.Range, pos hcl.Pos) (lang.Candidates, error) {
@@ -35,7 +37,7 @@ func (d *PathDecoder) attrValueCandidatesAtPos(ctx context.Context, attr *hclsyn
 				return candidates, nil
 			}
 
-			candidates.List = append(candidates.List, d.constraintToCandidates(c, outerBodyRng, prefixRng, editRng)...)
+			candidates.List = append(candidates.List, d.constraintToCandidates(ctx, c, outerBodyRng, prefixRng, editRng)...)
 			count++
 		}
 	}
@@ -305,7 +307,7 @@ func (d *PathDecoder) candidatesFromHooks(ctx context.Context, attr *hclsyntax.A
 	return candidates
 }
 
-func (d *PathDecoder) constraintToCandidates(constraint schema.ExprConstraint, outerBodyRng, prefixRng, editRng hcl.Range) []lang.Candidate {
+func (d *PathDecoder) constraintToCandidates(ctx context.Context, constraint schema.ExprConstraint, outerBodyRng, prefixRng, editRng hcl.Range) []lang.Candidate {
 	candidates := make([]lang.Candidate, 0)
 
 	switch c := constraint.(type) {
@@ -328,7 +330,7 @@ func (d *PathDecoder) constraintToCandidates(constraint schema.ExprConstraint, o
 			},
 		})
 	case schema.TraversalExpr:
-		candidates = append(candidates, d.candidatesForTraversalConstraint(c, outerBodyRng, prefixRng, editRng)...)
+		candidates = append(candidates, d.candidatesForTraversalConstraint(ctx, c, outerBodyRng, prefixRng, editRng)...)
 	case schema.TupleConsExpr:
 		candidates = append(candidates, lang.Candidate{
 			Label:       fmt.Sprintf(`[%s]`, labelForConstraints(c.AnyElem)),
@@ -457,8 +459,23 @@ func (d *PathDecoder) constraintToCandidates(constraint schema.ExprConstraint, o
 	return candidates
 }
 
-func (d *PathDecoder) candidatesForTraversalConstraint(tc schema.TraversalExpr, outerBodyRng, prefixRng, editRng hcl.Range) []lang.Candidate {
+func (d *PathDecoder) candidatesForTraversalConstraint(ctx context.Context, tc schema.TraversalExpr, outerBodyRng, prefixRng, editRng hcl.Range) []lang.Candidate {
 	candidates := make([]lang.Candidate, 0)
+
+	ext, ok := icontext.ExtensionsFromContext(ctx)
+	if ok && ext.Count && icontext.ActiveCountFromContext(ctx) {
+		candidates = append(candidates, lang.Candidate{
+			Label:       "count.index",
+			Detail:      "number",
+			Description: lang.PlainText("The distinct index number (starting with 0) corresponding to the instance"),
+			Kind:        lang.TraversalCandidateKind,
+			TextEdit: lang.TextEdit{
+				NewText: "count.index",
+				Snippet: "count.index",
+				Range:   editRng,
+			},
+		})
+	}
 
 	if d.pathCtx.ReferenceTargets == nil {
 		return candidates

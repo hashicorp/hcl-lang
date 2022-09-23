@@ -8,13 +8,14 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/zclconf/go-cty-debug/ctydebug"
+	"github.com/zclconf/go-cty/cty"
+
 	"github.com/hashicorp/hcl-lang/lang"
 	"github.com/hashicorp/hcl-lang/schema"
 	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hclsyntax"
 	"github.com/hashicorp/hcl/v2/json"
-	"github.com/zclconf/go-cty-debug/ctydebug"
-	"github.com/zclconf/go-cty/cty"
 )
 
 func TestDecoder_CandidatesAtPos_noSchema(t *testing.T) {
@@ -1575,9 +1576,10 @@ func TestDecoder_CandidatesAtPos_incompleteLabel(t *testing.T) {
 	resourceSchema := &schema.BlockSchema{
 		Labels: resourceLabelSchema,
 		Body: &schema.BodySchema{
-			Attributes: map[string]*schema.AttributeSchema{
-				"count": {Expr: schema.LiteralTypeOnly(cty.Number), IsOptional: true},
+			Extensions: &schema.BodyExtensions{
+				Count: true,
 			},
+			Attributes: map[string]*schema.AttributeSchema{},
 		},
 		DependentBody: map[schema.SchemaKey]*schema.BodySchema{
 			schema.NewSchemaKey(schema.DependencyKeys{
@@ -1638,7 +1640,11 @@ resource "any" "ref" {
 			hcl.Pos{Line: 3, Column: 5, Byte: 28},
 			lang.CompleteCandidates([]lang.Candidate{
 				{
-					Label:  "count",
+					Label: "count",
+					Description: lang.MarkupContent{
+						Value: "The distinct index number (starting with 0) corresponding to the instance",
+						Kind:  lang.PlainTextKind,
+					},
 					Detail: "optional, number",
 					TextEdit: lang.TextEdit{
 						Range: hcl.Range{
