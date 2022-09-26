@@ -1,18 +1,20 @@
 package decoder
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/zclconf/go-cty-debug/ctydebug"
+	"github.com/zclconf/go-cty/cty"
+
 	"github.com/hashicorp/hcl-lang/lang"
 	"github.com/hashicorp/hcl-lang/reference"
 	"github.com/hashicorp/hcl-lang/schema"
 	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hclsyntax"
-	"github.com/zclconf/go-cty-debug/ctydebug"
-	"github.com/zclconf/go-cty/cty"
 )
 
 func TestDecoder_HoverAtPos_expressions(t *testing.T) {
@@ -1282,7 +1284,8 @@ _object_`),
 				},
 			})
 
-			data, err := d.HoverAtPos("test.tf", tc.pos)
+			ctx := context.Background()
+			data, err := d.HoverAtPos(ctx, "test.tf", tc.pos)
 
 			if err != nil {
 				if tc.expectedErr != nil && !errors.As(err, &tc.expectedErr) {
@@ -1483,7 +1486,8 @@ func TestDecoder_HoverAtPos_traversalExpressions(t *testing.T) {
 				},
 			})
 
-			data, err := d.HoverAtPos("test.tf", tc.pos)
+			ctx := context.Background()
+			data, err := d.HoverAtPos(ctx, "test.tf", tc.pos)
 			if err != nil {
 				if tc.expectedErr != nil && !errors.As(err, &tc.expectedErr) {
 					t.Fatalf("unexpected error: %s\nexpected: %s\n",
