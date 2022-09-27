@@ -1,16 +1,18 @@
 package decoder
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/zclconf/go-cty/cty"
+
 	"github.com/hashicorp/hcl-lang/lang"
 	"github.com/hashicorp/hcl-lang/reference"
 	"github.com/hashicorp/hcl-lang/schema"
 	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hclsyntax"
-	"github.com/zclconf/go-cty/cty"
 )
 
 func TestDecoder_SemanticTokensInFile_expressions(t *testing.T) {
@@ -1433,6 +1435,8 @@ EOT
 		},
 	}
 
+	ctx := context.Background()
+
 	for i, tc := range testCases {
 		t.Run(fmt.Sprintf("%d-%s", i, tc.name), func(t *testing.T) {
 			bodySchema := &schema.BodySchema{
@@ -1451,7 +1455,7 @@ EOT
 				},
 			})
 
-			tokens, err := d.SemanticTokensInFile("test.tf")
+			tokens, err := d.SemanticTokensInFile(ctx, "test.tf")
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -1912,6 +1916,8 @@ func TestDecoder_SemanticTokensInFile_traversalExpression(t *testing.T) {
 		},
 	}
 
+	ctx := context.Background()
+
 	for i, tc := range testCases {
 		t.Run(fmt.Sprintf("%d-%s", i, tc.name), func(t *testing.T) {
 			bodySchema := &schema.BodySchema{
@@ -1931,7 +1937,7 @@ func TestDecoder_SemanticTokensInFile_traversalExpression(t *testing.T) {
 				},
 			})
 
-			tokens, err := d.SemanticTokensInFile("test.tf")
+			tokens, err := d.SemanticTokensInFile(ctx, "test.tf")
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -2227,6 +2233,8 @@ func TestDecoder_SemanticTokensInFile_typeDeclaration(t *testing.T) {
 		},
 	}
 
+	ctx := context.Background()
+
 	for i, tc := range testCases {
 		t.Run(fmt.Sprintf("%d-%s", i, tc.name), func(t *testing.T) {
 			bodySchema := &schema.BodySchema{
@@ -2245,7 +2253,7 @@ func TestDecoder_SemanticTokensInFile_typeDeclaration(t *testing.T) {
 				},
 			})
 
-			tokens, err := d.SemanticTokensInFile("test.tf")
+			tokens, err := d.SemanticTokensInFile(ctx, "test.tf")
 			if err != nil {
 				t.Fatal(err)
 			}
