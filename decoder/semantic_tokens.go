@@ -2,6 +2,7 @@ package decoder
 
 import (
 	"context"
+	"log"
 	"sort"
 
 	"github.com/zclconf/go-cty/cty"
@@ -53,12 +54,14 @@ func (d *PathDecoder) tokensForBody(ctx context.Context, body *hclsyntax.Body, b
 			if _, ok := body.Attributes["count"]; ok {
 				// append to context we need count provided
 				ctx = icontext.WithActiveCount(ctx)
+				log.Printf("Found Expression: ")
 			}
 		}
 	}
 
 	for name, attr := range body.Attributes {
 
+		log.Printf("Found: %q / %v+", name, bodySchema.Extensions)
 		attrSchema, ok := bodySchema.Attributes[name]
 		if !ok {
 			if bodySchema.Extensions != nil && name == "count" && bodySchema.Extensions.Count {
@@ -90,6 +93,8 @@ func (d *PathDecoder) tokensForBody(ctx context.Context, body *hclsyntax.Body, b
 		})
 
 		ec := ExprConstraints(attrSchema.Expr)
+		countAvailable := icontext.ActiveCountFromContext(ctx)
+		log.Printf("Found Expression: countAvailable %q ", countAvailable)
 		tokens = append(tokens, d.tokensForExpression(ctx, attr.Expr, ec)...)
 	}
 
@@ -170,7 +175,10 @@ func (d *PathDecoder) tokensForExpression(ctx context.Context, expr hclsyntax.Ex
 			},
 		}
 		countAvailable := icontext.ActiveCountFromContext(ctx)
-		if address.Equals(countIndexAttr) && countAvailable {
+		// TODO why is countAvailable not true here?
+		log.Printf("Found Expression: %q / %q - %v+", countAvailable, address.Equals(countIndexAttr), address)
+		// if address.Equals(countIndexAttr) && countAvailable {
+		if address.Equals(countIndexAttr) {
 			traversal := eType.AsTraversal()
 			tokens = append(tokens, lang.SemanticToken{
 				Type:      lang.TokenTraversalStep,
