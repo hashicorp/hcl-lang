@@ -31,10 +31,10 @@ func TestCompletionAtPos_BodySchema_Extensions(t *testing.T) {
 					"resource": {
 						Labels: []*schema.LabelSchema{
 							{
-								Name: "aws_instance",
+								Name: "type",
 							},
 							{
-								Name: "foo",
+								Name: "name",
 							},
 						},
 						Body: &schema.BodySchema{
@@ -85,10 +85,10 @@ func TestCompletionAtPos_BodySchema_Extensions(t *testing.T) {
 					"resource": {
 						Labels: []*schema.LabelSchema{
 							{
-								Name: "aws_instance",
+								Name: "type",
 							},
 							{
-								Name: "foo",
+								Name: "name",
 							},
 						},
 						Body: &schema.BodySchema{
@@ -116,10 +116,10 @@ func TestCompletionAtPos_BodySchema_Extensions(t *testing.T) {
 					"resource": {
 						Labels: []*schema.LabelSchema{
 							{
-								Name: "aws_instance",
+								Name: "type",
 							},
 							{
-								Name: "foo",
+								Name: "name",
 							},
 						},
 						Body: &schema.BodySchema{
@@ -157,10 +157,10 @@ func TestCompletionAtPos_BodySchema_Extensions(t *testing.T) {
 					"resource": {
 						Labels: []*schema.LabelSchema{
 							{
-								Name: "aws_instance",
+								Name: "type",
 							},
 							{
-								Name: "foo",
+								Name: "name",
 							},
 						},
 						Body: &schema.BodySchema{
@@ -210,7 +210,8 @@ func TestCompletionAtPos_BodySchema_Extensions(t *testing.T) {
 							Column: 13,
 							Byte:   55,
 						},
-					}, NewText: "count.index", Snippet: "count.index"},
+					},
+					NewText: "count.index", Snippet: "count.index"},
 					Kind: lang.TraversalCandidateKind,
 				},
 			}),
@@ -222,10 +223,10 @@ func TestCompletionAtPos_BodySchema_Extensions(t *testing.T) {
 					"resource": {
 						Labels: []*schema.LabelSchema{
 							{
-								Name: "aws_instance",
+								Name: "type",
 							},
 							{
-								Name: "foo",
+								Name: "name",
 							},
 						},
 						Body: &schema.BodySchema{
@@ -254,10 +255,10 @@ func TestCompletionAtPos_BodySchema_Extensions(t *testing.T) {
 					"resource": {
 						Labels: []*schema.LabelSchema{
 							{
-								Name: "aws_instance",
+								Name: "type",
 							},
 							{
-								Name: "foo",
+								Name: "name",
 							},
 						},
 						Body: &schema.BodySchema{
@@ -295,10 +296,10 @@ func TestCompletionAtPos_BodySchema_Extensions(t *testing.T) {
 					"resource": {
 						Labels: []*schema.LabelSchema{
 							{
-								Name: "aws_instance",
+								Name: "type",
 							},
 							{
-								Name: "foo",
+								Name: "name",
 							},
 						},
 						Body: &schema.BodySchema{
