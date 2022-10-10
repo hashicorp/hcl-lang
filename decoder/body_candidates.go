@@ -18,9 +18,9 @@ func (d *PathDecoder) bodySchemaCandidates(body *hclsyntax.Body, schema *schema.
 	count := 0
 
 	if schema.Extensions != nil {
-		// check if this schema supports Count attribute
+		// check if count attribute "extension" is enabled here
 		if schema.Extensions.Count {
-			// check if Count is already used inside this body, so we don't
+			// check if count attribute is already declared, so we don't
 			// suggest a duplicate
 			if _, ok := body.Attributes["count"]; !ok {
 				candidates.List = append(candidates.List, countAttributeCandidate(editRng))

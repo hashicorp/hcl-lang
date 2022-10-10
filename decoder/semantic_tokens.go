@@ -5,7 +5,6 @@ import (
 	"sort"
 
 	"github.com/zclconf/go-cty/cty"
-
 	icontext "github.com/hashicorp/hcl-lang/context"
 	"github.com/hashicorp/hcl-lang/lang"
 	"github.com/hashicorp/hcl-lang/reference"
@@ -62,10 +61,6 @@ func (d *PathDecoder) tokensForBody(ctx context.Context, body *hclsyntax.Body, b
 		if !ok {
 			if bodySchema.Extensions != nil && name == "count" && bodySchema.Extensions.Count {
 				attrSchema = &schema.AttributeSchema{
-					Description: lang.MarkupContent{
-						Kind:  lang.MarkdownKind,
-						Value: "**count** _optional, number_\n\nThe distinct index number (starting with 0) corresponding to the instance",
-					},
 					IsOptional: true,
 					Expr:       schema.LiteralTypeOnly(cty.Number),
 				}

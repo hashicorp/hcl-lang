@@ -10,7 +10,6 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/zclconf/go-cty-debug/ctydebug"
 	"github.com/zclconf/go-cty/cty"
-
 	"github.com/hashicorp/hcl-lang/lang"
 	"github.com/hashicorp/hcl-lang/schema"
 	"github.com/hashicorp/hcl/v2"
@@ -935,7 +934,7 @@ func TestDecoder_HoverAtPos_typeDeclaration(t *testing.T) {
 	}
 }
 
-func TestDecoder_HoverAtPos_expression_extension(t *testing.T) {
+func TestDecoder_HoverAtPos_extension(t *testing.T) {
 	resourceLabelSchema := []*schema.LabelSchema{
 		{Name: "type", IsDepKey: true},
 		{Name: "name"},
