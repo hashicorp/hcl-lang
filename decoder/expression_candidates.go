@@ -462,9 +462,8 @@ func (d *PathDecoder) constraintToCandidates(ctx context.Context, constraint sch
 func (d *PathDecoder) candidatesForTraversalConstraint(ctx context.Context, tc schema.TraversalExpr, outerBodyRng, prefixRng, editRng hcl.Range) []lang.Candidate {
 	candidates := make([]lang.Candidate, 0)
 
-	ext, ok := icontext.ExtensionsFromContext(ctx)
-	if ok && ext.Count && icontext.ActiveCountFromContext(ctx) {
-		candidates = append(candidates, countAttributeCandidate(editRng))
+	if icontext.ActiveCountFromContext(ctx) {
+		candidates = append(candidates, countIndexCandidate(editRng))
 	}
 
 	if d.pathCtx.ReferenceTargets == nil {

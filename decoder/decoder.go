@@ -173,6 +173,20 @@ func countAttributeCandidate(editRng hcl.Range) lang.Candidate {
 	}
 }
 
+func countIndexCandidate(editRng hcl.Range) lang.Candidate {
+	return lang.Candidate{
+		Label:       "count.index",
+		Detail:      "number",
+		Description: lang.PlainText("The distinct index number (starting with 0) corresponding to the instance"),
+		Kind:        lang.TraversalCandidateKind,
+		TextEdit: lang.TextEdit{
+			NewText: "count.index",
+			Snippet: "count.index",
+			Range:   editRng,
+		},
+	}
+}
+
 func countAttributeHoverData(editRng hcl.Range) *lang.HoverData {
 	return &lang.HoverData{
 		Content: lang.MarkupContent{

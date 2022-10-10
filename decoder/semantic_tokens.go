@@ -4,13 +4,14 @@ import (
 	"context"
 	"sort"
 
+	"github.com/zclconf/go-cty/cty"
+
 	icontext "github.com/hashicorp/hcl-lang/context"
 	"github.com/hashicorp/hcl-lang/lang"
 	"github.com/hashicorp/hcl-lang/reference"
 	"github.com/hashicorp/hcl-lang/schema"
 	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hclsyntax"
-	"github.com/zclconf/go-cty/cty"
 )
 
 // SemanticTokensInFile returns a sequence of semantic tokens
@@ -185,7 +186,19 @@ func (d *PathDecoder) tokensForExpression(ctx context.Context, expr hclsyntax.Ex
 			tokens = append(tokens, lang.SemanticToken{
 				Type:      lang.TokenTraversalStep,
 				Modifiers: []lang.SemanticTokenModifier{},
-				Range:     traversal[1].SourceRange(),
+				Range: hcl.Range{
+					Filename: traversal[1].SourceRange().Filename,
+					Start: hcl.Pos{
+						Line:   traversal[1].SourceRange().Start.Line,
+						Column: traversal[1].SourceRange().Start.Column + 1,
+						Byte:   traversal[1].SourceRange().Start.Byte + 1,
+					},
+					End: hcl.Pos{
+						Line:   traversal[1].SourceRange().End.Line,
+						Column: traversal[1].SourceRange().End.Column + 1,
+						Byte:   traversal[1].SourceRange().End.Byte + 1,
+					},
+				},
 			})
 			return tokens
 		}

@@ -6,12 +6,12 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
-	"github.com/zclconf/go-cty/cty"
 	"github.com/hashicorp/hcl-lang/lang"
 	"github.com/hashicorp/hcl-lang/schema"
 	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hclsyntax"
 	"github.com/hashicorp/hcl/v2/json"
+	"github.com/zclconf/go-cty/cty"
 )
 
 func TestDecoder_SemanticTokensInFile_emptyBody(t *testing.T) {
@@ -1027,7 +1027,7 @@ resource "aws_instance" "app_server" {
 				},
 				End: hcl.Pos{
 					Line:   4,
-					Column: 26,
+					Column: 25,
 					Byte:   85,
 				},
 			},
@@ -1039,13 +1039,13 @@ resource "aws_instance" "app_server" {
 				Filename: "test.tf",
 				Start: hcl.Pos{
 					Line:   4,
-					Column: 25,
-					Byte:   85,
+					Column: 26,
+					Byte:   86,
 				},
 				End: hcl.Pos{
 					Line:   4,
-					Column: 31,
-					Byte:   91,
+					Column: 32,
+					Byte:   92,
 				},
 			},
 		},
@@ -1248,20 +1248,20 @@ resource "aws_instance" "app_server" {
 				},
 			},
 		},
-		{ // .index
+		{ // index
 			Type:      lang.TokenTraversalStep,
 			Modifiers: lang.SemanticTokenModifiers{},
 			Range: hcl.Range{
 				Filename: "test.tf",
 				Start: hcl.Pos{
 					Line:   4,
-					Column: 25,
-					Byte:   85,
+					Column: 26,
+					Byte:   86,
 				},
 				End: hcl.Pos{
 					Line:   4,
-					Column: 31,
-					Byte:   91,
+					Column: 32,
+					Byte:   92,
 				},
 			},
 		},

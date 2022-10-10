@@ -198,20 +198,23 @@ func TestCompletionAtPos_BodySchema_Extensions(t *testing.T) {
 						Kind:  lang.PlainTextKind,
 					},
 					Detail: "number",
-					TextEdit: lang.TextEdit{Range: hcl.Range{
-						Filename: "test.tf",
-						Start: hcl.Pos{
-							Line:   3,
-							Column: 13,
-							Byte:   55,
+					TextEdit: lang.TextEdit{
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start: hcl.Pos{
+								Line:   3,
+								Column: 13,
+								Byte:   55,
+							},
+							End: hcl.Pos{
+								Line:   3,
+								Column: 13,
+								Byte:   55,
+							},
 						},
-						End: hcl.Pos{
-							Line:   3,
-							Column: 13,
-							Byte:   55,
-						},
+						NewText: "count.index",
+						Snippet: "count.index",
 					},
-					NewText: "count.index", Snippet: "count.index"},
 					Kind: lang.TraversalCandidateKind,
 				},
 			}),

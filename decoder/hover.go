@@ -47,7 +47,6 @@ func (d *PathDecoder) hoverAtPos(ctx context.Context, body *hclsyntax.Body, body
 	filename := body.Range().Filename
 
 	if bodySchema.Extensions != nil {
-		ctx = icontext.WithExtensions(ctx, bodySchema.Extensions)
 		if bodySchema.Extensions.Count {
 			if _, ok := body.Attributes["count"]; ok {
 				// append to context we need count provided
