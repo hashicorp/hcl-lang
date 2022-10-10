@@ -237,7 +237,6 @@ func TestDecoder_HoverAtPos_nilBodySchema(t *testing.T) {
 		},
 	}
 
-
 	for i, tc := range testCases {
 		t.Run(fmt.Sprintf("%d-%s", i, tc.name), func(t *testing.T) {
 			ctx := context.Background()
