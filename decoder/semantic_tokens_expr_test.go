@@ -6,12 +6,13 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/zclconf/go-cty/cty"
+
 	"github.com/hashicorp/hcl-lang/lang"
 	"github.com/hashicorp/hcl-lang/reference"
 	"github.com/hashicorp/hcl-lang/schema"
 	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hclsyntax"
-	"github.com/zclconf/go-cty/cty"
 )
 
 func TestDecoder_SemanticTokensInFile_expressions(t *testing.T) {
@@ -1434,10 +1435,11 @@ EOT
 		},
 	}
 
-	ctx := context.Background()
-
 	for i, tc := range testCases {
 		t.Run(fmt.Sprintf("%d-%s", i, tc.name), func(t *testing.T) {
+
+			ctx := context.Background()
+
 			bodySchema := &schema.BodySchema{
 				Attributes: tc.attrSchema,
 			}

@@ -1027,12 +1027,12 @@ resource "aws_instance" "app_server" {
 				},
 				End: hcl.Pos{
 					Line:   4,
-					Column: 25,
+					Column: 26,
 					Byte:   85,
 				},
 			},
 		},
-		{ // .index
+		{ // index
 			Type:      lang.TokenTraversalStep,
 			Modifiers: lang.SemanticTokenModifiers{},
 			Range: hcl.Range{
