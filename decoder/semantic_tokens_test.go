@@ -7,7 +7,6 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/zclconf/go-cty/cty"
-
 	"github.com/hashicorp/hcl-lang/lang"
 	"github.com/hashicorp/hcl-lang/schema"
 	"github.com/hashicorp/hcl/v2"
@@ -853,7 +852,7 @@ resource "vault_auth_backend" "blah" {
 	}
 }
 
-func TestDecoder_SemanticTokensInFile_expression_extensions(t *testing.T) {
+func TestDecoder_SemanticTokensInFile_extensions(t *testing.T) {
 	bodySchema := &schema.BodySchema{
 		Blocks: map[string]*schema.BlockSchema{
 			"resource": {
