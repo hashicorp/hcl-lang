@@ -4,13 +4,13 @@ import (
 	"context"
 	"sort"
 
-	"github.com/zclconf/go-cty/cty"
 	icontext "github.com/hashicorp/hcl-lang/context"
 	"github.com/hashicorp/hcl-lang/lang"
 	"github.com/hashicorp/hcl-lang/reference"
 	"github.com/hashicorp/hcl-lang/schema"
 	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hclsyntax"
+	"github.com/zclconf/go-cty/cty"
 )
 
 // SemanticTokensInFile returns a sequence of semantic tokens
