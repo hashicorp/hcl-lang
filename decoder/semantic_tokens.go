@@ -94,7 +94,7 @@ func (d *PathDecoder) tokensForBody(ctx context.Context, body *hclsyntax.Body, b
 
 		ec := ExprConstraints(attrSchema.Expr)
 		countAvailable := icontext.ActiveCountFromContext(ctx)
-		log.Printf("Found Expression: countAvailable %q ", countAvailable)
+		log.Printf("Found Expression: countAvailable %t", countAvailable)
 		tokens = append(tokens, d.tokensForExpression(ctx, attr.Expr, ec)...)
 	}
 
@@ -176,9 +176,9 @@ func (d *PathDecoder) tokensForExpression(ctx context.Context, expr hclsyntax.Ex
 		}
 		countAvailable := icontext.ActiveCountFromContext(ctx)
 		// TODO why is countAvailable not true here?
-		log.Printf("Found Expression: %q / %q - %v+", countAvailable, address.Equals(countIndexAttr), address)
+		log.Printf("Found Expression: %t / %t - %v+", countAvailable, address.Equals(countIndexAttr), address)
 		// if address.Equals(countIndexAttr) && countAvailable {
-		if address.Equals(countIndexAttr) {
+		if address.Equals(countIndexAttr) && countAvailable {
 			traversal := eType.AsTraversal()
 			tokens = append(tokens, lang.SemanticToken{
 				Type:      lang.TokenTraversalStep,

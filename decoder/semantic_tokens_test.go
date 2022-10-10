@@ -1053,3 +1053,135 @@ resource "vault_auth_backend" "blah" {
 		t.Fatalf("unexpected tokens: %s", diff)
 	}
 }
+
+func TestDecoder_SemanticTokensInFile_extensions_countUndeclared(t *testing.T) {
+	bodySchema := &schema.BodySchema{
+		Blocks: map[string]*schema.BlockSchema{
+			"resource": {
+				Body: &schema.BodySchema{
+					Extensions: &schema.BodyExtensions{
+						Count: true,
+					},
+					Attributes: map[string]*schema.AttributeSchema{
+						"cpu_count": {
+							Expr: schema.LiteralTypeOnly(cty.Number),
+						},
+					},
+				},
+				Labels: []*schema.LabelSchema{
+					{
+						Name:     "type",
+						IsDepKey: true,
+						SemanticTokenModifiers: lang.SemanticTokenModifiers{
+							lang.TokenModifierDependent,
+						},
+					},
+					{Name: "name"},
+				},
+			},
+		},
+	}
+
+	testCfg := []byte(`
+resource "vault_auth_backend" "blah" {
+  cpu_count = count.index
+}
+`)
+
+	f, pDiags := hclsyntax.ParseConfig(testCfg, "test.tf", hcl.InitialPos)
+	if len(pDiags) > 0 {
+		t.Fatal(pDiags)
+	}
+
+	d := testPathDecoder(t, &PathContext{
+		Schema: bodySchema,
+		Files: map[string]*hcl.File{
+			"test.tf": f,
+		},
+	})
+
+	ctx := context.Background()
+
+	tokens, err := d.SemanticTokensInFile(ctx, "test.tf")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	expectedTokens := []lang.SemanticToken{
+		{ // resource
+			Type:      lang.TokenBlockType,
+			Modifiers: []lang.SemanticTokenModifier{},
+			Range: hcl.Range{
+				Filename: "test.tf",
+				Start: hcl.Pos{
+					Line:   2,
+					Column: 1,
+					Byte:   1,
+				},
+				End: hcl.Pos{
+					Line:   2,
+					Column: 9,
+					Byte:   9,
+				},
+			},
+		},
+		{ // vault_auth_backend
+			Type: lang.TokenBlockLabel,
+			Modifiers: []lang.SemanticTokenModifier{
+				lang.TokenModifierDependent,
+			},
+			Range: hcl.Range{
+				Filename: "test.tf",
+				Start: hcl.Pos{
+					Line:   2,
+					Column: 10,
+					Byte:   10,
+				},
+				End: hcl.Pos{
+					Line:   2,
+					Column: 30,
+					Byte:   30,
+				},
+			},
+		},
+		{ // blah
+			Type:      lang.TokenBlockLabel,
+			Modifiers: []lang.SemanticTokenModifier{},
+			Range: hcl.Range{
+				Filename: "test.tf",
+				Start: hcl.Pos{
+					Line:   2,
+					Column: 31,
+					Byte:   31,
+				},
+				End: hcl.Pos{
+					Line:   2,
+					Column: 37,
+					Byte:   37,
+				},
+			},
+		},
+		{ // cpu_count
+			Type:      lang.TokenAttrName,
+			Modifiers: lang.SemanticTokenModifiers{},
+			Range: hcl.Range{
+				Filename: "test.tf",
+				Start: hcl.Pos{
+					Line:   3,
+					Column: 3,
+					Byte:   42,
+				},
+				End: hcl.Pos{
+					Line:   3,
+					Column: 12,
+					Byte:   51,
+				},
+			},
+		},
+	}
+
+	diff := cmp.Diff(expectedTokens, tokens)
+	if diff != "" {
+		t.Fatalf("unexpected tokens: %s", diff)
+	}
+}
