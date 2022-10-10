@@ -61,9 +61,6 @@ func (be *BodyExtensions) Copy() *BodyExtensions {
 
 	return &BodyExtensions{
 		Count:         be.Count,
-		ForEach:       be.ForEach,
-		DynamicBlocks: be.DynamicBlocks,
-		SelfRefs:      be.SelfRefs,
 	}
 }
 
