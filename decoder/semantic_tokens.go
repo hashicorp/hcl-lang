@@ -2,7 +2,6 @@ package decoder
 
 import (
 	"context"
-	"log"
 	"sort"
 
 	"github.com/zclconf/go-cty/cty"
@@ -48,20 +47,17 @@ func (d *PathDecoder) tokensForBody(ctx context.Context, body *hclsyntax.Body, b
 		return tokens
 	}
 
+	// TODO: test for count extension used in root BodySchema
 	if bodySchema.Extensions != nil {
-		ctx = icontext.WithExtensions(ctx, bodySchema.Extensions)
 		if bodySchema.Extensions.Count {
 			if _, ok := body.Attributes["count"]; ok {
 				// append to context we need count provided
 				ctx = icontext.WithActiveCount(ctx)
-				log.Printf("Found Expression: ")
 			}
 		}
 	}
 
 	for name, attr := range body.Attributes {
-
-		log.Printf("Found: %q / %v+", name, bodySchema.Extensions)
 		attrSchema, ok := bodySchema.Attributes[name]
 		if !ok {
 			if bodySchema.Extensions != nil && name == "count" && bodySchema.Extensions.Count {
@@ -93,8 +89,6 @@ func (d *PathDecoder) tokensForBody(ctx context.Context, body *hclsyntax.Body, b
 		})
 
 		ec := ExprConstraints(attrSchema.Expr)
-		countAvailable := icontext.ActiveCountFromContext(ctx)
-		log.Printf("Found Expression: countAvailable %t", countAvailable)
 		tokens = append(tokens, d.tokensForExpression(ctx, attr.Expr, ec)...)
 	}
 
@@ -136,6 +130,15 @@ func (d *PathDecoder) tokensForBody(ctx context.Context, body *hclsyntax.Body, b
 		}
 
 		if block.Body != nil {
+			// TODO: Test for count.index in a sub-block
+			if blockSchema.Body != nil && blockSchema.Body.Extensions != nil {
+				if blockSchema.Body.Extensions.Count {
+					if _, ok := block.Body.Attributes["count"]; ok {
+						// append to context we need count provided
+						ctx = icontext.WithActiveCount(ctx)
+					}
+				}
+			}
 			tokens = append(tokens, d.tokensForBody(ctx, block.Body, blockSchema.Body, blockModifiers)...)
 		}
 
@@ -176,7 +179,6 @@ func (d *PathDecoder) tokensForExpression(ctx context.Context, expr hclsyntax.Ex
 		}
 		countAvailable := icontext.ActiveCountFromContext(ctx)
 		// TODO why is countAvailable not true here?
-		log.Printf("Found Expression: %t / %t - %v+", countAvailable, address.Equals(countIndexAttr), address)
 		// if address.Equals(countIndexAttr) && countAvailable {
 		if address.Equals(countIndexAttr) && countAvailable {
 			traversal := eType.AsTraversal()

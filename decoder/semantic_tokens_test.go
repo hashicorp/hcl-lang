@@ -862,8 +862,12 @@ func TestDecoder_SemanticTokensInFile_expression_extensions(t *testing.T) {
 						Count: true,
 					},
 					Attributes: map[string]*schema.AttributeSchema{
-						"cpu_count": {
-							Expr: schema.LiteralTypeOnly(cty.Number),
+						"cpu_core_count": {
+							Expr: schema.ExprConstraints{
+								schema.TraversalExpr{OfType: cty.Number},
+								schema.LiteralTypeExpr{Type: cty.Number},
+							},
+							IsOptional: true,
 						},
 					},
 				},
@@ -882,9 +886,9 @@ func TestDecoder_SemanticTokensInFile_expression_extensions(t *testing.T) {
 	}
 
 	testCfg := []byte(`
-resource "vault_auth_backend" "blah" {
-	count = 1
-  cpu_count = count.index
+resource "aws_instance" "app_server" {
+  count          = 1
+  cpu_core_count = count.index
 }
 `)
 
@@ -925,7 +929,7 @@ resource "vault_auth_backend" "blah" {
 				},
 			},
 		},
-		{ // vault_auth_backend
+		{ // aws_instance
 			Type: lang.TokenBlockLabel,
 			Modifiers: []lang.SemanticTokenModifier{
 				lang.TokenModifierDependent,
@@ -939,20 +943,20 @@ resource "vault_auth_backend" "blah" {
 				},
 				End: hcl.Pos{
 					Line:   2,
-					Column: 30,
-					Byte:   30,
+					Column: 24,
+					Byte:   24,
 				},
 			},
 		},
-		{ // blah
+		{ // app_server
 			Type:      lang.TokenBlockLabel,
 			Modifiers: []lang.SemanticTokenModifier{},
 			Range: hcl.Range{
 				Filename: "test.tf",
 				Start: hcl.Pos{
 					Line:   2,
-					Column: 31,
-					Byte:   31,
+					Column: 25,
+					Byte:   25,
 				},
 				End: hcl.Pos{
 					Line:   2,
@@ -968,13 +972,13 @@ resource "vault_auth_backend" "blah" {
 				Filename: "test.tf",
 				Start: hcl.Pos{
 					Line:   3,
-					Column: 2,
-					Byte:   41,
+					Column: 3,
+					Byte:   42,
 				},
 				End: hcl.Pos{
 					Line:   3,
-					Column: 7,
-					Byte:   46,
+					Column: 8,
+					Byte:   47,
 				},
 			},
 		},
@@ -985,17 +989,17 @@ resource "vault_auth_backend" "blah" {
 				Filename: "test.tf",
 				Start: hcl.Pos{
 					Line:   3,
-					Column: 10,
-					Byte:   49,
+					Column: 20,
+					Byte:   59,
 				},
 				End: hcl.Pos{
 					Line:   3,
-					Column: 11,
-					Byte:   50,
+					Column: 21,
+					Byte:   60,
 				},
 			},
 		},
-		{ // cpu_count
+		{ // cpu_core_count
 			Type:      lang.TokenAttrName,
 			Modifiers: lang.SemanticTokenModifiers{},
 			Range: hcl.Range{
@@ -1003,29 +1007,29 @@ resource "vault_auth_backend" "blah" {
 				Start: hcl.Pos{
 					Line:   4,
 					Column: 3,
-					Byte:   53,
+					Byte:   63,
 				},
 				End: hcl.Pos{
 					Line:   4,
-					Column: 12,
-					Byte:   62,
+					Column: 17,
+					Byte:   77,
 				},
 			},
 		},
-		{ // count.
+		{ // count
 			Type:      lang.TokenTraversalStep,
 			Modifiers: lang.SemanticTokenModifiers{},
 			Range: hcl.Range{
 				Filename: "test.tf",
 				Start: hcl.Pos{
 					Line:   4,
-					Column: 15,
-					Byte:   65,
+					Column: 20,
+					Byte:   80,
 				},
 				End: hcl.Pos{
 					Line:   4,
-					Column: 20,
-					Byte:   70,
+					Column: 25,
+					Byte:   85,
 				},
 			},
 		},
@@ -1036,13 +1040,229 @@ resource "vault_auth_backend" "blah" {
 				Filename: "test.tf",
 				Start: hcl.Pos{
 					Line:   4,
-					Column: 20,
-					Byte:   70,
+					Column: 25,
+					Byte:   85,
 				},
 				End: hcl.Pos{
 					Line:   4,
-					Column: 26,
-					Byte:   76,
+					Column: 31,
+					Byte:   91,
+				},
+			},
+		},
+	}
+
+	diff := cmp.Diff(expectedTokens, tokens)
+	if diff != "" {
+		t.Fatalf("unexpected tokens: %s", diff)
+	}
+}
+
+func TestDecoder_SemanticTokensInFile_expression_extensions_depSchema(t *testing.T) {
+	bodySchema := &schema.BodySchema{
+		Blocks: map[string]*schema.BlockSchema{
+			"resource": {
+				Body: &schema.BodySchema{
+					Extensions: &schema.BodyExtensions{
+						Count: true,
+					},
+				},
+				DependentBody: map[schema.SchemaKey]*schema.BodySchema{
+					schema.NewSchemaKey(schema.DependencyKeys{
+						Labels: []schema.LabelDependent{
+							{
+								Index: 0,
+								Value: "aws_instance",
+							},
+						},
+					}): {
+						Attributes: map[string]*schema.AttributeSchema{
+							"cpu_core_count": {
+								Expr: schema.ExprConstraints{
+									schema.TraversalExpr{OfType: cty.Number},
+									schema.LiteralTypeExpr{Type: cty.Number},
+								},
+								IsOptional: true,
+							},
+						},
+					},
+				},
+				Labels: []*schema.LabelSchema{
+					{
+						Name:     "type",
+						IsDepKey: true,
+						SemanticTokenModifiers: lang.SemanticTokenModifiers{
+							lang.TokenModifierDependent,
+						},
+					},
+					{Name: "name"},
+				},
+			},
+		},
+	}
+
+	testCfg := []byte(`
+resource "aws_instance" "app_server" {
+  count          = 1
+  cpu_core_count = count.index
+}
+`)
+
+	f, pDiags := hclsyntax.ParseConfig(testCfg, "test.tf", hcl.InitialPos)
+	if len(pDiags) > 0 {
+		t.Fatal(pDiags)
+	}
+
+	d := testPathDecoder(t, &PathContext{
+		Schema: bodySchema,
+		Files: map[string]*hcl.File{
+			"test.tf": f,
+		},
+	})
+
+	ctx := context.Background()
+
+	tokens, err := d.SemanticTokensInFile(ctx, "test.tf")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	expectedTokens := []lang.SemanticToken{
+		{ // resource
+			Type:      lang.TokenBlockType,
+			Modifiers: []lang.SemanticTokenModifier{},
+			Range: hcl.Range{
+				Filename: "test.tf",
+				Start: hcl.Pos{
+					Line:   2,
+					Column: 1,
+					Byte:   1,
+				},
+				End: hcl.Pos{
+					Line:   2,
+					Column: 9,
+					Byte:   9,
+				},
+			},
+		},
+		{ // aws_instance
+			Type: lang.TokenBlockLabel,
+			Modifiers: []lang.SemanticTokenModifier{
+				lang.TokenModifierDependent,
+			},
+			Range: hcl.Range{
+				Filename: "test.tf",
+				Start: hcl.Pos{
+					Line:   2,
+					Column: 10,
+					Byte:   10,
+				},
+				End: hcl.Pos{
+					Line:   2,
+					Column: 24,
+					Byte:   24,
+				},
+			},
+		},
+		{ // app_server
+			Type:      lang.TokenBlockLabel,
+			Modifiers: []lang.SemanticTokenModifier{},
+			Range: hcl.Range{
+				Filename: "test.tf",
+				Start: hcl.Pos{
+					Line:   2,
+					Column: 25,
+					Byte:   25,
+				},
+				End: hcl.Pos{
+					Line:   2,
+					Column: 37,
+					Byte:   37,
+				},
+			},
+		},
+		{ // count
+			Type:      lang.TokenAttrName,
+			Modifiers: lang.SemanticTokenModifiers{},
+			Range: hcl.Range{
+				Filename: "test.tf",
+				Start: hcl.Pos{
+					Line:   3,
+					Column: 3,
+					Byte:   42,
+				},
+				End: hcl.Pos{
+					Line:   3,
+					Column: 8,
+					Byte:   47,
+				},
+			},
+		},
+		{ // 1
+			Type:      lang.TokenNumber,
+			Modifiers: lang.SemanticTokenModifiers{},
+			Range: hcl.Range{
+				Filename: "test.tf",
+				Start: hcl.Pos{
+					Line:   3,
+					Column: 20,
+					Byte:   59,
+				},
+				End: hcl.Pos{
+					Line:   3,
+					Column: 21,
+					Byte:   60,
+				},
+			},
+		},
+		{ // cpu_core_count
+			Type:      lang.TokenAttrName,
+			Modifiers: lang.SemanticTokenModifiers{},
+			Range: hcl.Range{
+				Filename: "test.tf",
+				Start: hcl.Pos{
+					Line:   4,
+					Column: 3,
+					Byte:   63,
+				},
+				End: hcl.Pos{
+					Line:   4,
+					Column: 17,
+					Byte:   77,
+				},
+			},
+		},
+		{ // count
+			Type:      lang.TokenTraversalStep,
+			Modifiers: lang.SemanticTokenModifiers{},
+			Range: hcl.Range{
+				Filename: "test.tf",
+				Start: hcl.Pos{
+					Line:   4,
+					Column: 20,
+					Byte:   80,
+				},
+				End: hcl.Pos{
+					Line:   4,
+					Column: 25,
+					Byte:   85,
+				},
+			},
+		},
+		{ // .index
+			Type:      lang.TokenTraversalStep,
+			Modifiers: lang.SemanticTokenModifiers{},
+			Range: hcl.Range{
+				Filename: "test.tf",
+				Start: hcl.Pos{
+					Line:   4,
+					Column: 25,
+					Byte:   85,
+				},
+				End: hcl.Pos{
+					Line:   4,
+					Column: 31,
+					Byte:   91,
 				},
 			},
 		},
