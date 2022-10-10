@@ -61,13 +61,7 @@ func (d *PathDecoder) hoverAtPos(ctx context.Context, body *hclsyntax.Body, body
 
 			if bodySchema.Extensions != nil {
 				if name == "count" && bodySchema.Extensions.Count {
-					return &lang.HoverData{
-						Content: lang.MarkupContent{
-							Kind:  lang.MarkdownKind,
-							Value: "**count** _optional, number_\n\nThe distinct index number (starting with 0) corresponding to the instance",
-						},
-						Range: attr.Range(),
-					}, nil
+					return countAttributeHoverData(attr.Range()), nil
 				}
 			}
 
@@ -267,13 +261,7 @@ func (d *PathDecoder) hoverDataForExpr(ctx context.Context, expr hcl.Expression,
 				Name: "index",
 			},
 		}) && icontext.ActiveCountFromContext(ctx) {
-			return &lang.HoverData{
-				Content: lang.MarkupContent{
-					Kind:  lang.MarkdownKind,
-					Value: "**count** _optional, number_\n\nThe distinct index number (starting with 0) corresponding to the instance",
-				},
-				Range: expr.Range(),
-			}, nil
+			return countAttributeHoverData(expr.Range()), nil
 		}
 
 		tes, ok := constraints.TraversalExprs()

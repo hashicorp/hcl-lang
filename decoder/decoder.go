@@ -3,6 +3,7 @@ package decoder
 import (
 	"fmt"
 
+	"github.com/hashicorp/hcl-lang/lang"
 	"github.com/hashicorp/hcl-lang/schema"
 	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hclsyntax"
@@ -156,4 +157,28 @@ func decodeBody(body hcl.Body, bodySchema *schema.BodySchema) bodyContent {
 
 func stringPos(pos hcl.Pos) string {
 	return fmt.Sprintf("%d,%d", pos.Line, pos.Column)
+}
+
+func countAttributeCandidate(editRng hcl.Range) lang.Candidate {
+	return lang.Candidate{
+		Label:       "count",
+		Detail:      "optional, number",
+		Description: lang.PlainText("The distinct index number (starting with 0) corresponding to the instance"),
+		Kind:        lang.AttributeCandidateKind,
+		TextEdit: lang.TextEdit{
+			NewText: "count",
+			Snippet: "count = ${1:1}",
+			Range:   editRng,
+		},
+	}
+}
+
+func countAttributeHoverData(editRng hcl.Range) *lang.HoverData {
+	return &lang.HoverData{
+		Content: lang.MarkupContent{
+			Kind:  lang.MarkdownKind,
+			Value: "**count** _optional, number_\n\nThe distinct index number (starting with 0) corresponding to the instance",
+		},
+		Range: editRng,
+	}
 }

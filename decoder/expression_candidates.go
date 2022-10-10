@@ -464,17 +464,7 @@ func (d *PathDecoder) candidatesForTraversalConstraint(ctx context.Context, tc s
 
 	ext, ok := icontext.ExtensionsFromContext(ctx)
 	if ok && ext.Count && icontext.ActiveCountFromContext(ctx) {
-		candidates = append(candidates, lang.Candidate{
-			Label:       "count.index",
-			Detail:      "number",
-			Description: lang.PlainText("The distinct index number (starting with 0) corresponding to the instance"),
-			Kind:        lang.TraversalCandidateKind,
-			TextEdit: lang.TextEdit{
-				NewText: "count.index",
-				Snippet: "count.index",
-				Range:   editRng,
-			},
-		})
+		candidates = append(candidates, countAttributeCandidate(editRng))
 	}
 
 	if d.pathCtx.ReferenceTargets == nil {
