@@ -268,8 +268,11 @@ func (d *PathDecoder) hoverDataForExpr(ctx context.Context, expr hcl.Expression,
 			},
 		}) && icontext.ActiveCountFromContext(ctx) {
 			return &lang.HoverData{
-				Content: lang.Markdown("**count.index**  fooooo"),
-				Range:   expr.Range(),
+				Content: lang.MarkupContent{
+					Kind:  lang.MarkdownKind,
+					Value: "**count** _optional, number_\n\nThe distinct index number (starting with 0) corresponding to the instance",
+				},
+				Range: expr.Range(),
 			}, nil
 		}
 
