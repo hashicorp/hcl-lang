@@ -8,7 +8,6 @@ import (
 
 	"github.com/zclconf/go-cty/cty"
 
-	icontext "github.com/hashicorp/hcl-lang/context"
 	"github.com/hashicorp/hcl-lang/lang"
 	"github.com/hashicorp/hcl-lang/reference"
 	"github.com/hashicorp/hcl-lang/schema"
@@ -50,7 +49,7 @@ func (d *PathDecoder) hoverAtPos(ctx context.Context, body *hclsyntax.Body, body
 		if bodySchema.Extensions.Count {
 			if _, ok := body.Attributes["count"]; ok {
 				// append to context we need count provided
-				ctx = icontext.WithActiveCount(ctx)
+				ctx = schema.WithActiveCount(ctx)
 			}
 		}
 	}
@@ -259,7 +258,7 @@ func (d *PathDecoder) hoverDataForExpr(ctx context.Context, expr hcl.Expression,
 			lang.AttrStep{
 				Name: "index",
 			},
-		}) && icontext.ActiveCountFromContext(ctx) {
+		}) && schema.ActiveCountFromContext(ctx) {
 			return countAttributeHoverData(expr.Range()), nil
 		}
 

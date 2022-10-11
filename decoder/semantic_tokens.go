@@ -6,7 +6,6 @@ import (
 
 	"github.com/zclconf/go-cty/cty"
 
-	icontext "github.com/hashicorp/hcl-lang/context"
 	"github.com/hashicorp/hcl-lang/lang"
 	"github.com/hashicorp/hcl-lang/reference"
 	"github.com/hashicorp/hcl-lang/schema"
@@ -52,7 +51,7 @@ func (d *PathDecoder) tokensForBody(ctx context.Context, body *hclsyntax.Body, b
 		if bodySchema.Extensions.Count {
 			if _, ok := body.Attributes["count"]; ok {
 				// append to context we need count provided
-				ctx = icontext.WithActiveCount(ctx)
+				ctx = schema.WithActiveCount(ctx)
 			}
 		}
 	}
@@ -131,7 +130,7 @@ func (d *PathDecoder) tokensForBody(ctx context.Context, body *hclsyntax.Body, b
 				if blockSchema.Body.Extensions.Count {
 					if _, ok := block.Body.Attributes["count"]; ok {
 						// append to context we need count provided
-						ctx = icontext.WithActiveCount(ctx)
+						ctx = schema.WithActiveCount(ctx)
 					}
 				}
 			}
@@ -173,7 +172,7 @@ func (d *PathDecoder) tokensForExpression(ctx context.Context, expr hclsyntax.Ex
 				Name: "index",
 			},
 		}
-		countAvailable := icontext.ActiveCountFromContext(ctx)
+		countAvailable := schema.ActiveCountFromContext(ctx)
 		// TODO why is countAvailable not true here?
 		// if address.Equals(countIndexAttr) && countAvailable {
 		if address.Equals(countIndexAttr) && countAvailable {

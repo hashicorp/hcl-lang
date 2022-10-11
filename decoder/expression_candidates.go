@@ -9,7 +9,6 @@ import (
 
 	"github.com/zclconf/go-cty/cty"
 
-	icontext "github.com/hashicorp/hcl-lang/context"
 	"github.com/hashicorp/hcl-lang/lang"
 	"github.com/hashicorp/hcl-lang/reference"
 	"github.com/hashicorp/hcl-lang/schema"
@@ -462,7 +461,7 @@ func (d *PathDecoder) constraintToCandidates(ctx context.Context, constraint sch
 func (d *PathDecoder) candidatesForTraversalConstraint(ctx context.Context, tc schema.TraversalExpr, outerBodyRng, prefixRng, editRng hcl.Range) []lang.Candidate {
 	candidates := make([]lang.Candidate, 0)
 
-	if icontext.ActiveCountFromContext(ctx) {
+	if schema.ActiveCountFromContext(ctx) {
 		candidates = append(candidates, countIndexCandidate(editRng))
 	}
 
