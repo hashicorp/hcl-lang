@@ -6,13 +6,12 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/zclconf/go-cty/cty"
-
 	"github.com/hashicorp/hcl-lang/lang"
 	"github.com/hashicorp/hcl-lang/reference"
 	"github.com/hashicorp/hcl-lang/schema"
 	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hclsyntax"
+	"github.com/zclconf/go-cty/cty"
 )
 
 func (d *PathDecoder) HoverAtPos(ctx context.Context, filename string, pos hcl.Pos) (*lang.HoverData, error) {
@@ -56,7 +55,6 @@ func (d *PathDecoder) hoverAtPos(ctx context.Context, body *hclsyntax.Body, body
 
 	for name, attr := range body.Attributes {
 		if attr.Range().ContainsPos(pos) {
-
 			if bodySchema.Extensions != nil {
 				if name == "count" && bodySchema.Extensions.Count {
 					return countAttributeHoverData(attr.Range()), nil

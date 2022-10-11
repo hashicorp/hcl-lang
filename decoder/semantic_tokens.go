@@ -4,13 +4,12 @@ import (
 	"context"
 	"sort"
 
-	"github.com/zclconf/go-cty/cty"
-
 	"github.com/hashicorp/hcl-lang/lang"
 	"github.com/hashicorp/hcl-lang/reference"
 	"github.com/hashicorp/hcl-lang/schema"
 	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hclsyntax"
+	"github.com/zclconf/go-cty/cty"
 )
 
 // SemanticTokensInFile returns a sequence of semantic tokens
@@ -46,7 +45,6 @@ func (d *PathDecoder) tokensForBody(ctx context.Context, body *hclsyntax.Body, b
 		return tokens
 	}
 
-	// TODO: test for count extension used in root BodySchema
 	if bodySchema.Extensions != nil {
 		if bodySchema.Extensions.Count {
 			if _, ok := body.Attributes["count"]; ok {
@@ -125,7 +123,6 @@ func (d *PathDecoder) tokensForBody(ctx context.Context, body *hclsyntax.Body, b
 		}
 
 		if block.Body != nil {
-			// TODO: Test for count.index in a sub-block
 			if blockSchema.Body != nil && blockSchema.Body.Extensions != nil {
 				if blockSchema.Body.Extensions.Count {
 					if _, ok := block.Body.Attributes["count"]; ok {
@@ -164,6 +161,7 @@ func (d *PathDecoder) tokensForExpression(ctx context.Context, expr hclsyntax.Ex
 		}
 
 		address, _ := lang.TraversalToAddress(eType.AsTraversal())
+		countAvailable := schema.ActiveCountFromContext(ctx)
 		countIndexAttr := lang.Address{
 			lang.RootStep{
 				Name: "count",
@@ -172,16 +170,16 @@ func (d *PathDecoder) tokensForExpression(ctx context.Context, expr hclsyntax.Ex
 				Name: "index",
 			},
 		}
-		countAvailable := schema.ActiveCountFromContext(ctx)
-		// TODO why is countAvailable not true here?
-		// if address.Equals(countIndexAttr) && countAvailable {
+
 		if address.Equals(countIndexAttr) && countAvailable {
 			traversal := eType.AsTraversal()
+
 			tokens = append(tokens, lang.SemanticToken{
 				Type:      lang.TokenTraversalStep,
 				Modifiers: []lang.SemanticTokenModifier{},
 				Range:     traversal[0].SourceRange(),
 			})
+
 			tokens = append(tokens, lang.SemanticToken{
 				Type:      lang.TokenTraversalStep,
 				Modifiers: []lang.SemanticTokenModifier{},
