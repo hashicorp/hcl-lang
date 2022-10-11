@@ -8,14 +8,14 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
-	"github.com/zclconf/go-cty-debug/ctydebug"
-	"github.com/zclconf/go-cty/cty"
 
 	"github.com/hashicorp/hcl-lang/lang"
 	"github.com/hashicorp/hcl-lang/schema"
 	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hclsyntax"
 	"github.com/hashicorp/hcl/v2/json"
+	"github.com/zclconf/go-cty-debug/ctydebug"
+	"github.com/zclconf/go-cty/cty"
 )
 
 func TestDecoder_CandidatesAtPos_noSchema(t *testing.T) {
@@ -460,7 +460,7 @@ func TestDecoder_CandidatesAtPos_rightHandSide(t *testing.T) {
 		},
 	}
 	testConfig := []byte(`myblock "foo" {
-  num_attr = 
+  num_attr =
 }
 `)
 
