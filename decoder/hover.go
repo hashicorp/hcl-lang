@@ -248,7 +248,10 @@ func (d *PathDecoder) hoverDataForExpr(ctx context.Context, expr hcl.Expression,
 			}, nil
 		}
 
-		address, _ := lang.TraversalToAddress(e.AsTraversal())
+		address, err := lang.TraversalToAddress(e.AsTraversal())
+		if err != nil {
+			return nil, err
+		}
 		if address.Equals(lang.Address{
 			lang.RootStep{
 				Name: "count",

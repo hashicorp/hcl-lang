@@ -974,7 +974,10 @@ func TestDecoder_HoverAtPos_extension(t *testing.T) {
 }
 `)
 
-	f, _ := hclsyntax.ParseConfig(testConfig, "test.tf", hcl.InitialPos)
+	f, err := hclsyntax.ParseConfig(testConfig, "test.tf", hcl.InitialPos)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	d := testPathDecoder(t, &PathContext{
 		Schema: bodySchema,

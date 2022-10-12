@@ -160,7 +160,10 @@ func (d *PathDecoder) tokensForExpression(ctx context.Context, expr hclsyntax.Ex
 			}
 		}
 
-		address, _ := lang.TraversalToAddress(eType.AsTraversal())
+		address, err := lang.TraversalToAddress(eType.AsTraversal())
+		if err != nil {
+			return tokens
+		}
 		countAvailable := schema.ActiveCountFromContext(ctx)
 		countIndexAttr := lang.Address{
 			lang.RootStep{
