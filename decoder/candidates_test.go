@@ -459,7 +459,7 @@ func TestDecoder_CandidatesAtPos_rightHandSide(t *testing.T) {
 		},
 	}
 	testConfig := []byte(`myblock "foo" {
-  num_attr =
+  num_attr = 
 }
 `)
 
