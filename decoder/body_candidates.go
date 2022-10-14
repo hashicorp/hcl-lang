@@ -17,6 +17,17 @@ func (d *PathDecoder) bodySchemaCandidates(body *hclsyntax.Body, schema *schema.
 	candidates := lang.NewCandidates()
 	count := 0
 
+	if schema.Extensions != nil {
+		// check if count attribute "extension" is enabled here
+		if schema.Extensions.Count {
+			// check if count attribute is already declared, so we don't
+			// suggest a duplicate
+			if _, ok := body.Attributes["count"]; !ok {
+				candidates.List = append(candidates.List, countAttributeCandidate(editRng))
+			}
+		}
+	}
+
 	if len(schema.Attributes) > 0 {
 		attrNames := sortedAttributeNames(schema.Attributes)
 		for _, name := range attrNames {

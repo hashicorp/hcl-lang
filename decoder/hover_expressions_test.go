@@ -1,6 +1,7 @@
 package decoder
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"testing"
@@ -1282,7 +1283,8 @@ _object_`),
 				},
 			})
 
-			data, err := d.HoverAtPos("test.tf", tc.pos)
+			ctx := context.Background()
+			data, err := d.HoverAtPos(ctx, "test.tf", tc.pos)
 
 			if err != nil {
 				if tc.expectedErr != nil && !errors.As(err, &tc.expectedErr) {
@@ -1483,7 +1485,8 @@ func TestDecoder_HoverAtPos_traversalExpressions(t *testing.T) {
 				},
 			})
 
-			data, err := d.HoverAtPos("test.tf", tc.pos)
+			ctx := context.Background()
+			data, err := d.HoverAtPos(ctx, "test.tf", tc.pos)
 			if err != nil {
 				if tc.expectedErr != nil && !errors.As(err, &tc.expectedErr) {
 					t.Fatalf("unexpected error: %s\nexpected: %s\n",

@@ -1,6 +1,7 @@
 package decoder
 
 import (
+	"context"
 	"fmt"
 	"sort"
 	"strings"
@@ -13,7 +14,7 @@ import (
 	"github.com/zclconf/go-cty/cty"
 )
 
-func (d *PathDecoder) HoverAtPos(filename string, pos hcl.Pos) (*lang.HoverData, error) {
+func (d *PathDecoder) HoverAtPos(ctx context.Context, filename string, pos hcl.Pos) (*lang.HoverData, error) {
 	f, err := d.fileByName(filename)
 	if err != nil {
 		return nil, err
@@ -28,7 +29,7 @@ func (d *PathDecoder) HoverAtPos(filename string, pos hcl.Pos) (*lang.HoverData,
 		return nil, &NoSchemaError{}
 	}
 
-	data, err := d.hoverAtPos(rootBody, d.pathCtx.Schema, pos)
+	data, err := d.hoverAtPos(ctx, rootBody, d.pathCtx.Schema, pos)
 	if err != nil {
 		return nil, err
 	}
@@ -36,15 +37,30 @@ func (d *PathDecoder) HoverAtPos(filename string, pos hcl.Pos) (*lang.HoverData,
 	return data, nil
 }
 
-func (d *PathDecoder) hoverAtPos(body *hclsyntax.Body, bodySchema *schema.BodySchema, pos hcl.Pos) (*lang.HoverData, error) {
+func (d *PathDecoder) hoverAtPos(ctx context.Context, body *hclsyntax.Body, bodySchema *schema.BodySchema, pos hcl.Pos) (*lang.HoverData, error) {
 	if bodySchema == nil {
 		return nil, nil
 	}
 
 	filename := body.Range().Filename
 
+	if bodySchema.Extensions != nil {
+		if bodySchema.Extensions.Count {
+			if _, ok := body.Attributes["count"]; ok {
+				// append to context we need count provided
+				ctx = schema.WithActiveCount(ctx)
+			}
+		}
+	}
+
 	for name, attr := range body.Attributes {
 		if attr.Range().ContainsPos(pos) {
+			if bodySchema.Extensions != nil {
+				if name == "count" && bodySchema.Extensions.Count {
+					return countAttributeHoverData(attr.Range()), nil
+				}
+			}
+
 			aSchema, ok := bodySchema.Attributes[attr.Name]
 			if !ok {
 				if bodySchema.AnyAttribute == nil {
@@ -66,7 +82,7 @@ func (d *PathDecoder) hoverAtPos(body *hclsyntax.Body, bodySchema *schema.BodySc
 
 			if attr.Expr.Range().ContainsPos(pos) {
 				exprCons := ExprConstraints(aSchema.Expr)
-				data, err := d.hoverDataForExpr(attr.Expr, exprCons, 0, pos)
+				data, err := d.hoverDataForExpr(ctx, attr.Expr, exprCons, 0, pos)
 				if err != nil {
 					return nil, &PositionalError{
 						Filename: filename,
@@ -128,7 +144,7 @@ func (d *PathDecoder) hoverAtPos(body *hclsyntax.Body, bodySchema *schema.BodySc
 					return nil, err
 				}
 
-				return d.hoverAtPos(block.Body, mergedSchema, pos)
+				return d.hoverAtPos(ctx, block.Body, mergedSchema, pos)
 			}
 		}
 	}
@@ -215,7 +231,7 @@ func (d *PathDecoder) hoverContentForBlock(bType string, schema *schema.BlockSch
 	}
 }
 
-func (d *PathDecoder) hoverDataForExpr(expr hcl.Expression, constraints ExprConstraints, nestingLvl int, pos hcl.Pos) (*lang.HoverData, error) {
+func (d *PathDecoder) hoverDataForExpr(ctx context.Context, expr hcl.Expression, constraints ExprConstraints, nestingLvl int, pos hcl.Pos) (*lang.HoverData, error) {
 	switch e := expr.(type) {
 	case *hclsyntax.ScopeTraversalExpr:
 		kw, ok := constraints.KeywordExpr()
@@ -230,6 +246,21 @@ func (d *PathDecoder) hoverDataForExpr(expr hcl.Expression, constraints ExprCons
 				Content: lang.Markdown(fmt.Sprintf("`%s` _%s_", kw.Keyword, kw.FriendlyName())),
 				Range:   expr.Range(),
 			}, nil
+		}
+
+		address, err := lang.TraversalToAddress(e.AsTraversal())
+		if err != nil {
+			return nil, err
+		}
+		if address.Equals(lang.Address{
+			lang.RootStep{
+				Name: "count",
+			},
+			lang.AttrStep{
+				Name: "index",
+			},
+		}) && schema.ActiveCountFromContext(ctx) {
+			return countAttributeHoverData(expr.Range()), nil
 		}
 
 		tes, ok := constraints.TraversalExprs()
@@ -261,7 +292,7 @@ func (d *PathDecoder) hoverDataForExpr(expr hcl.Expression, constraints ExprCons
 		}
 	case *hclsyntax.TemplateExpr:
 		if e.IsStringLiteral() {
-			data, err := d.hoverDataForExpr(e.Parts[0], constraints, nestingLvl, pos)
+			data, err := d.hoverDataForExpr(ctx, e.Parts[0], constraints, nestingLvl, pos)
 			if err != nil {
 				return nil, err
 			}
@@ -295,7 +326,7 @@ func (d *PathDecoder) hoverDataForExpr(expr hcl.Expression, constraints ExprCons
 			}
 		}
 	case *hclsyntax.TemplateWrapExpr:
-		data, err := d.hoverDataForExpr(e.Wrapped, constraints, nestingLvl, pos)
+		data, err := d.hoverDataForExpr(ctx, e.Wrapped, constraints, nestingLvl, pos)
 		if err != nil {
 			return nil, err
 		}
@@ -320,7 +351,7 @@ func (d *PathDecoder) hoverDataForExpr(expr hcl.Expression, constraints ExprCons
 		if ok {
 			for _, elemExpr := range e.Exprs {
 				if elemExpr.Range().ContainsPos(pos) {
-					return d.hoverDataForExpr(elemExpr, ExprConstraints(se.Elem), nestingLvl, pos)
+					return d.hoverDataForExpr(ctx, elemExpr, ExprConstraints(se.Elem), nestingLvl, pos)
 				}
 			}
 			content := fmt.Sprintf("_%s_", se.FriendlyName())
@@ -336,7 +367,7 @@ func (d *PathDecoder) hoverDataForExpr(expr hcl.Expression, constraints ExprCons
 		if ok {
 			for _, elemExpr := range e.Exprs {
 				if elemExpr.Range().ContainsPos(pos) {
-					return d.hoverDataForExpr(elemExpr, ExprConstraints(le.Elem), nestingLvl, pos)
+					return d.hoverDataForExpr(ctx, elemExpr, ExprConstraints(le.Elem), nestingLvl, pos)
 				}
 			}
 			content := fmt.Sprintf("_%s_", le.FriendlyName())
@@ -356,7 +387,7 @@ func (d *PathDecoder) hoverDataForExpr(expr hcl.Expression, constraints ExprCons
 						return nil, &ConstraintMismatch{elemExpr}
 					}
 					ec := ExprConstraints(te.Elems[i])
-					return d.hoverDataForExpr(elemExpr, ec, nestingLvl, pos)
+					return d.hoverDataForExpr(ctx, elemExpr, ec, nestingLvl, pos)
 				}
 			}
 			content := fmt.Sprintf("_%s_", te.FriendlyName())
@@ -393,7 +424,7 @@ func (d *PathDecoder) hoverDataForExpr(expr hcl.Expression, constraints ExprCons
 	case *hclsyntax.ObjectConsExpr:
 		objExpr, ok := constraints.ObjectExpr()
 		if ok {
-			return d.hoverDataForObjectExpr(e, objExpr, nestingLvl, pos)
+			return d.hoverDataForObjectExpr(ctx, e, objExpr, nestingLvl, pos)
 		}
 		mapExpr, ok := constraints.MapExpr()
 		if ok {
@@ -469,7 +500,7 @@ func (d *PathDecoder) hoverDataForExpr(expr hcl.Expression, constraints ExprCons
 	return nil, fmt.Errorf("unsupported expression (%T)", expr)
 }
 
-func (d *PathDecoder) hoverDataForObjectExpr(objExpr *hclsyntax.ObjectConsExpr, oe schema.ObjectExpr, nestingLvl int, pos hcl.Pos) (*lang.HoverData, error) {
+func (d *PathDecoder) hoverDataForObjectExpr(ctx context.Context, objExpr *hclsyntax.ObjectConsExpr, oe schema.ObjectExpr, nestingLvl int, pos hcl.Pos) (*lang.HoverData, error) {
 	declaredAttributes := make(map[string]hclsyntax.Expression, 0)
 	for _, item := range objExpr.Items {
 		key, _ := item.KeyExpr.Value(nil)
@@ -485,7 +516,7 @@ func (d *PathDecoder) hoverDataForObjectExpr(objExpr *hclsyntax.ObjectConsExpr, 
 		}
 
 		if item.ValueExpr.Range().ContainsPos(pos) {
-			return d.hoverDataForExpr(item.ValueExpr, ExprConstraints(attr.Expr), nestingLvl+1, pos)
+			return d.hoverDataForExpr(ctx, item.ValueExpr, ExprConstraints(attr.Expr), nestingLvl+1, pos)
 		}
 
 		itemRng := hcl.RangeBetween(item.KeyExpr.Range(), item.ValueExpr.Range())
@@ -526,7 +557,7 @@ func (d *PathDecoder) hoverDataForObjectExpr(objExpr *hclsyntax.ObjectConsExpr, 
 		attrData := ec.FriendlyName()
 
 		if attrExpr, ok := declaredAttributes[name]; ok {
-			data, err := d.hoverDataForExpr(attrExpr, ExprConstraints(ec), nestingLvl+1, pos)
+			data, err := d.hoverDataForExpr(ctx, attrExpr, ExprConstraints(ec), nestingLvl+1, pos)
 			if err == nil && data.Content.Value != "" {
 				attrData = data.Content.Value
 			}

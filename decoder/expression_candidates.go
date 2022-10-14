@@ -35,7 +35,7 @@ func (d *PathDecoder) attrValueCandidatesAtPos(ctx context.Context, attr *hclsyn
 				return candidates, nil
 			}
 
-			candidates.List = append(candidates.List, d.constraintToCandidates(c, outerBodyRng, prefixRng, editRng)...)
+			candidates.List = append(candidates.List, d.constraintToCandidates(ctx, c, outerBodyRng, prefixRng, editRng)...)
 			count++
 		}
 	}
@@ -305,7 +305,7 @@ func (d *PathDecoder) candidatesFromHooks(ctx context.Context, attr *hclsyntax.A
 	return candidates
 }
 
-func (d *PathDecoder) constraintToCandidates(constraint schema.ExprConstraint, outerBodyRng, prefixRng, editRng hcl.Range) []lang.Candidate {
+func (d *PathDecoder) constraintToCandidates(ctx context.Context, constraint schema.ExprConstraint, outerBodyRng, prefixRng, editRng hcl.Range) []lang.Candidate {
 	candidates := make([]lang.Candidate, 0)
 
 	switch c := constraint.(type) {
@@ -328,7 +328,7 @@ func (d *PathDecoder) constraintToCandidates(constraint schema.ExprConstraint, o
 			},
 		})
 	case schema.TraversalExpr:
-		candidates = append(candidates, d.candidatesForTraversalConstraint(c, outerBodyRng, prefixRng, editRng)...)
+		candidates = append(candidates, d.candidatesForTraversalConstraint(ctx, c, outerBodyRng, prefixRng, editRng)...)
 	case schema.TupleConsExpr:
 		candidates = append(candidates, lang.Candidate{
 			Label:       fmt.Sprintf(`[%s]`, labelForConstraints(c.AnyElem)),
@@ -457,8 +457,12 @@ func (d *PathDecoder) constraintToCandidates(constraint schema.ExprConstraint, o
 	return candidates
 }
 
-func (d *PathDecoder) candidatesForTraversalConstraint(tc schema.TraversalExpr, outerBodyRng, prefixRng, editRng hcl.Range) []lang.Candidate {
+func (d *PathDecoder) candidatesForTraversalConstraint(ctx context.Context, tc schema.TraversalExpr, outerBodyRng, prefixRng, editRng hcl.Range) []lang.Candidate {
 	candidates := make([]lang.Candidate, 0)
+
+	if schema.ActiveCountFromContext(ctx) {
+		candidates = append(candidates, countIndexCandidate(editRng))
+	}
 
 	if d.pathCtx.ReferenceTargets == nil {
 		return candidates

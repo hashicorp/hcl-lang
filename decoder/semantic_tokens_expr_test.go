@@ -1,6 +1,7 @@
 package decoder
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
@@ -1435,6 +1436,9 @@ EOT
 
 	for i, tc := range testCases {
 		t.Run(fmt.Sprintf("%d-%s", i, tc.name), func(t *testing.T) {
+
+			ctx := context.Background()
+
 			bodySchema := &schema.BodySchema{
 				Attributes: tc.attrSchema,
 			}
@@ -1451,7 +1455,7 @@ EOT
 				},
 			})
 
-			tokens, err := d.SemanticTokensInFile("test.tf")
+			tokens, err := d.SemanticTokensInFile(ctx, "test.tf")
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -1912,6 +1916,8 @@ func TestDecoder_SemanticTokensInFile_traversalExpression(t *testing.T) {
 		},
 	}
 
+	ctx := context.Background()
+
 	for i, tc := range testCases {
 		t.Run(fmt.Sprintf("%d-%s", i, tc.name), func(t *testing.T) {
 			bodySchema := &schema.BodySchema{
@@ -1931,7 +1937,7 @@ func TestDecoder_SemanticTokensInFile_traversalExpression(t *testing.T) {
 				},
 			})
 
-			tokens, err := d.SemanticTokensInFile("test.tf")
+			tokens, err := d.SemanticTokensInFile(ctx, "test.tf")
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -2227,6 +2233,8 @@ func TestDecoder_SemanticTokensInFile_typeDeclaration(t *testing.T) {
 		},
 	}
 
+	ctx := context.Background()
+
 	for i, tc := range testCases {
 		t.Run(fmt.Sprintf("%d-%s", i, tc.name), func(t *testing.T) {
 			bodySchema := &schema.BodySchema{
@@ -2245,7 +2253,7 @@ func TestDecoder_SemanticTokensInFile_typeDeclaration(t *testing.T) {
 				},
 			})
 
-			tokens, err := d.SemanticTokensInFile("test.tf")
+			tokens, err := d.SemanticTokensInFile(ctx, "test.tf")
 			if err != nil {
 				t.Fatal(err)
 			}

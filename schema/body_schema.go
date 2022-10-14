@@ -45,6 +45,23 @@ type BodySchema struct {
 	// referenced from still unknown locations during the build of the module
 	// schema.
 	ImpliedOrigins ImpliedOrigins
+
+	// Extensions represents any HCL extensions supported in this body
+	Extensions *BodyExtensions
+}
+
+type BodyExtensions struct {
+	Count bool // count attribute + count.index refs
+}
+
+func (be *BodyExtensions) Copy() *BodyExtensions {
+	if be == nil {
+		return nil
+	}
+
+	return &BodyExtensions{
+		Count: be.Count,
+	}
 }
 
 type ImpliedOrigins []ImpliedOrigin
@@ -176,6 +193,7 @@ func (bs *BodySchema) Copy() *BodySchema {
 		HoverURL:     bs.HoverURL,
 		DocsLink:     bs.DocsLink.Copy(),
 		Targets:      bs.Targets.Copy(),
+		Extensions:   bs.Extensions.Copy(),
 	}
 
 	if bs.TargetableAs != nil {

@@ -48,6 +48,15 @@ func (d *PathDecoder) candidatesAtPos(ctx context.Context, body *hclsyntax.Body,
 
 	filename := body.Range().Filename
 
+	if bodySchema.Extensions != nil {
+		if bodySchema.Extensions.Count {
+			if _, ok := body.Attributes["count"]; ok {
+				// append to context we need count completed
+				ctx = schema.WithActiveCount(ctx)
+			}
+		}
+	}
+
 	for _, attr := range body.Attributes {
 		if d.isPosInsideAttrExpr(attr, pos) {
 			if aSchema, ok := bodySchema.Attributes[attr.Name]; ok {
