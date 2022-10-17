@@ -32,3 +32,13 @@ func WithActiveForEach(ctx context.Context) context.Context {
 func ActiveForEachFromContext(ctx context.Context) bool {
 	return ctx.Value(bodyActiveForEachCtxKey{}) != nil
 }
+
+type bodyActiveDynamicBlockCtxKey struct{}
+
+func WithActiveDynamicBlock(ctx context.Context) context.Context {
+	return context.WithValue(ctx, bodyActiveDynamicBlockCtxKey{}, true)
+}
+
+func ActiveActiveDynamicBlockFromContext(ctx context.Context) bool {
+	return ctx.Value(bodyActiveDynamicBlockCtxKey{}) != nil
+}

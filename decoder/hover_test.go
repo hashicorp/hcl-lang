@@ -1238,3 +1238,85 @@ func TestDecoder_HoverAtPos_foreach_extension(t *testing.T) {
 		})
 	}
 }
+
+func TestDecoder_HoverAtPos_dynamic_extension(t *testing.T) {
+	testCases := []struct {
+		name         string
+		bodySchema   *schema.BodySchema
+		config       string
+		pos          hcl.Pos
+		expectedData *lang.HoverData
+	}{
+		{
+			"dynamic block",
+			&schema.BodySchema{
+				Blocks: map[string]*schema.BlockSchema{
+					"myblock": {
+						Labels: []*schema.LabelSchema{
+							{Name: "type", IsDepKey: true}, {Name: "name"},
+						},
+						Body: &schema.BodySchema{
+							Extensions: &schema.BodyExtensions{
+								DynamicBlocks: true,
+							},
+						},
+						DependentBody: map[schema.SchemaKey]*schema.BodySchema{
+							schema.NewSchemaKey(schema.DependencyKeys{
+								Labels: []schema.LabelDependent{
+									{Index: 0, Value: "setting"},
+								},
+							}): {
+								Extensions: &schema.BodyExtensions{
+									DynamicBlocks: true,
+								},
+							},
+						},
+					},
+				},
+			},
+			`myblock "foo" "bar" {
+  dynamic "thing" {	}
+}
+`,
+			hcl.Pos{Line: 2, Column: 5, Byte: 26},
+			&lang.HoverData{
+				Content: lang.MarkupContent{
+					Value: "**dynamic** _Block, map_\n\n" +
+						"A dynamic block to produce blocks dynamically by iterating over a given complex value",
+					Kind: lang.MarkdownKind,
+				},
+				Range: hcl.Range{
+					Filename: "test.tf",
+					Start:    hcl.Pos{Line: 2, Column: 3, Byte: 24},
+					End:      hcl.Pos{Line: 2, Column: 10, Byte: 31},
+				},
+			},
+		},
+	}
+
+	for i, tc := range testCases {
+		t.Run(fmt.Sprintf("%d-%s", i, tc.name), func(t *testing.T) {
+			ctx := context.Background()
+
+			f, diags := hclsyntax.ParseConfig([]byte(tc.config), "test.tf", hcl.InitialPos)
+			if diags != nil {
+				t.Fatal(diags)
+			}
+
+			d := testPathDecoder(t, &PathContext{
+				Schema: tc.bodySchema,
+				Files: map[string]*hcl.File{
+					"test.tf": f,
+				},
+			})
+
+			data, err := d.HoverAtPos(ctx, "test.tf", tc.pos)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if diff := cmp.Diff(tc.expectedData, data, ctydebug.CmpOptions); diff != "" {
+				t.Fatalf("hover data mismatch: %s", diff)
+			}
+		})
+	}
+}
