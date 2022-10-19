@@ -463,6 +463,10 @@ func (d *PathDecoder) candidatesForTraversalConstraint(ctx context.Context, tc s
 	if schema.ActiveCountFromContext(ctx) {
 		candidates = append(candidates, countIndexCandidate(editRng))
 	}
+	
+	if schema.ActiveForEachFromContext(ctx) {
+		candidates = append(candidates, foreachEachCandidate(editRng)...)
+	}
 
 	if d.pathCtx.ReferenceTargets == nil {
 		return candidates

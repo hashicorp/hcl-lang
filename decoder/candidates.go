@@ -55,6 +55,15 @@ func (d *PathDecoder) candidatesAtPos(ctx context.Context, body *hclsyntax.Body,
 				ctx = schema.WithActiveCount(ctx)
 			}
 		}
+		
+		if bodySchema.Extensions.ForEach {
+			ctx = schema.WithActiveForEach(ctx)
+			
+			// if _, ok := body.Attributes["count"]; ok {
+			// 	// append to context we need foreach completed
+			// 	ctx = schema.WithActiveForEach(ctx)
+			// }
+		}
 	}
 
 	for _, attr := range body.Attributes {

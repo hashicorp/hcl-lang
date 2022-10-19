@@ -197,3 +197,56 @@ func countAttributeHoverData(editRng hcl.Range) *lang.HoverData {
 		Range: editRng,
 	}
 }
+
+func forEachAttributeCandidate(editRng hcl.Range) lang.Candidate {
+	return lang.Candidate{
+		Label:  "foreach",
+		Detail: "optional, string", // this should be a map or set of strings
+		Description: lang.MarkupContent{
+			Kind: lang.MarkdownKind,
+			Value: "A meta-argument that accepts a map or a set of strings, and creates an instance for each item in that map or set." +
+				" Each instance has a distinct infrastructure object associated with it, and each is separately created, updated, or" +
+				" destroyed when the configuration is applied. " +
+				"**Note**: A given resource or module block cannot use both count and for_each.",
+		},
+		Kind: lang.AttributeCandidateKind,
+		TextEdit: lang.TextEdit{
+			NewText: "for_each",
+			Snippet: "for_each {\n ${1}\n}",
+			Range:   editRng,
+		},
+	}
+}
+
+func foreachEachCandidate(editRng hcl.Range) []lang.Candidate {
+	return []lang.Candidate{
+		lang.Candidate{
+			Label:  "each.key",
+			Detail: "string",
+			Description: lang.MarkupContent{
+				Value: "The map key (or set member) corresponding to this instance",
+				Kind:  lang.MarkdownKind,
+			},
+			Kind: lang.TraversalCandidateKind,
+			TextEdit: lang.TextEdit{
+				NewText: "each.key",
+				Snippet: "each.key",
+				Range:   editRng,
+			},
+		},
+		lang.Candidate{
+			Label:  "each.value",
+			Detail: "string",
+			Description: lang.MarkupContent{
+				Value: "The map value corresponding to this instance. (If a set was provided, this is the same as `each.key`.)",
+				Kind:  lang.MarkdownKind,
+			},
+			Kind: lang.TraversalCandidateKind,
+			TextEdit: lang.TextEdit{
+				NewText: "each.value",
+				Snippet: "each.value",
+				Range:   editRng,
+			},
+		},
+	}
+}

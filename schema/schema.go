@@ -22,3 +22,13 @@ func WithActiveCount(ctx context.Context) context.Context {
 func ActiveCountFromContext(ctx context.Context) bool {
 	return ctx.Value(bodyActiveCountCtxKey{}) != nil
 }
+
+type bodyActiveForEachCtxKey struct{}
+
+func WithActiveForEach(ctx context.Context) context.Context {
+	return context.WithValue(ctx, bodyActiveForEachCtxKey{}, true)
+}
+
+func ActiveForEachFromContext(ctx context.Context) bool {
+	return ctx.Value(bodyActiveForEachCtxKey{}) != nil
+}

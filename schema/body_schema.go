@@ -51,7 +51,8 @@ type BodySchema struct {
 }
 
 type BodyExtensions struct {
-	Count bool // count attribute + count.index refs
+	Count   bool // count attribute + count.index refs
+	ForEach bool // for_each attribute + each.* refs
 }
 
 func (be *BodyExtensions) Copy() *BodyExtensions {
@@ -61,6 +62,7 @@ func (be *BodyExtensions) Copy() *BodyExtensions {
 
 	return &BodyExtensions{
 		Count: be.Count,
+		ForEach: be.ForEach,
 	}
 }
 
