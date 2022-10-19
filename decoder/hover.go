@@ -51,6 +51,10 @@ func (d *PathDecoder) hoverAtPos(ctx context.Context, body *hclsyntax.Body, body
 				ctx = schema.WithActiveCount(ctx)
 			}
 		}
+
+		if bodySchema.Extensions.ForEach {
+			ctx = schema.WithActiveForEach(ctx)
+		}
 	}
 
 	for name, attr := range body.Attributes {
@@ -58,6 +62,10 @@ func (d *PathDecoder) hoverAtPos(ctx context.Context, body *hclsyntax.Body, body
 			if bodySchema.Extensions != nil {
 				if name == "count" && bodySchema.Extensions.Count {
 					return countAttributeHoverData(attr.Range()), nil
+				}
+				
+				if name == "for_each" && bodySchema.Extensions.ForEach {
+					return foreachHoverData(attr.Range()), nil
 				}
 			}
 
@@ -252,6 +260,7 @@ func (d *PathDecoder) hoverDataForExpr(ctx context.Context, expr hcl.Expression,
 		if err != nil {
 			return nil, err
 		}
+
 		if address.Equals(lang.Address{
 			lang.RootStep{
 				Name: "count",
@@ -261,6 +270,28 @@ func (d *PathDecoder) hoverDataForExpr(ctx context.Context, expr hcl.Expression,
 			},
 		}) && schema.ActiveCountFromContext(ctx) {
 			return countAttributeHoverData(expr.Range()), nil
+		}
+
+		if address.Equals(lang.Address{
+			lang.RootStep{
+				Name: "each",
+			},
+			lang.AttrStep{
+				Name: "key",
+			},
+		}) && schema.ActiveForEachFromContext(ctx) {
+			return eachKeyHoverData(expr.Range()), nil
+		}
+		
+		if address.Equals(lang.Address{
+			lang.RootStep{
+				Name: "each",
+			},
+			lang.AttrStep{
+				Name: "value",
+			},
+		}) && schema.ActiveForEachFromContext(ctx) {
+			return eachValueHoverData(expr.Range()), nil
 		}
 
 		tes, ok := constraints.TraversalExprs()

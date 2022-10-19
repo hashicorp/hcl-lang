@@ -253,3 +253,37 @@ func foreachEachCandidate(editRng hcl.Range) []lang.Candidate {
 		},
 	}
 }
+
+func foreachHoverData(editRng hcl.Range) *lang.HoverData {
+	return &lang.HoverData{
+		Content: lang.MarkupContent{
+			Kind: lang.MarkdownKind,
+			Value: "**for_each** _optional, set or map of any type_\n\n" +
+				"A meta-argument that accepts a map or a set of strings, and creates an instance for each item in that map or set." +
+				" Each instance has a distinct infrastructure object associated with it, and each is separately created, updated, or" +
+				" destroyed when the configuration is applied.\n\n" +
+				"**Note**: A given resource or module block cannot use both count and for_each.",
+		},
+		Range: editRng,
+	}
+}
+
+func eachKeyHoverData(editRng hcl.Range) *lang.HoverData {
+	return &lang.HoverData{
+		Content: lang.MarkupContent{
+			Kind:  lang.MarkdownKind,
+			Value: "**each.key** _optional, string_\n\nThe map key (or set member) corresponding to this instance",
+		},
+		Range: editRng,
+	}
+}
+
+func eachValueHoverData(editRng hcl.Range) *lang.HoverData {
+	return &lang.HoverData{
+		Content: lang.MarkupContent{
+			Kind:  lang.MarkdownKind,
+			Value: "**each.value** _optional, string_\n\nThe map value corresponding to this instance. (If a set was provided, this is the same as `each.key`.)",
+		},
+		Range: editRng,
+	}
+}
