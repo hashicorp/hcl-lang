@@ -565,7 +565,80 @@ func TestCompletionAtPos_BodySchema_Extensions(t *testing.T) {
 			}),
 		},
 		{
-			"for_each attribute completion with DependentBody",
+			"for_each does not complete with count present",
+			&schema.BodySchema{
+				Blocks: map[string]*schema.BlockSchema{
+					"resource": {
+						Labels: []*schema.LabelSchema{
+							{
+								Name:     "type",
+								IsDepKey: true,
+							},
+							{
+								Name: "name",
+							},
+						},
+						Body: &schema.BodySchema{
+							Extensions: &schema.BodyExtensions{
+								ForEach: true,
+								Count:   true,
+							},
+						},
+						DependentBody: map[schema.SchemaKey]*schema.BodySchema{
+							schema.NewSchemaKey(schema.DependencyKeys{
+								Labels: []schema.LabelDependent{
+									{
+										Index: 0,
+										Value: "aws_instance",
+									},
+								},
+							}): {
+								Attributes: map[string]*schema.AttributeSchema{
+									"type": {
+										Expr:       schema.LiteralTypeOnly(cty.String),
+										IsOptional: true,
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			`resource "aws_instance" "foo" {
+	count = 1
+	
+}`,
+			hcl.Pos{
+				Line:   2,
+				Column: 1,
+				Byte:   32,
+			},
+			lang.CompleteCandidates([]lang.Candidate{
+				{
+					Label:  "type",
+					Detail: "optional, string",
+					TextEdit: lang.TextEdit{
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start: hcl.Pos{
+								Line:   2,
+								Column: 1,
+								Byte:   32,
+							},
+							End: hcl.Pos{
+								Line:   2,
+								Column: 1,
+								Byte:   32,
+							},
+						},
+						NewText: "type",
+						Snippet: `type = "${1:value}"`,
+					},
+					Kind: lang.AttributeCandidateKind,
+				}}),
+		},
+		{
+			"each.* attribute completion with DependentBody",
 			&schema.BodySchema{
 				Blocks: map[string]*schema.BlockSchema{
 					"resource": {

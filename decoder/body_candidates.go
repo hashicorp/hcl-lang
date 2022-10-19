@@ -28,12 +28,11 @@ func (d *PathDecoder) bodySchemaCandidates(body *hclsyntax.Body, schema *schema.
 		}
 
 		if schema.Extensions.ForEach {
-			candidates.List = append(candidates.List, forEachAttributeCandidate(editRng))
 			// A given resource or module block cannot use both count and for_each
 			// in the same block
-			// if _, ok := body.Attributes["count"]; !ok {
-			// 	candidates.List = append(candidates.List, forEachAttributeCandidate(editRng))
-			// }
+			if _, ok := body.Attributes["count"]; !ok {
+				candidates.List = append(candidates.List, forEachAttributeCandidate(editRng))
+			}
 		}
 	}
 
