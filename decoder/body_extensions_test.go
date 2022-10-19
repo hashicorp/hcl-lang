@@ -564,6 +564,122 @@ func TestCompletionAtPos_BodySchema_Extensions(t *testing.T) {
 				},
 			}),
 		},
+		{
+			"for_each attribute completion with DependentBody",
+			&schema.BodySchema{
+				Blocks: map[string]*schema.BlockSchema{
+					"resource": {
+						Labels: []*schema.LabelSchema{
+							{
+								Name:     "type",
+								IsDepKey: true,
+							},
+							{
+								Name: "name",
+							},
+						},
+						Body: &schema.BodySchema{
+							Extensions: &schema.BodyExtensions{
+								ForEach: true,
+							},
+							Attributes: map[string]*schema.AttributeSchema{
+								"name": {
+									IsOptional: true,
+									Expr: schema.ExprConstraints{
+										schema.TraversalExpr{
+											OfType: cty.String,
+										},
+									},
+								},
+							},
+						},
+						DependentBody: map[schema.SchemaKey]*schema.BodySchema{
+							schema.NewSchemaKey(schema.DependencyKeys{
+								Labels: []schema.LabelDependent{
+									{
+										Index: 0,
+										Value: "aws_instance",
+									},
+								},
+							}): {
+								Attributes: map[string]*schema.AttributeSchema{
+									"type": {
+										Expr:       schema.LiteralTypeOnly(cty.String),
+										IsOptional: true,
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			`resource "aws_instance" "foo" {
+	for_each = {
+		a_group = "eastus"
+		another_group = "westus2"
+	}
+	name = 
+}`,
+			hcl.Pos{
+				Line:   6,
+				Column: 10,
+				Byte:   106,
+			},
+			lang.CompleteCandidates([]lang.Candidate{
+				{
+					Label:  "each.key",
+					Detail: "string",
+					Kind:   lang.TraversalCandidateKind,
+					Description: lang.MarkupContent{
+						Value: "The map key (or set member) corresponding to this instance",
+						Kind:  lang.MarkdownKind,
+					},
+					TextEdit: lang.TextEdit{
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start: hcl.Pos{
+								Line:   6,
+								Column: 9,
+								Byte:   106,
+							},
+							End: hcl.Pos{
+								Line:   6,
+								Column: 9,
+								Byte:   106,
+							},
+						},
+						NewText: "each.key",
+						Snippet: "each.key",
+					},
+				},
+				{
+					Label:  "each.value",
+					Detail: "string",
+					Kind:   lang.TraversalCandidateKind,
+					Description: lang.MarkupContent{
+						Value: "The map value corresponding to this instance. (If a set was provided, this is the same as `each.key`.)",
+						Kind:  lang.MarkdownKind,
+					},
+					TextEdit: lang.TextEdit{
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start: hcl.Pos{
+								Line:   6,
+								Column: 9,
+								Byte:   106,
+							},
+							End: hcl.Pos{
+								Line:   6,
+								Column: 9,
+								Byte:   106,
+							},
+						},
+						NewText: "each.value",
+						Snippet: "each.value",
+					},
+				},
+			}),
+		},
 	}
 
 	for i, tc := range testCases {
