@@ -365,6 +365,202 @@ func TestCompletionAtPos_BodySchema_Extensions(t *testing.T) {
 				},
 			}),
 		},
+		{
+			"count attribute completion with DependentBody",
+			&schema.BodySchema{
+				Blocks: map[string]*schema.BlockSchema{
+					"resource": {
+						Labels: []*schema.LabelSchema{
+							{
+								Name:     "type",
+								IsDepKey: true,
+							},
+							{
+								Name: "name",
+							},
+						},
+						Body: &schema.BodySchema{
+							Extensions: &schema.BodyExtensions{
+								Count: true,
+							},
+						},
+						DependentBody: map[schema.SchemaKey]*schema.BodySchema{
+							schema.NewSchemaKey(schema.DependencyKeys{
+								Labels: []schema.LabelDependent{
+									{
+										Index: 0,
+										Value: "aws_instance",
+									},
+								},
+							}): {
+								Attributes: map[string]*schema.AttributeSchema{
+									"type": {
+										Expr:       schema.LiteralTypeOnly(cty.String),
+										IsOptional: true,
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			`resource "aws_instance" "foo" {
+
+}`,
+			hcl.Pos{
+				Line:   2,
+				Column: 1,
+				Byte:   32,
+			},
+			lang.CompleteCandidates([]lang.Candidate{
+				{
+					Label: "count",
+					Description: lang.MarkupContent{
+						Value: "The distinct index number (starting with 0) corresponding to the instance",
+						Kind:  lang.PlainTextKind,
+					},
+					Detail: "optional, number",
+					TextEdit: lang.TextEdit{
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start: hcl.Pos{
+								Line:   2,
+								Column: 1,
+								Byte:   32,
+							},
+							End: hcl.Pos{
+								Line:   2,
+								Column: 1,
+								Byte:   32,
+							},
+						},
+						NewText: "count",
+						Snippet: "count = ${1:1}",
+					},
+					Kind: lang.AttributeCandidateKind,
+				},
+				{
+					Label:  "type",
+					Detail: "optional, string",
+					TextEdit: lang.TextEdit{
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start: hcl.Pos{
+								Line:   2,
+								Column: 1,
+								Byte:   32,
+							},
+							End: hcl.Pos{
+								Line:   2,
+								Column: 1,
+								Byte:   32,
+							},
+						},
+						NewText: "type",
+						Snippet: `type = "${1:value}"`,
+					},
+					Kind: lang.AttributeCandidateKind,
+				},
+			}),
+		},
+		{
+			"for_each attribute completion with DependentBody",
+			&schema.BodySchema{
+				Blocks: map[string]*schema.BlockSchema{
+					"resource": {
+						Labels: []*schema.LabelSchema{
+							{
+								Name:     "type",
+								IsDepKey: true,
+							},
+							{
+								Name: "name",
+							},
+						},
+						Body: &schema.BodySchema{
+							Extensions: &schema.BodyExtensions{
+								ForEach: true,
+							},
+						},
+						DependentBody: map[schema.SchemaKey]*schema.BodySchema{
+							schema.NewSchemaKey(schema.DependencyKeys{
+								Labels: []schema.LabelDependent{
+									{
+										Index: 0,
+										Value: "aws_instance",
+									},
+								},
+							}): {
+								Attributes: map[string]*schema.AttributeSchema{
+									"type": {
+										Expr:       schema.LiteralTypeOnly(cty.String),
+										IsOptional: true,
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			`resource "aws_instance" "foo" {
+
+}`,
+			hcl.Pos{
+				Line:   2,
+				Column: 1,
+				Byte:   32,
+			},
+			lang.CompleteCandidates([]lang.Candidate{
+				{
+					Label: "for_each",
+					Description: lang.MarkupContent{
+						Value: "A set or a map where each item represents an instance",
+						Kind:  lang.PlainTextKind,
+					},
+					Detail: "optional, set or map of any type",
+					TextEdit: lang.TextEdit{
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start: hcl.Pos{
+								Line:   2,
+								Column: 1,
+								Byte:   32,
+							},
+							End: hcl.Pos{
+								Line:   2,
+								Column: 1,
+								Byte:   32,
+							},
+						},
+						NewText: "for_each",
+						Snippet: "for_each = ${1:1}",
+					},
+					Kind: lang.AttributeCandidateKind,
+				},
+				{
+					Label:  "type",
+					Detail: "optional, string",
+					TextEdit: lang.TextEdit{
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start: hcl.Pos{
+								Line:   2,
+								Column: 1,
+								Byte:   32,
+							},
+							End: hcl.Pos{
+								Line:   2,
+								Column: 1,
+								Byte:   32,
+							},
+						},
+						NewText: "type",
+						Snippet: `type = "${1:value}"`,
+					},
+					Kind: lang.AttributeCandidateKind,
+				},
+			}),
+		},
 	}
 
 	for i, tc := range testCases {
