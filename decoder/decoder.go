@@ -75,7 +75,10 @@ func mergeBlockBodySchemas(block *hcl.Block, blockSchema *schema.BlockSchema) (*
 		mergedSchema.ImpliedOrigins = append(mergedSchema.ImpliedOrigins, depSchema.ImpliedOrigins...)
 		mergedSchema.Targets = depSchema.Targets.Copy()
 		mergedSchema.DocsLink = depSchema.DocsLink.Copy()
-		mergedSchema.Extensions = depSchema.Extensions.Copy()
+		
+		if depSchema.Extensions != nil {
+			mergedSchema.Extensions = depSchema.Extensions.Copy()
+		}
 	}
 
 	return mergedSchema, nil
@@ -200,13 +203,13 @@ func countAttributeHoverData(editRng hcl.Range) *lang.HoverData {
 
 func forEachAttributeCandidate(editRng hcl.Range) lang.Candidate {
 	return lang.Candidate{
-		Label:  "foreach",
-		Detail: "optional, string", // this should be a map or set of strings
+		Label:  "for_each",
+		Detail: "optional, set or map of any type",
 		Description: lang.MarkupContent{
 			Kind: lang.MarkdownKind,
 			Value: "A meta-argument that accepts a map or a set of strings, and creates an instance for each item in that map or set." +
 				" Each instance has a distinct infrastructure object associated with it, and each is separately created, updated, or" +
-				" destroyed when the configuration is applied. " +
+				" destroyed when the configuration is applied.\n\n" +
 				"**Note**: A given resource or module block cannot use both count and for_each.",
 		},
 		Kind: lang.AttributeCandidateKind,
@@ -220,7 +223,7 @@ func forEachAttributeCandidate(editRng hcl.Range) lang.Candidate {
 
 func foreachEachCandidate(editRng hcl.Range) []lang.Candidate {
 	return []lang.Candidate{
-		lang.Candidate{
+		{
 			Label:  "each.key",
 			Detail: "string",
 			Description: lang.MarkupContent{
@@ -234,7 +237,7 @@ func foreachEachCandidate(editRng hcl.Range) []lang.Candidate {
 				Range:   editRng,
 			},
 		},
-		lang.Candidate{
+		{
 			Label:  "each.value",
 			Detail: "string",
 			Description: lang.MarkupContent{
