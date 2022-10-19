@@ -61,7 +61,7 @@ func (be *BodyExtensions) Copy() *BodyExtensions {
 	}
 
 	return &BodyExtensions{
-		Count: be.Count,
+		Count:   be.Count,
 		ForEach: be.ForEach,
 	}
 }

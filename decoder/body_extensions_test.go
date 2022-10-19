@@ -515,10 +515,10 @@ func TestCompletionAtPos_BodySchema_Extensions(t *testing.T) {
 					Label: "for_each",
 					Description: lang.MarkupContent{
 						Value: "A meta-argument that accepts a map or a set of strings, and creates an instance for each item in that map or set." +
-						" Each instance has a distinct infrastructure object associated with it, and each is separately created, updated, or" +
-						" destroyed when the configuration is applied.\n\n" +
-						"**Note**: A given resource or module block cannot use both count and for_each.",
-						Kind:  lang.MarkdownKind,
+							" Each instance has a distinct infrastructure object associated with it, and each is separately created, updated, or" +
+							" destroyed when the configuration is applied.\n\n" +
+							"**Note**: A given resource or module block cannot use both count and for_each.",
+						Kind: lang.MarkdownKind,
 					},
 					Detail: "optional, set or map of any type",
 					TextEdit: lang.TextEdit{

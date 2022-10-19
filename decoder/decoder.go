@@ -75,7 +75,7 @@ func mergeBlockBodySchemas(block *hcl.Block, blockSchema *schema.BlockSchema) (*
 		mergedSchema.ImpliedOrigins = append(mergedSchema.ImpliedOrigins, depSchema.ImpliedOrigins...)
 		mergedSchema.Targets = depSchema.Targets.Copy()
 		mergedSchema.DocsLink = depSchema.DocsLink.Copy()
-		
+
 		if depSchema.Extensions != nil {
 			mergedSchema.Extensions = depSchema.Extensions.Copy()
 		}
