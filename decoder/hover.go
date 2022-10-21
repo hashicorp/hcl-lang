@@ -55,22 +55,22 @@ func (d *PathDecoder) hoverAtPos(ctx context.Context, body *hclsyntax.Body, body
 
 	for name, attr := range body.Attributes {
 		if attr.Range().ContainsPos(pos) {
-			if bodySchema.Extensions != nil {
-				if name == "count" && bodySchema.Extensions.Count {
-					return countAttributeHoverData(attr.Range()), nil
-				}
-			}
-
-			aSchema, ok := bodySchema.Attributes[attr.Name]
-			if !ok {
-				if bodySchema.AnyAttribute == nil {
-					return nil, &PositionalError{
-						Filename: filename,
-						Pos:      pos,
-						Msg:      fmt.Sprintf("unknown attribute %q", attr.Name),
+			var aSchema *schema.AttributeSchema
+			if bodySchema.Extensions != nil && bodySchema.Extensions.Count && name == "count" {
+				aSchema = countAttributeSchema()
+			} else {
+				var ok bool
+				aSchema, ok = bodySchema.Attributes[attr.Name]
+				if !ok {
+					if bodySchema.AnyAttribute == nil {
+						return nil, &PositionalError{
+							Filename: filename,
+							Pos:      pos,
+							Msg:      fmt.Sprintf("unknown attribute %q", attr.Name),
+						}
 					}
+					aSchema = bodySchema.AnyAttribute
 				}
-				aSchema = bodySchema.AnyAttribute
 			}
 
 			if attr.NameRange.ContainsPos(pos) {
@@ -260,7 +260,7 @@ func (d *PathDecoder) hoverDataForExpr(ctx context.Context, expr hcl.Expression,
 				Name: "index",
 			},
 		}) && schema.ActiveCountFromContext(ctx) {
-			return countAttributeHoverData(expr.Range()), nil
+			return countIndexHoverData(expr.Range()), nil
 		}
 
 		tes, ok := constraints.TraversalExprs()

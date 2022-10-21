@@ -172,6 +172,13 @@ func countAttributeSchema() *schema.AttributeSchema {
 	}
 }
 
+func countIndexHoverData(rng hcl.Range) *lang.HoverData {
+	return &lang.HoverData{
+		Content: lang.Markdown("`count.index` _number_\n\nThe distinct index number (starting with 0) corresponding to the instance"),
+		Range:   rng,
+	}
+}
+
 func countIndexCandidate(editRng hcl.Range) lang.Candidate {
 	return lang.Candidate{
 		Label:       "count.index",
@@ -183,15 +190,5 @@ func countIndexCandidate(editRng hcl.Range) lang.Candidate {
 			Snippet: "count.index",
 			Range:   editRng,
 		},
-	}
-}
-
-func countAttributeHoverData(editRng hcl.Range) *lang.HoverData {
-	return &lang.HoverData{
-		Content: lang.MarkupContent{
-			Kind:  lang.MarkdownKind,
-			Value: "**count** _optional, number_\n\nThe distinct index number (starting with 0) corresponding to the instance",
-		},
-		Range: editRng,
 	}
 }
