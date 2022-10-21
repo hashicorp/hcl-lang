@@ -973,6 +973,78 @@ func TestDecoder_HoverAtPos_extension(t *testing.T) {
 				},
 			},
 		},
+		{
+			"count.index reference",
+			&schema.BodySchema{
+				Blocks: map[string]*schema.BlockSchema{
+					"myblock": {
+						Labels: []*schema.LabelSchema{
+							{Name: "type", IsDepKey: true},
+							{Name: "name"},
+						},
+						Body: &schema.BodySchema{
+							Extensions: &schema.BodyExtensions{
+								Count: true,
+							},
+							Attributes: map[string]*schema.AttributeSchema{
+								"foo": {
+									IsOptional: true,
+									Expr: schema.ExprConstraints{
+										schema.TraversalExpr{OfType: cty.Number},
+										schema.LiteralTypeExpr{Type: cty.Number},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			`myblock "foo" "bar" {
+  count = 1
+  foo   = count.index
+}
+`,
+			hcl.Pos{Line: 3, Column: 15, Byte: 48},
+			&lang.HoverData{
+				Content: lang.Markdown("`count.index` _number_\n\nThe distinct index number (starting with 0) corresponding to the instance"),
+				Range: hcl.Range{
+					Filename: "test.tf",
+					Start:    hcl.Pos{Line: 3, Column: 11, Byte: 44},
+					End:      hcl.Pos{Line: 3, Column: 22, Byte: 55},
+				},
+			},
+		},
+		{
+			"count attribute value",
+			&schema.BodySchema{
+				Blocks: map[string]*schema.BlockSchema{
+					"myblock": {
+						Labels: []*schema.LabelSchema{
+							{Name: "type", IsDepKey: true},
+							{Name: "name"},
+						},
+						Body: &schema.BodySchema{
+							Extensions: &schema.BodyExtensions{
+								Count: true,
+							},
+						},
+					},
+				},
+			},
+			`myblock "foo" "bar" {
+  count = 3
+}
+`,
+			hcl.Pos{Line: 2, Column: 11, Byte: 32},
+			&lang.HoverData{
+				Content: lang.Markdown("`3` _number_"),
+				Range: hcl.Range{
+					Filename: "test.tf",
+					Start:    hcl.Pos{Line: 2, Column: 11, Byte: 32},
+					End:      hcl.Pos{Line: 2, Column: 12, Byte: 33},
+				},
+			},
+		},
 	}
 
 	for i, tc := range testCases {
