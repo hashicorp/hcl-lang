@@ -935,64 +935,34 @@ func TestDecoder_HoverAtPos_typeDeclaration(t *testing.T) {
 }
 
 func TestDecoder_HoverAtPos_extension(t *testing.T) {
-	resourceLabelSchema := []*schema.LabelSchema{
-		{Name: "type", IsDepKey: true},
-		{Name: "name"},
-	}
-	blockSchema := &schema.BlockSchema{
-		Labels:      resourceLabelSchema,
-		Description: lang.Markdown("My special block"),
-		Body: &schema.BodySchema{
-			Extensions: &schema.BodyExtensions{
-				Count: true,
-			},
-			Attributes: map[string]*schema.AttributeSchema{
-				"num_attr": {Expr: schema.LiteralTypeOnly(cty.Number)},
-				"str_attr": {
-					Expr:        schema.LiteralTypeOnly(cty.String),
-					IsOptional:  true,
-					Description: lang.PlainText("Special attribute"),
-				},
-				"bool_attr": {
-					Expr:        schema.LiteralTypeOnly(cty.Bool),
-					IsSensitive: true,
-					Description: lang.PlainText("Flag attribute"),
-				},
-			},
-		},
-		DependentBody: map[schema.SchemaKey]*schema.BodySchema{},
-	}
-	bodySchema := &schema.BodySchema{
-		Blocks: map[string]*schema.BlockSchema{
-			"myblock": blockSchema,
-		},
-	}
-	testConfig := []byte(`myblock "foo" "bar" {
-  count = 1
-  num_attr = 4
-  bool_attr = true
-}
-`)
-
-	f, err := hclsyntax.ParseConfig(testConfig, "test.tf", hcl.InitialPos)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	d := testPathDecoder(t, &PathContext{
-		Schema: bodySchema,
-		Files: map[string]*hcl.File{
-			"test.tf": f,
-		},
-	})
-
 	testCases := []struct {
 		name         string
+		bodySchema   *schema.BodySchema
+		config       string
 		pos          hcl.Pos
 		expectedData *lang.HoverData
 	}{
 		{
-			"optional attribute name",
+			"count attribute name",
+			&schema.BodySchema{
+				Blocks: map[string]*schema.BlockSchema{
+					"myblock": {
+						Labels: []*schema.LabelSchema{
+							{Name: "type", IsDepKey: true},
+							{Name: "name"},
+						},
+						Body: &schema.BodySchema{
+							Extensions: &schema.BodyExtensions{
+								Count: true,
+							},
+						},
+					},
+				},
+			},
+			`myblock "foo" "bar" {
+  count = 1
+}
+`,
 			hcl.Pos{Line: 2, Column: 5, Byte: 24},
 			&lang.HoverData{
 				Content: lang.Markdown("**count** _optional, number_\n\nThe distinct index number (starting with 0) corresponding to the instance"),
@@ -1008,6 +978,19 @@ func TestDecoder_HoverAtPos_extension(t *testing.T) {
 	for i, tc := range testCases {
 		t.Run(fmt.Sprintf("%d-%s", i, tc.name), func(t *testing.T) {
 			ctx := context.Background()
+
+			f, diags := hclsyntax.ParseConfig([]byte(tc.config), "test.tf", hcl.InitialPos)
+			if diags != nil {
+				t.Fatal(diags)
+			}
+
+			d := testPathDecoder(t, &PathContext{
+				Schema: tc.bodySchema,
+				Files: map[string]*hcl.File{
+					"test.tf": f,
+				},
+			})
+
 			data, err := d.HoverAtPos(ctx, "test.tf", tc.pos)
 			if err != nil {
 				t.Fatal(err)
