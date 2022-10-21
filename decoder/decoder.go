@@ -7,6 +7,7 @@ import (
 	"github.com/hashicorp/hcl-lang/schema"
 	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hclsyntax"
+	"github.com/zclconf/go-cty/cty"
 )
 
 type Decoder struct {
@@ -171,6 +172,17 @@ func countAttributeCandidate(editRng hcl.Range) lang.Candidate {
 			Snippet: "count = ${1:1}",
 			Range:   editRng,
 		},
+	}
+}
+
+func countAttributeSchema() *schema.AttributeSchema {
+	return &schema.AttributeSchema{
+		IsOptional: true,
+		Expr: schema.ExprConstraints{
+			schema.TraversalExpr{OfType: cty.Number},
+			schema.LiteralTypeExpr{Type: cty.Number},
+		},
+		Description: lang.Markdown("The distinct index number (starting with 0) corresponding to the instance"),
 	}
 }
 
