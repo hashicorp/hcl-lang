@@ -60,23 +60,28 @@ func TestCompletionAtPos_BodySchema_Extensions(t *testing.T) {
 					Label: "count",
 					Description: lang.MarkupContent{
 						Value: "The distinct index number (starting with 0) corresponding to the instance",
-						Kind:  lang.PlainTextKind,
+						Kind:  lang.MarkdownKind,
 					},
 					Detail: "optional, number",
-					TextEdit: lang.TextEdit{Range: hcl.Range{
-						Filename: "test.tf",
-						Start: hcl.Pos{
-							Line:   2,
-							Column: 1,
-							Byte:   32,
+					TextEdit: lang.TextEdit{
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start: hcl.Pos{
+								Line:   2,
+								Column: 1,
+								Byte:   32,
+							},
+							End: hcl.Pos{
+								Line:   2,
+								Column: 1,
+								Byte:   32,
+							},
 						},
-						End: hcl.Pos{
-							Line:   2,
-							Column: 1,
-							Byte:   32,
-						},
-					}, NewText: "count", Snippet: "count = ${1:1}"},
-					Kind: lang.AttributeCandidateKind,
+						NewText: "count",
+						Snippet: "count = ",
+					},
+					TriggerSuggest: true,
+					Kind:           lang.AttributeCandidateKind,
 				},
 			}),
 		},

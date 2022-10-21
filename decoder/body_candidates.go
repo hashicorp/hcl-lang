@@ -23,7 +23,7 @@ func (d *PathDecoder) bodySchemaCandidates(body *hclsyntax.Body, schema *schema.
 			// check if count attribute is already declared, so we don't
 			// suggest a duplicate
 			if _, ok := body.Attributes["count"]; !ok {
-				candidates.List = append(candidates.List, countAttributeCandidate(editRng))
+				candidates.List = append(candidates.List, attributeSchemaToCandidate("count", countAttributeSchema(), editRng))
 			}
 		}
 	}
