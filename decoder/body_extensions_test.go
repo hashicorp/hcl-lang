@@ -9,6 +9,7 @@ import (
 	"github.com/zclconf/go-cty/cty"
 
 	"github.com/hashicorp/hcl-lang/lang"
+	"github.com/hashicorp/hcl-lang/reference"
 	"github.com/hashicorp/hcl-lang/schema"
 	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hclsyntax"
@@ -20,6 +21,7 @@ func TestCompletionAtPos_BodySchema_Extensions(t *testing.T) {
 	testCases := []struct {
 		testName           string
 		bodySchema         *schema.BodySchema
+		referenceTargets   reference.Targets
 		cfg                string
 		pos                hcl.Pos
 		expectedCandidates lang.Candidates
@@ -45,6 +47,7 @@ func TestCompletionAtPos_BodySchema_Extensions(t *testing.T) {
 					},
 				},
 			},
+			reference.Targets{},
 			`resource "aws_instance" "foo" {
 
 }`,
@@ -58,23 +61,28 @@ func TestCompletionAtPos_BodySchema_Extensions(t *testing.T) {
 					Label: "count",
 					Description: lang.MarkupContent{
 						Value: "The distinct index number (starting with 0) corresponding to the instance",
-						Kind:  lang.PlainTextKind,
+						Kind:  lang.MarkdownKind,
 					},
 					Detail: "optional, number",
-					TextEdit: lang.TextEdit{Range: hcl.Range{
-						Filename: "test.tf",
-						Start: hcl.Pos{
-							Line:   2,
-							Column: 1,
-							Byte:   32,
+					TextEdit: lang.TextEdit{
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start: hcl.Pos{
+								Line:   2,
+								Column: 1,
+								Byte:   32,
+							},
+							End: hcl.Pos{
+								Line:   2,
+								Column: 1,
+								Byte:   32,
+							},
 						},
-						End: hcl.Pos{
-							Line:   2,
-							Column: 1,
-							Byte:   32,
-						},
-					}, NewText: "count", Snippet: "count = ${1:1}"},
-					Kind: lang.AttributeCandidateKind,
+						NewText: "count",
+						Snippet: "count = ",
+					},
+					TriggerSuggest: true,
+					Kind:           lang.AttributeCandidateKind,
 				},
 			}),
 		},
@@ -99,6 +107,7 @@ func TestCompletionAtPos_BodySchema_Extensions(t *testing.T) {
 					},
 				},
 			},
+			reference.Targets{},
 			`resource "aws_instance" "foo" {
 
 }`,
@@ -140,6 +149,7 @@ func TestCompletionAtPos_BodySchema_Extensions(t *testing.T) {
 					},
 				},
 			},
+			reference.Targets{},
 			`resource "aws_instance" "foo" {
 	cpu_count =
 }`,
@@ -181,6 +191,7 @@ func TestCompletionAtPos_BodySchema_Extensions(t *testing.T) {
 					},
 				},
 			},
+			reference.Targets{},
 			`resource "aws_instance" "foo" {
 	count = 4
 	cpu_count =
@@ -240,6 +251,7 @@ func TestCompletionAtPos_BodySchema_Extensions(t *testing.T) {
 					},
 				},
 			},
+			reference.Targets{},
 			`resource "aws_instance" "foo" {
 	count = 4
 
@@ -282,6 +294,7 @@ func TestCompletionAtPos_BodySchema_Extensions(t *testing.T) {
 					},
 				},
 			},
+			reference.Targets{},
 			`resource "aws_instance" "foo" {
 	cpu_count =
 }`,
@@ -329,6 +342,7 @@ func TestCompletionAtPos_BodySchema_Extensions(t *testing.T) {
 					},
 				},
 			},
+			reference.Targets{},
 			`resource "aws_instance" "foo" {
   count = 4
   foo {
@@ -365,6 +379,87 @@ func TestCompletionAtPos_BodySchema_Extensions(t *testing.T) {
 				},
 			}),
 		},
+		{
+			"count attribute expression completion",
+			&schema.BodySchema{
+				Blocks: map[string]*schema.BlockSchema{
+					"resource": {
+						Labels: []*schema.LabelSchema{
+							{
+								Name: "type",
+							},
+							{
+								Name: "name",
+							},
+						},
+						Body: &schema.BodySchema{
+							Extensions: &schema.BodyExtensions{
+								Count: true,
+							},
+						},
+					},
+				},
+			},
+			reference.Targets{
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "test"},
+					},
+					ScopeId: lang.ScopeId("variable"),
+					Type:    cty.Number,
+					RangePtr: &hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   4,
+							Column: 1,
+							Byte:   45,
+						},
+						End: hcl.Pos{
+							Line:   6,
+							Column: 2,
+							Byte:   79,
+						},
+					},
+				},
+			},
+			`resource "aws_instance" "foo" {
+  count = 
+}
+variable "test" {
+	type = number
+}
+`,
+			hcl.Pos{
+				Line:   2,
+				Column: 11,
+				Byte:   42,
+			},
+			lang.CompleteCandidates([]lang.Candidate{
+				{
+					Label:  "var.test",
+					Detail: "number",
+					TextEdit: lang.TextEdit{
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start: hcl.Pos{
+								Line:   2,
+								Column: 11,
+								Byte:   42,
+							},
+							End: hcl.Pos{
+								Line:   2,
+								Column: 11,
+								Byte:   42,
+							},
+						},
+						NewText: "var.test",
+						Snippet: "var.test",
+					},
+					Kind: lang.TraversalCandidateKind,
+				},
+			}),
+		},
 	}
 
 	for i, tc := range testCases {
@@ -376,6 +471,7 @@ func TestCompletionAtPos_BodySchema_Extensions(t *testing.T) {
 				Files: map[string]*hcl.File{
 					"test.tf": f,
 				},
+				ReferenceTargets: tc.referenceTargets,
 			})
 
 			candidates, err := d.CandidatesAtPos(ctx, "test.tf", tc.pos)

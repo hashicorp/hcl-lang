@@ -1575,10 +1575,12 @@ func TestDecoder_CandidatesAtPos_incompleteLabel(t *testing.T) {
 	resourceSchema := &schema.BlockSchema{
 		Labels: resourceLabelSchema,
 		Body: &schema.BodySchema{
-			Extensions: &schema.BodyExtensions{
-				Count: true,
+			Attributes: map[string]*schema.AttributeSchema{
+				"foo": {
+					IsOptional: true,
+					Expr:       schema.LiteralTypeOnly(cty.String),
+				},
 			},
-			Attributes: map[string]*schema.AttributeSchema{},
 		},
 		DependentBody: map[schema.SchemaKey]*schema.BodySchema{
 			schema.NewSchemaKey(schema.DependencyKeys{
@@ -1633,26 +1635,22 @@ res
 			"new block or attribute inside a block",
 			`
 resource "any" "ref" {
-  co
+  fo
 }
 `,
 			hcl.Pos{Line: 3, Column: 5, Byte: 28},
 			lang.CompleteCandidates([]lang.Candidate{
 				{
-					Label: "count",
-					Description: lang.MarkupContent{
-						Value: "The distinct index number (starting with 0) corresponding to the instance",
-						Kind:  lang.PlainTextKind,
-					},
-					Detail: "optional, number",
+					Label:  "foo",
+					Detail: "optional, string",
 					TextEdit: lang.TextEdit{
 						Range: hcl.Range{
 							Filename: "test.tf",
 							Start:    hcl.Pos{Line: 3, Column: 3, Byte: 26},
 							End:      hcl.Pos{Line: 3, Column: 5, Byte: 28},
 						},
-						NewText: "count",
-						Snippet: "count = ${1:1}",
+						NewText: "foo",
+						Snippet: `foo = "${1:value}"`,
 					},
 					Kind: lang.AttributeCandidateKind,
 				},

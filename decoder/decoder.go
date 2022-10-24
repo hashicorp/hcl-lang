@@ -7,6 +7,7 @@ import (
 	"github.com/hashicorp/hcl-lang/schema"
 	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hclsyntax"
+	"github.com/zclconf/go-cty/cty"
 )
 
 type Decoder struct {
@@ -160,17 +161,21 @@ func stringPos(pos hcl.Pos) string {
 	return fmt.Sprintf("%d,%d", pos.Line, pos.Column)
 }
 
-func countAttributeCandidate(editRng hcl.Range) lang.Candidate {
-	return lang.Candidate{
-		Label:       "count",
-		Detail:      "optional, number",
-		Description: lang.PlainText("The distinct index number (starting with 0) corresponding to the instance"),
-		Kind:        lang.AttributeCandidateKind,
-		TextEdit: lang.TextEdit{
-			NewText: "count",
-			Snippet: "count = ${1:1}",
-			Range:   editRng,
+func countAttributeSchema() *schema.AttributeSchema {
+	return &schema.AttributeSchema{
+		IsOptional: true,
+		Expr: schema.ExprConstraints{
+			schema.TraversalExpr{OfType: cty.Number},
+			schema.LiteralTypeExpr{Type: cty.Number},
 		},
+		Description: lang.Markdown("The distinct index number (starting with 0) corresponding to the instance"),
+	}
+}
+
+func countIndexHoverData(rng hcl.Range) *lang.HoverData {
+	return &lang.HoverData{
+		Content: lang.Markdown("`count.index` _number_\n\nThe distinct index number (starting with 0) corresponding to the instance"),
+		Range:   rng,
 	}
 }
 
@@ -185,15 +190,5 @@ func countIndexCandidate(editRng hcl.Range) lang.Candidate {
 			Snippet: "count.index",
 			Range:   editRng,
 		},
-	}
-}
-
-func countAttributeHoverData(editRng hcl.Range) *lang.HoverData {
-	return &lang.HoverData{
-		Content: lang.MarkupContent{
-			Kind:  lang.MarkdownKind,
-			Value: "**count** _optional, number_\n\nThe distinct index number (starting with 0) corresponding to the instance",
-		},
-		Range: editRng,
 	}
 }
