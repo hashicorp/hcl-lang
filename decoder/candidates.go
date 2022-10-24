@@ -55,12 +55,22 @@ func (d *PathDecoder) candidatesAtPos(ctx context.Context, body *hclsyntax.Body,
 				ctx = schema.WithActiveCount(ctx)
 			}
 		}
+
+		if bodySchema.Extensions.ForEach {
+			if _, present := body.Attributes["for_each"]; present {
+				// append to context we need foreach completed
+				ctx = schema.WithActiveForEach(ctx)
+			}
+		}
 	}
 
 	for _, attr := range body.Attributes {
 		if d.isPosInsideAttrExpr(attr, pos) {
 			if bodySchema.Extensions != nil && bodySchema.Extensions.Count && attr.Name == "count" {
 				return d.attrValueCandidatesAtPos(ctx, attr, countAttributeSchema(), outerBodyRng, pos)
+			}
+			if bodySchema.Extensions != nil && bodySchema.Extensions.ForEach && attr.Name == "for_each" {
+				return d.attrValueCandidatesAtPos(ctx, attr, forEachAttributeSchema(), outerBodyRng, pos)
 			}
 			if aSchema, ok := bodySchema.Attributes[attr.Name]; ok {
 				return d.attrValueCandidatesAtPos(ctx, attr, aSchema, outerBodyRng, pos)

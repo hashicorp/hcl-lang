@@ -51,6 +51,10 @@ func (d *PathDecoder) hoverAtPos(ctx context.Context, body *hclsyntax.Body, body
 				ctx = schema.WithActiveCount(ctx)
 			}
 		}
+
+		if bodySchema.Extensions.ForEach {
+			ctx = schema.WithActiveForEach(ctx)
+		}
 	}
 
 	for name, attr := range body.Attributes {
@@ -58,6 +62,8 @@ func (d *PathDecoder) hoverAtPos(ctx context.Context, body *hclsyntax.Body, body
 			var aSchema *schema.AttributeSchema
 			if bodySchema.Extensions != nil && bodySchema.Extensions.Count && name == "count" {
 				aSchema = countAttributeSchema()
+			} else if bodySchema.Extensions != nil && bodySchema.Extensions.ForEach && name == "for_each" {
+				aSchema = forEachAttributeSchema()
 			} else {
 				var ok bool
 				aSchema, ok = bodySchema.Attributes[attr.Name]

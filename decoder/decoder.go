@@ -172,6 +172,20 @@ func countAttributeSchema() *schema.AttributeSchema {
 	}
 }
 
+func forEachAttributeSchema() *schema.AttributeSchema {
+	return &schema.AttributeSchema{
+		IsOptional: true,
+		Expr: schema.ExprConstraints{
+			schema.TraversalExpr{OfType: cty.Map(cty.DynamicPseudoType)},
+			schema.TraversalExpr{OfType: cty.Set(cty.String)},
+			schema.LiteralTypeExpr{Type: cty.Map(cty.DynamicPseudoType)},
+			schema.LiteralTypeExpr{Type: cty.Set(cty.String)},
+		},
+		Description: lang.Markdown("A meta-argument that accepts a map or a set of strings, and creates an instance for each item in that map or set.\n\n" +
+			"**Note**: A given block cannot use both `count` and `for_each`."),
+	}
+}
+
 func countIndexHoverData(rng hcl.Range) *lang.HoverData {
 	return &lang.HoverData{
 		Content: lang.Markdown("`count.index` _number_\n\nThe distinct index number (starting with 0) corresponding to the instance"),
@@ -189,6 +203,39 @@ func countIndexCandidate(editRng hcl.Range) lang.Candidate {
 			NewText: "count.index",
 			Snippet: "count.index",
 			Range:   editRng,
+		},
+	}
+}
+
+func foreachEachCandidate(editRng hcl.Range) []lang.Candidate {
+	return []lang.Candidate{
+		{
+			Label:  "each.key",
+			Detail: "string",
+			Description: lang.MarkupContent{
+				Value: "The map key (or set member) corresponding to this instance",
+				Kind:  lang.MarkdownKind,
+			},
+			Kind: lang.TraversalCandidateKind,
+			TextEdit: lang.TextEdit{
+				NewText: "each.key",
+				Snippet: "each.key",
+				Range:   editRng,
+			},
+		},
+		{
+			Label:  "each.value",
+			Detail: "any type",
+			Description: lang.MarkupContent{
+				Value: "The map value corresponding to this instance. (If a set was provided, this is the same as `each.key`.)",
+				Kind:  lang.MarkdownKind,
+			},
+			Kind: lang.TraversalCandidateKind,
+			TextEdit: lang.TextEdit{
+				NewText: "each.value",
+				Snippet: "each.value",
+				Range:   editRng,
+			},
 		},
 	}
 }

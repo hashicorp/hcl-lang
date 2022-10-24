@@ -26,6 +26,14 @@ func (d *PathDecoder) bodySchemaCandidates(body *hclsyntax.Body, schema *schema.
 				candidates.List = append(candidates.List, attributeSchemaToCandidate("count", countAttributeSchema(), editRng))
 			}
 		}
+
+		if schema.Extensions.ForEach {
+			// check if for_each attribute is already declared, so we don't
+			// suggest a duplicate
+			if _, present := body.Attributes["for_each"]; !present {
+				candidates.List = append(candidates.List, attributeSchemaToCandidate("for_each", forEachAttributeSchema(), editRng))
+			}
+		}
 	}
 
 	if len(schema.Attributes) > 0 {
