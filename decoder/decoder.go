@@ -104,6 +104,7 @@ type blockContent struct {
 type bodyContent struct {
 	Attributes hcl.Attributes
 	Blocks     []*blockContent
+	RangePtr   *hcl.Range
 }
 
 // decodeBody produces content of either HCL or JSON body
@@ -130,6 +131,8 @@ func decodeBody(body hcl.Body, bodySchema *schema.BodySchema) bodyContent {
 				Range: block.Range(),
 			})
 		}
+
+		content.RangePtr = hclBody.Range().Ptr()
 
 		return content
 	}
