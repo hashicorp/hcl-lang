@@ -37,11 +37,11 @@ func (ro Origins) Match(localPath lang.Path, target Target, targetPath lang.Path
 	for _, refOrigin := range ro {
 		switch origin := refOrigin.(type) {
 		case LocalOrigin:
-			if localPath.Equals(targetPath) && target.Matches(origin.Address(), origin.OriginConstraints()) {
+			if localPath.Equals(targetPath) && target.Matches(origin) {
 				origins = append(origins, refOrigin)
 			}
 		case PathOrigin:
-			if origin.TargetPath.Equals(targetPath) && target.Matches(origin.Address(), origin.OriginConstraints()) {
+			if origin.TargetPath.Equals(targetPath) && target.Matches(origin) {
 				origins = append(origins, refOrigin)
 			}
 		}

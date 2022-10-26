@@ -8,7 +8,28 @@ import (
 )
 
 type Target struct {
-	Addr    lang.Address
+	// Addr represents the address of the target, as available
+	// elsewhere in the configuration
+	Addr lang.Address
+
+	// LocalAddr represents the address of the target
+	// as available *locally* (e.g. self.attr_name)
+	LocalAddr lang.Address
+
+	// TargetableFromRangePtr defines where the target is targetable from.
+	// This is considered when matching the target against origin.
+	//
+	// e.g. count.index is only available within the body of the block
+	// where count is declared (and extension enabled)
+	TargetableFromRangePtr *hcl.Range
+
+	// ScopeId provides scope for matching/filtering
+	// (in addition to Type & Addr/LocalAddr).
+	//
+	// There should never be two targets with the same Type & address,
+	// but there are contexts (e.g. completion) where we don't filter
+	// by address and may not have type either (e.g. because targets
+	// are type-unaware).
 	ScopeId lang.ScopeId
 
 	// RangePtr represents range of the whole attribute or block
@@ -31,16 +52,38 @@ type Target struct {
 	NestedTargets Targets
 }
 
+// rangeOverlaps is a copy of hcl.Range.Overlaps
+// https://github.com/hashicorp/hcl/blob/v2.14.1/pos.go#L195-L212
+// which accounts for empty ranges that are common in the context of LS
+func rangeOverlaps(one, other hcl.Range) bool {
+	switch {
+	case one.Filename != other.Filename:
+		// If the ranges are in different files then they can't possibly overlap
+		return false
+	case one.Empty() && other.Empty():
+		// Empty ranges can never overlap
+		return false
+	case one.ContainsOffset(other.Start.Byte) || one.ContainsOffset(other.End.Byte):
+		return true
+	case other.ContainsOffset(one.Start.Byte) || other.ContainsOffset(one.End.Byte):
+		return true
+	default:
+		return false
+	}
+}
+
 func (ref Target) Copy() Target {
 	return Target{
-		Addr:          ref.Addr,
-		ScopeId:       ref.ScopeId,
-		RangePtr:      copyHclRangePtr(ref.RangePtr),
-		DefRangePtr:   copyHclRangePtr(ref.DefRangePtr),
-		Type:          ref.Type, // cty.Type is immutable by design
-		Name:          ref.Name,
-		Description:   ref.Description,
-		NestedTargets: ref.NestedTargets.Copy(),
+		Addr:                   ref.Addr,
+		LocalAddr:              ref.LocalAddr,
+		TargetableFromRangePtr: copyHclRangePtr(ref.TargetableFromRangePtr),
+		ScopeId:                ref.ScopeId,
+		RangePtr:               copyHclRangePtr(ref.RangePtr),
+		DefRangePtr:            copyHclRangePtr(ref.DefRangePtr),
+		Type:                   ref.Type, // cty.Type is immutable by design
+		Name:                   ref.Name,
+		Description:            ref.Description,
+		NestedTargets:          ref.NestedTargets.Copy(),
 	}
 }
 
@@ -51,8 +94,16 @@ func copyHclRangePtr(rng *hcl.Range) *hcl.Range {
 	return rng.Ptr()
 }
 
+// Address returns any of the two non-empty addresses
+//
+// TODO: Return address based on context when we have both
 func (r Target) Address() lang.Address {
-	return r.Addr
+	addr := r.Addr
+	if len(r.LocalAddr) > 0 {
+		addr = r.LocalAddr
+	}
+
+	return addr
 }
 
 func (r Target) FriendlyName() string {
@@ -98,26 +149,32 @@ func (ref Target) ConformsToType(typ cty.Type) bool {
 	return conformsToType || (typ == cty.NilType && ref.Type == cty.NilType)
 }
 
-func (target Target) Matches(addr lang.Address, cons OriginConstraints) bool {
-	if len(target.Addr) > len(addr) {
+func (target Target) Matches(origin MatchableOrigin) bool {
+	if len(target.LocalAddr) > len(origin.Address()) && len(target.Addr) > len(origin.Address()) {
 		return false
 	}
 
-	originAddr := addr
+	originAddr, localOriginAddr := origin.Address(), origin.Address()
 
 	matchesCons := false
 
-	if len(cons) == 0 && target.Type != cty.NilType {
-		matchesCons = true
+	// Unconstrained origins should be uncommon, but they match any target
+	if len(origin.OriginConstraints()) == 0 {
+		// As long as the target is type-aware. Type-unaware targets
+		// generally don't have Type, so we avoid false positive here.
+		if target.Type != cty.NilType {
+			matchesCons = true
+		}
 	}
 
-	for _, cons := range cons {
+	for _, cons := range origin.OriginConstraints() {
 		if !target.MatchesScopeId(cons.OfScopeId) {
 			continue
 		}
 
 		if target.Type == cty.DynamicPseudoType {
-			originAddr = addr.FirstSteps(uint(len(target.Addr)))
+			originAddr = origin.Address().FirstSteps(uint(len(target.Addr)))
+			localOriginAddr = origin.Address().FirstSteps(uint(len(target.LocalAddr)))
 			matchesCons = true
 			continue
 		}
@@ -130,5 +187,10 @@ func (target Target) Matches(addr lang.Address, cons OriginConstraints) bool {
 		}
 	}
 
-	return target.Addr.Equals(originAddr) && matchesCons
+	// Reject origin if it's outside the targetable range
+	if target.TargetableFromRangePtr != nil && !rangeOverlaps(*target.TargetableFromRangePtr, origin.OriginRange()) {
+		return false
+	}
+
+	return (target.LocalAddr.Equals(localOriginAddr) || target.Addr.Equals(originAddr)) && matchesCons
 }

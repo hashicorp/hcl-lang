@@ -207,7 +207,7 @@ func (d *PathDecoder) tokensForExpression(ctx context.Context, expr hclsyntax.Ex
 				return tokens
 			}
 
-			_, targetFound := d.pathCtx.ReferenceTargets.Match(origin.Address(), origin.OriginConstraints())
+			_, targetFound := d.pathCtx.ReferenceTargets.Match(origin)
 			if !targetFound {
 				return tokens
 			}

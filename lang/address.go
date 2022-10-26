@@ -9,6 +9,13 @@ import (
 type Address []AddressStep
 
 func (a Address) Equals(addr Address) bool {
+	// Empty address may come up in context where there are
+	// two addresses for the same target and only is declared
+	// (LocalAddr / Addr) in which case we don't want the empty
+	// one to be treated as a match.
+	if len(a) == 0 && len(addr) == 0 {
+		return false
+	}
 	if len(a) != len(addr) {
 		return false
 	}

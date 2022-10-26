@@ -4,7 +4,6 @@ import (
 	"errors"
 	"strings"
 
-	"github.com/hashicorp/hcl-lang/lang"
 	"github.com/hashicorp/hcl-lang/schema"
 	"github.com/hashicorp/hcl/v2"
 )
@@ -29,7 +28,8 @@ func (r Targets) Len() int {
 }
 
 func (r Targets) Less(i, j int) bool {
-	return r[i].Addr.String() < r[j].Addr.String()
+	return r[i].LocalAddr.String() < r[j].LocalAddr.String() ||
+		r[i].Addr.String() < r[j].Addr.String()
 }
 
 func (r Targets) Swap(i, j int) {
@@ -72,9 +72,18 @@ func (w refTargetDeepWalker) walk(refTargets Targets) {
 	}
 }
 
-func (refs Targets) MatchWalk(te schema.TraversalExpr, prefix string, f TargetWalkFunc) {
+func (refs Targets) MatchWalk(te schema.TraversalExpr, prefix string, originRng hcl.Range, f TargetWalkFunc) {
 	for _, ref := range refs {
-		if strings.HasPrefix(ref.Addr.String(), string(prefix)) {
+		if len(ref.LocalAddr) > 0 && strings.HasPrefix(ref.LocalAddr.String(), prefix) {
+			// Check if origin is inside the targetable range
+			if ref.TargetableFromRangePtr == nil || rangeOverlaps(*ref.TargetableFromRangePtr, originRng) {
+				nestedMatches := ref.NestedTargets.containsMatch(te, prefix)
+				if ref.MatchesConstraint(te) || nestedMatches {
+					f(ref)
+				}
+			}
+		}
+		if len(ref.Addr) > 0 && strings.HasPrefix(ref.Addr.String(), prefix) {
 			nestedMatches := ref.NestedTargets.containsMatch(te, prefix)
 			if ref.MatchesConstraint(te) || nestedMatches {
 				f(ref)
@@ -82,13 +91,17 @@ func (refs Targets) MatchWalk(te schema.TraversalExpr, prefix string, f TargetWa
 			}
 		}
 
-		ref.NestedTargets.MatchWalk(te, prefix, f)
+		ref.NestedTargets.MatchWalk(te, prefix, originRng, f)
 	}
 }
 
 func (refs Targets) containsMatch(te schema.TraversalExpr, prefix string) bool {
 	for _, ref := range refs {
-		if strings.HasPrefix(ref.Addr.String(), string(prefix)) &&
+		if strings.HasPrefix(ref.LocalAddr.String(), prefix) &&
+			ref.MatchesConstraint(te) {
+			return true
+		}
+		if strings.HasPrefix(ref.Addr.String(), prefix) &&
 			ref.MatchesConstraint(te) {
 			return true
 		}
@@ -101,13 +114,14 @@ func (refs Targets) containsMatch(te schema.TraversalExpr, prefix string) bool {
 	return false
 }
 
-func (refs Targets) Match(addr lang.Address, cons OriginConstraints) (Targets, bool) {
+func (refs Targets) Match(origin MatchableOrigin) (Targets, bool) {
 	matchingReferences := make(Targets, 0)
 
 	refs.deepWalk(func(ref Target) error {
-		if ref.Matches(addr, cons) {
+		if ref.Matches(origin) {
 			matchingReferences = append(matchingReferences, ref)
 		}
+
 		return nil
 	}, InfiniteDepth)
 
