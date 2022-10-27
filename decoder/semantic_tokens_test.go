@@ -853,7 +853,7 @@ resource "vault_auth_backend" "blah" {
 	}
 }
 
-func TestDecoder_SemanticTokensInFile_extensions(t *testing.T) {
+func TestDecoder_SemanticTokensInFile_extensions_basic(t *testing.T) {
 	bodySchema := &schema.BodySchema{
 		Blocks: map[string]*schema.BlockSchema{
 			"resource": {
@@ -1079,8 +1079,8 @@ resource "aws_instance" "app_server" {
 				},
 				End: hcl.Pos{
 					Line:   4,
-					Column: 32,
-					Byte:   92,
+					Column: 31,
+					Byte:   91,
 				},
 			},
 		},
@@ -1329,8 +1329,8 @@ resource "aws_instance" "app_server" {
 				},
 				End: hcl.Pos{
 					Line:   4,
-					Column: 32,
-					Byte:   92,
+					Column: 31,
+					Byte:   91,
 				},
 			},
 		},
@@ -1492,7 +1492,9 @@ func TestDecoder_SemanticTokensInFile_extensions_countIndexInSubBlock(t *testing
 							Body: &schema.BodySchema{
 								Attributes: map[string]*schema.AttributeSchema{
 									"attr": {
-										Expr: schema.LiteralTypeOnly(cty.Number),
+										Expr: schema.ExprConstraints{
+											schema.TraversalExpr{OfType: cty.Number},
+										},
 									},
 								},
 							},
@@ -1726,8 +1728,8 @@ resource "foobar" "name" {
 				},
 				End: hcl.Pos{
 					Line:   5,
-					Column: 22,
-					Byte:   69,
+					Column: 21,
+					Byte:   68,
 				},
 			},
 		},
