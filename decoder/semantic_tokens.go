@@ -187,17 +187,6 @@ func (d *PathDecoder) tokensForExpression(ctx context.Context, expr hclsyntax.Ex
 			return tokens
 		}
 
-		countAvailable := schema.ActiveCountFromContext(ctx)
-		countIndexAttr := lang.Address{
-			lang.RootStep{Name: "count"}, lang.AttrStep{Name: "index"},
-		}
-
-		if address.Equals(countIndexAttr) && countAvailable {
-			tokens = append(tokens, semanticTokensForTraversalExpression(eType.AsTraversal())...)
-
-			return tokens
-		}
-
 		foreachAvailable := schema.ActiveForEachFromContext(ctx)
 		eachKeyAddress := lang.Address{
 			lang.RootStep{Name: "each"}, lang.AttrStep{Name: "key"},

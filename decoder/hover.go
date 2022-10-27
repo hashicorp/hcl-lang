@@ -269,13 +269,10 @@ func (d *PathDecoder) hoverDataForExpr(ctx context.Context, expr hcl.Expression,
 			return nil, err
 		}
 
-		countIndexAddr := lang.Address{lang.RootStep{Name: "count"}, lang.AttrStep{Name: "index"}}
 		eachKeyAddr := lang.Address{lang.RootStep{Name: "each"}, lang.AttrStep{Name: "key"}}
 		eachValueAddr := lang.Address{lang.RootStep{Name: "each"}, lang.AttrStep{Name: "value"}}
 
-		if address.Equals(countIndexAddr) && schema.ActiveCountFromContext(ctx) {
-			return countIndexHoverData(expr.Range()), nil
-		} else if address.Equals(eachKeyAddr) && schema.ActiveForEachFromContext(ctx) {
+		if address.Equals(eachKeyAddr) && schema.ActiveForEachFromContext(ctx) {
 			return eachKeyHoverData(expr.Range()), nil
 		} else if address.Equals(eachValueAddr) && schema.ActiveForEachFromContext(ctx) {
 			return eachValueHoverData(expr.Range()), nil

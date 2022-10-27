@@ -60,7 +60,7 @@ func TestCompletionAtPos_BodySchema_Extensions(t *testing.T) {
 				{
 					Label: "count",
 					Description: lang.MarkupContent{
-						Value: "The distinct index number (starting with 0) corresponding to the instance",
+						Value: "Total number of instances of this block",
 						Kind:  lang.MarkdownKind,
 					},
 					Detail: "optional, number",
@@ -136,7 +136,7 @@ func TestCompletionAtPos_BodySchema_Extensions(t *testing.T) {
 				{
 					Label: "count",
 					Description: lang.MarkupContent{
-						Value: "The distinct index number (starting with 0) corresponding to the instance",
+						Value: "Total number of instances of this block",
 						Kind:  lang.MarkdownKind,
 					},
 					Detail: "optional, number",
@@ -289,7 +289,16 @@ func TestCompletionAtPos_BodySchema_Extensions(t *testing.T) {
 					},
 				},
 			},
-			reference.Targets{},
+			reference.Targets{
+				{
+					LocalAddr: lang.Address{
+						lang.RootStep{Name: "count"},
+						lang.AttrStep{Name: "index"},
+					},
+					Type:        cty.Number,
+					Description: lang.PlainText("The distinct index number (starting with 0) corresponding to the instance"),
+				},
+			},
 			`resource "aws_instance" "foo" {
 	count = 4
 	cpu_count =
@@ -440,7 +449,42 @@ func TestCompletionAtPos_BodySchema_Extensions(t *testing.T) {
 					},
 				},
 			},
-			reference.Targets{},
+			reference.Targets{
+				{
+					LocalAddr: lang.Address{
+						lang.RootStep{Name: "count"},
+						lang.AttrStep{Name: "index"},
+					},
+					Type:        cty.Number,
+					Description: lang.PlainText("The distinct index number (starting with 0) corresponding to the instance"),
+					RangePtr: &hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   2,
+							Column: 3,
+							Byte:   34,
+						},
+						End: hcl.Pos{
+							Line:   2,
+							Column: 12,
+							Byte:   43,
+						},
+					},
+					DefRangePtr: &hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   2,
+							Column: 3,
+							Byte:   34,
+						},
+						End: hcl.Pos{
+							Line:   2,
+							Column: 8,
+							Byte:   39,
+						},
+					},
+				},
+			},
 			`resource "aws_instance" "foo" {
   count = 4
   foo {

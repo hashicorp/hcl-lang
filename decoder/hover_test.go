@@ -970,7 +970,7 @@ func TestDecoder_HoverAtPos_extension(t *testing.T) {
 `,
 			hcl.Pos{Line: 2, Column: 5, Byte: 24},
 			&lang.HoverData{
-				Content: lang.Markdown("**count** _optional, number_\n\nThe distinct index number (starting with 0) corresponding to the instance"),
+				Content: lang.Markdown("**count** _optional, number_\n\nTotal number of instances of this block"),
 				Range: hcl.Range{
 					Filename: "test.tf",
 					Start:    hcl.Pos{Line: 2, Column: 3, Byte: 24},
@@ -1034,7 +1034,7 @@ func TestDecoder_HoverAtPos_extension(t *testing.T) {
 `,
 			hcl.Pos{Line: 3, Column: 15, Byte: 48},
 			&lang.HoverData{
-				Content: lang.Markdown("`count.index` _number_\n\nThe distinct index number (starting with 0) corresponding to the instance"),
+				Content: lang.Markdown("`count.index`\n_number_\n\nThe distinct index number (starting with 0) corresponding to the instance"),
 				Range: hcl.Range{
 					Filename: "test.tf",
 					Start:    hcl.Pos{Line: 3, Column: 11, Byte: 44},
