@@ -693,7 +693,42 @@ variable "test" {
 					},
 				},
 			},
-			reference.Targets{},
+			reference.Targets{
+				{
+					LocalAddr: lang.Address{
+						lang.RootStep{Name: "each"},
+					},
+					Type: cty.Object(map[string]cty.Type{
+						"key":   cty.String,
+						"value": cty.DynamicPseudoType,
+					}),
+					Description: lang.Markdown("Each element the given map or set"),
+					RangePtr:    nil,
+					DefRangePtr: nil,
+					NestedTargets: reference.Targets{
+						{
+							LocalAddr: lang.Address{
+								lang.RootStep{Name: "each"},
+								lang.AttrStep{Name: "key"},
+							},
+							Type:        cty.String,
+							Description: lang.Markdown("The map key (or set member) corresponding to this instance"),
+							RangePtr:    nil,
+							DefRangePtr: nil,
+						},
+						{
+							LocalAddr: lang.Address{
+								lang.RootStep{Name: "each"},
+								lang.AttrStep{Name: "value"},
+							},
+							Type:        cty.DynamicPseudoType,
+							Description: lang.Markdown("The map value corresponding to this instance. (If a set was provided, this is the same as `each.key`.)"),
+							RangePtr:    nil,
+							DefRangePtr: nil,
+						},
+					},
+				},
+			},
 			`resource "aws_instance" "foo" {
 for_each = {
 	a_group = "eastus"
@@ -701,8 +736,26 @@ for_each = {
 }
 thing = 
 }`,
-			hcl.Pos{Line: 6, Column: 8, Byte: 101},
+			hcl.Pos{Line: 6, Column: 9, Byte: 102},
 			lang.CompleteCandidates([]lang.Candidate{
+				{
+					Label:  "each",
+					Detail: "object",
+					Kind:   lang.TraversalCandidateKind,
+					Description: lang.MarkupContent{
+						Value: "Each element the given map or set",
+						Kind:  lang.MarkdownKind,
+					},
+					TextEdit: lang.TextEdit{
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 6, Column: 9, Byte: 102},
+							End:      hcl.Pos{Line: 6, Column: 9, Byte: 102},
+						},
+						NewText: "each",
+						Snippet: "each",
+					},
+				},
 				{
 					Label:  "each.key",
 					Detail: "string",
@@ -723,7 +776,7 @@ thing =
 				},
 				{
 					Label:  "each.value",
-					Detail: "any type",
+					Detail: "dynamic",
 					Kind:   lang.TraversalCandidateKind,
 					Description: lang.MarkupContent{
 						Value: "The map value corresponding to this instance. (If a set was provided, this is the same as `each.key`.)",
@@ -880,7 +933,7 @@ for_each = {
 												IsOptional: true,
 												Expr: schema.ExprConstraints{
 													schema.TraversalExpr{
-														OfType: cty.Number,
+														OfType: cty.DynamicPseudoType,
 													},
 												},
 											},
@@ -892,7 +945,42 @@ for_each = {
 					},
 				},
 			},
-			reference.Targets{},
+			reference.Targets{
+				{
+					LocalAddr: lang.Address{
+						lang.RootStep{Name: "each"},
+					},
+					Type: cty.Object(map[string]cty.Type{
+						"key":   cty.String,
+						"value": cty.DynamicPseudoType,
+					}),
+					Description: lang.Markdown("Each element the given map or set"),
+					RangePtr:    nil,
+					DefRangePtr: nil,
+					NestedTargets: reference.Targets{
+						{
+							LocalAddr: lang.Address{
+								lang.RootStep{Name: "each"},
+								lang.AttrStep{Name: "key"},
+							},
+							Type:        cty.String,
+							Description: lang.Markdown("The map key (or set member) corresponding to this instance"),
+							RangePtr:    nil,
+							DefRangePtr: nil,
+						},
+						{
+							LocalAddr: lang.Address{
+								lang.RootStep{Name: "each"},
+								lang.AttrStep{Name: "value"},
+							},
+							Type:        cty.DynamicPseudoType,
+							Description: lang.Markdown("The map value corresponding to this instance. (If a set was provided, this is the same as `each.key`.)"),
+							RangePtr:    nil,
+							DefRangePtr: nil,
+						},
+					},
+				},
+			},
 			`resource "aws_instance" "foo" {
 for_each = {
 	a_group = "eastus"
@@ -904,6 +992,24 @@ foo {
 }`,
 			hcl.Pos{Line: 7, Column: 11, Byte: 109},
 			lang.CompleteCandidates([]lang.Candidate{
+				{
+					Label:  "each",
+					Detail: "object",
+					Kind:   lang.TraversalCandidateKind,
+					Description: lang.MarkupContent{
+						Value: "Each element the given map or set",
+						Kind:  lang.MarkdownKind,
+					},
+					TextEdit: lang.TextEdit{
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 7, Column: 10, Byte: 109},
+							End:      hcl.Pos{Line: 7, Column: 10, Byte: 109},
+						},
+						NewText: "each",
+						Snippet: "each",
+					},
+				},
 				{
 					Label:  "each.key",
 					Detail: "string",
@@ -924,7 +1030,7 @@ foo {
 				},
 				{
 					Label:  "each.value",
-					Detail: "any type",
+					Detail: "dynamic",
 					Kind:   lang.TraversalCandidateKind,
 					Description: lang.MarkupContent{
 						Value: "The map value corresponding to this instance. (If a set was provided, this is the same as `each.key`.)",

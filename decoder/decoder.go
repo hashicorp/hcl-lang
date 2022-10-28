@@ -263,49 +263,29 @@ func countIndexReferenceTarget(attr *hcl.Attribute, bodyRange hcl.Range) referen
 	}
 }
 
-func foreachEachCandidate(editRng hcl.Range) []lang.Candidate {
-	return []lang.Candidate{
+func forEachReferenceTargets(attr *hcl.Attribute, bodyRange hcl.Range) reference.Targets {
+	return reference.Targets{
 		{
-			Label:  "each.key",
-			Detail: "string",
-			Description: lang.MarkupContent{
-				Value: "The map key (or set member) corresponding to this instance",
-				Kind:  lang.MarkdownKind,
+			LocalAddr: lang.Address{
+				lang.RootStep{Name: "each"},
+				lang.AttrStep{Name: "key"},
 			},
-			Kind: lang.TraversalCandidateKind,
-			TextEdit: lang.TextEdit{
-				NewText: "each.key",
-				Snippet: "each.key",
-				Range:   editRng,
-			},
+			TargetableFromRangePtr: bodyRange.Ptr(),
+			Type:                   cty.String,
+			Description:            lang.Markdown("The map key (or set member) corresponding to this instance"),
+			RangePtr:               attr.Range.Ptr(),
+			DefRangePtr:            attr.NameRange.Ptr(),
 		},
 		{
-			Label:  "each.value",
-			Detail: "any type",
-			Description: lang.MarkupContent{
-				Value: "The map value corresponding to this instance. (If a set was provided, this is the same as `each.key`.)",
-				Kind:  lang.MarkdownKind,
+			LocalAddr: lang.Address{
+				lang.RootStep{Name: "each"},
+				lang.AttrStep{Name: "value"},
 			},
-			Kind: lang.TraversalCandidateKind,
-			TextEdit: lang.TextEdit{
-				NewText: "each.value",
-				Snippet: "each.value",
-				Range:   editRng,
-			},
+			TargetableFromRangePtr: bodyRange.Ptr(),
+			Type:                   cty.DynamicPseudoType,
+			Description:            lang.Markdown("The map value corresponding to this instance. (If a set was provided, this is the same as `each.key`.)"),
+			RangePtr:               attr.Range.Ptr(),
+			DefRangePtr:            attr.NameRange.Ptr(),
 		},
-	}
-}
-
-func eachKeyHoverData(rng hcl.Range) *lang.HoverData {
-	return &lang.HoverData{
-		Content: lang.Markdown("`each.key` _string_\n\nThe map key (or set member) corresponding to this instance"),
-		Range:   rng,
-	}
-}
-
-func eachValueHoverData(rng hcl.Range) *lang.HoverData {
-	return &lang.HoverData{
-		Content: lang.Markdown("`each.value` _any type_\n\nThe map value corresponding to this instance. (If a set was provided, this is the same as `each.key`.)"),
-		Range:   rng,
 	}
 }

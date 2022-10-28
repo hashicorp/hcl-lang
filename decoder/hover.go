@@ -264,20 +264,6 @@ func (d *PathDecoder) hoverDataForExpr(ctx context.Context, expr hcl.Expression,
 			}, nil
 		}
 
-		address, err := lang.TraversalToAddress(e.AsTraversal())
-		if err != nil {
-			return nil, err
-		}
-
-		eachKeyAddr := lang.Address{lang.RootStep{Name: "each"}, lang.AttrStep{Name: "key"}}
-		eachValueAddr := lang.Address{lang.RootStep{Name: "each"}, lang.AttrStep{Name: "value"}}
-
-		if address.Equals(eachKeyAddr) && schema.ActiveForEachFromContext(ctx) {
-			return eachKeyHoverData(expr.Range()), nil
-		} else if address.Equals(eachValueAddr) && schema.ActiveForEachFromContext(ctx) {
-			return eachValueHoverData(expr.Range()), nil
-		}
-
 		tes, ok := constraints.TraversalExprs()
 		if ok {
 			content, err := d.hoverContentForTraversalExpr(e.AsTraversal(), tes, pos)
