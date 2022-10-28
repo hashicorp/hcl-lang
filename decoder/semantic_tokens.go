@@ -52,16 +52,20 @@ func (d *PathDecoder) tokensForBody(ctx context.Context, body *hclsyntax.Body, b
 				ctx = schema.WithActiveCount(ctx)
 			}
 		}
+
+		if bodySchema.Extensions.ForEach {
+			// append to context we need count provided
+			ctx = schema.WithActiveForEach(ctx)
+		}
 	}
 
 	for name, attr := range body.Attributes {
 		attrSchema, ok := bodySchema.Attributes[name]
 		if !ok {
 			if bodySchema.Extensions != nil && name == "count" && bodySchema.Extensions.Count {
-				attrSchema = &schema.AttributeSchema{
-					IsOptional: true,
-					Expr:       schema.LiteralTypeOnly(cty.Number),
-				}
+				attrSchema = countAttributeSchema()
+			} else if bodySchema.Extensions != nil && name == "for_each" && bodySchema.Extensions.ForEach {
+				attrSchema = forEachAttributeSchema()
 			} else {
 				if bodySchema.AnyAttribute == nil {
 					// unknown attribute
@@ -130,6 +134,10 @@ func (d *PathDecoder) tokensForBody(ctx context.Context, body *hclsyntax.Body, b
 						ctx = schema.WithActiveCount(ctx)
 					}
 				}
+				if blockSchema.Body.Extensions.ForEach {
+					// append to context we need each.* provided
+					ctx = schema.WithActiveForEach(ctx)
+				}
 			}
 			tokens = append(tokens, d.tokensForBody(ctx, block.Body, blockSchema.Body, blockModifiers)...)
 		}
@@ -164,42 +172,29 @@ func (d *PathDecoder) tokensForExpression(ctx context.Context, expr hclsyntax.Ex
 		if err != nil {
 			return tokens
 		}
+
 		countAvailable := schema.ActiveCountFromContext(ctx)
 		countIndexAttr := lang.Address{
-			lang.RootStep{
-				Name: "count",
-			},
-			lang.AttrStep{
-				Name: "index",
-			},
+			lang.RootStep{Name: "count"}, lang.AttrStep{Name: "index"},
 		}
 
 		if address.Equals(countIndexAttr) && countAvailable {
-			traversal := eType.AsTraversal()
+			tokens = append(tokens, semanticTokensForTraversalExpression(eType.AsTraversal())...)
 
-			tokens = append(tokens, lang.SemanticToken{
-				Type:      lang.TokenTraversalStep,
-				Modifiers: []lang.SemanticTokenModifier{},
-				Range:     traversal[0].SourceRange(),
-			})
+			return tokens
+		}
 
-			tokens = append(tokens, lang.SemanticToken{
-				Type:      lang.TokenTraversalStep,
-				Modifiers: []lang.SemanticTokenModifier{},
-				Range: hcl.Range{
-					Filename: traversal[1].SourceRange().Filename,
-					Start: hcl.Pos{
-						Line:   traversal[1].SourceRange().Start.Line,
-						Column: traversal[1].SourceRange().Start.Column + 1,
-						Byte:   traversal[1].SourceRange().Start.Byte + 1,
-					},
-					End: hcl.Pos{
-						Line:   traversal[1].SourceRange().End.Line,
-						Column: traversal[1].SourceRange().End.Column + 1,
-						Byte:   traversal[1].SourceRange().End.Byte + 1,
-					},
-				},
-			})
+		foreachAvailable := schema.ActiveForEachFromContext(ctx)
+		eachKeyAddress := lang.Address{
+			lang.RootStep{Name: "each"}, lang.AttrStep{Name: "key"},
+		}
+		eachValueAddress := lang.Address{
+			lang.RootStep{Name: "each"}, lang.AttrStep{Name: "value"},
+		}
+
+		if (address.Equals(eachKeyAddress) || address.Equals(eachValueAddress)) && foreachAvailable {
+			tokens = append(tokens, semanticTokensForTraversalExpression(eType.AsTraversal())...)
+
 			return tokens
 		}
 
@@ -602,6 +597,42 @@ func tokensForTupleConsExpr(expr *hclsyntax.TupleConsExpr, exprType cty.Type) []
 		}
 
 		tokens = append(tokens, tokenForTypedExpression(e, elemType)...)
+	}
+
+	return tokens
+}
+
+func semanticTokensForTraversalExpression(traversal hcl.Traversal) []lang.SemanticToken {
+	if len(traversal) == 0 {
+		return nil
+	}
+
+	tokens := make([]lang.SemanticToken, 0)
+
+	tokens = append(tokens, lang.SemanticToken{
+		Type:      lang.TokenTraversalStep,
+		Modifiers: []lang.SemanticTokenModifier{},
+		Range:     traversal[0].SourceRange(),
+	})
+
+	for i := 1; i < len(traversal); i++ {
+		tokens = append(tokens, lang.SemanticToken{
+			Type:      lang.TokenTraversalStep,
+			Modifiers: []lang.SemanticTokenModifier{},
+			Range: hcl.Range{
+				Filename: traversal[i].SourceRange().Filename,
+				Start: hcl.Pos{
+					Line:   traversal[i].SourceRange().Start.Line,
+					Column: traversal[i].SourceRange().Start.Column + 1,
+					Byte:   traversal[i].SourceRange().Start.Byte + 1,
+				},
+				End: hcl.Pos{
+					Line:   traversal[i].SourceRange().End.Line,
+					Column: traversal[i].SourceRange().End.Column + 1,
+					Byte:   traversal[i].SourceRange().End.Byte + 1,
+				},
+			},
+		})
 	}
 
 	return tokens

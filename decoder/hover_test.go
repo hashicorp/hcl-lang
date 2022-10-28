@@ -1073,3 +1073,168 @@ func TestDecoder_HoverAtPos_extension(t *testing.T) {
 		})
 	}
 }
+
+func TestDecoder_HoverAtPos_foreach_extension(t *testing.T) {
+	testCases := []struct {
+		name         string
+		bodySchema   *schema.BodySchema
+		config       string
+		pos          hcl.Pos
+		expectedData *lang.HoverData
+	}{
+		{
+			"for_each attribute name",
+			&schema.BodySchema{
+				Blocks: map[string]*schema.BlockSchema{
+					"myblock": {
+						Labels: []*schema.LabelSchema{
+							{Name: "type", IsDepKey: true},
+							{Name: "name"},
+						},
+						Body: &schema.BodySchema{
+							Extensions: &schema.BodyExtensions{
+								ForEach: true,
+							},
+						},
+					},
+				},
+			},
+			`myblock "foo" "bar" {
+  for_each = {
+		
+	}
+}
+`,
+			hcl.Pos{Line: 2, Column: 5, Byte: 26},
+			&lang.HoverData{
+				Content: lang.MarkupContent{
+					Value: "**for_each** _optional, map of any single type or set of string_\n\n" +
+						"A meta-argument that accepts a map or a set of strings, and creates an instance for each item in that map or set.\n\n" +
+						"**Note**: A given block cannot use both `count` and `for_each`.",
+					Kind: lang.MarkdownKind,
+				},
+				Range: hcl.Range{
+					Filename: "test.tf",
+					Start:    hcl.Pos{Line: 2, Column: 3, Byte: 24},
+					End:      hcl.Pos{Line: 4, Column: 3, Byte: 42},
+				},
+			},
+		},
+		{
+			"each.key attribute key",
+			&schema.BodySchema{
+				Blocks: map[string]*schema.BlockSchema{
+					"myblock": {
+						Labels: []*schema.LabelSchema{
+							{Name: "type", IsDepKey: true},
+							{Name: "name"},
+						},
+						Body: &schema.BodySchema{
+							Extensions: &schema.BodyExtensions{
+								ForEach: true,
+							},
+							Attributes: map[string]*schema.AttributeSchema{
+								"foo": {
+									IsOptional: true,
+									Expr: schema.ExprConstraints{
+										schema.TraversalExpr{
+											OfType: cty.String,
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			`myblock "foo" "bar" {
+	foo = each.key
+	for_each = {
+		thing = "bar"
+		woot = 3
+	}
+}
+`,
+			hcl.Pos{Line: 5, Column: 16, Byte: 73},
+			&lang.HoverData{
+				Content: lang.Markdown("_map of dynamic_"),
+				Range: hcl.Range{
+					Filename: "test.tf",
+					Start:    hcl.Pos{Line: 3, Column: 13, Byte: 50},
+					End:      hcl.Pos{Line: 6, Column: 3, Byte: 81},
+				},
+			},
+		},
+		{
+			"each.value attribute value",
+			&schema.BodySchema{
+				Blocks: map[string]*schema.BlockSchema{
+					"myblock": {
+						Labels: []*schema.LabelSchema{
+							{Name: "type", IsDepKey: true},
+							{Name: "name"},
+						},
+						Body: &schema.BodySchema{
+							Extensions: &schema.BodyExtensions{
+								ForEach: true,
+							},
+							Attributes: map[string]*schema.AttributeSchema{
+								"foo": {
+									IsOptional: true,
+									Expr: schema.ExprConstraints{
+										schema.TraversalExpr{
+											OfType: cty.String,
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			`myblock "foo" "bar" {
+	foo = each.value
+	for_each = {
+		thing = "bar"
+		woot = 3
+	}
+}
+`,
+			hcl.Pos{Line: 5, Column: 16, Byte: 73},
+			&lang.HoverData{
+				Content: lang.Markdown("_map of dynamic_"),
+				Range: hcl.Range{
+					Filename: "test.tf",
+					Start:    hcl.Pos{Line: 3, Column: 13, Byte: 52},
+					End:      hcl.Pos{Line: 6, Column: 3, Byte: 83},
+				},
+			},
+		},
+	}
+
+	for i, tc := range testCases {
+		t.Run(fmt.Sprintf("%d-%s", i, tc.name), func(t *testing.T) {
+			ctx := context.Background()
+
+			f, diags := hclsyntax.ParseConfig([]byte(tc.config), "test.tf", hcl.InitialPos)
+			if diags != nil {
+				t.Fatal(diags)
+			}
+
+			d := testPathDecoder(t, &PathContext{
+				Schema: tc.bodySchema,
+				Files: map[string]*hcl.File{
+					"test.tf": f,
+				},
+			})
+
+			data, err := d.HoverAtPos(ctx, "test.tf", tc.pos)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if diff := cmp.Diff(tc.expectedData, data, ctydebug.CmpOptions); diff != "" {
+				t.Fatalf("hover data mismatch: %s", diff)
+			}
+		})
+	}
+}
