@@ -1252,7 +1252,7 @@ func TestDecoder_HoverAtPos_foreach_extension(t *testing.T) {
 `,
 			hcl.Pos{Line: 2, Column: 8, Byte: 30},
 			&lang.HoverData{
-				Content: lang.Markdown("`each.key` _string_\n\nThe map key (or set member) corresponding to this instance"),
+				Content: lang.Markdown("`each.key`\n_string_\n\nThe map key (or set member) corresponding to this instance"),
 				Range: hcl.Range{
 					Filename: "test.tf",
 					Start:    hcl.Pos{Line: 2, Column: 8, Byte: 29},
@@ -1356,7 +1356,7 @@ func TestDecoder_HoverAtPos_foreach_extension(t *testing.T) {
 `,
 			hcl.Pos{Line: 2, Column: 8, Byte: 30},
 			&lang.HoverData{
-				Content: lang.Markdown("`each.value` _any type_\n\nThe map value corresponding to this instance. (If a set was provided, this is the same as `each.key`.)"),
+				Content: lang.Markdown("`each.value`\n_dynamic_\n\nThe map value corresponding to this instance. (If a set was provided, this is the same as `each.key`.)"),
 				Range: hcl.Range{
 					Filename: "test.tf",
 					Start:    hcl.Pos{Line: 2, Column: 8, Byte: 29},
