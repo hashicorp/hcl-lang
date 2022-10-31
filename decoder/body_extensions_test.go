@@ -87,6 +87,104 @@ func TestCompletionAtPos_BodySchema_Extensions(t *testing.T) {
 			}),
 		},
 		{
+			"count attribute completion with DependentBody",
+			&schema.BodySchema{
+				Blocks: map[string]*schema.BlockSchema{
+					"resource": {
+						Labels: []*schema.LabelSchema{
+							{
+								Name:     "type",
+								IsDepKey: true,
+							},
+							{
+								Name: "name",
+							},
+						},
+						Body: &schema.BodySchema{
+							Extensions: &schema.BodyExtensions{
+								Count: true,
+							},
+						},
+						DependentBody: map[schema.SchemaKey]*schema.BodySchema{
+							schema.NewSchemaKey(schema.DependencyKeys{
+								Labels: []schema.LabelDependent{
+									{Index: 0, Value: "aws_instance"},
+								},
+							}): {
+								Attributes: map[string]*schema.AttributeSchema{
+									"instance_size": {
+										IsOptional: true,
+										Expr:       schema.LiteralTypeOnly(cty.String),
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			reference.Targets{},
+			`resource "aws_instance" "foo" {
+
+}
+`,
+			hcl.Pos{
+				Line:   2,
+				Column: 1,
+				Byte:   32,
+			},
+			lang.CompleteCandidates([]lang.Candidate{
+				{
+					Label: "count",
+					Description: lang.MarkupContent{
+						Value: "The distinct index number (starting with 0) corresponding to the instance",
+						Kind:  lang.MarkdownKind,
+					},
+					Detail: "optional, number",
+					TextEdit: lang.TextEdit{
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start: hcl.Pos{
+								Line:   2,
+								Column: 1,
+								Byte:   32,
+							},
+							End: hcl.Pos{
+								Line:   2,
+								Column: 1,
+								Byte:   32,
+							},
+						},
+						NewText: "count",
+						Snippet: "count = ",
+					},
+					TriggerSuggest: true,
+					Kind:           lang.AttributeCandidateKind,
+				},
+				{
+					Label:  "instance_size",
+					Detail: "optional, string",
+					TextEdit: lang.TextEdit{
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start: hcl.Pos{
+								Line:   2,
+								Column: 1,
+								Byte:   32,
+							},
+							End: hcl.Pos{
+								Line:   2,
+								Column: 1,
+								Byte:   32,
+							},
+						},
+						NewText: "instance_size",
+						Snippet: `instance_size = "${1:value}"`,
+					},
+					Kind: lang.AttributeCandidateKind,
+				},
+			}),
+		},
+		{
 			"count attribute completion does not complete count when extensions not enabled",
 			&schema.BodySchema{
 				Blocks: map[string]*schema.BlockSchema{
