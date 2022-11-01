@@ -58,6 +58,7 @@ func (d *Decoder) ReferenceOriginsTargetingPos(path lang.Path, file string, pos 
 	return origins
 }
 
+// TODO: Avoid collecting self.* origins unless BodySchema.Extension.SelfRef == true
 func (d *PathDecoder) CollectReferenceOrigins() (reference.Origins, error) {
 	refOrigins := make(reference.Origins, 0)
 	impliedOrigins := make([]schema.ImpliedOrigin, 0)

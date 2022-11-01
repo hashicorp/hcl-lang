@@ -69,6 +69,9 @@ type BlockAddrSchema struct {
 	// blocks and attributes are also walked
 	// and their addresses inferred as data
 	InferDependentBody bool
+
+	// DependentBodySelfRef TODO
+	DependentBodySelfRef bool
 }
 
 type BlockAsTypeOf struct {
@@ -99,6 +102,10 @@ func (bas *BlockAddrSchema) Validate() error {
 		return errors.New("InferDependentBody requires DependentBodyAsData")
 	}
 
+	if bas.DependentBodySelfRef && !bas.InferDependentBody {
+		return errors.New("DependentBodySelfRef requires InferDependentBody")
+	}
+
 	return nil
 }
 
@@ -108,15 +115,16 @@ func (bas *BlockAddrSchema) Copy() *BlockAddrSchema {
 	}
 
 	newBas := &BlockAddrSchema{
-		FriendlyName:        bas.FriendlyName,
-		ScopeId:             bas.ScopeId,
-		AsReference:         bas.AsReference,
-		AsTypeOf:            bas.AsTypeOf.Copy(),
-		BodyAsData:          bas.BodyAsData,
-		InferBody:           bas.InferBody,
-		DependentBodyAsData: bas.DependentBodyAsData,
-		InferDependentBody:  bas.InferDependentBody,
-		Steps:               bas.Steps.Copy(),
+		FriendlyName:         bas.FriendlyName,
+		ScopeId:              bas.ScopeId,
+		AsReference:          bas.AsReference,
+		AsTypeOf:             bas.AsTypeOf.Copy(),
+		BodyAsData:           bas.BodyAsData,
+		InferBody:            bas.InferBody,
+		DependentBodyAsData:  bas.DependentBodyAsData,
+		InferDependentBody:   bas.InferDependentBody,
+		DependentBodySelfRef: bas.DependentBodySelfRef,
+		Steps:                bas.Steps.Copy(),
 	}
 
 	return newBas
