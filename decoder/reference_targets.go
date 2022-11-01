@@ -181,7 +181,7 @@ func (d *PathDecoder) decodeReferenceTargetsForBody(body hcl.Body, parentBlock *
 
 			if bSchema.Address.InferBody && bSchema.Body != nil {
 				bodyRef.NestedTargets = append(bodyRef.NestedTargets,
-					d.collectInferredReferenceTargetsForBody(addr, bSchema.Address.ScopeId, blk.Body, bSchema.Body)...)
+					d.collectInferredReferenceTargetsForBody(addr, bSchema.Address, blk.Body, bSchema.Body)...)
 			}
 
 			bodyRef.Type = bodyToDataType(bSchema.Type, bSchema.Body)
@@ -215,7 +215,7 @@ func (d *PathDecoder) decodeReferenceTargetsForBody(body hcl.Body, parentBlock *
 
 				if bSchema.Address.InferDependentBody && len(bSchema.DependentBody) > 0 {
 					bodyRef.NestedTargets = append(bodyRef.NestedTargets,
-						d.collectInferredReferenceTargetsForBody(addr, bSchema.Address.ScopeId, blk.Body, fullSchema)...)
+						d.collectInferredReferenceTargetsForBody(addr, bSchema.Address, blk.Body, fullSchema)...)
 				}
 
 				if !bSchema.Address.BodyAsData {
@@ -652,7 +652,7 @@ func bodySchemaAsAttrTypes(bodySchema *schema.BodySchema) map[string]cty.Type {
 	return attrTypes
 }
 
-func (d *PathDecoder) collectInferredReferenceTargetsForBody(addr lang.Address, scopeId lang.ScopeId, body hcl.Body, bodySchema *schema.BodySchema) reference.Targets {
+func (d *PathDecoder) collectInferredReferenceTargetsForBody(addr lang.Address, bAddrSchema *schema.BlockAddrSchema, body hcl.Body, bodySchema *schema.BodySchema) reference.Targets {
 	refs := make(reference.Targets, 0)
 
 	content := decodeBody(body, bodySchema)
@@ -668,7 +668,7 @@ func (d *PathDecoder) collectInferredReferenceTargetsForBody(addr lang.Address, 
 
 		ref := reference.Target{
 			Addr:        attrAddr,
-			ScopeId:     scopeId,
+			ScopeId:     bAddrSchema.ScopeId,
 			Type:        attrType,
 			Description: aSchema.Description,
 			RangePtr:    body.MissingItemRange().Ptr(),
@@ -683,7 +683,7 @@ func (d *PathDecoder) collectInferredReferenceTargetsForBody(addr lang.Address, 
 
 		if attrExpr != nil && !attrType.IsPrimitiveType() {
 			ref.NestedTargets = make(reference.Targets, 0)
-			ref.NestedTargets = append(ref.NestedTargets, decodeReferenceTargetsForComplexTypeExpr(attrAddr, attrExpr, attrType, scopeId)...)
+			ref.NestedTargets = append(ref.NestedTargets, decodeReferenceTargetsForComplexTypeExpr(attrAddr, attrExpr, attrType, bAddrSchema.ScopeId)...)
 		}
 
 		refs = append(refs, ref)
@@ -700,13 +700,13 @@ func (d *PathDecoder) collectInferredReferenceTargetsForBody(addr lang.Address, 
 
 		blockRef := reference.Target{
 			Addr:        blockAddr,
-			ScopeId:     scopeId,
+			ScopeId:     bAddrSchema.ScopeId,
 			Type:        cty.Object(bodySchemaAsAttrTypes(bCollection.Schema.Body)),
 			Description: bCollection.Schema.Description,
 			DefRangePtr: blk.DefRange.Ptr(),
 			RangePtr:    blk.Range.Ptr(),
 			NestedTargets: d.collectInferredReferenceTargetsForBody(
-				blockAddr, scopeId, blk.Body, bCollection.Schema.Body),
+				blockAddr, bAddrSchema, blk.Body, bCollection.Schema.Body),
 		}
 		sort.Sort(blockRef.NestedTargets)
 		refs = append(refs, blockRef)
@@ -719,7 +719,7 @@ func (d *PathDecoder) collectInferredReferenceTargetsForBody(addr lang.Address, 
 
 		blockRef := reference.Target{
 			Addr:        blockAddr,
-			ScopeId:     scopeId,
+			ScopeId:     bAddrSchema.ScopeId,
 			Type:        cty.List(cty.Object(bodySchemaAsAttrTypes(bCollection.Schema.Body))),
 			Description: bCollection.Schema.Description,
 			RangePtr:    body.MissingItemRange().Ptr(),
@@ -734,13 +734,13 @@ func (d *PathDecoder) collectInferredReferenceTargetsForBody(addr lang.Address, 
 
 			elemRef := reference.Target{
 				Addr:        elemAddr,
-				ScopeId:     scopeId,
+				ScopeId:     bAddrSchema.ScopeId,
 				Type:        cty.Object(bodySchemaAsAttrTypes(bCollection.Schema.Body)),
 				Description: bCollection.Schema.Description,
 				DefRangePtr: b.DefRange.Ptr(),
 				RangePtr:    b.Range.Ptr(),
 				NestedTargets: d.collectInferredReferenceTargetsForBody(
-					elemAddr, scopeId, b.Body, bCollection.Schema.Body),
+					elemAddr, bAddrSchema, b.Body, bCollection.Schema.Body),
 			}
 			sort.Sort(elemRef.NestedTargets)
 			blockRef.NestedTargets = append(blockRef.NestedTargets, elemRef)
@@ -771,7 +771,7 @@ func (d *PathDecoder) collectInferredReferenceTargetsForBody(addr lang.Address, 
 
 		blockRef := reference.Target{
 			Addr:        blockAddr,
-			ScopeId:     scopeId,
+			ScopeId:     bAddrSchema.ScopeId,
 			Type:        cty.Set(cty.Object(bodySchemaAsAttrTypes(bCollection.Schema.Body))),
 			Description: bCollection.Schema.Description,
 			RangePtr:    body.MissingItemRange().Ptr(),
@@ -803,7 +803,7 @@ func (d *PathDecoder) collectInferredReferenceTargetsForBody(addr lang.Address, 
 
 		blockRef := reference.Target{
 			Addr:        blockAddr,
-			ScopeId:     scopeId,
+			ScopeId:     bAddrSchema.ScopeId,
 			Type:        cty.Map(cty.Object(bodySchemaAsAttrTypes(bCollection.Schema.Body))),
 			Description: bCollection.Schema.Description,
 			RangePtr:    body.MissingItemRange().Ptr(),
@@ -820,13 +820,13 @@ func (d *PathDecoder) collectInferredReferenceTargetsForBody(addr lang.Address, 
 
 			elemRef := reference.Target{
 				Addr:        elemAddr,
-				ScopeId:     scopeId,
+				ScopeId:     bAddrSchema.ScopeId,
 				Type:        refType,
 				Description: bCollection.Schema.Description,
 				RangePtr:    b.Range.Ptr(),
 				DefRangePtr: b.DefRange.Ptr(),
 				NestedTargets: d.collectInferredReferenceTargetsForBody(
-					elemAddr, scopeId, b.Body, bCollection.Schema.Body),
+					elemAddr, bAddrSchema, b.Body, bCollection.Schema.Body),
 			}
 			sort.Sort(elemRef.NestedTargets)
 			blockRef.NestedTargets = append(blockRef.NestedTargets, elemRef)
