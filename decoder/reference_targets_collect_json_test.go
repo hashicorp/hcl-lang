@@ -1473,6 +1473,7 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 					Addr: lang.Address{
 						lang.RootStep{Name: "aws"},
 					},
+					LocalAddr: lang.Address{},
 					Type: cty.Object(map[string]cty.Type{
 						"attr":      cty.Number,
 						"name":      cty.String,
@@ -1826,6 +1827,7 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 								lang.AttrStep{Name: "aws"},
 								lang.AttrStep{Name: "objblock"},
 							},
+							LocalAddr: lang.Address{},
 							RangePtr: &hcl.Range{
 								Filename: "test.tf.json",
 								Start: hcl.Pos{
@@ -2100,6 +2102,7 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 										lang.AttrStep{Name: "listblock"},
 										lang.IndexStep{Key: cty.NumberIntVal(0)},
 									},
+									LocalAddr: lang.Address{},
 									RangePtr: &hcl.Range{
 										Filename: "test.tf.json",
 										Start: hcl.Pos{
@@ -2212,6 +2215,7 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 										lang.AttrStep{Name: "listblock"},
 										lang.IndexStep{Key: cty.NumberIntVal(1)},
 									},
+									LocalAddr: lang.Address{},
 									RangePtr: &hcl.Range{
 										Filename: "test.tf.json",
 										Start: hcl.Pos{
@@ -2655,6 +2659,7 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 										lang.AttrStep{Name: "listblock"},
 										lang.IndexStep{Key: cty.NumberIntVal(0)},
 									},
+									LocalAddr: lang.Address{},
 									RangePtr: &hcl.Range{
 										Filename: "test.tf.json",
 										Start: hcl.Pos{
@@ -2767,6 +2772,7 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 										lang.AttrStep{Name: "listblock"},
 										lang.IndexStep{Key: cty.NumberIntVal(1)},
 									},
+									LocalAddr: lang.Address{},
 									RangePtr: &hcl.Range{
 										Filename: "test.tf.json",
 										Start: hcl.Pos{
@@ -3049,6 +3055,7 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 										lang.AttrStep{Name: "listener"},
 										lang.IndexStep{Key: cty.StringVal("http")},
 									},
+									LocalAddr: lang.Address{},
 									Type: cty.Object(map[string]cty.Type{
 										"port":     cty.Number,
 										"protocol": cty.String,
@@ -3161,6 +3168,7 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 										lang.AttrStep{Name: "listener"},
 										lang.IndexStep{Key: cty.StringVal("https")},
 									},
+									LocalAddr: lang.Address{},
 									Type: cty.Object(map[string]cty.Type{
 										"port":     cty.Number,
 										"protocol": cty.String,
@@ -3954,6 +3962,7 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 						lang.RootStep{Name: "module"},
 						lang.AttrStep{Name: "test"},
 					},
+					LocalAddr: lang.Address{},
 					Type: cty.Object(map[string]cty.Type{
 						"attr": cty.String,
 					}),

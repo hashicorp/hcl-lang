@@ -1677,6 +1677,7 @@ provider "test" {
 					Addr: lang.Address{
 						lang.RootStep{Name: "aws"},
 					},
+					LocalAddr: lang.Address{},
 					Type: cty.Object(map[string]cty.Type{
 						"attr":      cty.Number,
 						"name":      cty.String,
@@ -2133,6 +2134,7 @@ provider "test" {
 								lang.AttrStep{Name: "aws"},
 								lang.AttrStep{Name: "objblock"},
 							},
+							LocalAddr: lang.Address{},
 							RangePtr: &hcl.Range{
 								Filename: "test.tf",
 								Start: hcl.Pos{
@@ -2403,6 +2405,7 @@ provider "test" {
 										lang.AttrStep{Name: "listblock"},
 										lang.IndexStep{Key: cty.NumberIntVal(0)},
 									},
+									LocalAddr: lang.Address{},
 									RangePtr: &hcl.Range{
 										Filename: "test.tf",
 										Start: hcl.Pos{
@@ -2515,6 +2518,7 @@ provider "test" {
 										lang.AttrStep{Name: "listblock"},
 										lang.IndexStep{Key: cty.NumberIntVal(1)},
 									},
+									LocalAddr: lang.Address{},
 									RangePtr: &hcl.Range{
 										Filename: "test.tf",
 										Start: hcl.Pos{
@@ -2950,6 +2954,7 @@ provider "test" {
 										lang.AttrStep{Name: "listblock"},
 										lang.IndexStep{Key: cty.NumberIntVal(0)},
 									},
+									LocalAddr: lang.Address{},
 									RangePtr: &hcl.Range{
 										Filename: "test.tf",
 										Start: hcl.Pos{
@@ -3062,6 +3067,7 @@ provider "test" {
 										lang.AttrStep{Name: "listblock"},
 										lang.IndexStep{Key: cty.NumberIntVal(1)},
 									},
+									LocalAddr: lang.Address{},
 									RangePtr: &hcl.Range{
 										Filename: "test.tf",
 										Start: hcl.Pos{
@@ -3338,6 +3344,7 @@ provider "test" {
 										lang.AttrStep{Name: "listener"},
 										lang.IndexStep{Key: cty.StringVal("http")},
 									},
+									LocalAddr: lang.Address{},
 									Type: cty.Object(map[string]cty.Type{
 										"port":     cty.Number,
 										"protocol": cty.String,
@@ -3450,6 +3457,7 @@ provider "test" {
 										lang.AttrStep{Name: "listener"},
 										lang.IndexStep{Key: cty.StringVal("https")},
 									},
+									LocalAddr: lang.Address{},
 									Type: cty.Object(map[string]cty.Type{
 										"port":     cty.Number,
 										"protocol": cty.String,
@@ -4234,6 +4242,7 @@ module "different" {
 						lang.RootStep{Name: "module"},
 						lang.AttrStep{Name: "test"},
 					},
+					LocalAddr: lang.Address{},
 					Type: cty.Object(map[string]cty.Type{
 						"attr": cty.String,
 					}),
