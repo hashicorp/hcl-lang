@@ -248,3 +248,17 @@ func foreachEachCandidate(editRng hcl.Range) []lang.Candidate {
 		},
 	}
 }
+
+func eachKeyHoverData(rng hcl.Range) *lang.HoverData {
+	return &lang.HoverData{
+		Content: lang.Markdown("`each.key` _string_\n\nThe map key (or set member) corresponding to this instance"),
+		Range:   rng,
+	}
+}
+
+func eachValueHoverData(rng hcl.Range) *lang.HoverData {
+	return &lang.HoverData{
+		Content: lang.Markdown("`each.value` _any type_\n\nThe map value corresponding to this instance. (If a set was provided, this is the same as `each.key`.)"),
+		Range:   rng,
+	}
+}
