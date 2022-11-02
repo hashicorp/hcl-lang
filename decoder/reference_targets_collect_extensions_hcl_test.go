@@ -431,6 +431,264 @@ func TestCollectReferenceTargets_extension_hcl(t *testing.T) {
 				},
 			},
 		},
+		{
+			"self references collection - list block",
+			&schema.BodySchema{
+				Blocks: map[string]*schema.BlockSchema{
+					"resource": {
+						Address: &schema.BlockAddrSchema{
+							Steps: schema.Address{
+								schema.LabelStep{Index: 0},
+								schema.LabelStep{Index: 1},
+							},
+							DependentBodyAsData:  true,
+							InferDependentBody:   true,
+							DependentBodySelfRef: true,
+						},
+						Labels: []*schema.LabelSchema{
+							{
+								Name:     "type",
+								IsDepKey: true,
+							},
+							{
+								Name: "name",
+							},
+						},
+						Body: &schema.BodySchema{
+							Attributes: map[string]*schema.AttributeSchema{
+								"static": {IsOptional: true, Expr: schema.LiteralTypeOnly(cty.String)},
+							},
+						},
+						DependentBody: map[schema.SchemaKey]*schema.BodySchema{
+							schema.NewSchemaKey(schema.DependencyKeys{
+								Labels: []schema.LabelDependent{
+									{
+										Index: 0,
+										Value: "aws_instance",
+									},
+								},
+							}): {
+								Blocks: map[string]*schema.BlockSchema{
+									"foo": {
+										Type: schema.BlockTypeList,
+										Body: &schema.BodySchema{
+											Attributes: map[string]*schema.AttributeSchema{
+												"bar": {IsOptional: true, Expr: schema.LiteralTypeOnly(cty.Number)},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			`resource "aws_instance" "blah" {
+  static = "test"
+  foo {
+    bar = 42
+  }
+}
+`,
+			reference.Targets{
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "aws_instance"},
+						lang.AttrStep{Name: "blah"},
+					},
+					LocalAddr: lang.Address{
+						lang.RootStep{Name: "self"},
+					},
+					RangePtr: &hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   1,
+							Column: 1,
+							Byte:   0,
+						},
+						End: hcl.Pos{
+							Line:   6,
+							Column: 2,
+							Byte:   77,
+						},
+					},
+					DefRangePtr: &hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   1,
+							Column: 1,
+							Byte:   0,
+						},
+						End: hcl.Pos{
+							Line:   1,
+							Column: 31,
+							Byte:   30,
+						},
+					},
+					Type: cty.Object(map[string]cty.Type{
+						"foo": cty.List(cty.Object(map[string]cty.Type{
+							"bar": cty.Number,
+						})),
+					}),
+					NestedTargets: reference.Targets{
+						{
+							Addr: lang.Address{
+								lang.RootStep{Name: "aws_instance"},
+								lang.AttrStep{Name: "blah"},
+								lang.AttrStep{Name: "foo"},
+							},
+							LocalAddr: lang.Address{
+								lang.RootStep{Name: "self"},
+								lang.AttrStep{Name: "foo"},
+							},
+							RangePtr: &hcl.Range{
+								Filename: "test.tf",
+								Start: hcl.Pos{
+									Line:   3,
+									Column: 3,
+									Byte:   53,
+								},
+								End: hcl.Pos{
+									Line:   5,
+									Column: 4,
+									Byte:   75,
+								},
+							},
+							Type: cty.List(cty.Object(map[string]cty.Type{
+								"bar": cty.Number,
+							})),
+							TargetableFromRangePtr: &hcl.Range{
+								Filename: "test.tf",
+								Start: hcl.Pos{
+									Line:   1,
+									Column: 32,
+									Byte:   31,
+								},
+								End: hcl.Pos{
+									Line:   6,
+									Column: 2,
+									Byte:   77,
+								},
+							},
+							NestedTargets: reference.Targets{
+								{
+									Addr: lang.Address{
+										lang.RootStep{Name: "aws_instance"},
+										lang.AttrStep{Name: "blah"},
+										lang.AttrStep{Name: "foo"},
+										lang.IndexStep{Key: cty.NumberIntVal(0)},
+									},
+									LocalAddr: lang.Address{
+										lang.RootStep{Name: "self"},
+										lang.AttrStep{Name: "foo"},
+										lang.IndexStep{Key: cty.NumberIntVal(0)},
+									},
+									RangePtr: &hcl.Range{
+										Filename: "test.tf",
+										Start: hcl.Pos{
+											Line:   3,
+											Column: 3,
+											Byte:   53,
+										},
+										End: hcl.Pos{
+											Line:   5,
+											Column: 4,
+											Byte:   75,
+										},
+									},
+									DefRangePtr: &hcl.Range{
+										Filename: "test.tf",
+										Start: hcl.Pos{
+											Line:   3,
+											Column: 3,
+											Byte:   53,
+										},
+										End: hcl.Pos{
+											Line:   3,
+											Column: 6,
+											Byte:   56,
+										},
+									},
+									Type: cty.Object(map[string]cty.Type{
+										"bar": cty.Number,
+									}),
+									TargetableFromRangePtr: &hcl.Range{
+										Filename: "test.tf",
+										Start: hcl.Pos{
+											Line:   1,
+											Column: 32,
+											Byte:   31,
+										},
+										End: hcl.Pos{
+											Line:   6,
+											Column: 2,
+											Byte:   77,
+										},
+									},
+									NestedTargets: reference.Targets{
+										{
+											Addr: lang.Address{
+												lang.RootStep{Name: "aws_instance"},
+												lang.AttrStep{Name: "blah"},
+												lang.AttrStep{Name: "foo"},
+												lang.IndexStep{Key: cty.NumberIntVal(0)},
+												lang.AttrStep{Name: "bar"},
+											},
+											LocalAddr: lang.Address{
+												lang.RootStep{Name: "self"},
+												lang.AttrStep{Name: "foo"},
+												lang.IndexStep{Key: cty.NumberIntVal(0)},
+												lang.AttrStep{Name: "bar"},
+											},
+											RangePtr: &hcl.Range{
+												Filename: "test.tf",
+												Start: hcl.Pos{
+													Line:   4,
+													Column: 5,
+													Byte:   63,
+												},
+												End: hcl.Pos{
+													Line:   4,
+													Column: 13,
+													Byte:   71,
+												},
+											},
+											DefRangePtr: &hcl.Range{
+												Filename: "test.tf",
+												Start: hcl.Pos{
+													Line:   4,
+													Column: 5,
+													Byte:   63,
+												},
+												End: hcl.Pos{
+													Line:   4,
+													Column: 8,
+													Byte:   66,
+												},
+											},
+											Type: cty.Number,
+											TargetableFromRangePtr: &hcl.Range{
+												Filename: "test.tf",
+												Start: hcl.Pos{
+													Line:   1,
+													Column: 32,
+													Byte:   31,
+												},
+												End: hcl.Pos{
+													Line:   6,
+													Column: 2,
+													Byte:   77,
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
 	}
 
 	for i, tc := range testCases {
