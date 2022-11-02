@@ -817,10 +817,16 @@ func (d *PathDecoder) collectInferredReferenceTargetsForBody(addr lang.Address, 
 
 		blockRef := reference.Target{
 			Addr:        blockAddr,
+			LocalAddr:   make(lang.Address, len(selfRefAddr)),
 			ScopeId:     bAddrSchema.ScopeId,
 			Type:        cty.Set(cty.Object(bodySchemaAsAttrTypes(bCollection.Schema.Body))),
 			Description: bCollection.Schema.Description,
 			RangePtr:    body.MissingItemRange().Ptr(),
+		}
+		if bAddrSchema.DependentBodySelfRef && selfRefBodyRangePtr != nil {
+			copy(blockRef.LocalAddr, selfRefAddr)
+			blockRef.LocalAddr = append(blockRef.LocalAddr, lang.AttrStep{Name: bType})
+			blockRef.TargetableFromRangePtr = selfRefBodyRangePtr.Ptr()
 		}
 
 		for i, b := range bCollection.Blocks {
