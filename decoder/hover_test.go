@@ -1155,13 +1155,13 @@ func TestDecoder_HoverAtPos_foreach_extension(t *testing.T) {
 	}
 }
 `,
-			hcl.Pos{Line: 5, Column: 16, Byte: 73},
+			hcl.Pos{Line: 2, Column: 8, Byte: 30},
 			&lang.HoverData{
-				Content: lang.Markdown("_map of dynamic_"),
+				Content: lang.Markdown("`each.key` _string_\n\nThe map key (or set member) corresponding to this instance"),
 				Range: hcl.Range{
 					Filename: "test.tf",
-					Start:    hcl.Pos{Line: 3, Column: 13, Byte: 50},
-					End:      hcl.Pos{Line: 6, Column: 3, Byte: 81},
+					Start:    hcl.Pos{Line: 2, Column: 8, Byte: 29},
+					End:      hcl.Pos{Line: 2, Column: 16, Byte: 37},
 				},
 			},
 		},
@@ -1200,13 +1200,13 @@ func TestDecoder_HoverAtPos_foreach_extension(t *testing.T) {
 	}
 }
 `,
-			hcl.Pos{Line: 5, Column: 16, Byte: 73},
+			hcl.Pos{Line: 2, Column: 8, Byte: 30},
 			&lang.HoverData{
-				Content: lang.Markdown("_map of dynamic_"),
+				Content: lang.Markdown("`each.value` _any type_\n\nThe map value corresponding to this instance. (If a set was provided, this is the same as `each.key`.)"),
 				Range: hcl.Range{
 					Filename: "test.tf",
-					Start:    hcl.Pos{Line: 3, Column: 13, Byte: 52},
-					End:      hcl.Pos{Line: 6, Column: 3, Byte: 83},
+					Start:    hcl.Pos{Line: 2, Column: 8, Byte: 29},
+					End:      hcl.Pos{Line: 2, Column: 18, Byte: 39},
 				},
 			},
 		},
