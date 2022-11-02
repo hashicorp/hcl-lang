@@ -2379,6 +2379,7 @@ provider "test" {
 								lang.AttrStep{Name: "aws"},
 								lang.AttrStep{Name: "listblock"},
 							},
+							LocalAddr: lang.Address{},
 							RangePtr: &hcl.Range{
 								Filename: "test.tf",
 								Start: hcl.Pos{
@@ -2928,6 +2929,7 @@ provider "test" {
 								lang.AttrStep{Name: "aws"},
 								lang.AttrStep{Name: "listblock"},
 							},
+							LocalAddr: lang.Address{},
 							RangePtr: &hcl.Range{
 								Filename: "test.tf",
 								Start: hcl.Pos{

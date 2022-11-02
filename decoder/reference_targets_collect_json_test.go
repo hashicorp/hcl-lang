@@ -2076,6 +2076,7 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 								lang.AttrStep{Name: "aws"},
 								lang.AttrStep{Name: "listblock"},
 							},
+							LocalAddr: lang.Address{},
 							RangePtr: &hcl.Range{
 								Filename: "test.tf.json",
 								Start: hcl.Pos{
@@ -2633,6 +2634,7 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 								lang.AttrStep{Name: "aws"},
 								lang.AttrStep{Name: "listblock"},
 							},
+							LocalAddr: lang.Address{},
 							RangePtr: &hcl.Range{
 								Filename: "test.tf.json",
 								Start: hcl.Pos{
