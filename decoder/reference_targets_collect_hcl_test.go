@@ -2768,6 +2768,7 @@ provider "test" {
 								lang.AttrStep{Name: "aws"},
 								lang.AttrStep{Name: "setblock"},
 							},
+							LocalAddr: lang.Address{},
 							RangePtr: &hcl.Range{
 								Filename: "test.tf",
 								Start: hcl.Pos{
