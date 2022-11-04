@@ -157,7 +157,11 @@ func (d *PathDecoder) referenceOriginsInBody(body hcl.Body, bodySchema *schema.B
 			})
 		}
 
-		origins = append(origins, d.findOriginsInExpression(attr.Expr, aSchema.Expr)...)
+		allowSelfRefs := false
+		if bodySchema.Extensions != nil && bodySchema.Extensions.SelfRefs {
+			allowSelfRefs = true
+		}
+		origins = append(origins, d.findOriginsInExpression(attr.Expr, aSchema.Expr, allowSelfRefs)...)
 	}
 
 	for _, block := range content.Blocks {
@@ -181,7 +185,7 @@ func (d *PathDecoder) referenceOriginsInBody(body hcl.Body, bodySchema *schema.B
 	return origins, impliedOrigins
 }
 
-func (d *PathDecoder) findOriginsInExpression(expr hcl.Expression, ec schema.ExprConstraints) reference.Origins {
+func (d *PathDecoder) findOriginsInExpression(expr hcl.Expression, ec schema.ExprConstraints, allowSelfRefs bool) reference.Origins {
 	origins := make(reference.Origins, 0)
 
 	switch eType := expr.(type) {
@@ -189,7 +193,7 @@ func (d *PathDecoder) findOriginsInExpression(expr hcl.Expression, ec schema.Exp
 		tce, ok := ExprConstraints(ec).TupleConsExpr()
 		if ok {
 			for _, elemExpr := range eType.ExprList() {
-				origins = append(origins, d.findOriginsInExpression(elemExpr, tce.AnyElem)...)
+				origins = append(origins, d.findOriginsInExpression(elemExpr, tce.AnyElem, allowSelfRefs)...)
 			}
 			break
 		}
@@ -197,7 +201,7 @@ func (d *PathDecoder) findOriginsInExpression(expr hcl.Expression, ec schema.Exp
 		le, ok := ExprConstraints(ec).ListExpr()
 		if ok {
 			for _, elemExpr := range eType.ExprList() {
-				origins = append(origins, d.findOriginsInExpression(elemExpr, le.Elem)...)
+				origins = append(origins, d.findOriginsInExpression(elemExpr, le.Elem, allowSelfRefs)...)
 			}
 			break
 		}
@@ -205,7 +209,7 @@ func (d *PathDecoder) findOriginsInExpression(expr hcl.Expression, ec schema.Exp
 		se, ok := ExprConstraints(ec).SetExpr()
 		if ok {
 			for _, elemExpr := range eType.ExprList() {
-				origins = append(origins, d.findOriginsInExpression(elemExpr, se.Elem)...)
+				origins = append(origins, d.findOriginsInExpression(elemExpr, se.Elem, allowSelfRefs)...)
 			}
 			break
 		}
@@ -216,7 +220,7 @@ func (d *PathDecoder) findOriginsInExpression(expr hcl.Expression, ec schema.Exp
 				if len(tue.Elems) < i+1 {
 					break
 				}
-				origins = append(origins, d.findOriginsInExpression(elemExpr, tue.Elems[i])...)
+				origins = append(origins, d.findOriginsInExpression(elemExpr, tue.Elems[i], allowSelfRefs)...)
 			}
 		}
 	case *hclsyntax.ObjectConsExpr:
@@ -236,14 +240,14 @@ func (d *PathDecoder) findOriginsInExpression(expr hcl.Expression, ec schema.Exp
 					continue
 				}
 
-				origins = append(origins, d.findOriginsInExpression(item.ValueExpr, attr.Expr)...)
+				origins = append(origins, d.findOriginsInExpression(item.ValueExpr, attr.Expr, allowSelfRefs)...)
 			}
 		}
 
 		me, ok := ExprConstraints(ec).MapExpr()
 		if ok {
 			for _, item := range eType.Items {
-				origins = append(origins, d.findOriginsInExpression(item.ValueExpr, me.Elem)...)
+				origins = append(origins, d.findOriginsInExpression(item.ValueExpr, me.Elem, allowSelfRefs)...)
 			}
 		}
 	case *hclsyntax.AnonSymbolExpr,
@@ -267,7 +271,7 @@ func (d *PathDecoder) findOriginsInExpression(expr hcl.Expression, ec schema.Exp
 		// see https://github.com/hashicorp/terraform-ls/issues/496
 		tes, ok := ExprConstraints(ec).TraversalExprs()
 		if ok {
-			origins = append(origins, reference.TraversalsToLocalOrigins(expr.Variables(), tes)...)
+			origins = append(origins, reference.TraversalsToLocalOrigins(expr.Variables(), tes, allowSelfRefs)...)
 		}
 	case *hclsyntax.LiteralValueExpr:
 		// String constant may also be a traversal in some cases, but currently not recognized
@@ -280,7 +284,7 @@ func (d *PathDecoder) findOriginsInExpression(expr hcl.Expression, ec schema.Exp
 		// This may result in less accurate decoding where even origins
 		// which do not actually conform to the constraints are recognized.
 		// TODO: https://github.com/hashicorp/terraform-ls/issues/675
-		origins = append(origins, reference.TraversalsToLocalOrigins(expr.Variables(), schema.TraversalExprs{})...)
+		origins = append(origins, reference.TraversalsToLocalOrigins(expr.Variables(), schema.TraversalExprs{}, allowSelfRefs)...)
 	}
 
 	return origins
@@ -298,7 +302,11 @@ func (d *PathDecoder) referenceOriginAtPos(body *hclsyntax.Body, bodySchema *sch
 				aSchema = bodySchema.AnyAttribute
 			}
 
-			for _, origin := range d.findOriginsInExpression(attr.Expr, aSchema.Expr) {
+			allowSelfRefs := false
+			if bodySchema.Extensions != nil && bodySchema.Extensions.SelfRefs {
+				allowSelfRefs = true
+			}
+			for _, origin := range d.findOriginsInExpression(attr.Expr, aSchema.Expr, allowSelfRefs) {
 				if origin.OriginRange().ContainsPos(pos) {
 					return &origin, nil
 				}
