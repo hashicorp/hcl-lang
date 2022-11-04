@@ -70,7 +70,14 @@ type BlockAddrSchema struct {
 	// and their addresses inferred as data
 	InferDependentBody bool
 
-	// DependentBodySelfRef TODO
+	// DependentBodySelfRef instructs collection of reference
+	// targets with an additional self.* LocalAddr and
+	// makes those targetable by origins within the block body
+	// via reference.Target.TargetableFromRangePtr.
+	//
+	// The targetting (matching w/ origins) is further limited by
+	// BodySchema.Extensions.SelfRef, where only self.* origins
+	// within a body w/ SelfRef:true will be collected.
 	DependentBodySelfRef bool
 }
 
