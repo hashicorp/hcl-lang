@@ -196,9 +196,195 @@ func TestTargets_Match(t *testing.T) {
 	}
 	for i, tc := range testCases {
 		t.Run(fmt.Sprintf("%d-%s", i, tc.name), func(t *testing.T) {
-			refTarget, ok := tc.targets.Match(tc.origin.Address(), tc.origin.OriginConstraints())
+			refTarget, ok := tc.targets.Match(tc.origin)
 			if !ok && tc.expectedFound {
 				t.Fatalf("expected targetable to be found")
+			}
+
+			if diff := cmp.Diff(tc.expectedTargets, refTarget, ctydebug.CmpOptions); diff != "" {
+				t.Fatalf("mismatch of reference target: %s", diff)
+			}
+		})
+	}
+}
+
+func TestTargets_Match_localRefs(t *testing.T) {
+	testCases := []struct {
+		name            string
+		targets         Targets
+		origin          MatchableOrigin
+		expectedTargets Targets
+		expectedMatch   bool
+	}{
+		{
+			"no targets",
+			Targets{},
+			LocalOrigin{
+				Addr: lang.Address{
+					lang.RootStep{Name: "count"},
+					lang.AttrStep{Name: "index"},
+				},
+			},
+			Targets{},
+			false,
+		},
+		{
+			"local address",
+			Targets{
+				{
+					LocalAddr: lang.Address{
+						lang.RootStep{Name: "count"},
+						lang.AttrStep{Name: "index"},
+					},
+					Type: cty.Number,
+				},
+			},
+			LocalOrigin{
+				Addr: lang.Address{
+					lang.RootStep{Name: "count"},
+					lang.AttrStep{Name: "index"},
+				},
+			},
+			Targets{
+				{
+					LocalAddr: lang.Address{
+						lang.RootStep{Name: "count"},
+						lang.AttrStep{Name: "index"},
+					},
+					Type: cty.Number,
+				},
+			},
+			true,
+		},
+		{
+			"local address with Constraint",
+			Targets{
+				{
+					LocalAddr: lang.Address{
+						lang.RootStep{Name: "count"},
+						lang.AttrStep{Name: "index"},
+					},
+					Type: cty.Number,
+				},
+			},
+			LocalOrigin{
+				Addr: lang.Address{
+					lang.RootStep{Name: "count"},
+					lang.AttrStep{Name: "index"},
+				},
+				Constraints: OriginConstraints{
+					{OfType: cty.Number},
+				},
+			},
+			Targets{
+				{
+					LocalAddr: lang.Address{
+						lang.RootStep{Name: "count"},
+						lang.AttrStep{Name: "index"},
+					},
+					Type: cty.Number,
+				},
+			},
+			true,
+		},
+		{
+			"local address with Type and TargetableFromRange positive",
+			Targets{
+				{
+					LocalAddr: lang.Address{
+						lang.RootStep{Name: "count"},
+						lang.AttrStep{Name: "index"},
+					},
+					Type: cty.Number,
+					TargetableFromRangePtr: &hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
+						End:      hcl.Pos{Line: 5, Column: 1, Byte: 50},
+					},
+				},
+			},
+			LocalOrigin{
+				Addr: lang.Address{
+					lang.RootStep{Name: "count"},
+					lang.AttrStep{Name: "index"},
+				},
+				Range: hcl.Range{
+					Filename: "test.tf",
+					Start:    hcl.Pos{Line: 2, Column: 1, Byte: 20},
+					End:      hcl.Pos{Line: 2, Column: 10, Byte: 29},
+				},
+				Constraints: OriginConstraints{
+					{OfType: cty.Number},
+				},
+			},
+			Targets{
+				{
+					LocalAddr: lang.Address{
+						lang.RootStep{Name: "count"},
+						lang.AttrStep{Name: "index"},
+					},
+					Type: cty.Number,
+					TargetableFromRangePtr: &hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
+						End:      hcl.Pos{Line: 5, Column: 1, Byte: 50},
+					},
+				},
+			},
+			true,
+		},
+		{
+			"local address with Type and TargetableFromRange negative",
+			Targets{
+				{
+					LocalAddr: lang.Address{
+						lang.RootStep{Name: "count"},
+						lang.AttrStep{Name: "index"},
+					},
+					Type: cty.Number,
+					TargetableFromRangePtr: &hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
+						End:      hcl.Pos{Line: 5, Column: 1, Byte: 20},
+					},
+				},
+			},
+			LocalOrigin{
+				Addr: lang.Address{
+					lang.RootStep{Name: "count"},
+					lang.AttrStep{Name: "index"},
+				},
+				Range: hcl.Range{
+					Filename: "test.tf",
+					Start:    hcl.Pos{Line: 2, Column: 1, Byte: 20},
+					End:      hcl.Pos{Line: 2, Column: 10, Byte: 29},
+				},
+				Constraints: OriginConstraints{
+					{OfType: cty.Number},
+				},
+			},
+			Targets{
+				{
+					LocalAddr: lang.Address{
+						lang.RootStep{Name: "count"},
+						lang.AttrStep{Name: "index"},
+					},
+					Type: cty.Number,
+					TargetableFromRangePtr: &hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
+						End:      hcl.Pos{Line: 5, Column: 1, Byte: 20},
+					},
+				},
+			},
+			true,
+		},
+	}
+	for i, tc := range testCases {
+		t.Run(fmt.Sprintf("%d-%s", i, tc.name), func(t *testing.T) {
+			refTarget, ok := tc.targets.Match(tc.origin)
+			if !ok && tc.expectedMatch {
+				t.Fatalf("expected target to be matched")
 			}
 
 			if diff := cmp.Diff(tc.expectedTargets, refTarget, ctydebug.CmpOptions); diff != "" {
@@ -512,7 +698,124 @@ func TestTargets_MatchWalk(t *testing.T) {
 	for i, tc := range testCases {
 		t.Run(fmt.Sprintf("%d-%s", i, tc.name), func(t *testing.T) {
 			targets := make(Targets, 0)
-			tc.targets.MatchWalk(tc.traversalConst, tc.prefix, func(t Target) error {
+			rng := hcl.Range{
+				Filename: "test.tf",
+				Start:    hcl.InitialPos,
+				End:      hcl.InitialPos,
+			}
+			tc.targets.MatchWalk(tc.traversalConst, tc.prefix, rng, func(t Target) error {
+				targets = append(targets, t)
+				return nil
+			})
+			if diff := cmp.Diff(tc.expectedTargets, targets, ctydebug.CmpOptions); diff != "" {
+				t.Fatalf("mismatch of targets: %s", diff)
+			}
+		})
+	}
+}
+
+func TestTargets_MatchWalk_localRefs(t *testing.T) {
+	testCases := []struct {
+		name            string
+		targets         Targets
+		traversalConst  schema.TraversalExpr
+		prefix          string
+		expectedTargets Targets
+	}{
+		{
+			"no targets",
+			Targets{},
+			schema.TraversalExpr{},
+			"test",
+			Targets{},
+		},
+		{
+			"targets with local address only",
+			Targets{
+				{
+					LocalAddr: lang.Address{
+						lang.RootStep{Name: "count"},
+						lang.AttrStep{Name: "index"},
+					},
+				},
+				{
+					LocalAddr: lang.Address{
+						lang.RootStep{Name: "foo"},
+						lang.AttrStep{Name: "bar"},
+					},
+				},
+			},
+			schema.TraversalExpr{},
+			"co",
+			Targets{
+				{
+					LocalAddr: lang.Address{
+						lang.RootStep{Name: "count"},
+						lang.AttrStep{Name: "index"},
+					},
+				},
+			},
+		},
+		{
+			"targets with mixed address",
+			Targets{
+				{
+					LocalAddr: lang.Address{
+						lang.RootStep{Name: "local"},
+						lang.AttrStep{Name: "foobar"},
+					},
+					Addr: lang.Address{
+						lang.RootStep{Name: "abs"},
+						lang.AttrStep{Name: "foobar"},
+					},
+				},
+				{
+					LocalAddr: lang.Address{
+						lang.RootStep{Name: "local"},
+						lang.AttrStep{Name: "boo"},
+					},
+					Addr: lang.Address{
+						lang.RootStep{Name: "abs"},
+						lang.AttrStep{Name: "boo"},
+					},
+				},
+			},
+			schema.TraversalExpr{},
+			"abs",
+			Targets{
+				{
+					LocalAddr: lang.Address{
+						lang.RootStep{Name: "local"},
+						lang.AttrStep{Name: "foobar"},
+					},
+					Addr: lang.Address{
+						lang.RootStep{Name: "abs"},
+						lang.AttrStep{Name: "foobar"},
+					},
+				},
+				{
+					LocalAddr: lang.Address{
+						lang.RootStep{Name: "local"},
+						lang.AttrStep{Name: "boo"},
+					},
+					Addr: lang.Address{
+						lang.RootStep{Name: "abs"},
+						lang.AttrStep{Name: "boo"},
+					},
+				},
+			},
+		},
+	}
+
+	for i, tc := range testCases {
+		t.Run(fmt.Sprintf("%d-%s", i, tc.name), func(t *testing.T) {
+			targets := make(Targets, 0)
+			rng := hcl.Range{
+				Filename: "test.tf",
+				Start:    hcl.InitialPos,
+				End:      hcl.InitialPos,
+			}
+			tc.targets.MatchWalk(tc.traversalConst, tc.prefix, rng, func(t Target) error {
 				targets = append(targets, t)
 				return nil
 			})

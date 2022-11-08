@@ -55,7 +55,7 @@ func (d *Decoder) ReferenceTargetsForOriginAtPos(path lang.Path, file string, po
 		if !ok {
 			continue
 		}
-		targets, ok := targetCtx.ReferenceTargets.Match(matchableOrigin.Address(), matchableOrigin.OriginConstraints())
+		targets, ok := targetCtx.ReferenceTargets.Match(matchableOrigin)
 		if !ok {
 			// target not found
 			continue

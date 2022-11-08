@@ -638,7 +638,7 @@ func (d *PathDecoder) hoverContentForTraversalExpr(traversal hcl.Traversal, tes 
 		return "", nil
 	}
 
-	targets, ok := d.pathCtx.ReferenceTargets.Match(origin.Address(), origin.OriginConstraints())
+	targets, ok := d.pathCtx.ReferenceTargets.Match(origin)
 	if !ok {
 		return "", &reference.NoTargetFound{}
 	}
@@ -648,7 +648,7 @@ func (d *PathDecoder) hoverContentForTraversalExpr(traversal hcl.Traversal, tes 
 }
 
 func hoverContentForReferenceTarget(ref reference.Target) (string, error) {
-	content := fmt.Sprintf("`%s`", ref.Addr.String())
+	content := fmt.Sprintf("`%s`", ref.Address())
 
 	var friendlyName string
 	if ref.Type != cty.NilType {

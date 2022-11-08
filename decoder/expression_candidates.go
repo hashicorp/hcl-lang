@@ -478,22 +478,23 @@ func (d *PathDecoder) candidatesForTraversalConstraint(tc schema.TraversalExpr, 
 
 	prefix, _ := d.bytesFromRange(prefixRng)
 
-	d.pathCtx.ReferenceTargets.MatchWalk(tc, string(prefix), func(ref reference.Target) error {
+	d.pathCtx.ReferenceTargets.MatchWalk(tc, string(prefix), editRng, func(target reference.Target) error {
 		// avoid suggesting references to block's own fields from within (for now)
-		if ref.RangePtr != nil && outerBodyRng.Filename == ref.RangePtr.Filename &&
-			(outerBodyRng.ContainsPos(ref.RangePtr.Start) ||
-				posEqual(outerBodyRng.End, ref.RangePtr.End)) {
+		// TODO: Reflect LocalAddr here
+		if referenceTargetIsInRange(target, outerBodyRng) {
 			return nil
 		}
 
+		address := target.Address().String()
+
 		candidates = append(candidates, lang.Candidate{
-			Label:       ref.Addr.String(),
-			Detail:      ref.FriendlyName(),
-			Description: ref.Description,
+			Label:       address,
+			Detail:      target.FriendlyName(),
+			Description: target.Description,
 			Kind:        lang.TraversalCandidateKind,
 			TextEdit: lang.TextEdit{
-				NewText: ref.Addr.String(),
-				Snippet: ref.Addr.String(),
+				NewText: address,
+				Snippet: address,
 				Range:   editRng,
 			},
 		})
@@ -501,6 +502,13 @@ func (d *PathDecoder) candidatesForTraversalConstraint(tc schema.TraversalExpr, 
 	})
 
 	return candidates
+}
+
+func referenceTargetIsInRange(target reference.Target, bodyRange hcl.Range) bool {
+	return target.RangePtr != nil &&
+		bodyRange.Filename == target.RangePtr.Filename &&
+		(bodyRange.ContainsPos(target.RangePtr.Start) ||
+			posEqual(bodyRange.End, target.RangePtr.End))
 }
 
 func newTextForConstraints(cons schema.ExprConstraints, isNested bool) string {
