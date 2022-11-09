@@ -57,6 +57,10 @@ func (d *PathDecoder) tokensForBody(ctx context.Context, body *hclsyntax.Body, b
 			// append to context we need count provided
 			ctx = schema.WithActiveForEach(ctx)
 		}
+
+		if bodySchema.Extensions.DynamicBlocks {
+			ctx = schema.WithActiveDynamicBlock(ctx)
+		}
 	}
 
 	for name, attr := range body.Attributes {
@@ -92,8 +96,12 @@ func (d *PathDecoder) tokensForBody(ctx context.Context, body *hclsyntax.Body, b
 	for _, block := range body.Blocks {
 		blockSchema, ok := bodySchema.Blocks[block.Type]
 		if !ok {
-			// unknown block
-			continue
+			if bodySchema.Extensions != nil && bodySchema.Extensions.DynamicBlocks && block.Type == "dynamic" {
+				blockSchema = dynamicBlockSchema()
+			} else {
+				// unknown block
+				continue
+			}
 		}
 
 		blockModifiers := make([]lang.SemanticTokenModifier, 0)

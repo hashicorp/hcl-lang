@@ -34,6 +34,10 @@ func (d *PathDecoder) bodySchemaCandidates(body *hclsyntax.Body, schema *schema.
 				candidates.List = append(candidates.List, attributeSchemaToCandidate("for_each", forEachAttributeSchema(), editRng))
 			}
 		}
+
+		if schema.Extensions.DynamicBlocks {
+			candidates.List = append(candidates.List, d.blockSchemaToCandidate("dynamic", dynamicBlockSchema(), editRng))
+		}
 	}
 
 	if len(schema.Attributes) > 0 {

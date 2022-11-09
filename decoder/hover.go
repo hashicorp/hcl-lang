@@ -55,6 +55,10 @@ func (d *PathDecoder) hoverAtPos(ctx context.Context, body *hclsyntax.Body, body
 		if bodySchema.Extensions.ForEach {
 			ctx = schema.WithActiveForEach(ctx)
 		}
+
+		if bodySchema.Extensions.DynamicBlocks {
+			ctx = schema.WithActiveDynamicBlock(ctx)
+		}
 	}
 
 	for name, attr := range body.Attributes {
@@ -103,12 +107,18 @@ func (d *PathDecoder) hoverAtPos(ctx context.Context, body *hclsyntax.Body, body
 
 	for _, block := range body.Blocks {
 		if block.Range().ContainsPos(pos) {
-			bSchema, ok := bodySchema.Blocks[block.Type]
-			if !ok {
-				return nil, &PositionalError{
-					Filename: filename,
-					Pos:      pos,
-					Msg:      fmt.Sprintf("unknown block type %q", block.Type),
+			var bSchema *schema.BlockSchema
+			if bodySchema.Extensions != nil && bodySchema.Extensions.DynamicBlocks && block.Type == "dynamic" {
+				bSchema = dynamicBlockSchema()
+			} else {
+				var ok bool
+				bSchema, ok = bodySchema.Blocks[block.Type]
+				if !ok {
+					return nil, &PositionalError{
+						Filename: filename,
+						Pos:      pos,
+						Msg:      fmt.Sprintf("unknown block type %q", block.Type),
+					}
 				}
 			}
 

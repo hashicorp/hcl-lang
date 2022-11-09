@@ -1802,3 +1802,114 @@ resource "foobar" "name" {
 		t.Fatalf("unexpected tokens: %s", diff)
 	}
 }
+
+func TestDecoder_SemanticTokensInFile_extensions_dynamich(t *testing.T) {
+	bodySchema := &schema.BodySchema{
+		Blocks: map[string]*schema.BlockSchema{
+			"myblock": {
+				Labels: []*schema.LabelSchema{
+					{
+						Name:                   "type",
+						IsDepKey:               true,
+						SemanticTokenModifiers: lang.SemanticTokenModifiers{lang.TokenModifierDependent},
+					},
+					{Name: "name"},
+				},
+				Body: &schema.BodySchema{
+					Extensions: &schema.BodyExtensions{
+						DynamicBlocks: true,
+					},
+					Blocks: map[string]*schema.BlockSchema{
+						"dynamic": {
+							Type: schema.BlockTypeMap,
+						},
+					},
+				},
+				DependentBody: map[schema.SchemaKey]*schema.BodySchema{
+					schema.NewSchemaKey(schema.DependencyKeys{
+						Labels: []schema.LabelDependent{
+							{Index: 0, Value: "setting"},
+						},
+					}): {
+						Extensions: &schema.BodyExtensions{
+							DynamicBlocks: true,
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testCfg := []byte(`
+myblock "foo" "bar" {
+	dynamic "setting" {
+		
+	}
+}
+`)
+
+	f, pDiags := hclsyntax.ParseConfig(testCfg, "test.tf", hcl.InitialPos)
+	if len(pDiags) > 0 {
+		t.Fatal(pDiags)
+	}
+
+	d := testPathDecoder(t, &PathContext{
+		Schema: bodySchema,
+		Files: map[string]*hcl.File{
+			"test.tf": f,
+		},
+	})
+
+	ctx := context.Background()
+
+	tokens, err := d.SemanticTokensInFile(ctx, "test.tf")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	expectedTokens := []lang.SemanticToken{
+		{ // myblock
+			Type:      lang.TokenBlockType,
+			Modifiers: []lang.SemanticTokenModifier{},
+			Range: hcl.Range{
+				Filename: "test.tf",
+				Start:    hcl.Pos{Line: 2, Column: 1, Byte: 1},
+				End:      hcl.Pos{Line: 2, Column: 8, Byte: 8},
+			},
+		},
+		{ // foo
+			Type: lang.TokenBlockLabel,
+			Modifiers: []lang.SemanticTokenModifier{
+				lang.TokenModifierDependent,
+			},
+			Range: hcl.Range{
+				Filename: "test.tf",
+				Start:    hcl.Pos{Line: 2, Column: 9, Byte: 9},
+				End:      hcl.Pos{Line: 2, Column: 14, Byte: 14},
+			},
+		},
+		{ // bar
+			Type:      lang.TokenBlockLabel,
+			Modifiers: []lang.SemanticTokenModifier{},
+			Range: hcl.Range{
+				Filename: "test.tf",
+				Start:    hcl.Pos{Line: 2, Column: 15, Byte: 15},
+				End:      hcl.Pos{Line: 2, Column: 20, Byte: 20},
+			},
+		},
+		{ // dynamic
+			Type:      lang.TokenBlockType,
+			Modifiers: lang.SemanticTokenModifiers{},
+			Range: hcl.Range{
+				Filename: "test.tf",
+				Start:    hcl.Pos{Line: 3, Column: 2, Byte: 24},
+				End:      hcl.Pos{Line: 3, Column: 9, Byte: 31},
+			},
+		},
+	}
+
+	diff := cmp.Diff(expectedTokens, tokens)
+	if diff != "" {
+		t.Fatalf("unexpected tokens: %s", diff)
+	}
+}

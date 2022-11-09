@@ -985,3 +985,224 @@ for_each =
 		})
 	}
 }
+
+func TestCompletionAtPos_BodySchema_DynamicBlock_Extensions(t *testing.T) {
+	ctx := context.Background()
+
+	testCases := []struct {
+		testName           string
+		bodySchema         *schema.BodySchema
+		cfg                string
+		pos                hcl.Pos
+		expectedCandidates lang.Candidates
+	}{
+		{
+			"dynamic block does not complete if not enabled",
+			&schema.BodySchema{
+				Blocks: map[string]*schema.BlockSchema{
+					"resource": {
+						Labels: []*schema.LabelSchema{
+							{
+								Name: "type",
+							},
+							{
+								Name: "name",
+							},
+						},
+						Body: &schema.BodySchema{
+							Extensions: &schema.BodyExtensions{
+								DynamicBlocks: false,
+							},
+						},
+					},
+				},
+			},
+			`
+resource "aws_elastic_beanstalk_environment" "example" {
+	name = "example"
+	
+}`,
+			hcl.Pos{
+				Line:   4,
+				Column: 3,
+				Byte:   77,
+			},
+			lang.CompleteCandidates([]lang.Candidate{}),
+		},
+		{
+			"dynamic block completion",
+			&schema.BodySchema{
+				Blocks: map[string]*schema.BlockSchema{
+					"resource": {
+						Labels: []*schema.LabelSchema{
+							{Name: "type"}, {Name: "name"},
+						},
+						Body: &schema.BodySchema{
+							Extensions: &schema.BodyExtensions{
+								DynamicBlocks: true,
+							},
+						},
+					},
+				},
+			},
+			`resource "aws_elastic_beanstalk_environment" "example" {
+	name = "example"
+	
+}`,
+			hcl.Pos{
+				Line:   3,
+				Column: 3,
+				Byte:   76,
+			},
+			lang.CompleteCandidates([]lang.Candidate{
+				{
+					Label: "dynamic",
+					Description: lang.MarkupContent{
+						Value: "A dynamic block to produce blocks dynamically by iterating over a given complex value",
+						Kind:  lang.MarkdownKind,
+					},
+					Detail: "Block, map",
+					Kind:   lang.BlockCandidateKind,
+					TextEdit: lang.TextEdit{
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start: hcl.Pos{
+								Line:   3,
+								Column: 3,
+								Byte:   76,
+							},
+							End: hcl.Pos{
+								Line:   3,
+								Column: 3,
+								Byte:   76,
+							},
+						},
+						NewText: "dynamic",
+						Snippet: "dynamic \"${1:name}\" {\n  ${2}\n}",
+					},
+				},
+			}),
+		},
+		{
+			"dynamic block inner completion",
+			&schema.BodySchema{
+				Blocks: map[string]*schema.BlockSchema{
+					"resource": {
+						Labels: []*schema.LabelSchema{
+							{Name: "type"}, {Name: "name"},
+						},
+						Body: &schema.BodySchema{
+							Extensions: &schema.BodyExtensions{
+								DynamicBlocks: true,
+							},
+						},
+					},
+				},
+			},
+			`resource "aws_elastic_beanstalk_environment" "example" {
+	name = "example"
+	dynamic "foo" {
+		
+	}
+}`,
+			hcl.Pos{Line: 4, Column: 5, Byte: 94},
+			lang.CompleteCandidates([]lang.Candidate{
+				{
+					Label: "content",
+					Description: lang.MarkupContent{
+						Value: "The body of each generated block",
+						Kind:  lang.PlainTextKind,
+					},
+					Detail: "Block, max: 1",
+					Kind:   lang.BlockCandidateKind,
+					TextEdit: lang.TextEdit{
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 4, Column: 5, Byte: 94},
+							End:      hcl.Pos{Line: 4, Column: 5, Byte: 94},
+						},
+						NewText: "content",
+						Snippet: "content {\n  ${1}\n}",
+					},
+				},
+				{
+					Label: "for_each",
+					Description: lang.MarkupContent{
+						Value: "A meta-argument that accepts a map or a set of strings, and creates an instance for each item in that map or set.\n\n**Note**: A given block cannot use both `count` and `for_each`.",
+						Kind:  lang.MarkdownKind,
+					},
+					Detail:         "required, map of any single type or set of string",
+					Kind:           lang.AttributeCandidateKind,
+					TriggerSuggest: true,
+					TextEdit: lang.TextEdit{
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 4, Column: 5, Byte: 94},
+							End:      hcl.Pos{Line: 4, Column: 5, Byte: 94},
+						},
+						NewText: "for_each",
+						Snippet: "for_each = ",
+					},
+				},
+				{
+					Label: "iterator",
+					Description: lang.MarkupContent{
+						Value: "The name of a temporary variable that represents the current element of the complex value. Defaults to the label of the dynamic block.",
+						Kind:  lang.MarkdownKind,
+					},
+					Detail: "optional, string",
+					Kind:   lang.AttributeCandidateKind,
+					TextEdit: lang.TextEdit{
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 4, Column: 5, Byte: 94},
+							End:      hcl.Pos{Line: 4, Column: 5, Byte: 94},
+						},
+						NewText: "iterator",
+						Snippet: `iterator = "${1:value}"`,
+					},
+				},
+				{
+					Label: "labels",
+					Description: lang.MarkupContent{
+						Value: "A list of strings that specifies the block labels, in order, to use for each generated block.",
+						Kind:  lang.MarkdownKind,
+					},
+					Detail: "optional, list of string",
+					Kind:   lang.AttributeCandidateKind,
+					TextEdit: lang.TextEdit{
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 4, Column: 5, Byte: 94},
+							End:      hcl.Pos{Line: 4, Column: 5, Byte: 94},
+						},
+						NewText: "labels",
+						Snippet: "labels = [\n  ${0}\n]",
+					},
+				},
+			}),
+		},
+	}
+
+	for i, tc := range testCases {
+		t.Run(fmt.Sprintf("%d-%s", i, tc.testName), func(t *testing.T) {
+			f, _ := hclsyntax.ParseConfig([]byte(tc.cfg), "test.tf", hcl.InitialPos)
+
+			d := testPathDecoder(t, &PathContext{
+				Schema: tc.bodySchema,
+				Files: map[string]*hcl.File{
+					"test.tf": f,
+				},
+			})
+
+			candidates, err := d.CandidatesAtPos(ctx, "test.tf", tc.pos)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			if diff := cmp.Diff(tc.expectedCandidates, candidates); diff != "" {
+				t.Fatalf("unexpected candidates: %s", diff)
+			}
+		})
+	}
+}
