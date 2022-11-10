@@ -193,6 +193,79 @@ func TestTargets_Match(t *testing.T) {
 			},
 			true,
 		},
+		{
+			"match of global nested target with local addrs set",
+			Targets{
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "aws_acmpca_certificate"},
+						lang.AttrStep{Name: "foo"},
+					},
+					LocalAddr: lang.Address{
+						lang.RootStep{Name: "self"},
+					},
+					Type: cty.Object(map[string]cty.Type{
+						"signing_algorithm": cty.String,
+					}),
+					ScopeId: "resource",
+					NestedTargets: Targets{
+						{
+							Addr: lang.Address{
+								lang.RootStep{Name: "aws_acmpca_certificate"},
+								lang.AttrStep{Name: "foo"},
+								lang.AttrStep{Name: "signing_algorithm"},
+							},
+							LocalAddr: lang.Address{
+								lang.RootStep{Name: "self"},
+								lang.AttrStep{Name: "signing_algorithm"},
+							},
+							Type: cty.String,
+							TargetableFromRangePtr: &hcl.Range{
+								Filename: "main.tf",
+								Start:    hcl.Pos{Line: 26, Column: 41, Byte: 360},
+								End:      hcl.Pos{Line: 41, Column: 2, Byte: 657},
+							},
+						},
+					},
+				},
+			},
+			LocalOrigin{
+				Addr: lang.Address{
+					lang.RootStep{Name: "aws_acmpca_certificate"},
+					lang.AttrStep{Name: "foo"},
+					lang.AttrStep{Name: "signing_algorithm"},
+				},
+
+				Constraints: OriginConstraints{
+					{OfType: cty.DynamicPseudoType},
+				},
+				Range: hcl.Range{
+					Filename: "main.tf",
+					Start:    hcl.Pos{Line: 44, Column: 11, Byte: 684},
+					End:      hcl.Pos{Line: 44, Column: 55, Byte: 728},
+				},
+			},
+			Targets{
+				Target{
+					Addr: lang.Address{
+						lang.RootStep{Name: "aws_acmpca_certificate"},
+						lang.AttrStep{Name: "foo"},
+						lang.AttrStep{Name: "signing_algorithm"},
+					},
+					LocalAddr: lang.Address{
+						lang.RootStep{Name: "self"},
+						lang.AttrStep{Name: "signing_algorithm"},
+					},
+					Type: cty.String,
+					TargetableFromRangePtr: &hcl.Range{
+						Filename: "main.tf",
+						Start:    hcl.Pos{Line: 26, Column: 41, Byte: 360},
+						End:      hcl.Pos{Line: 41, Column: 2, Byte: 657},
+					},
+				},
+			},
+			true,
+		},
 	}
 	for i, tc := range testCases {
 		t.Run(fmt.Sprintf("%d-%s", i, tc.name), func(t *testing.T) {
