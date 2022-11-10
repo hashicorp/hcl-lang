@@ -106,18 +106,12 @@ func (d *PathDecoder) candidatesAtPos(ctx context.Context, body *hclsyntax.Body,
 
 	for _, block := range body.Blocks {
 		if block.Range().ContainsPos(pos) {
-			var bSchema *schema.BlockSchema
-			if bodySchema.Extensions != nil && bodySchema.Extensions.DynamicBlocks && block.Type == "dynamic" {
-				bSchema = dynamicBlockSchema()
-			} else {
-				var ok bool
-				bSchema, ok = bodySchema.Blocks[block.Type]
-				if !ok {
-					return lang.ZeroCandidates(), &PositionalError{
-						Filename: filename,
-						Pos:      pos,
-						Msg:      fmt.Sprintf("unknown block type %q", block.Type),
-					}
+			bSchema, ok := bodySchema.Blocks[block.Type]
+			if !ok {
+				return lang.ZeroCandidates(), &PositionalError{
+					Filename: filename,
+					Pos:      pos,
+					Msg:      fmt.Sprintf("unknown block type %q", block.Type),
 				}
 			}
 
@@ -163,6 +157,32 @@ func (d *PathDecoder) candidatesAtPos(ctx context.Context, body *hclsyntax.Body,
 			}
 
 			if block.Body != nil && block.Body.Range().ContainsPos(pos) {
+				if bSchema.Body != nil && bSchema.Body.Extensions != nil && bSchema.Body.Extensions.DynamicBlocks {
+					depSchema, _, ok := NewBlockSchema(bSchema).DependentBodySchema(block.AsHCLBlock())
+					if ok && len(depSchema.Blocks) > 0 {
+						dynamicBlockSchema := buildDynamicBlockSchema()
+						dynamicBlockDependentBody := make(map[schema.SchemaKey]*schema.BodySchema)
+						for blockName, block := range depSchema.Blocks {
+							dynamicBlockDependentBody[schema.NewSchemaKey(schema.DependencyKeys{
+								Labels: []schema.LabelDependent{
+									{Index: 0, Value: blockName},
+								},
+							})] = &schema.BodySchema{
+								Blocks: map[string]*schema.BlockSchema{
+									"content": {
+										Description: lang.PlainText("The body of each generated block"),
+										MaxItems:    1,
+										Body:        block.Body,
+									},
+								},
+							}
+						}
+
+						dynamicBlockSchema.DependentBody = dynamicBlockDependentBody
+						bSchema.Body.Blocks["dynamic"] = dynamicBlockSchema
+					}
+				}
+
 				mergedSchema, err := mergeBlockBodySchemas(block.AsHCLBlock(), bSchema)
 				if err != nil {
 					return lang.ZeroCandidates(), err

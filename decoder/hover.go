@@ -113,7 +113,7 @@ func (d *PathDecoder) hoverAtPos(ctx context.Context, body *hclsyntax.Body, body
 		if block.Range().ContainsPos(pos) {
 			var bSchema *schema.BlockSchema
 			if bodySchema.Extensions != nil && bodySchema.Extensions.DynamicBlocks && block.Type == "dynamic" {
-				bSchema = dynamicBlockSchema()
+				bSchema = buildDynamicBlockSchema()
 			} else {
 				var ok bool
 				bSchema, ok = bodySchema.Blocks[block.Type]

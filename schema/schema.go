@@ -49,6 +49,6 @@ func WithActiveDynamicBlock(ctx context.Context) context.Context {
 	return context.WithValue(ctx, bodyActiveDynamicBlockCtxKey{}, true)
 }
 
-func ActiveActiveDynamicBlockFromContext(ctx context.Context) bool {
+func ActiveDynamicBlockFromContext(ctx context.Context) bool {
 	return ctx.Value(bodyActiveDynamicBlockCtxKey{}) != nil
 }

@@ -1730,30 +1730,105 @@ resource "aws_elastic_beanstalk_environment" "example" {
 			lang.CompleteCandidates([]lang.Candidate{}),
 		},
 		{
-			"dynamic block completion",
+			"dynamic block does not complete without blocks",
 			&schema.BodySchema{
 				Blocks: map[string]*schema.BlockSchema{
 					"resource": {
 						Labels: []*schema.LabelSchema{
-							{Name: "type"}, {Name: "name"},
+							{
+								Name:     "type",
+								IsDepKey: true,
+							}, {Name: "name"},
 						},
 						Body: &schema.BodySchema{
 							Extensions: &schema.BodyExtensions{
 								DynamicBlocks: true,
 							},
 						},
+						DependentBody: map[schema.SchemaKey]*schema.BodySchema{
+							schema.NewSchemaKey(schema.DependencyKeys{
+								Labels: []schema.LabelDependent{
+									{Index: 0, Value: "aws_instance"},
+								},
+							}): {
+								Attributes: map[string]*schema.AttributeSchema{
+									"instance_size": {
+										IsOptional: true,
+										Expr:       schema.LiteralTypeOnly(cty.String),
+									},
+								},
+							},
+						},
 					},
 				},
 			},
-			`resource "aws_elastic_beanstalk_environment" "example" {
+			`resource "aws_instance" "example" {
 	name = "example"
 	
 }`,
-			hcl.Pos{
-				Line:   3,
-				Column: 3,
-				Byte:   76,
+			hcl.Pos{Line: 3, Column: 3, Byte: 55},
+			lang.CompleteCandidates([]lang.Candidate{
+				{
+					Label:  "instance_size",
+					Detail: "optional, string",
+					TextEdit: lang.TextEdit{
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 3, Column: 3, Byte: 55},
+							End:      hcl.Pos{Line: 3, Column: 3, Byte: 55},
+						},
+						NewText: "instance_size",
+						Snippet: `instance_size = "${1:value}"`,
+					},
+					Kind: lang.AttributeCandidateKind,
+				},
+			}),
+		},
+		{
+			"dynamic block completion",
+			&schema.BodySchema{
+				Blocks: map[string]*schema.BlockSchema{
+					"resource": {
+						Labels: []*schema.LabelSchema{
+							{
+								Name:     "type",
+								IsDepKey: true,
+							}, {Name: "name"},
+						},
+						Body: &schema.BodySchema{
+							Extensions: &schema.BodyExtensions{
+								DynamicBlocks: true,
+							},
+							Blocks:     make(map[string]*schema.BlockSchema, 0),
+							Attributes: make(map[string]*schema.AttributeSchema, 0),
+						},
+						DependentBody: map[schema.SchemaKey]*schema.BodySchema{
+							schema.NewSchemaKey(schema.DependencyKeys{
+								Labels: []schema.LabelDependent{
+									{Index: 0, Value: "aws_instance"},
+								},
+							}): {
+								Blocks: map[string]*schema.BlockSchema{
+									"foo": {
+										Body: schema.NewBodySchema(),
+									},
+								},
+								Attributes: map[string]*schema.AttributeSchema{
+									"instance_size": {
+										IsOptional: true,
+										Expr:       schema.LiteralTypeOnly(cty.String),
+									},
+								},
+							},
+						},
+					},
+				},
 			},
+			`resource "aws_instance" "example" {
+	name = "example"
+	
+}`,
+			hcl.Pos{Line: 3, Column: 3, Byte: 55},
 			lang.CompleteCandidates([]lang.Candidate{
 				{
 					Label: "dynamic",
@@ -1761,24 +1836,45 @@ resource "aws_elastic_beanstalk_environment" "example" {
 						Value: "A dynamic block to produce blocks dynamically by iterating over a given complex value",
 						Kind:  lang.MarkdownKind,
 					},
-					Detail: "Block, map",
+					Detail:         "Block, map",
+					Kind:           lang.BlockCandidateKind,
+					TriggerSuggest: true,
+					TextEdit: lang.TextEdit{
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 3, Column: 3, Byte: 55},
+							End:      hcl.Pos{Line: 3, Column: 3, Byte: 55},
+						},
+						NewText: "dynamic",
+						Snippet: "dynamic \"${1}\" {\n  ${2}\n}",
+					},
+				},
+				{
+					Label:  "foo",
+					Detail: "Block",
 					Kind:   lang.BlockCandidateKind,
 					TextEdit: lang.TextEdit{
 						Range: hcl.Range{
 							Filename: "test.tf",
-							Start: hcl.Pos{
-								Line:   3,
-								Column: 3,
-								Byte:   76,
-							},
-							End: hcl.Pos{
-								Line:   3,
-								Column: 3,
-								Byte:   76,
-							},
+							Start:    hcl.Pos{Line: 3, Column: 3, Byte: 55},
+							End:      hcl.Pos{Line: 3, Column: 3, Byte: 55},
 						},
-						NewText: "dynamic",
-						Snippet: "dynamic \"${1:name}\" {\n  ${2}\n}",
+						NewText: "foo",
+						Snippet: "foo {\n  ${1}\n}",
+					},
+				},
+				{
+					Label:  "instance_size",
+					Detail: "optional, string",
+					Kind:   lang.AttributeCandidateKind,
+					TextEdit: lang.TextEdit{
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 3, Column: 3, Byte: 55},
+							End:      hcl.Pos{Line: 3, Column: 3, Byte: 55},
+						},
+						NewText: "instance_size",
+						Snippet: `instance_size = "${1:value}"`,
 					},
 				},
 			}),
@@ -1789,23 +1885,47 @@ resource "aws_elastic_beanstalk_environment" "example" {
 				Blocks: map[string]*schema.BlockSchema{
 					"resource": {
 						Labels: []*schema.LabelSchema{
-							{Name: "type"}, {Name: "name"},
+							{
+								Name:     "type",
+								IsDepKey: true,
+							}, {Name: "name"},
 						},
 						Body: &schema.BodySchema{
 							Extensions: &schema.BodyExtensions{
 								DynamicBlocks: true,
 							},
+							Blocks:     make(map[string]*schema.BlockSchema, 0),
+							Attributes: make(map[string]*schema.AttributeSchema, 0),
+						},
+						DependentBody: map[schema.SchemaKey]*schema.BodySchema{
+							schema.NewSchemaKey(schema.DependencyKeys{
+								Labels: []schema.LabelDependent{
+									{Index: 0, Value: "aws_instance"},
+								},
+							}): {
+								Blocks: map[string]*schema.BlockSchema{
+									"foo": {
+										Body: schema.NewBodySchema(),
+									},
+								},
+								Attributes: map[string]*schema.AttributeSchema{
+									"instance_size": {
+										IsOptional: true,
+										Expr:       schema.LiteralTypeOnly(cty.String),
+									},
+								},
+							},
 						},
 					},
 				},
 			},
-			`resource "aws_elastic_beanstalk_environment" "example" {
+			`resource "aws_instance" "example" {
 	name = "example"
 	dynamic "foo" {
 		
 	}
 }`,
-			hcl.Pos{Line: 4, Column: 5, Byte: 94},
+			hcl.Pos{Line: 4, Column: 5, Byte: 73},
 			lang.CompleteCandidates([]lang.Candidate{
 				{
 					Label: "content",
@@ -1818,8 +1938,8 @@ resource "aws_elastic_beanstalk_environment" "example" {
 					TextEdit: lang.TextEdit{
 						Range: hcl.Range{
 							Filename: "test.tf",
-							Start:    hcl.Pos{Line: 4, Column: 5, Byte: 94},
-							End:      hcl.Pos{Line: 4, Column: 5, Byte: 94},
+							Start:    hcl.Pos{Line: 4, Column: 5, Byte: 73},
+							End:      hcl.Pos{Line: 4, Column: 5, Byte: 73},
 						},
 						NewText: "content",
 						Snippet: "content {\n  ${1}\n}",
@@ -1837,8 +1957,8 @@ resource "aws_elastic_beanstalk_environment" "example" {
 					TextEdit: lang.TextEdit{
 						Range: hcl.Range{
 							Filename: "test.tf",
-							Start:    hcl.Pos{Line: 4, Column: 5, Byte: 94},
-							End:      hcl.Pos{Line: 4, Column: 5, Byte: 94},
+							Start:    hcl.Pos{Line: 4, Column: 5, Byte: 73},
+							End:      hcl.Pos{Line: 4, Column: 5, Byte: 73},
 						},
 						NewText: "for_each",
 						Snippet: "for_each = ",
@@ -1855,8 +1975,8 @@ resource "aws_elastic_beanstalk_environment" "example" {
 					TextEdit: lang.TextEdit{
 						Range: hcl.Range{
 							Filename: "test.tf",
-							Start:    hcl.Pos{Line: 4, Column: 5, Byte: 94},
-							End:      hcl.Pos{Line: 4, Column: 5, Byte: 94},
+							Start:    hcl.Pos{Line: 4, Column: 5, Byte: 73},
+							End:      hcl.Pos{Line: 4, Column: 5, Byte: 73},
 						},
 						NewText: "iterator",
 						Snippet: `iterator = "${1:value}"`,
@@ -1873,8 +1993,8 @@ resource "aws_elastic_beanstalk_environment" "example" {
 					TextEdit: lang.TextEdit{
 						Range: hcl.Range{
 							Filename: "test.tf",
-							Start:    hcl.Pos{Line: 4, Column: 5, Byte: 94},
-							End:      hcl.Pos{Line: 4, Column: 5, Byte: 94},
+							Start:    hcl.Pos{Line: 4, Column: 5, Byte: 73},
+							End:      hcl.Pos{Line: 4, Column: 5, Byte: 73},
 						},
 						NewText: "labels",
 						Snippet: "labels = [\n  ${0}\n]",
@@ -1882,6 +2002,84 @@ resource "aws_elastic_beanstalk_environment" "example" {
 				},
 			}),
 		},
+		{
+			"dynamic block content attribute completion",
+			&schema.BodySchema{
+				Blocks: map[string]*schema.BlockSchema{
+					"resource": {
+						Labels: []*schema.LabelSchema{
+							{
+								Name:     "type",
+								IsDepKey: true,
+							}, {Name: "name"},
+						},
+						Body: &schema.BodySchema{
+							Extensions: &schema.BodyExtensions{
+								DynamicBlocks: true,
+							},
+							Blocks:     make(map[string]*schema.BlockSchema, 0),
+							Attributes: make(map[string]*schema.AttributeSchema, 0),
+						},
+						DependentBody: map[schema.SchemaKey]*schema.BodySchema{
+							schema.NewSchemaKey(schema.DependencyKeys{
+								Labels: []schema.LabelDependent{
+									{Index: 0, Value: "aws_instance"},
+								},
+							}): {
+								Blocks: map[string]*schema.BlockSchema{
+									"foo": {
+										Body: &schema.BodySchema{
+											Attributes: map[string]*schema.AttributeSchema{
+												"thing": &schema.AttributeSchema{
+													IsOptional: true,
+													Expr:       schema.LiteralTypeOnly(cty.String),
+												},
+											},
+										},
+									},
+								},
+								Attributes: map[string]*schema.AttributeSchema{
+									"instance_size": {
+										IsOptional: true,
+										Expr:       schema.LiteralTypeOnly(cty.String),
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			`resource "aws_instance" "example" {
+	name = "example"
+	dynamic "foo" {
+		content {
+			
+		}
+	}
+}`,
+			hcl.Pos{Line: 5, Column: 7, Byte: 86},
+			lang.CompleteCandidates([]lang.Candidate{
+				{
+					Label:  "thing",
+					Detail: "optional, string",
+					Kind:   lang.AttributeCandidateKind,
+					TextEdit: lang.TextEdit{
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 5, Column: 7, Byte: 86},
+							End:      hcl.Pos{Line: 5, Column: 7, Byte: 86},
+						},
+						NewText: "thing",
+						Snippet: `thing = "${1:value}"`,
+					},
+				},
+			}),
+		},
+		//test that lifecycle is not completed
+
+		// completion after the thing =
+
+		// check docs if nesting is supposed to be supported?
 	}
 
 	for i, tc := range testCases {

@@ -200,12 +200,16 @@ func forEachAttributeSchema() *schema.AttributeSchema {
 	}
 }
 
-func dynamicBlockSchema() *schema.BlockSchema {
+func buildDynamicBlockSchema() *schema.BlockSchema {
 	return &schema.BlockSchema{
 		Description: lang.Markdown("A dynamic block to produce blocks dynamically by iterating over a given complex value"),
 		Type:        schema.BlockTypeMap,
 		Labels: []*schema.LabelSchema{
-			{Name: "name"},
+			{
+				Name:        "name",
+				Completable: true,
+				IsDepKey:    true,
+			},
 		},
 		Body: &schema.BodySchema{
 			Attributes: map[string]*schema.AttributeSchema{
@@ -238,12 +242,6 @@ func dynamicBlockSchema() *schema.BlockSchema {
 					IsOptional: true,
 					Description: lang.Markdown("A list of strings that specifies the block labels, " +
 						"in order, to use for each generated block."),
-				},
-			},
-			Blocks: map[string]*schema.BlockSchema{
-				"content": {
-					Description: lang.PlainText("The body of each generated block"),
-					MaxItems:    1,
 				},
 			},
 		},

@@ -103,7 +103,7 @@ func (d *PathDecoder) tokensForBody(ctx context.Context, body *hclsyntax.Body, b
 		blockSchema, ok := bodySchema.Blocks[block.Type]
 		if !ok {
 			if bodySchema.Extensions != nil && bodySchema.Extensions.DynamicBlocks && block.Type == "dynamic" {
-				blockSchema = dynamicBlockSchema()
+				blockSchema = buildDynamicBlockSchema()
 			} else {
 				// unknown block
 				continue
