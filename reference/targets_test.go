@@ -379,6 +379,33 @@ func TestTargets_Match_localRefs(t *testing.T) {
 			},
 			true,
 		},
+		{
+			"local origin and global target",
+			Targets{
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "module"},
+						lang.AttrStep{Name: "localmodd"},
+						lang.AttrStep{Name: "someattribute"},
+					},
+					Type: cty.DynamicPseudoType,
+				},
+			},
+			LocalOrigin{
+				Addr: lang.Address{
+					lang.RootStep{Name: "self"},
+					lang.AttrStep{Name: "attribute"},
+				},
+				Constraints: OriginConstraints{
+					{
+						OfScopeId: "",
+						OfType:    cty.String,
+					},
+				},
+			},
+			Targets{},
+			false,
+		},
 	}
 	for i, tc := range testCases {
 		t.Run(fmt.Sprintf("%d-%s", i, tc.name), func(t *testing.T) {
