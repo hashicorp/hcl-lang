@@ -206,16 +206,28 @@ func (d *PathDecoder) tokensForExpression(ctx context.Context, expr hclsyntax.Ex
 			return tokens
 		}
 
-		tes, ok := constraints.TraversalExprs()
-		if ok && d.pathCtx.ReferenceTargets != nil {
+		_, ok = constraints.TraversalExprs()
+		if ok && d.pathCtx.ReferenceTargets != nil && d.pathCtx.ReferenceOrigins != nil {
 			traversal := eType.AsTraversal()
 
-			origin, err := reference.TraversalToLocalOrigin(traversal, tes)
-			if err != nil {
+			origins, ok := d.pathCtx.ReferenceOrigins.AtPos(traversal.SourceRange().Filename, traversal.SourceRange().Start)
+			if !ok {
 				return tokens
 			}
 
-			_, targetFound := d.pathCtx.ReferenceTargets.Match(origin)
+			targetFound := false
+			for _, origin := range origins {
+				matchableOrigin, ok := origin.(reference.MatchableOrigin)
+				if !ok {
+					continue
+				}
+				_, ok = d.pathCtx.ReferenceTargets.Match(matchableOrigin)
+				if ok {
+					targetFound = true
+					break
+				}
+			}
+
 			if !targetFound {
 				return tokens
 			}

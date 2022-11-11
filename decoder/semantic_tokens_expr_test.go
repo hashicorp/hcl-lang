@@ -1473,6 +1473,7 @@ func TestDecoder_SemanticTokensInFile_traversalExpression(t *testing.T) {
 		name           string
 		attrSchema     map[string]*schema.AttributeSchema
 		refs           reference.Targets
+		origins        reference.Origins
 		cfg            string
 		expectedTokens []lang.SemanticToken
 	}{
@@ -1486,6 +1487,27 @@ func TestDecoder_SemanticTokensInFile_traversalExpression(t *testing.T) {
 				},
 			},
 			reference.Targets{},
+			reference.Origins{
+				reference.LocalOrigin{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "blah"},
+					},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   1,
+							Column: 7,
+							Byte:   6,
+						},
+						End: hcl.Pos{
+							Line:   1,
+							Column: 15,
+							Byte:   14,
+						},
+					},
+				},
+			},
 			`attr = var.blah
 `,
 			[]lang.SemanticToken{
@@ -1526,6 +1548,32 @@ func TestDecoder_SemanticTokensInFile_traversalExpression(t *testing.T) {
 					Type: cty.Bool,
 				},
 			},
+			reference.Origins{
+				reference.LocalOrigin{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "blah"},
+					},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   1,
+							Column: 7,
+							Byte:   6,
+						},
+						End: hcl.Pos{
+							Line:   1,
+							Column: 15,
+							Byte:   14,
+						},
+					},
+					Constraints: reference.OriginConstraints{
+						reference.OriginConstraint{
+							OfType: cty.String,
+						},
+					},
+				},
+			},
 			`attr = var.blah
 `,
 			[]lang.SemanticToken{
@@ -1564,6 +1612,32 @@ func TestDecoder_SemanticTokensInFile_traversalExpression(t *testing.T) {
 						lang.AttrStep{Name: "blah"},
 					},
 					Type: cty.String,
+				},
+			},
+			reference.Origins{
+				reference.LocalOrigin{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "blah"},
+					},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   1,
+							Column: 7,
+							Byte:   6,
+						},
+						End: hcl.Pos{
+							Line:   1,
+							Column: 15,
+							Byte:   14,
+						},
+					},
+					Constraints: reference.OriginConstraints{
+						reference.OriginConstraint{
+							OfType: cty.String,
+						},
+					},
 				},
 			},
 			`attr = var.blah
@@ -1640,6 +1714,32 @@ func TestDecoder_SemanticTokensInFile_traversalExpression(t *testing.T) {
 					ScopeId: lang.ScopeId("foo"),
 				},
 			},
+			reference.Origins{
+				reference.LocalOrigin{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "blah"},
+					},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   1,
+							Column: 7,
+							Byte:   6,
+						},
+						End: hcl.Pos{
+							Line:   1,
+							Column: 15,
+							Byte:   14,
+						},
+					},
+					Constraints: reference.OriginConstraints{
+						reference.OriginConstraint{
+							OfScopeId: lang.ScopeId("foo"),
+						},
+					},
+				},
+			},
 			`attr = var.blah
 `,
 			[]lang.SemanticToken{
@@ -1713,6 +1813,33 @@ func TestDecoder_SemanticTokensInFile_traversalExpression(t *testing.T) {
 						lang.IndexStep{Key: cty.StringVal("test")},
 						lang.AttrStep{Name: "bar"},
 						lang.IndexStep{Key: cty.NumberIntVal(4)},
+					},
+				},
+			},
+			reference.Origins{
+				reference.LocalOrigin{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "foo"},
+						lang.IndexStep{Key: cty.StringVal("test")},
+						lang.AttrStep{Name: "bar"},
+						lang.IndexStep{Key: cty.NumberIntVal(4)},
+					},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   1,
+							Column: 7,
+							Byte:   6,
+						},
+						End: hcl.Pos{
+							Line:   1,
+							Column: 29,
+							Byte:   28,
+						},
+					},
+					Constraints: reference.OriginConstraints{
+						reference.OriginConstraint{},
 					},
 				},
 			},
@@ -1841,6 +1968,33 @@ func TestDecoder_SemanticTokensInFile_traversalExpression(t *testing.T) {
 					Type: cty.DynamicPseudoType,
 				},
 			},
+			reference.Origins{
+				reference.LocalOrigin{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "foo"},
+						lang.AttrStep{Name: "bar"},
+					},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   1,
+							Column: 7,
+							Byte:   6,
+						},
+						End: hcl.Pos{
+							Line:   1,
+							Column: 18,
+							Byte:   17,
+						},
+					},
+					Constraints: reference.OriginConstraints{
+						reference.OriginConstraint{
+							OfType: cty.String,
+						},
+					},
+				},
+			},
 			`attr = var.foo.bar
 `,
 			[]lang.SemanticToken{
@@ -1932,6 +2086,7 @@ func TestDecoder_SemanticTokensInFile_traversalExpression(t *testing.T) {
 			d := testPathDecoder(t, &PathContext{
 				Schema:           bodySchema,
 				ReferenceTargets: tc.refs,
+				ReferenceOrigins: tc.origins,
 				Files: map[string]*hcl.File{
 					"test.tf": f,
 				},

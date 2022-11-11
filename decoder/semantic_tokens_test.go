@@ -7,6 +7,7 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/hashicorp/hcl-lang/lang"
+	"github.com/hashicorp/hcl-lang/reference"
 	"github.com/hashicorp/hcl-lang/schema"
 	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hclsyntax"
@@ -891,6 +892,38 @@ resource "aws_instance" "app_server" {
 }
 `)
 
+	refTargets := reference.Targets{
+		{
+			LocalAddr: lang.Address{
+				lang.RootStep{Name: "count"},
+				lang.AttrStep{Name: "index"},
+			},
+			Type:        cty.Number,
+			Description: lang.PlainText("The distinct index number (starting with 0) corresponding to the instance"),
+		},
+	}
+	refOrigins := reference.Origins{
+		reference.LocalOrigin{
+			Addr: lang.Address{
+				lang.RootStep{Name: "count"},
+				lang.AttrStep{Name: "index"},
+			},
+			Range: hcl.Range{
+				Filename: "test.tf",
+				Start: hcl.Pos{
+					Line:   4,
+					Column: 20,
+					Byte:   80,
+				},
+				End: hcl.Pos{
+					Line:   4,
+					Column: 31,
+					Byte:   91,
+				},
+			},
+		},
+	}
+
 	f, pDiags := hclsyntax.ParseConfig(testCfg, "test.tf", hcl.InitialPos)
 	if len(pDiags) > 0 {
 		t.Fatal(pDiags)
@@ -901,6 +934,8 @@ resource "aws_instance" "app_server" {
 		Files: map[string]*hcl.File{
 			"test.tf": f,
 		},
+		ReferenceTargets: refTargets,
+		ReferenceOrigins: refOrigins,
 	})
 
 	ctx := context.Background()
@@ -1107,6 +1142,38 @@ resource "aws_instance" "app_server" {
 }
 `)
 
+	refTargets := reference.Targets{
+		{
+			LocalAddr: lang.Address{
+				lang.RootStep{Name: "count"},
+				lang.AttrStep{Name: "index"},
+			},
+			Type:        cty.Number,
+			Description: lang.PlainText("The distinct index number (starting with 0) corresponding to the instance"),
+		},
+	}
+	refOrigins := reference.Origins{
+		reference.LocalOrigin{
+			Addr: lang.Address{
+				lang.RootStep{Name: "count"},
+				lang.AttrStep{Name: "index"},
+			},
+			Range: hcl.Range{
+				Filename: "test.tf",
+				Start: hcl.Pos{
+					Line:   4,
+					Column: 20,
+					Byte:   80,
+				},
+				End: hcl.Pos{
+					Line:   4,
+					Column: 31,
+					Byte:   91,
+				},
+			},
+		},
+	}
+
 	f, pDiags := hclsyntax.ParseConfig(testCfg, "test.tf", hcl.InitialPos)
 	if len(pDiags) > 0 {
 		t.Fatal(pDiags)
@@ -1117,6 +1184,8 @@ resource "aws_instance" "app_server" {
 		Files: map[string]*hcl.File{
 			"test.tf": f,
 		},
+		ReferenceTargets: refTargets,
+		ReferenceOrigins: refOrigins,
 	})
 
 	ctx := context.Background()
@@ -1453,6 +1522,38 @@ resource "foobar" "name" {
 }
 `)
 
+	refTargets := reference.Targets{
+		{
+			LocalAddr: lang.Address{
+				lang.RootStep{Name: "count"},
+				lang.AttrStep{Name: "index"},
+			},
+			Type:        cty.Number,
+			Description: lang.PlainText("The distinct index number (starting with 0) corresponding to the instance"),
+		},
+	}
+	refOrigins := reference.Origins{
+		reference.LocalOrigin{
+			Addr: lang.Address{
+				lang.RootStep{Name: "count"},
+				lang.AttrStep{Name: "index"},
+			},
+			Range: hcl.Range{
+				Filename: "test.tf",
+				Start: hcl.Pos{
+					Line:   5,
+					Column: 10,
+					Byte:   57,
+				},
+				End: hcl.Pos{
+					Line:   5,
+					Column: 21,
+					Byte:   68,
+				},
+			},
+		},
+	}
+
 	f, pDiags := hclsyntax.ParseConfig(testCfg, "test.tf", hcl.InitialPos)
 	if len(pDiags) > 0 {
 		t.Fatal(pDiags)
@@ -1463,6 +1564,8 @@ resource "foobar" "name" {
 		Files: map[string]*hcl.File{
 			"test.tf": f,
 		},
+		ReferenceTargets: refTargets,
+		ReferenceOrigins: refOrigins,
 	})
 
 	ctx := context.Background()
