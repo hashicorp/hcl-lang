@@ -1599,6 +1599,30 @@ func TestDecoder_HoverAtPos_traversalExpressions(t *testing.T) {
 			},
 			nil,
 		},
+		{
+			"matching target but missing collected origin",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Expr: schema.ExprConstraints{
+						schema.TraversalExpr{OfType: cty.String},
+					},
+				},
+			},
+			reference.Targets{
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "blah"},
+					},
+					Type: cty.String,
+				},
+			},
+			reference.Origins{},
+			`attr = var.blah`,
+			hcl.Pos{Line: 1, Column: 10, Byte: 9},
+			nil,
+			&reference.NoTargetFound{},
+		},
 	}
 
 	for i, tc := range testCases {
