@@ -2076,10 +2076,513 @@ resource "aws_elastic_beanstalk_environment" "example" {
 			}),
 		},
 		//test that lifecycle is not completed
+		{
+			"dynamic block inner completion lifecycle is not completed",
+			&schema.BodySchema{
+				Blocks: map[string]*schema.BlockSchema{
+					"resource": {
+						Labels: []*schema.LabelSchema{
+							{Name: "type", IsDepKey: true}, {Name: "name"},
+						},
+						Body: &schema.BodySchema{
+							Extensions: &schema.BodyExtensions{
+								DynamicBlocks: true,
+							},
+							Blocks: map[string]*schema.BlockSchema{
+								"life_cycle": {
+									Body: &schema.BodySchema{
+										Attributes: map[string]*schema.AttributeSchema{
+											"create_before_destroy": {
+												Expr:       schema.LiteralTypeOnly(cty.Bool),
+												IsOptional: true,
+												Description: lang.Markdown("Whether to reverse the default order of operations (destroy -> create) during apply " +
+													"when the resource requires replacement (cannot be updated in-place)"),
+											},
+											"prevent_destroy": {
+												Expr:       schema.LiteralTypeOnly(cty.Bool),
+												IsOptional: true,
+												Description: lang.Markdown("Whether to prevent accidental destruction of the resource and cause Terraform " +
+													"to reject with an error any plan that would destroy the resource"),
+											},
+											"ignore_changes": {
+												Expr: schema.ExprConstraints{
+													schema.TupleConsExpr{},
+													schema.KeywordExpr{
+														Keyword: "all",
+														Description: lang.Markdown("Ignore all attributes, which means that Terraform can create" +
+															" and destroy the remote object but will never propose updates to it"),
+													},
+												},
+												IsOptional:  true,
+												Description: lang.Markdown("A set of fields (references) of which to ignore changes to, e.g. `tags`"),
+											},
+										},
+									},
+								},
+							},
+							Attributes: make(map[string]*schema.AttributeSchema, 0),
+						},
+						DependentBody: map[schema.SchemaKey]*schema.BodySchema{
+							schema.NewSchemaKey(schema.DependencyKeys{
+								Labels: []schema.LabelDependent{
+									{Index: 0, Value: "aws_instance"},
+								},
+							}): {
+								Blocks: map[string]*schema.BlockSchema{
+									"foo": {
+										Body: schema.NewBodySchema(),
+									},
+								},
+								Attributes: map[string]*schema.AttributeSchema{
+									"instance_size": {
+										IsOptional: true,
+										Expr:       schema.LiteralTypeOnly(cty.String),
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			`resource "aws_instance" "example" {
+	name = "example"
+	dynamic "foo" {
+		
+	}
+}`,
+			hcl.Pos{Line: 4, Column: 5, Byte: 73},
+			lang.CompleteCandidates([]lang.Candidate{
+				{
+					Label: "content",
+					Description: lang.MarkupContent{
+						Value: "The body of each generated block",
+						Kind:  lang.PlainTextKind,
+					},
+					Detail: "Block, max: 1",
+					Kind:   lang.BlockCandidateKind,
+					TextEdit: lang.TextEdit{
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 4, Column: 5, Byte: 73},
+							End:      hcl.Pos{Line: 4, Column: 5, Byte: 73},
+						},
+						NewText: "content",
+						Snippet: "content {\n  ${1}\n}",
+					},
+				},
+				{
+					Label: "for_each",
+					Description: lang.MarkupContent{
+						Value: "A meta-argument that accepts a map or a set of strings, and creates an instance for each item in that map or set.\n\n**Note**: A given block cannot use both `count` and `for_each`.",
+						Kind:  lang.MarkdownKind,
+					},
+					Detail:         "required, map of any single type or set of string",
+					Kind:           lang.AttributeCandidateKind,
+					TriggerSuggest: true,
+					TextEdit: lang.TextEdit{
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 4, Column: 5, Byte: 73},
+							End:      hcl.Pos{Line: 4, Column: 5, Byte: 73},
+						},
+						NewText: "for_each",
+						Snippet: "for_each = ",
+					},
+				},
+				{
+					Label: "iterator",
+					Description: lang.MarkupContent{
+						Value: "The name of a temporary variable that represents the current element of the complex value. Defaults to the label of the dynamic block.",
+						Kind:  lang.MarkdownKind,
+					},
+					Detail: "optional, string",
+					Kind:   lang.AttributeCandidateKind,
+					TextEdit: lang.TextEdit{
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 4, Column: 5, Byte: 73},
+							End:      hcl.Pos{Line: 4, Column: 5, Byte: 73},
+						},
+						NewText: "iterator",
+						Snippet: `iterator = "${1:value}"`,
+					},
+				},
+				{
+					Label: "labels",
+					Description: lang.MarkupContent{
+						Value: "A list of strings that specifies the block labels, in order, to use for each generated block.",
+						Kind:  lang.MarkdownKind,
+					},
+					Detail: "optional, list of string",
+					Kind:   lang.AttributeCandidateKind,
+					TextEdit: lang.TextEdit{
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 4, Column: 5, Byte: 73},
+							End:      hcl.Pos{Line: 4, Column: 5, Byte: 73},
+						},
+						NewText: "labels",
+						Snippet: "labels = [\n  ${0}\n]",
+					},
+				},
+			}),
+		},
 
+		// completion nesting should work
+		{
+			"dynamic block completion nesting should work",
+			&schema.BodySchema{
+				Blocks: map[string]*schema.BlockSchema{
+					"resource": {
+						Labels: []*schema.LabelSchema{
+							{Name: "type", IsDepKey: true}, {Name: "name"},
+						},
+						Body: &schema.BodySchema{
+							Extensions: &schema.BodyExtensions{
+								DynamicBlocks: true,
+							},
+							Blocks:     make(map[string]*schema.BlockSchema, 0),
+							Attributes: make(map[string]*schema.AttributeSchema, 0),
+						},
+						DependentBody: map[schema.SchemaKey]*schema.BodySchema{
+							schema.NewSchemaKey(schema.DependencyKeys{
+								Labels: []schema.LabelDependent{
+									{Index: 0, Value: "aws_instance"},
+								},
+							}): {
+								Blocks: map[string]*schema.BlockSchema{
+									"foo": {
+										Body: &schema.BodySchema{
+											Blocks: map[string]*schema.BlockSchema{
+												"bar": {},
+											},
+											Attributes: map[string]*schema.AttributeSchema{
+												"thing": {
+													IsOptional: true,
+													Expr:       schema.LiteralTypeOnly(cty.String),
+												},
+											},
+										},
+									},
+								},
+								Attributes: map[string]*schema.AttributeSchema{
+									"instance_size": {
+										IsOptional: true,
+										Expr:       schema.LiteralTypeOnly(cty.String),
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			`resource "aws_instance" "example" {
+	name = "example"
+	dynamic "foo" {
+		content {
+			
+		}
+	}
+}`,
+			hcl.Pos{Line: 5, Column: 7, Byte: 86},
+			lang.CompleteCandidates([]lang.Candidate{
+				{
+					Label:  "bar",
+					Detail: "Block",
+					Kind:   lang.BlockCandidateKind,
+					TextEdit: lang.TextEdit{
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 5, Column: 7, Byte: 86},
+							End:      hcl.Pos{Line: 5, Column: 7, Byte: 86},
+						},
+						NewText: "bar",
+						Snippet: "bar {\n  ${1}\n}",
+					},
+				},
+				{
+					Label:  "thing",
+					Detail: "optional, string",
+					Kind:   lang.AttributeCandidateKind,
+					TextEdit: lang.TextEdit{
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 5, Column: 7, Byte: 86},
+							End:      hcl.Pos{Line: 5, Column: 7, Byte: 86},
+						},
+						NewText: "thing",
+						Snippet: `thing = "${1:value}"`,
+					},
+				},
+				{
+					Label:  "dynamic",
+					Detail: "Block",
+					Kind:   lang.BlockCandidateKind,
+					TextEdit: lang.TextEdit{
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 4, Column: 7, Byte: 86},
+							End:      hcl.Pos{Line: 4, Column: 7, Byte: 86},
+						},
+						NewText: "dynamic",
+						Snippet: "dynamic {\n  ${1}\n}",
+					},
+				},
+			}),
+		},
 		// completion after the thing =
-
-		// check docs if nesting is supposed to be supported?
+		{
+			"dynamic block completion after the thing =",
+			&schema.BodySchema{
+				Blocks: map[string]*schema.BlockSchema{
+					"resource": {
+						Labels: []*schema.LabelSchema{
+							{
+								Name:     "type",
+								IsDepKey: true,
+							}, {Name: "name"},
+						},
+						Body: &schema.BodySchema{
+							Extensions: &schema.BodyExtensions{
+								DynamicBlocks: true,
+							},
+							Blocks:     make(map[string]*schema.BlockSchema, 0),
+							Attributes: make(map[string]*schema.AttributeSchema, 0),
+						},
+						DependentBody: map[schema.SchemaKey]*schema.BodySchema{
+							schema.NewSchemaKey(schema.DependencyKeys{
+								Labels: []schema.LabelDependent{
+									{Index: 0, Value: "aws_instance"},
+								},
+							}): {
+								Blocks: map[string]*schema.BlockSchema{
+									"foo": {
+										Body: &schema.BodySchema{
+											Attributes: map[string]*schema.AttributeSchema{
+												"thing": {
+													IsOptional: true,
+													Expr:       schema.LiteralTypeOnly(cty.Bool),
+												},
+											},
+										},
+									},
+								},
+								Attributes: map[string]*schema.AttributeSchema{
+									"instance_size": {
+										IsOptional: true,
+										Expr:       schema.LiteralTypeOnly(cty.String),
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			`resource "aws_instance" "example" {
+	name = "example"
+	dynamic "foo" {
+		content {
+			thing = 
+		}
+	}
+}`,
+			hcl.Pos{Line: 5, Column: 15, Byte: 94},
+			lang.CompleteCandidates([]lang.Candidate{
+				{
+					Label:  "true",
+					Detail: "bool",
+					Kind:   lang.BoolCandidateKind,
+					TextEdit: lang.TextEdit{
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 5, Column: 12, Byte: 94},
+							End:      hcl.Pos{Line: 5, Column: 12, Byte: 94},
+						},
+						NewText: "true",
+						Snippet: `${1:true}`,
+					},
+				},
+				{
+					Label:  "false",
+					Detail: "bool",
+					Kind:   lang.BoolCandidateKind,
+					TextEdit: lang.TextEdit{
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 5, Column: 12, Byte: 94},
+							End:      hcl.Pos{Line: 5, Column: 12, Byte: 94},
+						},
+						NewText: "false",
+						Snippet: `${1:false}`,
+					},
+				},
+			}),
+		},
+		// check allows more than one dynamic - what schema for this?
+		{
+			"allows more than one dynamic",
+			&schema.BodySchema{
+				Blocks: map[string]*schema.BlockSchema{
+					"resource": {
+						Labels: []*schema.LabelSchema{
+							{Name: "type", IsDepKey: true}, {Name: "name"},
+						},
+						Body: &schema.BodySchema{
+							Extensions: &schema.BodyExtensions{
+								DynamicBlocks: true,
+							},
+							Blocks:     make(map[string]*schema.BlockSchema, 0),
+							Attributes: make(map[string]*schema.AttributeSchema, 0),
+						},
+						DependentBody: map[schema.SchemaKey]*schema.BodySchema{
+							schema.NewSchemaKey(schema.DependencyKeys{
+								Labels: []schema.LabelDependent{
+									{Index: 0, Value: "aws_instance"},
+								},
+							}): {
+								Blocks: map[string]*schema.BlockSchema{
+									"foo": {
+										Body: schema.NewBodySchema(),
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			`resource "aws_instance" "example" {
+	name = "example"
+	dynamic "foo" {
+		
+	}
+	
+}`,
+			hcl.Pos{Line: 6, Column: 3, Byte: 78},
+			lang.CompleteCandidates([]lang.Candidate{
+				{
+					Label: "dynamic",
+					Description: lang.MarkupContent{
+						Value: "A dynamic block to produce blocks dynamically by iterating over a given complex value",
+						Kind:  lang.MarkdownKind,
+					},
+					Detail:         "Block, map",
+					Kind:           lang.BlockCandidateKind,
+					TriggerSuggest: true,
+					TextEdit: lang.TextEdit{
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 6, Column: 3, Byte: 78},
+							End:      hcl.Pos{Line: 6, Column: 3, Byte: 78},
+						},
+						NewText: "dynamic",
+						Snippet: "dynamic \"${1}\" {\n  ${2}\n}",
+					},
+				},
+				{
+					Label:  "foo",
+					Detail: "Block",
+					Kind:   lang.BlockCandidateKind,
+					TextEdit: lang.TextEdit{
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 6, Column: 3, Byte: 78},
+							End:      hcl.Pos{Line: 6, Column: 3, Byte: 78},
+						},
+						NewText: "foo",
+						Snippet: "foo {\n  ${1}\n}",
+					},
+				},
+			}),
+		},
+		{
+			"allows more nested dynamic",
+			&schema.BodySchema{
+				Blocks: map[string]*schema.BlockSchema{
+					"resource": {
+						Labels: []*schema.LabelSchema{
+							{Name: "type", IsDepKey: true}, {Name: "name"},
+						},
+						Body: &schema.BodySchema{
+							Extensions: &schema.BodyExtensions{
+								DynamicBlocks: true,
+							},
+							Blocks:     make(map[string]*schema.BlockSchema, 0),
+							Attributes: make(map[string]*schema.AttributeSchema, 0),
+						},
+						DependentBody: map[schema.SchemaKey]*schema.BodySchema{
+							schema.NewSchemaKey(schema.DependencyKeys{
+								Labels: []schema.LabelDependent{
+									{Index: 0, Value: "aws_instance"},
+								},
+							}): {
+								Blocks: map[string]*schema.BlockSchema{
+									"foo": {
+										Body: &schema.BodySchema{
+											Blocks: map[string]*schema.BlockSchema{
+												"bar": {
+													Body: schema.NewBodySchema(),
+												},
+											},
+										},
+									},
+								},
+								Attributes: map[string]*schema.AttributeSchema{
+									"instance_size": {
+										IsOptional: true,
+										Expr:       schema.LiteralTypeOnly(cty.String),
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			`resource "aws_instance" "example" {
+	name = "example"
+	foo {
+		
+	}	
+}`,
+			hcl.Pos{Line: 4, Column: 5, Byte: 63},
+			lang.CompleteCandidates([]lang.Candidate{
+				{
+					Label: "bar",
+					Description: lang.MarkupContent{
+						Value: "The body of each generated block",
+						Kind:  lang.PlainTextKind,
+					},
+					Detail: "Block, max: 1",
+					Kind:   lang.BlockCandidateKind,
+					TextEdit: lang.TextEdit{
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 6, Column: 3, Byte: 78},
+							End:      hcl.Pos{Line: 6, Column: 3, Byte: 78},
+						},
+						NewText: "dynamic",
+						Snippet: "dynamic \"${1}\" {\n  ${2}\n}",
+					},
+				},
+				{
+					Label: "dynamic",
+					Description: lang.MarkupContent{
+						Value: "The body of each generated block",
+						Kind:  lang.PlainTextKind,
+					},
+					Detail: "Block, max: 1",
+					Kind:   lang.BlockCandidateKind,
+					TextEdit: lang.TextEdit{
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 6, Column: 3, Byte: 78},
+							End:      hcl.Pos{Line: 6, Column: 3, Byte: 78},
+						},
+						NewText: "dynamic",
+						Snippet: "dynamic \"${1}\" {\n  ${2}\n}",
+					},
+				},
+			}),
+		},
 	}
 
 	for i, tc := range testCases {
