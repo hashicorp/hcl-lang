@@ -193,10 +193,12 @@ func (target Target) Matches(origin MatchableOrigin) bool {
 		}
 	}
 
-	// Reject origin if it's outside the targetable range
+	// If the target is only targetable from a particular range
+	// we confirm that the origin is within that range.
+	targetRangeMatches := true
 	if target.TargetableFromRangePtr != nil && !rangeOverlaps(*target.TargetableFromRangePtr, origin.OriginRange()) {
-		return false
+		targetRangeMatches = false
 	}
 
-	return (target.LocalAddr.Equals(localOriginAddr) || target.Addr.Equals(originAddr)) && matchesCons
+	return ((target.LocalAddr.Equals(localOriginAddr) && targetRangeMatches) || target.Addr.Equals(originAddr)) && matchesCons
 }
