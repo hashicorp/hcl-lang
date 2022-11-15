@@ -31,6 +31,12 @@ func (d *PathDecoder) SemanticTokensInFile(ctx context.Context, filename string)
 
 	tokens := d.tokensForBody(ctx, body, d.pathCtx.Schema, []lang.SemanticTokenModifier{})
 
+	// TODO decouple semantic tokens for valid references from AST walking
+	//   instead of matching targets and origins when encountering a traversal expression,
+	//   we can do this way earlier by comparing pathCtx.ReferenceTargets and
+	//   d.pathCtx.ReferenceOrigins, to build a list of tokens.
+	//   Be sure to sort them afterward!
+
 	sort.Slice(tokens, func(i, j int) bool {
 		return tokens[i].Range.Start.Byte < tokens[j].Range.Start.Byte
 	})
