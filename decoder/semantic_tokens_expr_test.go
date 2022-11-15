@@ -2068,6 +2068,47 @@ func TestDecoder_SemanticTokensInFile_traversalExpression(t *testing.T) {
 				},
 			},
 		},
+		{
+			"matching target but missing collected origin",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Expr: schema.ExprConstraints{
+						schema.TraversalExpr{OfType: cty.String},
+					},
+				},
+			},
+			reference.Targets{
+				reference.Target{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "blah"},
+					},
+					Type: cty.String,
+				},
+			},
+			reference.Origins{},
+			`attr = var.blah
+`,
+			[]lang.SemanticToken{
+				{ // attr
+					Type:      lang.TokenAttrName,
+					Modifiers: []lang.SemanticTokenModifier{},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   1,
+							Column: 1,
+							Byte:   0,
+						},
+						End: hcl.Pos{
+							Line:   1,
+							Column: 5,
+							Byte:   4,
+						},
+					},
+				},
+			},
+		},
 	}
 
 	ctx := context.Background()
