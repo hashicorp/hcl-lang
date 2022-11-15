@@ -150,10 +150,6 @@ func (ref Target) ConformsToType(typ cty.Type) bool {
 }
 
 func (target Target) Matches(origin MatchableOrigin) bool {
-	if len(target.LocalAddr) > len(origin.Address()) && len(target.Addr) > len(origin.Address()) {
-		return false
-	}
-
 	originAddr, localOriginAddr := origin.Address(), origin.Address()
 
 	matchesCons := false
@@ -173,8 +169,18 @@ func (target Target) Matches(origin MatchableOrigin) bool {
 		}
 
 		if target.Type == cty.DynamicPseudoType {
-			originAddr = origin.Address().FirstSteps(uint(len(target.Addr)))
-			localOriginAddr = origin.Address().FirstSteps(uint(len(target.LocalAddr)))
+			// Account for the case where the origin address points to a nested
+			// segment, which the target address doesn't explicitly contain
+			// but implies.
+			// e.g. If self.foo target is of "any type" (cty.DynamicPseudoType),
+			// then we assume it is a match for self.foo.anything
+			// by ignoring the last "anything" segment.
+			if len(target.Addr) < len(origin.Address()) {
+				originAddr = origin.Address().FirstSteps(uint(len(target.Addr)))
+			}
+			if len(target.LocalAddr) < len(origin.Address()) {
+				localOriginAddr = origin.Address().FirstSteps(uint(len(target.LocalAddr)))
+			}
 			matchesCons = true
 			continue
 		}
