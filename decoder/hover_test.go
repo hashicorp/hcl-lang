@@ -9,6 +9,7 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/hashicorp/hcl-lang/lang"
+	"github.com/hashicorp/hcl-lang/reference"
 	"github.com/hashicorp/hcl-lang/schema"
 	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hclsyntax"
@@ -938,6 +939,8 @@ func TestDecoder_HoverAtPos_extension(t *testing.T) {
 	testCases := []struct {
 		name         string
 		bodySchema   *schema.BodySchema
+		RefTargets   reference.Targets
+		origins      reference.Origins
 		config       string
 		pos          hcl.Pos
 		expectedData *lang.HoverData
@@ -959,6 +962,8 @@ func TestDecoder_HoverAtPos_extension(t *testing.T) {
 					},
 				},
 			},
+			reference.Targets{},
+			reference.Origins{},
 			`myblock "foo" "bar" {
   count = 1
 }
@@ -999,6 +1004,29 @@ func TestDecoder_HoverAtPos_extension(t *testing.T) {
 					},
 				},
 			},
+			reference.Targets{
+				{
+					LocalAddr: lang.Address{
+						lang.RootStep{Name: "count"},
+						lang.AttrStep{Name: "index"},
+					},
+					Type:        cty.Number,
+					Description: lang.PlainText("The distinct index number (starting with 0) corresponding to the instance"),
+				},
+			},
+			reference.Origins{
+				reference.LocalOrigin{
+					Addr: lang.Address{
+						lang.RootStep{Name: "count"},
+						lang.AttrStep{Name: "index"},
+					},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 3, Column: 11, Byte: 44},
+						End:      hcl.Pos{Line: 3, Column: 22, Byte: 55},
+					},
+				},
+			},
 			`myblock "foo" "bar" {
   count = 1
   foo   = count.index
@@ -1031,6 +1059,8 @@ func TestDecoder_HoverAtPos_extension(t *testing.T) {
 					},
 				},
 			},
+			reference.Targets{},
+			reference.Origins{},
 			`myblock "foo" "bar" {
   count = 3
 }
@@ -1061,6 +1091,8 @@ func TestDecoder_HoverAtPos_extension(t *testing.T) {
 				Files: map[string]*hcl.File{
 					"test.tf": f,
 				},
+				ReferenceTargets: tc.RefTargets,
+				ReferenceOrigins: tc.origins,
 			})
 
 			data, err := d.HoverAtPos(ctx, "test.tf", tc.pos)
@@ -1078,6 +1110,8 @@ func TestDecoder_HoverAtPos_foreach_extension(t *testing.T) {
 	testCases := []struct {
 		name         string
 		bodySchema   *schema.BodySchema
+		refTargets   reference.Targets
+		origins      reference.Origins
 		config       string
 		pos          hcl.Pos
 		expectedData *lang.HoverData
@@ -1099,6 +1133,8 @@ func TestDecoder_HoverAtPos_foreach_extension(t *testing.T) {
 					},
 				},
 			},
+			reference.Targets{},
+			reference.Origins{},
 			`myblock "foo" "bar" {
   for_each = {
 		
@@ -1147,6 +1183,65 @@ func TestDecoder_HoverAtPos_foreach_extension(t *testing.T) {
 					},
 				},
 			},
+			reference.Targets{
+				{
+					LocalAddr: lang.Address{
+						lang.RootStep{Name: "each"},
+						lang.AttrStep{Name: "key"},
+					},
+					TargetableFromRangePtr: &hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   1,
+							Column: 21,
+							Byte:   20,
+						},
+						End: hcl.Pos{
+							Line:   7,
+							Column: 2,
+							Byte:   83,
+						},
+					},
+					Type:        cty.String,
+					Description: lang.Markdown("The map key (or set member) corresponding to this instance"),
+					// TODO: RangePtr & DefRangePtr
+				},
+				{
+					LocalAddr: lang.Address{
+						lang.RootStep{Name: "each"},
+						lang.AttrStep{Name: "value"},
+					},
+					TargetableFromRangePtr: &hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   1,
+							Column: 21,
+							Byte:   20,
+						},
+						End: hcl.Pos{
+							Line:   7,
+							Column: 2,
+							Byte:   83,
+						},
+					},
+					Type:        cty.DynamicPseudoType,
+					Description: lang.Markdown("The map value corresponding to this instance. (If a set was provided, this is the same as `each.key`.)"),
+					// TODO: RangePtr & DefRangePtr
+				},
+			},
+			reference.Origins{
+				reference.LocalOrigin{
+					Addr: lang.Address{
+						lang.RootStep{Name: "each"},
+						lang.AttrStep{Name: "key"},
+					},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 2, Column: 8, Byte: 29},
+						End:      hcl.Pos{Line: 2, Column: 16, Byte: 37},
+					},
+				},
+			},
 			`myblock "foo" "bar" {
 	foo = each.key
 	for_each = {
@@ -1192,6 +1287,65 @@ func TestDecoder_HoverAtPos_foreach_extension(t *testing.T) {
 					},
 				},
 			},
+			reference.Targets{
+				{
+					LocalAddr: lang.Address{
+						lang.RootStep{Name: "each"},
+						lang.AttrStep{Name: "key"},
+					},
+					TargetableFromRangePtr: &hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   1,
+							Column: 21,
+							Byte:   20,
+						},
+						End: hcl.Pos{
+							Line:   7,
+							Column: 2,
+							Byte:   83,
+						},
+					},
+					Type:        cty.String,
+					Description: lang.Markdown("The map key (or set member) corresponding to this instance"),
+					// TODO: RangePtr & DefRangePtr
+				},
+				{
+					LocalAddr: lang.Address{
+						lang.RootStep{Name: "each"},
+						lang.AttrStep{Name: "value"},
+					},
+					TargetableFromRangePtr: &hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   1,
+							Column: 21,
+							Byte:   20,
+						},
+						End: hcl.Pos{
+							Line:   7,
+							Column: 2,
+							Byte:   83,
+						},
+					},
+					Type:        cty.DynamicPseudoType,
+					Description: lang.Markdown("The map value corresponding to this instance. (If a set was provided, this is the same as `each.key`.)"),
+					// TODO: RangePtr & DefRangePtr
+				},
+			},
+			reference.Origins{
+				reference.LocalOrigin{
+					Addr: lang.Address{
+						lang.RootStep{Name: "each"},
+						lang.AttrStep{Name: "value"},
+					},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 2, Column: 8, Byte: 29},
+						End:      hcl.Pos{Line: 2, Column: 18, Byte: 39},
+					},
+				},
+			},
 			`myblock "foo" "bar" {
 	foo = each.value
 	for_each = {
@@ -1226,6 +1380,8 @@ func TestDecoder_HoverAtPos_foreach_extension(t *testing.T) {
 				Files: map[string]*hcl.File{
 					"test.tf": f,
 				},
+				ReferenceTargets: tc.refTargets,
+				ReferenceOrigins: tc.origins,
 			})
 
 			data, err := d.HoverAtPos(ctx, "test.tf", tc.pos)

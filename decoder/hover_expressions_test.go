@@ -1309,6 +1309,7 @@ func TestDecoder_HoverAtPos_traversalExpressions(t *testing.T) {
 		name         string
 		attrSchema   map[string]*schema.AttributeSchema
 		refs         reference.Targets
+		origins      reference.Origins
 		cfg          string
 		pos          hcl.Pos
 		expectedData *lang.HoverData
@@ -1324,6 +1325,32 @@ func TestDecoder_HoverAtPos_traversalExpressions(t *testing.T) {
 				},
 			},
 			reference.Targets{},
+			reference.Origins{
+				reference.LocalOrigin{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "blah"},
+					},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   1,
+							Column: 8,
+							Byte:   7,
+						},
+						End: hcl.Pos{
+							Line:   1,
+							Column: 16,
+							Byte:   15,
+						},
+					},
+					Constraints: reference.OriginConstraints{
+						reference.OriginConstraint{
+							OfType: cty.String,
+						},
+					},
+				},
+			},
 			`attr = var.blah`,
 			hcl.Pos{Line: 1, Column: 10, Byte: 9},
 			nil,
@@ -1347,6 +1374,32 @@ func TestDecoder_HoverAtPos_traversalExpressions(t *testing.T) {
 					Type: cty.Bool,
 				},
 			},
+			reference.Origins{
+				reference.LocalOrigin{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "blah"},
+					},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   1,
+							Column: 8,
+							Byte:   7,
+						},
+						End: hcl.Pos{
+							Line:   1,
+							Column: 16,
+							Byte:   15,
+						},
+					},
+					Constraints: reference.OriginConstraints{
+						reference.OriginConstraint{
+							OfType: cty.String,
+						},
+					},
+				},
+			},
 			`attr = var.blah`,
 			hcl.Pos{Line: 1, Column: 10, Byte: 9},
 			nil,
@@ -1368,6 +1421,32 @@ func TestDecoder_HoverAtPos_traversalExpressions(t *testing.T) {
 						lang.AttrStep{Name: "blah"},
 					},
 					Type: cty.String,
+				},
+			},
+			reference.Origins{
+				reference.LocalOrigin{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "blah"},
+					},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   1,
+							Column: 8,
+							Byte:   7,
+						},
+						End: hcl.Pos{
+							Line:   1,
+							Column: 16,
+							Byte:   15,
+						},
+					},
+					Constraints: reference.OriginConstraints{
+						reference.OriginConstraint{
+							OfType: cty.String,
+						},
+					},
 				},
 			},
 			`attr = var.blah`,
@@ -1406,6 +1485,33 @@ func TestDecoder_HoverAtPos_traversalExpressions(t *testing.T) {
 						lang.AttrStep{Name: "foo"},
 					},
 					Type: cty.DynamicPseudoType,
+				},
+			},
+			reference.Origins{
+				reference.LocalOrigin{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "foo"},
+						lang.AttrStep{Name: "bar"},
+					},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   1,
+							Column: 8,
+							Byte:   7,
+						},
+						End: hcl.Pos{
+							Line:   1,
+							Column: 19,
+							Byte:   18,
+						},
+					},
+					Constraints: reference.OriginConstraints{
+						reference.OriginConstraint{
+							OfType: cty.String,
+						},
+					},
 				},
 			},
 			`attr = var.foo.bar`,
@@ -1447,6 +1553,32 @@ func TestDecoder_HoverAtPos_traversalExpressions(t *testing.T) {
 					Name:    "special",
 				},
 			},
+			reference.Origins{
+				reference.LocalOrigin{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "foo"},
+					},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   1,
+							Column: 8,
+							Byte:   7,
+						},
+						End: hcl.Pos{
+							Line:   1,
+							Column: 15,
+							Byte:   14,
+						},
+					},
+					Constraints: reference.OriginConstraints{
+						reference.OriginConstraint{
+							OfScopeId: lang.ScopeId("foo"),
+						},
+					},
+				},
+			},
 			`attr = var.foo`,
 			hcl.Pos{Line: 1, Column: 10, Byte: 9},
 			&lang.HoverData{
@@ -1480,6 +1612,7 @@ func TestDecoder_HoverAtPos_traversalExpressions(t *testing.T) {
 			d := testPathDecoder(t, &PathContext{
 				Schema:           bodySchema,
 				ReferenceTargets: tc.refs,
+				ReferenceOrigins: tc.origins,
 				Files: map[string]*hcl.File{
 					"test.tf": f,
 				},

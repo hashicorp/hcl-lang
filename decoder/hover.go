@@ -283,7 +283,7 @@ func (d *PathDecoder) hoverDataForExpr(ctx context.Context, expr hcl.Expression,
 
 		tes, ok := constraints.TraversalExprs()
 		if ok {
-			content, err := d.hoverContentForTraversalExpr(e.AsTraversal(), tes)
+			content, err := d.hoverContentForTraversalExpr(e.AsTraversal(), tes, pos)
 			if err != nil {
 				return nil, err
 			}
@@ -642,19 +642,28 @@ func stringValFromTemplateExpr(tplExpr *hclsyntax.TemplateExpr) (cty.Value, bool
 	return cty.StringVal(value), true
 }
 
-func (d *PathDecoder) hoverContentForTraversalExpr(traversal hcl.Traversal, tes []schema.TraversalExpr) (string, error) {
-	origin, err := reference.TraversalToLocalOrigin(traversal, tes)
-	if err != nil {
-		return "", nil
-	}
-
-	targets, ok := d.pathCtx.ReferenceTargets.Match(origin)
+func (d *PathDecoder) hoverContentForTraversalExpr(traversal hcl.Traversal, tes []schema.TraversalExpr, pos hcl.Pos) (string, error) {
+	origins, ok := d.pathCtx.ReferenceOrigins.AtPos(traversal.SourceRange().Filename, pos)
 	if !ok {
-		return "", &reference.NoTargetFound{}
+		return "", &reference.NoOriginFound{}
 	}
 
-	// TODO: Reflect additional found targets here?
-	return hoverContentForReferenceTarget(targets[0])
+	for _, origin := range origins {
+		matchableOrigin, ok := origin.(reference.MatchableOrigin)
+		if !ok {
+			continue
+		}
+		targets, ok := d.pathCtx.ReferenceTargets.Match(matchableOrigin)
+		if !ok {
+			// target not found
+			continue
+		}
+
+		// TODO: Reflect additional found targets here?
+		return hoverContentForReferenceTarget(targets[0])
+	}
+
+	return "", &reference.NoTargetFound{}
 }
 
 func hoverContentForReferenceTarget(ref reference.Target) (string, error) {
