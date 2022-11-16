@@ -855,7 +855,38 @@ func TestTargets_MatchWalk(t *testing.T) {
 				},
 			},
 		},
-		// TODO: test matching of originRng vs outermostBodyRng (cyclical references)
+		{
+			"avoid matching references to block's own fields",
+			Targets{
+				Target{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "test"},
+					},
+					Type: cty.String,
+					RangePtr: &hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 5, Column: 1, Byte: 25},
+						End:      hcl.Pos{Line: 5, Column: 10, Byte: 35},
+					},
+				},
+			},
+			schema.TraversalExpr{
+				OfType: cty.String,
+			},
+			"",
+			hcl.Range{
+				Filename: "test.tf",
+				Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
+				End:      hcl.Pos{Line: 10, Column: 1, Byte: 50},
+			},
+			hcl.Range{
+				Filename: "test.tf",
+				Start:    hcl.InitialPos,
+				End:      hcl.InitialPos,
+			},
+			Targets{},
+		},
 	}
 
 	for i, tc := range testCases {
@@ -937,7 +968,7 @@ func TestTargets_MatchWalk_localRefs(t *testing.T) {
 			},
 		},
 		{
-			"targets with mixed address",
+			"targets with mixed address and same block",
 			Targets{
 				{
 					LocalAddr: lang.Address{
@@ -947,6 +978,11 @@ func TestTargets_MatchWalk_localRefs(t *testing.T) {
 					Addr: lang.Address{
 						lang.RootStep{Name: "abs"},
 						lang.AttrStep{Name: "foobar"},
+					},
+					RangePtr: &hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 5, Column: 1, Byte: 25},
+						End:      hcl.Pos{Line: 5, Column: 10, Byte: 35},
 					},
 				},
 				{
@@ -961,11 +997,11 @@ func TestTargets_MatchWalk_localRefs(t *testing.T) {
 				},
 			},
 			schema.TraversalExpr{},
-			"abs",
+			"local",
 			hcl.Range{
 				Filename: "test.tf",
-				Start:    hcl.InitialPos,
-				End:      hcl.InitialPos,
+				Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
+				End:      hcl.Pos{Line: 10, Column: 1, Byte: 50},
 			},
 			hcl.Range{
 				Filename: "test.tf",
@@ -981,6 +1017,11 @@ func TestTargets_MatchWalk_localRefs(t *testing.T) {
 					Addr: lang.Address{
 						lang.RootStep{Name: "abs"},
 						lang.AttrStep{Name: "foobar"},
+					},
+					RangePtr: &hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 5, Column: 1, Byte: 25},
+						End:      hcl.Pos{Line: 5, Column: 10, Byte: 35},
 					},
 				},
 				{
