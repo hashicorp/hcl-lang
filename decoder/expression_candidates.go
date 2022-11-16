@@ -474,7 +474,7 @@ func (d *PathDecoder) candidatesForTraversalConstraint(tc schema.TraversalExpr, 
 	d.pathCtx.ReferenceTargets.MatchWalk(tc, string(prefix), editRng, func(target reference.Target) error {
 		// avoid suggesting references to block's own fields from within (for now)
 		// TODO: Reflect LocalAddr here
-		if referenceTargetIsInRange(target, outerBodyRng) {
+		if len(target.LocalAddr) == 0 && referenceTargetIsInRange(target, outerBodyRng) {
 			return nil
 		}
 
