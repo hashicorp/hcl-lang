@@ -15,7 +15,7 @@ import (
 	"github.com/hashicorp/hcl/v2/hclsyntax"
 )
 
-func TestCompletionAtPos_BodySchema_Extensions(t *testing.T) {
+func TestCompletionAtPos_BodySchema_Extensions_Count(t *testing.T) {
 	ctx := context.Background()
 
 	testCases := []struct {
@@ -297,16 +297,42 @@ func TestCompletionAtPos_BodySchema_Extensions(t *testing.T) {
 					},
 					Type:        cty.Number,
 					Description: lang.PlainText("The distinct index number (starting with 0) corresponding to the instance"),
+					RangePtr: &hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   2,
+							Column: 3,
+							Byte:   34,
+						},
+						End: hcl.Pos{
+							Line:   2,
+							Column: 12,
+							Byte:   43,
+						},
+					},
+					DefRangePtr: &hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   2,
+							Column: 3,
+							Byte:   34,
+						},
+						End: hcl.Pos{
+							Line:   2,
+							Column: 8,
+							Byte:   39,
+						},
+					},
 				},
 			},
 			`resource "aws_instance" "foo" {
-	count = 4
-	cpu_count =
+  count = 4
+  cpu_count = 
 }`,
 			hcl.Pos{
 				Line:   3,
-				Column: 14,
-				Byte:   55,
+				Column: 15,
+				Byte:   57,
 			},
 			lang.CompleteCandidates([]lang.Candidate{
 				{
@@ -321,13 +347,13 @@ func TestCompletionAtPos_BodySchema_Extensions(t *testing.T) {
 							Filename: "test.tf",
 							Start: hcl.Pos{
 								Line:   3,
-								Column: 13,
-								Byte:   55,
+								Column: 15,
+								Byte:   58,
 							},
 							End: hcl.Pos{
 								Line:   3,
-								Column: 13,
-								Byte:   55,
+								Column: 15,
+								Byte:   58,
 							},
 						},
 						NewText: "count.index",
@@ -602,6 +628,43 @@ variable "test" {
 				},
 			}),
 		},
+	}
+
+	for i, tc := range testCases {
+		t.Run(fmt.Sprintf("%d-%s", i, tc.testName), func(t *testing.T) {
+			f, _ := hclsyntax.ParseConfig([]byte(tc.cfg), "test.tf", hcl.InitialPos)
+
+			d := testPathDecoder(t, &PathContext{
+				Schema: tc.bodySchema,
+				Files: map[string]*hcl.File{
+					"test.tf": f,
+				},
+				ReferenceTargets: tc.referenceTargets,
+			})
+
+			candidates, err := d.CandidatesAtPos(ctx, "test.tf", tc.pos)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			if diff := cmp.Diff(tc.expectedCandidates, candidates); diff != "" {
+				t.Fatalf("unexpected candidates: %s", diff)
+			}
+		})
+	}
+}
+
+func TestCompletionAtPos_BodySchema_Extensions_ForEach(t *testing.T) {
+	ctx := context.Background()
+
+	testCases := []struct {
+		testName           string
+		bodySchema         *schema.BodySchema
+		referenceTargets   reference.Targets
+		cfg                string
+		pos                hcl.Pos
+		expectedCandidates lang.Candidates
+	}{
 		{
 			"foreach attribute completion",
 			&schema.BodySchema{
@@ -1104,7 +1167,526 @@ for_each =
 	}
 }
 
-func TestCompletionAtPos_BodySchema_DynamicBlock_Extensions(t *testing.T) {
+func TestCompletionAtPos_BodySchema_Extensions_SelfRef(t *testing.T) {
+	ctx := context.Background()
+
+	testCases := []struct {
+		testName           string
+		bodySchema         *schema.BodySchema
+		cfg                string
+		pos                hcl.Pos
+		expectedCandidates lang.Candidates
+	}{
+		// nested block
+		{
+			"target self addr enabled but no extension enabled",
+			&schema.BodySchema{
+				Blocks: map[string]*schema.BlockSchema{
+					"resource": {
+						Labels: []*schema.LabelSchema{
+							{
+								Name:        "type",
+								IsDepKey:    true,
+								Completable: true,
+							},
+							{Name: "name"},
+						},
+						Body: schema.NewBodySchema(),
+						DependentBody: map[schema.SchemaKey]*schema.BodySchema{
+							schema.NewSchemaKey(schema.DependencyKeys{
+								Labels: []schema.LabelDependent{
+									{
+										Index: 0,
+										Value: "aws_instance",
+									},
+								},
+							}): {
+								Attributes: map[string]*schema.AttributeSchema{
+									"cpu_count": {
+										IsOptional: true,
+										Expr: schema.ExprConstraints{
+											schema.TraversalExpr{
+												OfType: cty.Number,
+											},
+											schema.LiteralTypeExpr{
+												Type: cty.Number,
+											},
+										},
+									},
+									"fox": {
+										IsOptional: true,
+										Expr: schema.ExprConstraints{
+											schema.TraversalExpr{
+												OfType: cty.Number,
+											},
+											schema.LiteralTypeExpr{
+												Type: cty.Number,
+											},
+										},
+									},
+								},
+							},
+						},
+						Address: &schema.BlockAddrSchema{
+							DependentBodyAsData:  true,
+							InferDependentBody:   true,
+							DependentBodySelfRef: true,
+							Steps: []schema.AddrStep{
+								schema.LabelStep{Index: 0},
+								schema.LabelStep{Index: 1},
+							},
+						},
+					},
+				},
+			},
+			`resource "aws_instance" "foo" {
+  cpu_count = 4
+  fox =
+}`,
+			hcl.Pos{Line: 3, Column: 8, Byte: 55},
+			lang.CompleteCandidates([]lang.Candidate{}),
+		},
+		{
+			"target self addr enabled and extension enabled",
+			&schema.BodySchema{
+				Blocks: map[string]*schema.BlockSchema{
+					"resource": {
+						Labels: []*schema.LabelSchema{
+							{
+								Name:        "type",
+								IsDepKey:    true,
+								Completable: true,
+							},
+							{Name: "name"},
+						},
+						Body: &schema.BodySchema{
+							Extensions: &schema.BodyExtensions{
+								SelfRefs: true,
+							},
+						},
+						DependentBody: map[schema.SchemaKey]*schema.BodySchema{
+							schema.NewSchemaKey(schema.DependencyKeys{
+								Labels: []schema.LabelDependent{
+									{
+										Index: 0,
+										Value: "aws_instance",
+									},
+								},
+							}): {
+								Attributes: map[string]*schema.AttributeSchema{
+									"cpu_count": {
+										IsOptional: true,
+										Expr: schema.ExprConstraints{
+											schema.TraversalExpr{
+												OfType: cty.Number,
+											},
+											schema.LiteralTypeExpr{
+												Type: cty.Number,
+											},
+										},
+									},
+									"fox": {
+										IsOptional: true,
+										Expr: schema.ExprConstraints{
+											schema.TraversalExpr{
+												OfType: cty.Number,
+											},
+											schema.LiteralTypeExpr{
+												Type: cty.Number,
+											},
+										},
+									},
+								},
+							},
+						},
+						Address: &schema.BlockAddrSchema{
+							DependentBodyAsData:  true,
+							InferDependentBody:   true,
+							DependentBodySelfRef: true,
+							Steps: []schema.AddrStep{
+								schema.LabelStep{Index: 0},
+								schema.LabelStep{Index: 1},
+							},
+						},
+					},
+				},
+			},
+			`resource "aws_instance" "foo" {
+  cpu_count = 4
+  fox =
+}`,
+			hcl.Pos{Line: 3, Column: 8, Byte: 55},
+			lang.CompleteCandidates([]lang.Candidate{
+				{
+					Label:  "self",
+					Detail: "object",
+					TextEdit: lang.TextEdit{
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 3, Column: 8, Byte: 55},
+							End:      hcl.Pos{Line: 3, Column: 8, Byte: 55},
+						},
+
+						NewText: "self",
+						Snippet: "self",
+					},
+					Kind: lang.TraversalCandidateKind,
+				},
+			}),
+		},
+		{
+			"target self addr disabled and extension enabled",
+			&schema.BodySchema{
+				Blocks: map[string]*schema.BlockSchema{
+					"resource": {
+						Labels: []*schema.LabelSchema{
+							{
+								Name:        "type",
+								IsDepKey:    true,
+								Completable: true,
+							},
+							{Name: "name"},
+						},
+						Body: &schema.BodySchema{
+							Extensions: &schema.BodyExtensions{
+								SelfRefs: true,
+							},
+						},
+						DependentBody: map[schema.SchemaKey]*schema.BodySchema{
+							schema.NewSchemaKey(schema.DependencyKeys{
+								Labels: []schema.LabelDependent{
+									{
+										Index: 0,
+										Value: "aws_instance",
+									},
+								},
+							}): {
+								Attributes: map[string]*schema.AttributeSchema{
+									"cpu_count": {
+										IsOptional: true,
+										Expr: schema.ExprConstraints{
+											schema.TraversalExpr{
+												OfType: cty.Number,
+											},
+											schema.LiteralTypeExpr{
+												Type: cty.Number,
+											},
+										},
+									},
+									"fox": {
+										IsOptional: true,
+										Expr: schema.ExprConstraints{
+											schema.TraversalExpr{
+												OfType: cty.Number,
+											},
+											schema.LiteralTypeExpr{
+												Type: cty.Number,
+											},
+										},
+									},
+								},
+							},
+						},
+						Address: &schema.BlockAddrSchema{
+							DependentBodyAsData: true,
+							InferDependentBody:  true,
+							Steps: []schema.AddrStep{
+								schema.LabelStep{Index: 0},
+								schema.LabelStep{Index: 1},
+							},
+						},
+					},
+				},
+			},
+			`resource "aws_instance" "foo" {
+  cpu_count = 4
+  fox =
+}`,
+			hcl.Pos{Line: 3, Column: 8, Byte: 55},
+			lang.CompleteCandidates([]lang.Candidate{}),
+		},
+		{
+			"no cyclical completion (attr = self.attr)",
+			&schema.BodySchema{
+				Blocks: map[string]*schema.BlockSchema{
+					"resource": {
+						Labels: []*schema.LabelSchema{
+							{
+								Name:        "type",
+								IsDepKey:    true,
+								Completable: true,
+							},
+							{Name: "name"},
+						},
+						Body: &schema.BodySchema{
+							Extensions: &schema.BodyExtensions{
+								SelfRefs: true,
+							},
+						},
+						DependentBody: map[schema.SchemaKey]*schema.BodySchema{
+							schema.NewSchemaKey(schema.DependencyKeys{
+								Labels: []schema.LabelDependent{
+									{
+										Index: 0,
+										Value: "aws_instance",
+									},
+								},
+							}): {
+								Attributes: map[string]*schema.AttributeSchema{
+									"cpu_count": {
+										IsOptional: true,
+										Expr: schema.ExprConstraints{
+											schema.TraversalExpr{
+												OfType: cty.Number,
+											},
+											schema.LiteralTypeExpr{
+												Type: cty.Number,
+											},
+										},
+									},
+								},
+							},
+						},
+						Address: &schema.BlockAddrSchema{
+							DependentBodyAsData:  true,
+							InferDependentBody:   true,
+							DependentBodySelfRef: true,
+							Steps: []schema.AddrStep{
+								schema.LabelStep{Index: 0},
+								schema.LabelStep{Index: 1},
+							},
+						},
+					},
+				},
+			},
+			`resource "aws_instance" "foo" {
+  cpu_count = 
+}`,
+			hcl.Pos{Line: 2, Column: 15, Byte: 46},
+			lang.CompleteCandidates([]lang.Candidate{}),
+		},
+		{
+			"completion with prefix",
+			&schema.BodySchema{
+				Blocks: map[string]*schema.BlockSchema{
+					"resource": {
+						Labels: []*schema.LabelSchema{
+							{
+								Name:        "type",
+								IsDepKey:    true,
+								Completable: true,
+							},
+							{Name: "name"},
+						},
+						Body: &schema.BodySchema{
+							Extensions: &schema.BodyExtensions{
+								SelfRefs: true,
+							},
+						},
+						DependentBody: map[schema.SchemaKey]*schema.BodySchema{
+							schema.NewSchemaKey(schema.DependencyKeys{
+								Labels: []schema.LabelDependent{
+									{
+										Index: 0,
+										Value: "aws_instance",
+									},
+								},
+							}): {
+								Attributes: map[string]*schema.AttributeSchema{
+									"cpu_count": {
+										IsOptional: true,
+										Expr: schema.ExprConstraints{
+											schema.TraversalExpr{
+												OfType: cty.Number,
+											},
+											schema.LiteralTypeExpr{
+												Type: cty.Number,
+											},
+										},
+									},
+									"fox": {
+										IsOptional: true,
+										Expr: schema.ExprConstraints{
+											schema.TraversalExpr{
+												OfType: cty.Number,
+											},
+											schema.LiteralTypeExpr{
+												Type: cty.Number,
+											},
+										},
+									},
+								},
+							},
+						},
+						Address: &schema.BlockAddrSchema{
+							DependentBodyAsData:  true,
+							InferDependentBody:   true,
+							DependentBodySelfRef: true,
+							Steps: []schema.AddrStep{
+								schema.LabelStep{Index: 0},
+								schema.LabelStep{Index: 1},
+							},
+						},
+					},
+				},
+			},
+			`resource "aws_instance" "foo" {
+  cpu_count = 4
+  fox = self.
+}`,
+			hcl.Pos{Line: 3, Column: 14, Byte: 61},
+			lang.CompleteCandidates([]lang.Candidate{
+				{
+					Label:  "self.cpu_count",
+					Detail: "number",
+					TextEdit: lang.TextEdit{
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 3, Column: 9, Byte: 56},
+							End:      hcl.Pos{Line: 3, Column: 14, Byte: 61},
+						},
+						NewText: "self.cpu_count",
+						Snippet: "self.cpu_count",
+					},
+					Kind: lang.TraversalCandidateKind,
+				},
+			}),
+		},
+		{
+			"target self addr enabled and extension enabled within a block",
+			&schema.BodySchema{
+				Blocks: map[string]*schema.BlockSchema{
+					"resource": {
+						Labels: []*schema.LabelSchema{
+							{
+								Name:        "type",
+								IsDepKey:    true,
+								Completable: true,
+							},
+							{Name: "name"},
+						},
+						Body: &schema.BodySchema{
+							Blocks: map[string]*schema.BlockSchema{
+								"animal": {
+									Body: &schema.BodySchema{
+										Extensions: &schema.BodyExtensions{
+											SelfRefs: true,
+										},
+										Attributes: map[string]*schema.AttributeSchema{
+											"fox": {
+												IsOptional: true,
+												Expr: schema.ExprConstraints{
+													schema.TraversalExpr{
+														OfType: cty.Number,
+													},
+													schema.LiteralTypeExpr{
+														Type: cty.Number,
+													},
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+						DependentBody: map[schema.SchemaKey]*schema.BodySchema{
+							schema.NewSchemaKey(schema.DependencyKeys{
+								Labels: []schema.LabelDependent{
+									{
+										Index: 0,
+										Value: "aws_instance",
+									},
+								},
+							}): {
+								Attributes: map[string]*schema.AttributeSchema{
+									"cpu_count": {
+										IsOptional: true,
+										Expr: schema.ExprConstraints{
+											schema.TraversalExpr{
+												OfType: cty.Number,
+											},
+											schema.LiteralTypeExpr{
+												Type: cty.Number,
+											},
+										},
+									},
+								},
+							},
+						},
+						Address: &schema.BlockAddrSchema{
+							DependentBodyAsData:  true,
+							InferDependentBody:   true,
+							DependentBodySelfRef: true,
+							Steps: []schema.AddrStep{
+								schema.LabelStep{Index: 0},
+								schema.LabelStep{Index: 1},
+							},
+						},
+					},
+				},
+			},
+			`resource "aws_instance" "foo" {
+  cpu_count = 4
+  animal {
+    fox =
+  }
+}`,
+			hcl.Pos{Line: 4, Column: 10, Byte: 68},
+			lang.CompleteCandidates([]lang.Candidate{
+				{
+					Label:  "self",
+					Detail: "object",
+					TextEdit: lang.TextEdit{
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 4, Column: 10, Byte: 68},
+							End:      hcl.Pos{Line: 4, Column: 10, Byte: 68},
+						},
+
+						NewText: "self",
+						Snippet: "self",
+					},
+					Kind: lang.TraversalCandidateKind,
+				},
+			}),
+		},
+	}
+
+	for i, tc := range testCases {
+		t.Run(fmt.Sprintf("%d-%s", i, tc.testName), func(t *testing.T) {
+			f, _ := hclsyntax.ParseConfig([]byte(tc.cfg), "test.tf", hcl.InitialPos)
+
+			d := testPathDecoder(t, &PathContext{
+				Schema: tc.bodySchema,
+				Files: map[string]*hcl.File{
+					"test.tf": f,
+				},
+			})
+			targets, err := d.CollectReferenceTargets()
+			if err != nil {
+				t.Fatal(err)
+			}
+			d = testPathDecoder(t, &PathContext{
+				Schema: tc.bodySchema,
+				Files: map[string]*hcl.File{
+					"test.tf": f,
+				},
+				ReferenceTargets: targets,
+			})
+
+			candidates, err := d.CandidatesAtPos(ctx, "test.tf", tc.pos)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			if diff := cmp.Diff(tc.expectedCandidates, candidates); diff != "" {
+				t.Fatalf("unexpected candidates: %s", diff)
+			}
+		})
+	}
+}
+
+func TestCompletionAtPos_BodySchema_Extensions_DynamicBlock(t *testing.T) {
 	ctx := context.Background()
 
 	testCases := []struct {
