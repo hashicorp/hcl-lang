@@ -328,7 +328,7 @@ func (d *PathDecoder) constraintToCandidates(ctx context.Context, constraint sch
 			},
 		})
 	case schema.TraversalExpr:
-		candidates = append(candidates, d.candidatesForTraversalConstraint(c, outerBodyRng, prefixRng, editRng)...)
+		candidates = append(candidates, d.candidatesForTraversalConstraint(ctx, c, outerBodyRng, prefixRng, editRng)...)
 	case schema.TupleConsExpr:
 		candidates = append(candidates, lang.Candidate{
 			Label:       fmt.Sprintf(`[%s]`, labelForConstraints(c.AnyElem)),
@@ -457,7 +457,7 @@ func (d *PathDecoder) constraintToCandidates(ctx context.Context, constraint sch
 	return candidates
 }
 
-func (d *PathDecoder) candidatesForTraversalConstraint(tc schema.TraversalExpr, outerBodyRng, prefixRng, editRng hcl.Range) []lang.Candidate {
+func (d *PathDecoder) candidatesForTraversalConstraint(ctx context.Context, tc schema.TraversalExpr, outermostBodyRng, prefixRng, editRng hcl.Range) []lang.Candidate {
 	candidates := make([]lang.Candidate, 0)
 
 	if d.pathCtx.ReferenceTargets == nil {
@@ -471,13 +471,7 @@ func (d *PathDecoder) candidatesForTraversalConstraint(tc schema.TraversalExpr, 
 
 	prefix, _ := d.bytesFromRange(prefixRng)
 
-	d.pathCtx.ReferenceTargets.MatchWalk(tc, string(prefix), editRng, func(target reference.Target) error {
-		// avoid suggesting references to block's own fields from within (for now)
-		// TODO: Reflect LocalAddr here
-		if len(target.LocalAddr) == 0 && referenceTargetIsInRange(target, outerBodyRng) {
-			return nil
-		}
-
+	d.pathCtx.ReferenceTargets.MatchWalk(tc, string(prefix), outermostBodyRng, editRng, func(target reference.Target) error {
 		address := target.Address().String()
 
 		candidates = append(candidates, lang.Candidate{

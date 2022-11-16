@@ -72,27 +72,47 @@ func (w refTargetDeepWalker) walk(refTargets Targets) {
 	}
 }
 
-func (refs Targets) MatchWalk(te schema.TraversalExpr, prefix string, originRng hcl.Range, f TargetWalkFunc) {
+func (refs Targets) MatchWalk(te schema.TraversalExpr, prefix string, outermostBodyRng, originRng hcl.Range, f TargetWalkFunc) {
 	for _, ref := range refs {
+		matched := false
 		if len(ref.LocalAddr) > 0 && strings.HasPrefix(ref.LocalAddr.String(), prefix) {
 			// Check if origin is inside the targetable range
 			if ref.TargetableFromRangePtr == nil || rangeOverlaps(*ref.TargetableFromRangePtr, originRng) {
 				nestedMatches := ref.NestedTargets.containsMatch(te, prefix)
 				if ref.MatchesConstraint(te) || nestedMatches {
-					f(ref)
+					matched = true
 				}
 			}
 		}
 		if len(ref.Addr) > 0 && strings.HasPrefix(ref.Addr.String(), prefix) {
 			nestedMatches := ref.NestedTargets.containsMatch(te, prefix)
-			if ref.MatchesConstraint(te) || nestedMatches {
-				f(ref)
-				continue
+
+			// avoid suggesting references to block's own fields from within
+			if !referenceTargetIsInRange(ref, outermostBodyRng) &&
+				(ref.MatchesConstraint(te) || nestedMatches) {
+				matched = true
 			}
 		}
+		if matched {
+			f(ref)
+			continue
+		}
 
-		ref.NestedTargets.MatchWalk(te, prefix, originRng, f)
+		ref.NestedTargets.MatchWalk(te, prefix, outermostBodyRng, originRng, f)
 	}
+}
+
+func referenceTargetIsInRange(target Target, bodyRange hcl.Range) bool {
+	return target.RangePtr != nil &&
+		bodyRange.Filename == target.RangePtr.Filename &&
+		(bodyRange.ContainsPos(target.RangePtr.Start) ||
+			posEqual(bodyRange.End, target.RangePtr.End))
+}
+
+func posEqual(pos, other hcl.Pos) bool {
+	return pos.Line == other.Line &&
+		pos.Column == other.Column &&
+		pos.Byte == other.Byte
 }
 
 func (refs Targets) containsMatch(te schema.TraversalExpr, prefix string) bool {
