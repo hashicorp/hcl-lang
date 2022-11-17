@@ -1036,8 +1036,58 @@ func TestTargets_MatchWalk_localRefs(t *testing.T) {
 				},
 			},
 		},
-		// TODO: test matching of originRng vs outermostBodyRng (cyclical references)
-		// TODO: test matching of TargetableFromRangePtr
+		{
+			"targets matching only the local block",
+			Targets{
+				{
+					LocalAddr: lang.Address{
+						lang.RootStep{Name: "count"},
+						lang.AttrStep{Name: "index"},
+					},
+					TargetableFromRangePtr: &hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
+						End:      hcl.Pos{Line: 10, Column: 1, Byte: 50},
+					},
+				},
+				{
+					LocalAddr: lang.Address{
+						lang.RootStep{Name: "count"},
+						lang.AttrStep{Name: "index"},
+					},
+					TargetableFromRangePtr: &hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 12, Column: 1, Byte: 52},
+						End:      hcl.Pos{Line: 20, Column: 1, Byte: 80},
+					},
+				},
+			},
+			schema.TraversalExpr{},
+			"co",
+			hcl.Range{
+				Filename: "test.tf",
+				Start:    hcl.InitialPos,
+				End:      hcl.InitialPos,
+			},
+			hcl.Range{
+				Filename: "test.tf",
+				Start:    hcl.Pos{Line: 5, Column: 1, Byte: 25},
+				End:      hcl.Pos{Line: 5, Column: 10, Byte: 35},
+			},
+			Targets{
+				{
+					LocalAddr: lang.Address{
+						lang.RootStep{Name: "count"},
+						lang.AttrStep{Name: "index"},
+					},
+					TargetableFromRangePtr: &hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
+						End:      hcl.Pos{Line: 10, Column: 1, Byte: 50},
+					},
+				},
+			},
+		},
 	}
 
 	for i, tc := range testCases {
