@@ -628,6 +628,60 @@ variable "test" {
 				},
 			}),
 		},
+		{
+			"cyclical count = count.index completion",
+			&schema.BodySchema{
+				Blocks: map[string]*schema.BlockSchema{
+					"resource": {
+						Labels: []*schema.LabelSchema{
+							{
+								Name: "type",
+							},
+							{
+								Name: "name",
+							},
+						},
+						Body: &schema.BodySchema{
+							Extensions: &schema.BodyExtensions{
+								Count: true,
+							},
+						},
+					},
+				},
+			},
+			reference.Targets{
+				{
+					LocalAddr: lang.Address{
+						lang.RootStep{Name: "count"},
+						lang.AttrStep{Name: "index"},
+					},
+					Type: cty.Number,
+					RangePtr: &hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   2,
+							Column: 3,
+							Byte:   34,
+						},
+						End: hcl.Pos{
+							Line:   2,
+							Column: 10,
+							Byte:   41,
+						},
+					},
+				},
+			},
+			`resource "aws_instance" "foo" {
+  count = 
+}
+`,
+			hcl.Pos{
+				Line:   2,
+				Column: 11,
+				Byte:   42,
+			},
+			lang.CompleteCandidates([]lang.Candidate{}),
+		},
 	}
 
 	for i, tc := range testCases {
