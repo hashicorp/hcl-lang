@@ -760,12 +760,10 @@ func TestCompletionAtPos_BodySchema_Extensions_ForEach(t *testing.T) {
 				{
 					LocalAddr: lang.Address{
 						lang.RootStep{Name: "each"},
+						lang.AttrStep{Name: "key"},
 					},
-					Type: cty.Object(map[string]cty.Type{
-						"key":   cty.String,
-						"value": cty.DynamicPseudoType,
-					}),
-					Description: lang.Markdown("Each element the given map or set"),
+					Type:        cty.String,
+					Description: lang.Markdown("The map key (or set member) corresponding to this instance"),
 					RangePtr: &hcl.Range{
 						Filename: "test.tf",
 						Start:    hcl.Pos{Line: 2, Column: 1, Byte: 32},
@@ -776,43 +774,23 @@ func TestCompletionAtPos_BodySchema_Extensions_ForEach(t *testing.T) {
 						Start:    hcl.Pos{Line: 2, Column: 1, Byte: 32},
 						End:      hcl.Pos{Line: 2, Column: 9, Byte: 40},
 					},
-					NestedTargets: reference.Targets{
-						{
-							LocalAddr: lang.Address{
-								lang.RootStep{Name: "each"},
-								lang.AttrStep{Name: "key"},
-							},
-							Type:        cty.String,
-							Description: lang.Markdown("The map key (or set member) corresponding to this instance"),
-							RangePtr: &hcl.Range{
-								Filename: "test.tf",
-								Start:    hcl.Pos{Line: 2, Column: 1, Byte: 32},
-								End:      hcl.Pos{Line: 5, Column: 2, Byte: 93},
-							},
-							DefRangePtr: &hcl.Range{
-								Filename: "test.tf",
-								Start:    hcl.Pos{Line: 2, Column: 1, Byte: 32},
-								End:      hcl.Pos{Line: 2, Column: 9, Byte: 40},
-							},
-						},
-						{
-							LocalAddr: lang.Address{
-								lang.RootStep{Name: "each"},
-								lang.AttrStep{Name: "value"},
-							},
-							Type:        cty.DynamicPseudoType,
-							Description: lang.Markdown("The map value corresponding to this instance. (If a set was provided, this is the same as `each.key`.)"),
-							RangePtr: &hcl.Range{
-								Filename: "test.tf",
-								Start:    hcl.Pos{Line: 2, Column: 1, Byte: 32},
-								End:      hcl.Pos{Line: 5, Column: 2, Byte: 93},
-							},
-							DefRangePtr: &hcl.Range{
-								Filename: "test.tf",
-								Start:    hcl.Pos{Line: 2, Column: 1, Byte: 32},
-								End:      hcl.Pos{Line: 2, Column: 9, Byte: 40},
-							},
-						},
+				},
+				{
+					LocalAddr: lang.Address{
+						lang.RootStep{Name: "each"},
+						lang.AttrStep{Name: "value"},
+					},
+					Type:        cty.DynamicPseudoType,
+					Description: lang.Markdown("The map value corresponding to this instance. (If a set was provided, this is the same as `each.key`.)"),
+					RangePtr: &hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 2, Column: 1, Byte: 32},
+						End:      hcl.Pos{Line: 5, Column: 2, Byte: 93},
+					},
+					DefRangePtr: &hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 2, Column: 1, Byte: 32},
+						End:      hcl.Pos{Line: 2, Column: 9, Byte: 40},
 					},
 				},
 			},
@@ -825,24 +803,6 @@ thing =
 }`,
 			hcl.Pos{Line: 6, Column: 9, Byte: 102},
 			lang.CompleteCandidates([]lang.Candidate{
-				{
-					Label:  "each",
-					Detail: "object",
-					Kind:   lang.TraversalCandidateKind,
-					Description: lang.MarkupContent{
-						Value: "Each element the given map or set",
-						Kind:  lang.MarkdownKind,
-					},
-					TextEdit: lang.TextEdit{
-						Range: hcl.Range{
-							Filename: "test.tf",
-							Start:    hcl.Pos{Line: 6, Column: 9, Byte: 102},
-							End:      hcl.Pos{Line: 6, Column: 9, Byte: 102},
-						},
-						NewText: "each",
-						Snippet: "each",
-					},
-				},
 				{
 					Label:  "each.key",
 					Detail: "string",
@@ -1036,12 +996,10 @@ for_each = {
 				{
 					LocalAddr: lang.Address{
 						lang.RootStep{Name: "each"},
+						lang.AttrStep{Name: "key"},
 					},
-					Type: cty.Object(map[string]cty.Type{
-						"key":   cty.String,
-						"value": cty.DynamicPseudoType,
-					}),
-					Description: lang.Markdown("Each element the given map or set"),
+					Type:        cty.String,
+					Description: lang.Markdown("The map key (or set member) corresponding to this instance"),
 					RangePtr: &hcl.Range{
 						Filename: "test.tf",
 						Start:    hcl.Pos{Line: 2, Column: 1, Byte: 32},
@@ -1052,43 +1010,23 @@ for_each = {
 						Start:    hcl.Pos{Line: 2, Column: 1, Byte: 32},
 						End:      hcl.Pos{Line: 2, Column: 9, Byte: 40},
 					},
-					NestedTargets: reference.Targets{
-						{
-							LocalAddr: lang.Address{
-								lang.RootStep{Name: "each"},
-								lang.AttrStep{Name: "key"},
-							},
-							Type:        cty.String,
-							Description: lang.Markdown("The map key (or set member) corresponding to this instance"),
-							RangePtr: &hcl.Range{
-								Filename: "test.tf",
-								Start:    hcl.Pos{Line: 2, Column: 1, Byte: 32},
-								End:      hcl.Pos{Line: 5, Column: 2, Byte: 93},
-							},
-							DefRangePtr: &hcl.Range{
-								Filename: "test.tf",
-								Start:    hcl.Pos{Line: 2, Column: 1, Byte: 32},
-								End:      hcl.Pos{Line: 2, Column: 9, Byte: 40},
-							},
-						},
-						{
-							LocalAddr: lang.Address{
-								lang.RootStep{Name: "each"},
-								lang.AttrStep{Name: "value"},
-							},
-							Type:        cty.DynamicPseudoType,
-							Description: lang.Markdown("The map value corresponding to this instance. (If a set was provided, this is the same as `each.key`.)"),
-							RangePtr: &hcl.Range{
-								Filename: "test.tf",
-								Start:    hcl.Pos{Line: 2, Column: 1, Byte: 32},
-								End:      hcl.Pos{Line: 5, Column: 2, Byte: 93},
-							},
-							DefRangePtr: &hcl.Range{
-								Filename: "test.tf",
-								Start:    hcl.Pos{Line: 2, Column: 1, Byte: 32},
-								End:      hcl.Pos{Line: 2, Column: 9, Byte: 40},
-							},
-						},
+				},
+				{
+					LocalAddr: lang.Address{
+						lang.RootStep{Name: "each"},
+						lang.AttrStep{Name: "value"},
+					},
+					Type:        cty.DynamicPseudoType,
+					Description: lang.Markdown("The map value corresponding to this instance. (If a set was provided, this is the same as `each.key`.)"),
+					RangePtr: &hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 2, Column: 1, Byte: 32},
+						End:      hcl.Pos{Line: 5, Column: 2, Byte: 93},
+					},
+					DefRangePtr: &hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 2, Column: 1, Byte: 32},
+						End:      hcl.Pos{Line: 2, Column: 9, Byte: 40},
 					},
 				},
 			},
@@ -1103,24 +1041,6 @@ foo {
 }`,
 			hcl.Pos{Line: 7, Column: 11, Byte: 109},
 			lang.CompleteCandidates([]lang.Candidate{
-				{
-					Label:  "each",
-					Detail: "object",
-					Kind:   lang.TraversalCandidateKind,
-					Description: lang.MarkupContent{
-						Value: "Each element the given map or set",
-						Kind:  lang.MarkdownKind,
-					},
-					TextEdit: lang.TextEdit{
-						Range: hcl.Range{
-							Filename: "test.tf",
-							Start:    hcl.Pos{Line: 7, Column: 10, Byte: 109},
-							End:      hcl.Pos{Line: 7, Column: 10, Byte: 109},
-						},
-						NewText: "each",
-						Snippet: "each",
-					},
-				},
 				{
 					Label:  "each.key",
 					Detail: "string",
