@@ -1,6 +1,7 @@
 package reference
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
@@ -892,7 +893,8 @@ func TestTargets_MatchWalk(t *testing.T) {
 	for i, tc := range testCases {
 		t.Run(fmt.Sprintf("%d-%s", i, tc.name), func(t *testing.T) {
 			targets := make(Targets, 0)
-			tc.targets.MatchWalk(tc.traversalConst, tc.prefix, tc.outermostBodyRng, tc.originRng, func(t Target) error {
+			ctx := context.Background()
+			tc.targets.MatchWalk(ctx, tc.traversalConst, tc.prefix, tc.outermostBodyRng, tc.originRng, func(t Target) error {
 				targets = append(targets, t)
 				return nil
 			})
@@ -1088,12 +1090,14 @@ func TestTargets_MatchWalk_localRefs(t *testing.T) {
 				},
 			},
 		},
+		// TODO: active vs inactive self
 	}
 
 	for i, tc := range testCases {
 		t.Run(fmt.Sprintf("%d-%s", i, tc.name), func(t *testing.T) {
 			targets := make(Targets, 0)
-			tc.targets.MatchWalk(tc.traversalConst, tc.prefix, tc.outermostBodyRng, tc.originRng, func(t Target) error {
+			ctx := context.Background()
+			tc.targets.MatchWalk(ctx, tc.traversalConst, tc.prefix, tc.outermostBodyRng, tc.originRng, func(t Target) error {
 				targets = append(targets, t)
 				return nil
 			})

@@ -70,6 +70,9 @@ func (d *PathDecoder) candidatesAtPos(ctx context.Context, body *hclsyntax.Body,
 
 	for _, attr := range body.Attributes {
 		if d.isPosInsideAttrExpr(attr, pos) {
+			if bodySchema.Extensions != nil && bodySchema.Extensions.SelfRefs {
+				ctx = schema.WithActiveSelfRefs(ctx)
+			}
 			if bodySchema.Extensions != nil && bodySchema.Extensions.Count && attr.Name == "count" {
 				return d.attrValueCandidatesAtPos(ctx, attr, countAttributeSchema(), outerBodyRng, pos)
 			}

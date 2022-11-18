@@ -1,6 +1,7 @@
 package reference
 
 import (
+	"context"
 	"errors"
 	"strings"
 
@@ -72,34 +73,67 @@ func (w refTargetDeepWalker) walk(refTargets Targets) {
 	}
 }
 
-func (refs Targets) MatchWalk(te schema.TraversalExpr, prefix string, outermostBodyRng, originRng hcl.Range, f TargetWalkFunc) {
+func (refs Targets) MatchWalk(ctx context.Context, te schema.TraversalExpr, prefix string, outermostBodyRng, originRng hcl.Range, f TargetWalkFunc) {
 	for _, ref := range refs {
-		matched := false
-		if len(ref.LocalAddr) > 0 && strings.HasPrefix(ref.LocalAddr.String(), prefix) {
-			// Check if origin is inside the targetable range
-			if ref.TargetableFromRangePtr == nil || rangeOverlaps(*ref.TargetableFromRangePtr, originRng) {
-				nestedMatches := ref.NestedTargets.containsMatch(te, prefix)
-				if ref.MatchesConstraint(te) || nestedMatches {
-					matched = true
-				}
-			}
-		}
-		if len(ref.Addr) > 0 && strings.HasPrefix(ref.Addr.String(), prefix) {
-			nestedMatches := ref.NestedTargets.containsMatch(te, prefix)
-
-			// avoid suggesting references to block's own fields from within
-			if !referenceTargetIsInRange(ref, outermostBodyRng) &&
-				(ref.MatchesConstraint(te) || nestedMatches) {
-				matched = true
-			}
-		}
-		if matched {
+		if localTargetMatches(ctx, ref, te, prefix, outermostBodyRng, originRng) ||
+			absTargetMatches(ctx, ref, te, prefix, outermostBodyRng, originRng) {
 			f(ref)
 			continue
 		}
 
-		ref.NestedTargets.MatchWalk(te, prefix, outermostBodyRng, originRng, f)
+		ref.NestedTargets.MatchWalk(ctx, te, prefix, outermostBodyRng, originRng, f)
 	}
+}
+
+func localTargetMatches(ctx context.Context, target Target, te schema.TraversalExpr, prefix string, outermostBodyRng, originRng hcl.Range) bool {
+	if len(target.LocalAddr) > 0 && strings.HasPrefix(target.LocalAddr.String(), prefix) {
+		// reject self references if not enabled
+		if !schema.ActiveSelfRefsFromContext(ctx) && target.LocalAddr[0].String() == "self" {
+			return false
+		}
+
+		hasNestedMatches := target.NestedTargets.containsMatch(ctx, te, prefix, outermostBodyRng, originRng)
+
+		// Avoid suggesting cyclical reference to the same attribute
+		// unless it has nested matches - i.e. we still consider "self"
+		// as match if it refers to the outside block
+		if target.RangePtr != nil && !hasNestedMatches {
+			if rangeOverlaps(*target.RangePtr, originRng) {
+				return false
+			}
+			// We compare line in case the (incomplete) attribute
+			// ends w/ whitespace which wouldn't be included in the range
+			if target.RangePtr.Filename == originRng.Filename &&
+				target.RangePtr.End.Line == originRng.Start.Line {
+				return false
+			}
+		}
+
+		// Reject origins which are outside the targetable range
+		if target.TargetableFromRangePtr != nil && !rangeOverlaps(*target.TargetableFromRangePtr, originRng) {
+			return false
+		}
+
+		if target.MatchesConstraint(te) || hasNestedMatches {
+			return true
+		}
+	}
+
+	return false
+}
+
+func absTargetMatches(ctx context.Context, target Target, te schema.TraversalExpr, prefix string, outermostBodyRng, originRng hcl.Range) bool {
+	if len(target.Addr) > 0 && strings.HasPrefix(target.Addr.String(), prefix) {
+		// Reject references to block's own fields from within the body
+		if referenceTargetIsInRange(target, outermostBodyRng) {
+			return false
+		}
+
+		if target.MatchesConstraint(te) || target.NestedTargets.containsMatch(ctx, te, prefix, outermostBodyRng, originRng) {
+			return true
+		}
+	}
+	return false
 }
 
 func referenceTargetIsInRange(target Target, bodyRange hcl.Range) bool {
@@ -115,18 +149,17 @@ func posEqual(pos, other hcl.Pos) bool {
 		pos.Byte == other.Byte
 }
 
-func (refs Targets) containsMatch(te schema.TraversalExpr, prefix string) bool {
+func (refs Targets) containsMatch(ctx context.Context, te schema.TraversalExpr, prefix string, outermostBodyRng, originRng hcl.Range) bool {
 	for _, ref := range refs {
-		if strings.HasPrefix(ref.LocalAddr.String(), prefix) &&
-			ref.MatchesConstraint(te) {
+		if localTargetMatches(ctx, ref, te, prefix, outermostBodyRng, originRng) {
 			return true
 		}
-		if strings.HasPrefix(ref.Addr.String(), prefix) &&
-			ref.MatchesConstraint(te) {
+		if absTargetMatches(ctx, ref, te, prefix, outermostBodyRng, originRng) {
 			return true
 		}
+
 		if len(ref.NestedTargets) > 0 {
-			if match := ref.NestedTargets.containsMatch(te, prefix); match {
+			if match := ref.NestedTargets.containsMatch(ctx, te, prefix, outermostBodyRng, originRng); match {
 				return true
 			}
 		}

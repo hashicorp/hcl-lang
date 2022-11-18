@@ -64,6 +64,10 @@ func (d *PathDecoder) hoverAtPos(ctx context.Context, body *hclsyntax.Body, body
 	for name, attr := range body.Attributes {
 		if attr.Range().ContainsPos(pos) {
 			var aSchema *schema.AttributeSchema
+			if bodySchema.Extensions != nil && bodySchema.Extensions.SelfRefs {
+				ctx = schema.WithActiveSelfRefs(ctx)
+			}
+
 			if bodySchema.Extensions != nil && bodySchema.Extensions.Count && name == "count" {
 				aSchema = countAttributeSchema()
 			} else if bodySchema.Extensions != nil && bodySchema.Extensions.ForEach && name == "for_each" {
@@ -266,7 +270,7 @@ func (d *PathDecoder) hoverDataForExpr(ctx context.Context, expr hcl.Expression,
 
 		tes, ok := constraints.TraversalExprs()
 		if ok {
-			content, err := d.hoverContentForTraversalExpr(e.AsTraversal(), tes, pos)
+			content, err := d.hoverContentForTraversalExpr(ctx, e.AsTraversal(), tes, pos)
 			if err != nil {
 				return nil, err
 			}
@@ -625,7 +629,7 @@ func stringValFromTemplateExpr(tplExpr *hclsyntax.TemplateExpr) (cty.Value, bool
 	return cty.StringVal(value), true
 }
 
-func (d *PathDecoder) hoverContentForTraversalExpr(traversal hcl.Traversal, tes []schema.TraversalExpr, pos hcl.Pos) (string, error) {
+func (d *PathDecoder) hoverContentForTraversalExpr(ctx context.Context, traversal hcl.Traversal, tes []schema.TraversalExpr, pos hcl.Pos) (string, error) {
 	origins, ok := d.pathCtx.ReferenceOrigins.AtPos(traversal.SourceRange().Filename, pos)
 	if !ok {
 		return "", &reference.NoOriginFound{}
@@ -643,14 +647,14 @@ func (d *PathDecoder) hoverContentForTraversalExpr(traversal hcl.Traversal, tes 
 		}
 
 		// TODO: Reflect additional found targets here?
-		return hoverContentForReferenceTarget(targets[0])
+		return hoverContentForReferenceTarget(ctx, targets[0])
 	}
 
 	return "", &reference.NoTargetFound{}
 }
 
-func hoverContentForReferenceTarget(ref reference.Target) (string, error) {
-	content := fmt.Sprintf("`%s`", ref.Address())
+func hoverContentForReferenceTarget(ctx context.Context, ref reference.Target) (string, error) {
+	content := fmt.Sprintf("`%s`", ref.Address(ctx))
 
 	var friendlyName string
 	if ref.Type != cty.NilType {
