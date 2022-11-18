@@ -64,6 +64,10 @@ func (d *PathDecoder) hoverAtPos(ctx context.Context, body *hclsyntax.Body, body
 	for name, attr := range body.Attributes {
 		if attr.Range().ContainsPos(pos) {
 			var aSchema *schema.AttributeSchema
+			if bodySchema.Extensions != nil && bodySchema.Extensions.SelfRefs {
+				ctx = schema.WithActiveSelfRefs(ctx)
+			}
+
 			if bodySchema.Extensions != nil && bodySchema.Extensions.Count && name == "count" {
 				aSchema = countAttributeSchema()
 			} else if bodySchema.Extensions != nil && bodySchema.Extensions.ForEach && name == "for_each" {

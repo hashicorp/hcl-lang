@@ -881,6 +881,7 @@ func TestTargets_MatchWalk_localRefs(t *testing.T) {
 		prefix           string
 		outermostBodyRng hcl.Range
 		originRng        hcl.Range
+		activeSelfRefs   bool
 		expectedTargets  Targets
 	}{
 		{
@@ -898,6 +899,7 @@ func TestTargets_MatchWalk_localRefs(t *testing.T) {
 				Start:    hcl.InitialPos,
 				End:      hcl.InitialPos,
 			},
+			false,
 			Targets{},
 		},
 		{
@@ -928,6 +930,7 @@ func TestTargets_MatchWalk_localRefs(t *testing.T) {
 				Start:    hcl.InitialPos,
 				End:      hcl.InitialPos,
 			},
+			false,
 			Targets{
 				{
 					LocalAddr: lang.Address{
@@ -978,6 +981,7 @@ func TestTargets_MatchWalk_localRefs(t *testing.T) {
 				Start:    hcl.InitialPos,
 				End:      hcl.InitialPos,
 			},
+			false,
 			Targets{
 				{
 					LocalAddr: lang.Address{
@@ -1044,6 +1048,7 @@ func TestTargets_MatchWalk_localRefs(t *testing.T) {
 				Start:    hcl.Pos{Line: 5, Column: 1, Byte: 25},
 				End:      hcl.Pos{Line: 5, Column: 10, Byte: 35},
 			},
+			false,
 			Targets{
 				{
 					LocalAddr: lang.Address{
@@ -1099,6 +1104,7 @@ func TestTargets_MatchWalk_localRefs(t *testing.T) {
 				Start:    hcl.Pos{Line: 2, Column: 11, Byte: 38},
 				End:      hcl.Pos{Line: 2, Column: 11, Byte: 38},
 			},
+			false,
 			Targets{},
 		},
 		{
@@ -1158,6 +1164,172 @@ func TestTargets_MatchWalk_localRefs(t *testing.T) {
 				Start:    hcl.Pos{Line: 2, Column: 9, Byte: 36},
 				End:      hcl.Pos{Line: 2, Column: 9, Byte: 36},
 			},
+			true,
+			Targets{},
+		},
+		{
+			"self only matches when enabled",
+			Targets{
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "aws_alb"},
+						lang.AttrStep{Name: "test"},
+					},
+					LocalAddr: lang.Address{
+						lang.RootStep{Name: "self"},
+					},
+					RangePtr: &hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 1, Column: 28, Byte: 27},
+						End:      hcl.Pos{Line: 4, Column: 1, Byte: 37},
+					},
+					TargetableFromRangePtr: &hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 1, Column: 28, Byte: 27},
+						End:      hcl.Pos{Line: 4, Column: 1, Byte: 37},
+					},
+					NestedTargets: Targets{
+						{
+							Addr: lang.Address{
+								lang.RootStep{Name: "aws_alb"},
+								lang.AttrStep{Name: "test"},
+								lang.AttrStep{Name: "bar"},
+							},
+							LocalAddr: lang.Address{
+								lang.RootStep{Name: "self"},
+								lang.AttrStep{Name: "bar"},
+							},
+							RangePtr: &hcl.Range{
+								Filename: "test.tf",
+								Start:    hcl.Pos{Line: 2, Column: 1, Byte: 30},
+								End:      hcl.Pos{Line: 2, Column: 20, Byte: 35},
+							},
+							TargetableFromRangePtr: &hcl.Range{
+								Filename: "test.tf",
+								Start:    hcl.Pos{Line: 1, Column: 28, Byte: 27},
+								End:      hcl.Pos{Line: 4, Column: 1, Byte: 37},
+							},
+						},
+					},
+				},
+			},
+			schema.TraversalExpr{},
+			"",
+			hcl.Range{ // outermost body range
+				Filename: "test.tf",
+				Start:    hcl.Pos{Line: 1, Column: 28, Byte: 27},
+				End:      hcl.Pos{Line: 3, Column: 1, Byte: 37},
+			},
+			hcl.Range{ // origin range
+				Filename: "test.tf",
+				Start:    hcl.Pos{Line: 3, Column: 2, Byte: 36},
+				End:      hcl.Pos{Line: 3, Column: 2, Byte: 36},
+			},
+			true,
+			Targets{
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "aws_alb"},
+						lang.AttrStep{Name: "test"},
+					},
+					LocalAddr: lang.Address{
+						lang.RootStep{Name: "self"},
+					},
+					RangePtr: &hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 1, Column: 28, Byte: 27},
+						End:      hcl.Pos{Line: 4, Column: 1, Byte: 37},
+					},
+					TargetableFromRangePtr: &hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 1, Column: 28, Byte: 27},
+						End:      hcl.Pos{Line: 4, Column: 1, Byte: 37},
+					},
+					NestedTargets: Targets{
+						{
+							Addr: lang.Address{
+								lang.RootStep{Name: "aws_alb"},
+								lang.AttrStep{Name: "test"},
+								lang.AttrStep{Name: "bar"},
+							},
+							LocalAddr: lang.Address{
+								lang.RootStep{Name: "self"},
+								lang.AttrStep{Name: "bar"},
+							},
+							RangePtr: &hcl.Range{
+								Filename: "test.tf",
+								Start:    hcl.Pos{Line: 2, Column: 1, Byte: 30},
+								End:      hcl.Pos{Line: 2, Column: 20, Byte: 35},
+							},
+							TargetableFromRangePtr: &hcl.Range{
+								Filename: "test.tf",
+								Start:    hcl.Pos{Line: 1, Column: 28, Byte: 27},
+								End:      hcl.Pos{Line: 4, Column: 1, Byte: 37},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			"self doesn't match when disabled",
+			Targets{
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "aws_alb"},
+						lang.AttrStep{Name: "test"},
+					},
+					LocalAddr: lang.Address{
+						lang.RootStep{Name: "self"},
+					},
+					RangePtr: &hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 1, Column: 28, Byte: 27},
+						End:      hcl.Pos{Line: 4, Column: 1, Byte: 37},
+					},
+					TargetableFromRangePtr: &hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 1, Column: 28, Byte: 27},
+						End:      hcl.Pos{Line: 4, Column: 1, Byte: 37},
+					},
+					NestedTargets: Targets{
+						{
+							Addr: lang.Address{
+								lang.RootStep{Name: "aws_alb"},
+								lang.AttrStep{Name: "test"},
+								lang.AttrStep{Name: "bar"},
+							},
+							LocalAddr: lang.Address{
+								lang.RootStep{Name: "self"},
+								lang.AttrStep{Name: "bar"},
+							},
+							RangePtr: &hcl.Range{
+								Filename: "test.tf",
+								Start:    hcl.Pos{Line: 2, Column: 1, Byte: 30},
+								End:      hcl.Pos{Line: 2, Column: 20, Byte: 35},
+							},
+							TargetableFromRangePtr: &hcl.Range{
+								Filename: "test.tf",
+								Start:    hcl.Pos{Line: 1, Column: 28, Byte: 27},
+								End:      hcl.Pos{Line: 4, Column: 1, Byte: 37},
+							},
+						},
+					},
+				},
+			},
+			schema.TraversalExpr{},
+			"",
+			hcl.Range{ // outermost body range
+				Filename: "test.tf",
+				Start:    hcl.Pos{Line: 1, Column: 28, Byte: 27},
+				End:      hcl.Pos{Line: 3, Column: 1, Byte: 37},
+			},
+			hcl.Range{ // origin range
+				Filename: "test.tf",
+				Start:    hcl.Pos{Line: 3, Column: 2, Byte: 36},
+				End:      hcl.Pos{Line: 3, Column: 2, Byte: 36},
+			},
+			false,
 			Targets{},
 		},
 	}
@@ -1166,6 +1338,9 @@ func TestTargets_MatchWalk_localRefs(t *testing.T) {
 		t.Run(fmt.Sprintf("%d-%s", i, tc.name), func(t *testing.T) {
 			targets := make(Targets, 0)
 			ctx := context.Background()
+			if tc.activeSelfRefs {
+				ctx = schema.WithActiveSelfRefs(ctx)
+			}
 			tc.targets.MatchWalk(ctx, tc.traversalConst, tc.prefix, tc.outermostBodyRng, tc.originRng, func(t Target) error {
 				targets = append(targets, t)
 				return nil

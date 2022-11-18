@@ -100,7 +100,8 @@ func copyHclRangePtr(rng *hcl.Range) *hcl.Range {
 // depending on the provided context
 func (r Target) Address(ctx context.Context) lang.Address {
 	addr := r.Addr
-	if len(r.LocalAddr) > 0 {
+	if len(r.LocalAddr) > 0 &&
+		(len(r.Addr) == 0 || schema.ActiveSelfRefsFromContext(ctx)) {
 		addr = r.LocalAddr
 	}
 
