@@ -479,12 +479,6 @@ func (d *PathDecoder) candidatesForTraversalConstraint(ctx context.Context, tc s
 	prefix, _ := d.bytesFromRange(prefixRng)
 
 	d.pathCtx.ReferenceTargets.MatchWalk(ctx, tc, string(prefix), outermostBodyRng, editRng, func(target reference.Target) error {
-		// avoid suggesting references to block's own fields from within (for now)
-		// TODO: Reflect LocalAddr here
-		if referenceTargetIsInRange(target, outermostBodyRng) {
-			return nil
-		}
-
 		address := target.Address(ctx).String()
 
 		candidates = append(candidates, lang.Candidate{
