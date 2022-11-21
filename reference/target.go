@@ -1,6 +1,8 @@
 package reference
 
 import (
+	"context"
+
 	"github.com/hashicorp/hcl-lang/lang"
 	"github.com/hashicorp/hcl-lang/schema"
 	"github.com/hashicorp/hcl/v2"
@@ -95,9 +97,8 @@ func copyHclRangePtr(rng *hcl.Range) *hcl.Range {
 }
 
 // Address returns any of the two non-empty addresses
-//
-// TODO: Return address based on context when we have both
-func (r Target) Address() lang.Address {
+// depending on the provided context
+func (r Target) Address(ctx context.Context) lang.Address {
 	addr := r.Addr
 	if len(r.LocalAddr) > 0 {
 		addr = r.LocalAddr

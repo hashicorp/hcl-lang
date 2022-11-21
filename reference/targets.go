@@ -1,6 +1,7 @@
 package reference
 
 import (
+	"context"
 	"errors"
 	"strings"
 
@@ -72,7 +73,7 @@ func (w refTargetDeepWalker) walk(refTargets Targets) {
 	}
 }
 
-func (refs Targets) MatchWalk(te schema.TraversalExpr, prefix string, originRng hcl.Range, f TargetWalkFunc) {
+func (refs Targets) MatchWalk(ctx context.Context, te schema.TraversalExpr, prefix string, outermostBodyRng, originRng hcl.Range, f TargetWalkFunc) {
 	for _, ref := range refs {
 		if len(ref.LocalAddr) > 0 && strings.HasPrefix(ref.LocalAddr.String(), prefix) {
 			// Check if origin is inside the targetable range
@@ -91,7 +92,7 @@ func (refs Targets) MatchWalk(te schema.TraversalExpr, prefix string, originRng 
 			}
 		}
 
-		ref.NestedTargets.MatchWalk(te, prefix, originRng, f)
+		ref.NestedTargets.MatchWalk(ctx, te, prefix, outermostBodyRng, originRng, f)
 	}
 }
 
