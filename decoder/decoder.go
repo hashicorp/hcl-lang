@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/hashicorp/hcl-lang/lang"
+	"github.com/hashicorp/hcl-lang/reference"
 	"github.com/hashicorp/hcl-lang/schema"
 	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hclsyntax"
@@ -104,6 +105,7 @@ type blockContent struct {
 type bodyContent struct {
 	Attributes hcl.Attributes
 	Blocks     []*blockContent
+	RangePtr   *hcl.Range
 }
 
 // decodeBody produces content of either HCL or JSON body
@@ -130,6 +132,8 @@ func decodeBody(body hcl.Body, bodySchema *schema.BodySchema) bodyContent {
 				Range: block.Range(),
 			})
 		}
+
+		content.RangePtr = hclBody.Range().Ptr()
 
 		return content
 	}
@@ -177,7 +181,8 @@ func countAttributeSchema() *schema.AttributeSchema {
 			schema.TraversalExpr{OfType: cty.Number},
 			schema.LiteralTypeExpr{Type: cty.Number},
 		},
-		Description: lang.Markdown("The distinct index number (starting with 0) corresponding to the instance"),
+		Description: lang.Markdown("Total number of instances of this block.\n\n" +
+			"**Note**: A given block cannot use both `count` and `for_each`."),
 	}
 }
 
@@ -245,24 +250,17 @@ func dynamicBlockSchema() *schema.BlockSchema {
 	}
 }
 
-func countIndexHoverData(rng hcl.Range) *lang.HoverData {
-	return &lang.HoverData{
-		Content: lang.Markdown("`count.index` _number_\n\nThe distinct index number (starting with 0) corresponding to the instance"),
-		Range:   rng,
-	}
-}
-
-func countIndexCandidate(editRng hcl.Range) lang.Candidate {
-	return lang.Candidate{
-		Label:       "count.index",
-		Detail:      "number",
-		Description: lang.PlainText("The distinct index number (starting with 0) corresponding to the instance"),
-		Kind:        lang.TraversalCandidateKind,
-		TextEdit: lang.TextEdit{
-			NewText: "count.index",
-			Snippet: "count.index",
-			Range:   editRng,
+func countIndexReferenceTarget(attr *hcl.Attribute, bodyRange hcl.Range) reference.Target {
+	return reference.Target{
+		LocalAddr: lang.Address{
+			lang.RootStep{Name: "count"},
+			lang.AttrStep{Name: "index"},
 		},
+		TargetableFromRangePtr: bodyRange.Ptr(),
+		Type:                   cty.Number,
+		Description:            lang.Markdown("The distinct index number (starting with 0) corresponding to the instance"),
+		RangePtr:               attr.Range.Ptr(),
+		DefRangePtr:            attr.NameRange.Ptr(),
 	}
 }
 

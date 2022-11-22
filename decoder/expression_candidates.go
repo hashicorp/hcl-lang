@@ -328,9 +328,6 @@ func (d *PathDecoder) constraintToCandidates(ctx context.Context, constraint sch
 			},
 		})
 	case schema.TraversalExpr:
-		if schema.ActiveCountFromContext(ctx) && attr.Name != "count" {
-			candidates = append(candidates, countIndexCandidate(editRng))
-		}
 		if schema.ActiveForEachFromContext(ctx) && attr.Name != "for_each" {
 			candidates = append(candidates, foreachEachCandidate(editRng)...)
 		}
