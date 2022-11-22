@@ -1015,6 +1015,125 @@ tup = [ var.three ]
 				},
 			},
 		},
+		{
+			"cyclical origin referring back to the attribute",
+			&schema.BodySchema{
+				Attributes: map[string]*schema.AttributeSchema{
+					"attr": {
+						Address: &schema.AttributeAddrSchema{
+							Steps: schema.Address{
+								schema.StaticStep{Name: "root"},
+								schema.AttrNameStep{},
+							},
+						},
+						IsOptional: true,
+						Expr: schema.ExprConstraints{
+							schema.TraversalExpr{OfType: cty.String},
+							schema.LiteralTypeExpr{Type: cty.String},
+						},
+					},
+				},
+			},
+			`attr = root.attr`,
+			reference.Origins{},
+		},
+		{
+			"cyclical origin referring back to the attribute with implied address",
+			&schema.BodySchema{
+				Blocks: map[string]*schema.BlockSchema{
+					"blk": {
+						Address: &schema.BlockAddrSchema{
+							Steps: schema.Address{
+								schema.StaticStep{Name: "blk"},
+							},
+							BodyAsData: true,
+							InferBody:  true,
+						},
+						Body: &schema.BodySchema{
+							Attributes: map[string]*schema.AttributeSchema{
+								"attr": {
+									IsOptional: true,
+									Expr: schema.ExprConstraints{
+										schema.TraversalExpr{OfType: cty.String},
+										schema.LiteralTypeExpr{Type: cty.String},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			`blk {
+  attr = blk.attr
+}
+`,
+			reference.Origins{},
+		},
+		{
+			"cyclical origin referring back to the block with implied address",
+			&schema.BodySchema{
+				Blocks: map[string]*schema.BlockSchema{
+					"blk": {
+						Address: &schema.BlockAddrSchema{
+							Steps: schema.Address{
+								schema.StaticStep{Name: "blk"},
+							},
+							BodyAsData: true,
+							InferBody:  true,
+						},
+						Body: &schema.BodySchema{
+							Attributes: map[string]*schema.AttributeSchema{
+								"attr": {
+									IsOptional: true,
+									Expr: schema.ExprConstraints{
+										schema.TraversalExpr{OfType: cty.String},
+										schema.LiteralTypeExpr{Type: cty.String},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			`blk {
+  attr = blk
+}
+`,
+			reference.Origins{},
+		},
+		{
+			"cyclical origin referring to another attribute in the same the block",
+			&schema.BodySchema{
+				Blocks: map[string]*schema.BlockSchema{
+					"blk": {
+						Address: &schema.BlockAddrSchema{
+							Steps: schema.Address{
+								schema.StaticStep{Name: "blk"},
+							},
+							BodyAsData: true,
+							InferBody:  true,
+						},
+						Body: &schema.BodySchema{
+							Attributes: map[string]*schema.AttributeSchema{
+								"attr": {
+									IsOptional: true,
+									Expr: schema.ExprConstraints{
+										schema.TraversalExpr{OfType: cty.String},
+										schema.LiteralTypeExpr{Type: cty.String},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			`blk {
+  foo = "test"
+  attr = blk.foo
+}
+`,
+			reference.Origins{},
+		},
 	}
 	for i, tc := range testCases {
 		t.Run(fmt.Sprintf("%d/%s", i, tc.name), func(t *testing.T) {
