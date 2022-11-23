@@ -200,7 +200,35 @@ func forEachAttributeSchema() *schema.AttributeSchema {
 	}
 }
 
-func buildDynamicBlockSchema() *schema.BlockSchema {
+func buildDynamicBlockSchema(inputSchema *schema.BodySchema) *schema.BlockSchema {
+	dependentBody := make(map[schema.SchemaKey]*schema.BodySchema)
+	for blockName, block := range inputSchema.Blocks {
+		if blockName == "dynamic" {
+			// Never allow dynamic as a label completion
+			continue
+		}
+		if len(block.Body.Blocks) > 0 {
+			// Check if there are nested blocks to enable dynamic again
+			block.Body.Extensions = &schema.BodyExtensions{
+				DynamicBlocks: true,
+			}
+		}
+
+		dependentBody[schema.NewSchemaKey(schema.DependencyKeys{
+			Labels: []schema.LabelDependent{
+				{Index: 0, Value: blockName},
+			},
+		})] = &schema.BodySchema{
+			Blocks: map[string]*schema.BlockSchema{
+				"content": {
+					Description: lang.PlainText("The body of each generated block"),
+					MaxItems:    1,
+					Body:        block.Body,
+				},
+			},
+		}
+	}
+
 	return &schema.BlockSchema{
 		Description: lang.Markdown("A dynamic block to produce blocks dynamically by iterating over a given complex value"),
 		Type:        schema.BlockTypeMap,
@@ -245,6 +273,7 @@ func buildDynamicBlockSchema() *schema.BlockSchema {
 				},
 			},
 		},
+		DependentBody: dependentBody,
 	}
 }
 

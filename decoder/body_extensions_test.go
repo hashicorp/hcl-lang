@@ -2075,52 +2075,28 @@ resource "aws_elastic_beanstalk_environment" "example" {
 				},
 			}),
 		},
-		//test that lifecycle is not completed
 		{
-			"dynamic block inner completion lifecycle is not completed",
+			"dynamic block label only completes dependent blocks",
 			&schema.BodySchema{
 				Blocks: map[string]*schema.BlockSchema{
 					"resource": {
 						Labels: []*schema.LabelSchema{
-							{Name: "type", IsDepKey: true}, {Name: "name"},
+							{
+								Name:        "type",
+								IsDepKey:    true,
+								Completable: true,
+							},
+							{Name: "name"},
 						},
 						Body: &schema.BodySchema{
 							Extensions: &schema.BodyExtensions{
 								DynamicBlocks: true,
 							},
 							Blocks: map[string]*schema.BlockSchema{
-								"life_cycle": {
-									Body: &schema.BodySchema{
-										Attributes: map[string]*schema.AttributeSchema{
-											"create_before_destroy": {
-												Expr:       schema.LiteralTypeOnly(cty.Bool),
-												IsOptional: true,
-												Description: lang.Markdown("Whether to reverse the default order of operations (destroy -> create) during apply " +
-													"when the resource requires replacement (cannot be updated in-place)"),
-											},
-											"prevent_destroy": {
-												Expr:       schema.LiteralTypeOnly(cty.Bool),
-												IsOptional: true,
-												Description: lang.Markdown("Whether to prevent accidental destruction of the resource and cause Terraform " +
-													"to reject with an error any plan that would destroy the resource"),
-											},
-											"ignore_changes": {
-												Expr: schema.ExprConstraints{
-													schema.TupleConsExpr{},
-													schema.KeywordExpr{
-														Keyword: "all",
-														Description: lang.Markdown("Ignore all attributes, which means that Terraform can create" +
-															" and destroy the remote object but will never propose updates to it"),
-													},
-												},
-												IsOptional:  true,
-												Description: lang.Markdown("A set of fields (references) of which to ignore changes to, e.g. `tags`"),
-											},
-										},
-									},
+								"lifecycle": {
+									Body: schema.NewBodySchema(),
 								},
 							},
-							Attributes: make(map[string]*schema.AttributeSchema, 0),
 						},
 						DependentBody: map[schema.SchemaKey]*schema.BodySchema{
 							schema.NewSchemaKey(schema.DependencyKeys{
@@ -2133,101 +2109,34 @@ resource "aws_elastic_beanstalk_environment" "example" {
 										Body: schema.NewBodySchema(),
 									},
 								},
-								Attributes: map[string]*schema.AttributeSchema{
-									"instance_size": {
-										IsOptional: true,
-										Expr:       schema.LiteralTypeOnly(cty.String),
-									},
-								},
 							},
 						},
 					},
 				},
 			},
 			`resource "aws_instance" "example" {
-	name = "example"
-	dynamic "foo" {
-		
-	}
+  name = "example"
+  dynamic "" {
+    
+  }
 }`,
-			hcl.Pos{Line: 4, Column: 5, Byte: 73},
+			hcl.Pos{Line: 3, Column: 12, Byte: 66},
 			lang.CompleteCandidates([]lang.Candidate{
 				{
-					Label: "content",
-					Description: lang.MarkupContent{
-						Value: "The body of each generated block",
-						Kind:  lang.PlainTextKind,
-					},
-					Detail: "Block, max: 1",
-					Kind:   lang.BlockCandidateKind,
+					Label: "foo",
+					Kind:  lang.LabelCandidateKind,
 					TextEdit: lang.TextEdit{
 						Range: hcl.Range{
 							Filename: "test.tf",
-							Start:    hcl.Pos{Line: 4, Column: 5, Byte: 73},
-							End:      hcl.Pos{Line: 4, Column: 5, Byte: 73},
+							Start:    hcl.Pos{Line: 3, Column: 12, Byte: 66},
+							End:      hcl.Pos{Line: 3, Column: 12, Byte: 66},
 						},
-						NewText: "content",
-						Snippet: "content {\n  ${1}\n}",
-					},
-				},
-				{
-					Label: "for_each",
-					Description: lang.MarkupContent{
-						Value: "A meta-argument that accepts a map or a set of strings, and creates an instance for each item in that map or set.\n\n**Note**: A given block cannot use both `count` and `for_each`.",
-						Kind:  lang.MarkdownKind,
-					},
-					Detail:         "required, map of any single type or set of string",
-					Kind:           lang.AttributeCandidateKind,
-					TriggerSuggest: true,
-					TextEdit: lang.TextEdit{
-						Range: hcl.Range{
-							Filename: "test.tf",
-							Start:    hcl.Pos{Line: 4, Column: 5, Byte: 73},
-							End:      hcl.Pos{Line: 4, Column: 5, Byte: 73},
-						},
-						NewText: "for_each",
-						Snippet: "for_each = ",
-					},
-				},
-				{
-					Label: "iterator",
-					Description: lang.MarkupContent{
-						Value: "The name of a temporary variable that represents the current element of the complex value. Defaults to the label of the dynamic block.",
-						Kind:  lang.MarkdownKind,
-					},
-					Detail: "optional, string",
-					Kind:   lang.AttributeCandidateKind,
-					TextEdit: lang.TextEdit{
-						Range: hcl.Range{
-							Filename: "test.tf",
-							Start:    hcl.Pos{Line: 4, Column: 5, Byte: 73},
-							End:      hcl.Pos{Line: 4, Column: 5, Byte: 73},
-						},
-						NewText: "iterator",
-						Snippet: `iterator = "${1:value}"`,
-					},
-				},
-				{
-					Label: "labels",
-					Description: lang.MarkupContent{
-						Value: "A list of strings that specifies the block labels, in order, to use for each generated block.",
-						Kind:  lang.MarkdownKind,
-					},
-					Detail: "optional, list of string",
-					Kind:   lang.AttributeCandidateKind,
-					TextEdit: lang.TextEdit{
-						Range: hcl.Range{
-							Filename: "test.tf",
-							Start:    hcl.Pos{Line: 4, Column: 5, Byte: 73},
-							End:      hcl.Pos{Line: 4, Column: 5, Byte: 73},
-						},
-						NewText: "labels",
-						Snippet: "labels = [\n  ${0}\n]",
+						NewText: "foo",
+						Snippet: "foo",
 					},
 				},
 			}),
 		},
-
 		// completion nesting should work
 		{
 			"dynamic block completion nesting should work",
@@ -2254,7 +2163,9 @@ resource "aws_elastic_beanstalk_environment" "example" {
 									"foo": {
 										Body: &schema.BodySchema{
 											Blocks: map[string]*schema.BlockSchema{
-												"bar": {},
+												"bar": {
+													Body: schema.NewBodySchema(),
+												},
 											},
 											Attributes: map[string]*schema.AttributeSchema{
 												"thing": {
@@ -2301,6 +2212,25 @@ resource "aws_elastic_beanstalk_environment" "example" {
 					},
 				},
 				{
+					Label: "dynamic",
+					Description: lang.MarkupContent{
+						Value: "A dynamic block to produce blocks dynamically by iterating over a given complex value",
+						Kind:  lang.MarkdownKind,
+					},
+					Detail:         "Block, map",
+					Kind:           lang.BlockCandidateKind,
+					TriggerSuggest: true,
+					TextEdit: lang.TextEdit{
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 5, Column: 7, Byte: 86},
+							End:      hcl.Pos{Line: 5, Column: 7, Byte: 86},
+						},
+						NewText: "dynamic",
+						Snippet: "dynamic \"${1}\" {\n  ${2}\n}",
+					},
+				},
+				{
 					Label:  "thing",
 					Detail: "optional, string",
 					Kind:   lang.AttributeCandidateKind,
@@ -2312,20 +2242,6 @@ resource "aws_elastic_beanstalk_environment" "example" {
 						},
 						NewText: "thing",
 						Snippet: `thing = "${1:value}"`,
-					},
-				},
-				{
-					Label:  "dynamic",
-					Detail: "Block",
-					Kind:   lang.BlockCandidateKind,
-					TextEdit: lang.TextEdit{
-						Range: hcl.Range{
-							Filename: "test.tf",
-							Start:    hcl.Pos{Line: 4, Column: 7, Byte: 86},
-							End:      hcl.Pos{Line: 4, Column: 7, Byte: 86},
-						},
-						NewText: "dynamic",
-						Snippet: "dynamic {\n  ${1}\n}",
 					},
 				},
 			}),
@@ -2418,7 +2334,7 @@ resource "aws_elastic_beanstalk_environment" "example" {
 				},
 			}),
 		},
-		// check allows more than one dynamic - what schema for this?
+		// check allows more than one dynamic
 		{
 			"allows more than one dynamic",
 			&schema.BodySchema{
@@ -2494,8 +2410,9 @@ resource "aws_elastic_beanstalk_environment" "example" {
 				},
 			}),
 		},
+		// allows dynamic blocks in blocks
 		{
-			"allows more nested dynamic",
+			"allows dynamic blocks in blocks",
 			&schema.BodySchema{
 				Blocks: map[string]*schema.BlockSchema{
 					"resource": {
@@ -2546,39 +2463,102 @@ resource "aws_elastic_beanstalk_environment" "example" {
 			hcl.Pos{Line: 4, Column: 5, Byte: 63},
 			lang.CompleteCandidates([]lang.Candidate{
 				{
-					Label: "bar",
-					Description: lang.MarkupContent{
-						Value: "The body of each generated block",
-						Kind:  lang.PlainTextKind,
-					},
-					Detail: "Block, max: 1",
+					Label:  "bar",
+					Detail: "Block",
 					Kind:   lang.BlockCandidateKind,
 					TextEdit: lang.TextEdit{
 						Range: hcl.Range{
 							Filename: "test.tf",
-							Start:    hcl.Pos{Line: 6, Column: 3, Byte: 78},
-							End:      hcl.Pos{Line: 6, Column: 3, Byte: 78},
+							Start:    hcl.Pos{Line: 4, Column: 5, Byte: 63},
+							End:      hcl.Pos{Line: 4, Column: 5, Byte: 63},
 						},
-						NewText: "dynamic",
-						Snippet: "dynamic \"${1}\" {\n  ${2}\n}",
+						NewText: "bar",
+						Snippet: "bar {\n  ${1}\n}",
 					},
 				},
 				{
 					Label: "dynamic",
 					Description: lang.MarkupContent{
-						Value: "The body of each generated block",
-						Kind:  lang.PlainTextKind,
+						Value: "A dynamic block to produce blocks dynamically by iterating over a given complex value",
+						Kind:  lang.MarkdownKind,
 					},
-					Detail: "Block, max: 1",
-					Kind:   lang.BlockCandidateKind,
+					Detail:         "Block, map",
+					Kind:           lang.BlockCandidateKind,
+					TriggerSuggest: true,
 					TextEdit: lang.TextEdit{
 						Range: hcl.Range{
 							Filename: "test.tf",
-							Start:    hcl.Pos{Line: 6, Column: 3, Byte: 78},
-							End:      hcl.Pos{Line: 6, Column: 3, Byte: 78},
+							Start:    hcl.Pos{Line: 4, Column: 5, Byte: 63},
+							End:      hcl.Pos{Line: 4, Column: 5, Byte: 63},
 						},
 						NewText: "dynamic",
 						Snippet: "dynamic \"${1}\" {\n  ${2}\n}",
+					},
+				},
+			}),
+		},
+		// never complete dynamic as a dynamic label
+		{
+			"never complete dynamic as a dynamic label",
+			&schema.BodySchema{
+				Blocks: map[string]*schema.BlockSchema{
+					"resource": {
+						Labels: []*schema.LabelSchema{
+							{
+								Name:        "type",
+								IsDepKey:    true,
+								Completable: true,
+							},
+							{Name: "name"},
+						},
+						Body: &schema.BodySchema{
+							Extensions: &schema.BodyExtensions{
+								DynamicBlocks: true,
+							},
+							Blocks: make(map[string]*schema.BlockSchema, 0),
+						},
+						DependentBody: map[schema.SchemaKey]*schema.BodySchema{
+							schema.NewSchemaKey(schema.DependencyKeys{
+								Labels: []schema.LabelDependent{
+									{Index: 0, Value: "aws_instance"},
+								},
+							}): {
+								Blocks: map[string]*schema.BlockSchema{
+									"foo": {
+										Body: &schema.BodySchema{
+											Blocks: map[string]*schema.BlockSchema{
+												"bar": {
+													Body: schema.NewBodySchema(),
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			`resource "aws_instance" "example" {
+  foo {
+    dynamic "" {
+      
+    }
+  }
+}`,
+			hcl.Pos{Line: 3, Column: 14, Byte: 57},
+			lang.CompleteCandidates([]lang.Candidate{
+				{
+					Label: "bar",
+					Kind:  lang.LabelCandidateKind,
+					TextEdit: lang.TextEdit{
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 3, Column: 14, Byte: 57},
+							End:      hcl.Pos{Line: 3, Column: 14, Byte: 57},
+						},
+						NewText: "bar",
+						Snippet: "bar",
 					},
 				},
 			}),
@@ -2596,6 +2576,11 @@ resource "aws_elastic_beanstalk_environment" "example" {
 				},
 			})
 
+			// We're triggering completion twice her, to cover any unintended side effects
+			_, err := d.CandidatesAtPos(ctx, "test.tf", tc.pos)
+			if err != nil {
+				t.Fatal(err)
+			}
 			candidates, err := d.CandidatesAtPos(ctx, "test.tf", tc.pos)
 			if err != nil {
 				t.Fatal(err)

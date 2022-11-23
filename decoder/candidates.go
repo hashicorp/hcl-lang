@@ -160,26 +160,9 @@ func (d *PathDecoder) candidatesAtPos(ctx context.Context, body *hclsyntax.Body,
 				if bSchema.Body != nil && bSchema.Body.Extensions != nil && bSchema.Body.Extensions.DynamicBlocks {
 					depSchema, _, ok := NewBlockSchema(bSchema).DependentBodySchema(block.AsHCLBlock())
 					if ok && len(depSchema.Blocks) > 0 {
-						dynamicBlockSchema := buildDynamicBlockSchema()
-						dynamicBlockDependentBody := make(map[schema.SchemaKey]*schema.BodySchema)
-						for blockName, block := range depSchema.Blocks {
-							dynamicBlockDependentBody[schema.NewSchemaKey(schema.DependencyKeys{
-								Labels: []schema.LabelDependent{
-									{Index: 0, Value: blockName},
-								},
-							})] = &schema.BodySchema{
-								Blocks: map[string]*schema.BlockSchema{
-									"content": {
-										Description: lang.PlainText("The body of each generated block"),
-										MaxItems:    1,
-										Body:        block.Body,
-									},
-								},
-							}
-						}
-
-						dynamicBlockSchema.DependentBody = dynamicBlockDependentBody
-						bSchema.Body.Blocks["dynamic"] = dynamicBlockSchema
+						bSchema.Body.Blocks["dynamic"] = buildDynamicBlockSchema(depSchema)
+					} else if !ok && len(bSchema.Body.Blocks) > 0 {
+						bSchema.Body.Blocks["dynamic"] = buildDynamicBlockSchema(bSchema.Body)
 					}
 				}
 
