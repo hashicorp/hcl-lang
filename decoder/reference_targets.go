@@ -218,6 +218,7 @@ func (d *PathDecoder) decodeReferenceTargetsForBody(body hcl.Body, parentBlock *
 						bodyRef.LocalAddr = lang.Address{
 							lang.RootStep{Name: "self"},
 						}
+						bodyRef.TargetableFromRangePtr = blk.Range.Ptr()
 					} else {
 						bodyRef.LocalAddr = lang.Address{}
 					}
