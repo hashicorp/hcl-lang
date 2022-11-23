@@ -112,6 +112,10 @@ func (d *PathDecoder) decodeReferenceTargetsForBody(body hcl.Body, parentBlock *
 				refs = append(refs, countIndexReferenceTarget(attr, *content.RangePtr))
 				continue
 			}
+			if bodySchema.Extensions.ForEach && attr.Name == "for_each" && content.RangePtr != nil {
+				refs = append(refs, forEachReferenceTargets(attr, *content.RangePtr)...)
+				continue
+			}
 		}
 		attrSchema, ok := bodySchema.Attributes[attr.Name]
 		if !ok {

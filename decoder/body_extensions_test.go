@@ -693,7 +693,44 @@ variable "test" {
 					},
 				},
 			},
-			reference.Targets{},
+			reference.Targets{
+				{
+					LocalAddr: lang.Address{
+						lang.RootStep{Name: "each"},
+						lang.AttrStep{Name: "key"},
+					},
+					Type:        cty.String,
+					Description: lang.Markdown("The map key (or set member) corresponding to this instance"),
+					RangePtr: &hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 2, Column: 1, Byte: 32},
+						End:      hcl.Pos{Line: 5, Column: 2, Byte: 93},
+					},
+					DefRangePtr: &hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 2, Column: 1, Byte: 32},
+						End:      hcl.Pos{Line: 2, Column: 9, Byte: 40},
+					},
+				},
+				{
+					LocalAddr: lang.Address{
+						lang.RootStep{Name: "each"},
+						lang.AttrStep{Name: "value"},
+					},
+					Type:        cty.DynamicPseudoType,
+					Description: lang.Markdown("The map value corresponding to this instance. (If a set was provided, this is the same as `each.key`.)"),
+					RangePtr: &hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 2, Column: 1, Byte: 32},
+						End:      hcl.Pos{Line: 5, Column: 2, Byte: 93},
+					},
+					DefRangePtr: &hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 2, Column: 1, Byte: 32},
+						End:      hcl.Pos{Line: 2, Column: 9, Byte: 40},
+					},
+				},
+			},
 			`resource "aws_instance" "foo" {
 for_each = {
 	a_group = "eastus"
@@ -701,7 +738,7 @@ for_each = {
 }
 thing = 
 }`,
-			hcl.Pos{Line: 6, Column: 8, Byte: 101},
+			hcl.Pos{Line: 6, Column: 9, Byte: 102},
 			lang.CompleteCandidates([]lang.Candidate{
 				{
 					Label:  "each.key",
@@ -723,7 +760,7 @@ thing =
 				},
 				{
 					Label:  "each.value",
-					Detail: "any type",
+					Detail: "dynamic",
 					Kind:   lang.TraversalCandidateKind,
 					Description: lang.MarkupContent{
 						Value: "The map value corresponding to this instance. (If a set was provided, this is the same as `each.key`.)",
@@ -880,7 +917,7 @@ for_each = {
 												IsOptional: true,
 												Expr: schema.ExprConstraints{
 													schema.TraversalExpr{
-														OfType: cty.Number,
+														OfType: cty.DynamicPseudoType,
 													},
 												},
 											},
@@ -892,7 +929,44 @@ for_each = {
 					},
 				},
 			},
-			reference.Targets{},
+			reference.Targets{
+				{
+					LocalAddr: lang.Address{
+						lang.RootStep{Name: "each"},
+						lang.AttrStep{Name: "key"},
+					},
+					Type:        cty.String,
+					Description: lang.Markdown("The map key (or set member) corresponding to this instance"),
+					RangePtr: &hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 2, Column: 1, Byte: 32},
+						End:      hcl.Pos{Line: 5, Column: 2, Byte: 93},
+					},
+					DefRangePtr: &hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 2, Column: 1, Byte: 32},
+						End:      hcl.Pos{Line: 2, Column: 9, Byte: 40},
+					},
+				},
+				{
+					LocalAddr: lang.Address{
+						lang.RootStep{Name: "each"},
+						lang.AttrStep{Name: "value"},
+					},
+					Type:        cty.DynamicPseudoType,
+					Description: lang.Markdown("The map value corresponding to this instance. (If a set was provided, this is the same as `each.key`.)"),
+					RangePtr: &hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 2, Column: 1, Byte: 32},
+						End:      hcl.Pos{Line: 5, Column: 2, Byte: 93},
+					},
+					DefRangePtr: &hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 2, Column: 1, Byte: 32},
+						End:      hcl.Pos{Line: 2, Column: 9, Byte: 40},
+					},
+				},
+			},
 			`resource "aws_instance" "foo" {
 for_each = {
 	a_group = "eastus"
@@ -924,7 +998,7 @@ foo {
 				},
 				{
 					Label:  "each.value",
-					Detail: "any type",
+					Detail: "dynamic",
 					Kind:   lang.TraversalCandidateKind,
 					Description: lang.MarkupContent{
 						Value: "The map value corresponding to this instance. (If a set was provided, this is the same as `each.key`.)",
