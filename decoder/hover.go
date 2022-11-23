@@ -55,10 +55,6 @@ func (d *PathDecoder) hoverAtPos(ctx context.Context, body *hclsyntax.Body, body
 		if bodySchema.Extensions.ForEach {
 			ctx = schema.WithActiveForEach(ctx)
 		}
-
-		if bodySchema.Extensions.DynamicBlocks {
-			ctx = schema.WithActiveDynamicBlock(ctx)
-		}
 	}
 
 	for name, attr := range body.Attributes {

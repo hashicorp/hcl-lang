@@ -63,10 +63,6 @@ func (d *PathDecoder) tokensForBody(ctx context.Context, body *hclsyntax.Body, b
 			// append to context we need count provided
 			ctx = schema.WithActiveForEach(ctx)
 		}
-
-		if bodySchema.Extensions.DynamicBlocks {
-			ctx = schema.WithActiveDynamicBlock(ctx)
-		}
 	}
 
 	for name, attr := range body.Attributes {

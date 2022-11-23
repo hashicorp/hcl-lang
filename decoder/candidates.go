@@ -62,10 +62,6 @@ func (d *PathDecoder) candidatesAtPos(ctx context.Context, body *hclsyntax.Body,
 				ctx = schema.WithActiveForEach(ctx)
 			}
 		}
-
-		if bodySchema.Extensions.DynamicBlocks {
-			ctx = schema.WithActiveDynamicBlock(ctx)
-		}
 	}
 
 	for _, attr := range body.Attributes {

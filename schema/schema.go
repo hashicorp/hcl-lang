@@ -42,13 +42,3 @@ func WithActiveSelfRefs(ctx context.Context) context.Context {
 func ActiveSelfRefsFromContext(ctx context.Context) bool {
 	return ctx.Value(bodyActiveSelfRefsCtxKey{}) != nil
 }
-
-type bodyActiveDynamicBlockCtxKey struct{}
-
-func WithActiveDynamicBlock(ctx context.Context) context.Context {
-	return context.WithValue(ctx, bodyActiveDynamicBlockCtxKey{}, true)
-}
-
-func ActiveDynamicBlockFromContext(ctx context.Context) bool {
-	return ctx.Value(bodyActiveDynamicBlockCtxKey{}) != nil
-}
