@@ -1415,15 +1415,18 @@ func TestDecoder_HoverAtPos_dynamic_extension(t *testing.T) {
 							Extensions: &schema.BodyExtensions{
 								DynamicBlocks: true,
 							},
+							Blocks: make(map[string]*schema.BlockSchema, 0),
 						},
 						DependentBody: map[schema.SchemaKey]*schema.BodySchema{
 							schema.NewSchemaKey(schema.DependencyKeys{
 								Labels: []schema.LabelDependent{
-									{Index: 0, Value: "setting"},
+									{Index: 0, Value: "foo"},
 								},
 							}): {
-								Extensions: &schema.BodyExtensions{
-									DynamicBlocks: true,
+								Blocks: map[string]*schema.BlockSchema{
+									"thing": {
+										Body: schema.NewBodySchema(),
+									},
 								},
 							},
 						},
@@ -1445,6 +1448,67 @@ func TestDecoder_HoverAtPos_dynamic_extension(t *testing.T) {
 					Filename: "test.tf",
 					Start:    hcl.Pos{Line: 2, Column: 3, Byte: 24},
 					End:      hcl.Pos{Line: 2, Column: 10, Byte: 31},
+				},
+			},
+		},
+		{
+			"hover on nested dynamic blocks",
+			&schema.BodySchema{
+				Blocks: map[string]*schema.BlockSchema{
+					"resource": {
+						Labels: []*schema.LabelSchema{
+							{Name: "type", IsDepKey: true}, {Name: "name"},
+						},
+						Body: &schema.BodySchema{
+							Extensions: &schema.BodyExtensions{
+								DynamicBlocks: true,
+							},
+							Blocks:     make(map[string]*schema.BlockSchema, 0),
+							Attributes: make(map[string]*schema.AttributeSchema, 0),
+						},
+						DependentBody: map[schema.SchemaKey]*schema.BodySchema{
+							schema.NewSchemaKey(schema.DependencyKeys{
+								Labels: []schema.LabelDependent{
+									{Index: 0, Value: "aws_instance"},
+								},
+							}): {
+								Blocks: map[string]*schema.BlockSchema{
+									"foo": {
+										Body: &schema.BodySchema{
+											Blocks: map[string]*schema.BlockSchema{
+												"bar": {
+													Body: schema.NewBodySchema(),
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			`resource "aws_instance" "example" {
+  dynamic "foo" {
+    content {
+      dynamic "bar" {
+        content {
+        }
+      }
+    }
+  }
+}`,
+			hcl.Pos{Line: 5, Column: 13, Byte: 102},
+			&lang.HoverData{
+				Content: lang.MarkupContent{
+					Value: "**content** _Block, max: 1_\n\n" +
+						"The body of each generated block",
+					Kind: lang.MarkdownKind,
+				},
+				Range: hcl.Range{
+					Filename: "test.tf",
+					Start:    hcl.Pos{Line: 5, Column: 9, Byte: 98},
+					End:      hcl.Pos{Line: 5, Column: 16, Byte: 105},
 				},
 			},
 		},

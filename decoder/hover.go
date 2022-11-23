@@ -111,18 +111,12 @@ func (d *PathDecoder) hoverAtPos(ctx context.Context, body *hclsyntax.Body, body
 
 	for _, block := range body.Blocks {
 		if block.Range().ContainsPos(pos) {
-			var bSchema *schema.BlockSchema
-			if bodySchema.Extensions != nil && bodySchema.Extensions.DynamicBlocks && block.Type == "dynamic" {
-				bSchema = buildDynamicBlockSchema()
-			} else {
-				var ok bool
-				bSchema, ok = bodySchema.Blocks[block.Type]
-				if !ok {
-					return nil, &PositionalError{
-						Filename: filename,
-						Pos:      pos,
-						Msg:      fmt.Sprintf("unknown block type %q", block.Type),
-					}
+			bSchema, ok := bodySchema.Blocks[block.Type]
+			if !ok {
+				return nil, &PositionalError{
+					Filename: filename,
+					Pos:      pos,
+					Msg:      fmt.Sprintf("unknown block type %q", block.Type),
 				}
 			}
 
@@ -159,6 +153,15 @@ func (d *PathDecoder) hoverAtPos(ctx context.Context, body *hclsyntax.Body, body
 			}
 
 			if block.Body != nil && block.Body.Range().ContainsPos(pos) {
+				if bSchema.Body != nil && bSchema.Body.Extensions != nil && bSchema.Body.Extensions.DynamicBlocks {
+					depSchema, _, ok := NewBlockSchema(bSchema).DependentBodySchema(block.AsHCLBlock())
+					if ok && len(depSchema.Blocks) > 0 {
+						bSchema.Body.Blocks["dynamic"] = buildDynamicBlockSchema(depSchema)
+					} else if !ok && len(bSchema.Body.Blocks) > 0 {
+						bSchema.Body.Blocks["dynamic"] = buildDynamicBlockSchema(bSchema.Body)
+					}
+				}
+
 				mergedSchema, err := mergeBlockBodySchemas(block.AsHCLBlock(), bSchema)
 				if err != nil {
 					return nil, err
