@@ -33,10 +33,6 @@ func posEqual(pos, other hcl.Pos) bool {
 }
 
 func mergeBlockBodySchemas(block *hcl.Block, blockSchema *schema.BlockSchema) (*schema.BodySchema, error) {
-	if len(blockSchema.DependentBody) == 0 {
-		return blockSchema.Body, nil
-	}
-
 	mergedSchema := &schema.BodySchema{}
 	if blockSchema.Body != nil {
 		mergedSchema = blockSchema.Body.Copy()
@@ -54,6 +50,10 @@ func mergeBlockBodySchemas(block *hcl.Block, blockSchema *schema.BlockSchema) (*
 		mergedSchema.ImpliedOrigins = make([]schema.ImpliedOrigin, 0)
 	}
 
+	if mergedSchema.Extensions != nil && mergedSchema.Extensions.DynamicBlocks && len(mergedSchema.Blocks) > 0 {
+		mergedSchema.Blocks["dynamic"] = buildDynamicBlockSchema(mergedSchema)
+	}
+
 	depSchema, _, ok := NewBlockSchema(blockSchema).DependentBodySchema(block)
 	if ok {
 		for name, attr := range depSchema.Attributes {
@@ -66,11 +66,21 @@ func mergeBlockBodySchemas(block *hcl.Block, blockSchema *schema.BlockSchema) (*
 		}
 		for bType, block := range depSchema.Blocks {
 			if _, exists := mergedSchema.Blocks[bType]; !exists {
+				if mergedSchema.Extensions != nil && mergedSchema.Extensions.DynamicBlocks {
+					if block.Body.Extensions == nil {
+						block.Body.Extensions = &schema.BodyExtensions{}
+					}
+					block.Body.Extensions.DynamicBlocks = true
+				}
 				mergedSchema.Blocks[bType] = block
 			} else {
 				// Skip duplicate block type
 				continue
 			}
+		}
+
+		if mergedSchema.Extensions != nil && mergedSchema.Extensions.DynamicBlocks && len(depSchema.Blocks) > 0 {
+			mergedSchema.Blocks["dynamic"] = buildDynamicBlockSchema(depSchema)
 		}
 
 		mergedSchema.TargetableAs = append(mergedSchema.TargetableAs, depSchema.TargetableAs...)
@@ -203,17 +213,6 @@ func forEachAttributeSchema() *schema.AttributeSchema {
 func buildDynamicBlockSchema(inputSchema *schema.BodySchema) *schema.BlockSchema {
 	dependentBody := make(map[schema.SchemaKey]*schema.BodySchema)
 	for blockName, block := range inputSchema.Blocks {
-		if blockName == "dynamic" {
-			// Never allow dynamic as a label completion
-			continue
-		}
-		if len(block.Body.Blocks) > 0 {
-			// Check if there are nested blocks to enable dynamic again
-			block.Body.Extensions = &schema.BodyExtensions{
-				DynamicBlocks: true,
-			}
-		}
-
 		dependentBody[schema.NewSchemaKey(schema.DependencyKeys{
 			Labels: []schema.LabelDependent{
 				{Index: 0, Value: blockName},
@@ -223,7 +222,7 @@ func buildDynamicBlockSchema(inputSchema *schema.BodySchema) *schema.BlockSchema
 				"content": {
 					Description: lang.PlainText("The body of each generated block"),
 					MaxItems:    1,
-					Body:        block.Body,
+					Body:        block.Body.Copy(),
 				},
 			},
 		}

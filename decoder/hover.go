@@ -107,7 +107,7 @@ func (d *PathDecoder) hoverAtPos(ctx context.Context, body *hclsyntax.Body, body
 
 	for _, block := range body.Blocks {
 		if block.Range().ContainsPos(pos) {
-			bSchema, ok := bodySchema.Blocks[block.Type]
+			blockSchema, ok := bodySchema.Blocks[block.Type]
 			if !ok {
 				return nil, &PositionalError{
 					Filename: filename,
@@ -118,14 +118,14 @@ func (d *PathDecoder) hoverAtPos(ctx context.Context, body *hclsyntax.Body, body
 
 			if block.TypeRange.ContainsPos(pos) {
 				return &lang.HoverData{
-					Content: d.hoverContentForBlock(block.Type, bSchema),
+					Content: d.hoverContentForBlock(block.Type, blockSchema),
 					Range:   block.TypeRange,
 				}, nil
 			}
 
 			for i, labelRange := range block.LabelRanges {
 				if labelRange.ContainsPos(pos) {
-					if i+1 > len(bSchema.Labels) {
+					if i+1 > len(blockSchema.Labels) {
 						return nil, &PositionalError{
 							Filename: filename,
 							Pos:      pos,
@@ -134,7 +134,7 @@ func (d *PathDecoder) hoverAtPos(ctx context.Context, body *hclsyntax.Body, body
 					}
 
 					return &lang.HoverData{
-						Content: d.hoverContentForLabel(i, block, bSchema),
+						Content: d.hoverContentForLabel(i, block, blockSchema),
 						Range:   labelRange,
 					}, nil
 				}
@@ -149,16 +149,7 @@ func (d *PathDecoder) hoverAtPos(ctx context.Context, body *hclsyntax.Body, body
 			}
 
 			if block.Body != nil && block.Body.Range().ContainsPos(pos) {
-				if bSchema.Body != nil && bSchema.Body.Extensions != nil && bSchema.Body.Extensions.DynamicBlocks {
-					depSchema, _, ok := NewBlockSchema(bSchema).DependentBodySchema(block.AsHCLBlock())
-					if ok && len(depSchema.Blocks) > 0 {
-						bSchema.Body.Blocks["dynamic"] = buildDynamicBlockSchema(depSchema)
-					} else if !ok && len(bSchema.Body.Blocks) > 0 {
-						bSchema.Body.Blocks["dynamic"] = buildDynamicBlockSchema(bSchema.Body)
-					}
-				}
-
-				mergedSchema, err := mergeBlockBodySchemas(block.AsHCLBlock(), bSchema)
+				mergedSchema, err := mergeBlockBodySchemas(block.AsHCLBlock(), blockSchema)
 				if err != nil {
 					return nil, err
 				}

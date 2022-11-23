@@ -132,16 +132,11 @@ func (d *PathDecoder) tokensForBody(ctx context.Context, body *hclsyntax.Body, b
 			})
 		}
 
-		depSchema, _, hasDepSchema := NewBlockSchema(blockSchema).DependentBodySchema(block.AsHCLBlock())
-		if blockSchema.Body != nil && blockSchema.Body.Extensions != nil && blockSchema.Body.Extensions.DynamicBlocks {
-			if hasDepSchema && len(depSchema.Blocks) > 0 {
-				blockSchema.Body.Blocks["dynamic"] = buildDynamicBlockSchema(depSchema)
-			} else if !hasDepSchema && len(blockSchema.Body.Blocks) > 0 {
-				blockSchema.Body.Blocks["dynamic"] = buildDynamicBlockSchema(blockSchema.Body)
-			}
-		}
-
 		if block.Body != nil {
+			mergedSchema, err := mergeBlockBodySchemas(block.AsHCLBlock(), blockSchema)
+			if err != nil {
+				continue
+			}
 			if blockSchema.Body != nil && blockSchema.Body.Extensions != nil {
 				if blockSchema.Body.Extensions.Count {
 					if _, ok := block.Body.Attributes["count"]; ok {
@@ -154,11 +149,7 @@ func (d *PathDecoder) tokensForBody(ctx context.Context, body *hclsyntax.Body, b
 					ctx = schema.WithActiveForEach(ctx)
 				}
 			}
-			tokens = append(tokens, d.tokensForBody(ctx, block.Body, blockSchema.Body, blockModifiers)...)
-		}
-
-		if hasDepSchema {
-			tokens = append(tokens, d.tokensForBody(ctx, block.Body, depSchema, []lang.SemanticTokenModifier{})...)
+			tokens = append(tokens, d.tokensForBody(ctx, block.Body, mergedSchema, blockModifiers)...)
 		}
 	}
 
