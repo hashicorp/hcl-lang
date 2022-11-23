@@ -2030,7 +2030,7 @@ resource "aws_elastic_beanstalk_environment" "example" {
 									"foo": {
 										Body: &schema.BodySchema{
 											Attributes: map[string]*schema.AttributeSchema{
-												"thing": &schema.AttributeSchema{
+												"thing": {
 													IsOptional: true,
 													Expr:       schema.LiteralTypeOnly(cty.String),
 												},

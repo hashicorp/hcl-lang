@@ -100,14 +100,10 @@ func (d *PathDecoder) tokensForBody(ctx context.Context, body *hclsyntax.Body, b
 	}
 
 	for _, block := range body.Blocks {
-		blockSchema, ok := bodySchema.Blocks[block.Type]
-		if !ok {
-			if bodySchema.Extensions != nil && bodySchema.Extensions.DynamicBlocks && block.Type == "dynamic" {
-				blockSchema = buildDynamicBlockSchema()
-			} else {
-				// unknown block
-				continue
-			}
+		blockSchema, hasDepSchema := bodySchema.Blocks[block.Type]
+		if !hasDepSchema {
+			// unknown block
+			continue
 		}
 
 		blockModifiers := make([]lang.SemanticTokenModifier, 0)
@@ -140,6 +136,15 @@ func (d *PathDecoder) tokensForBody(ctx context.Context, body *hclsyntax.Body, b
 			})
 		}
 
+		depSchema, _, hasDepSchema := NewBlockSchema(blockSchema).DependentBodySchema(block.AsHCLBlock())
+		if blockSchema.Body != nil && blockSchema.Body.Extensions != nil && blockSchema.Body.Extensions.DynamicBlocks {
+			if hasDepSchema && len(depSchema.Blocks) > 0 {
+				blockSchema.Body.Blocks["dynamic"] = buildDynamicBlockSchema(depSchema)
+			} else if !hasDepSchema && len(blockSchema.Body.Blocks) > 0 {
+				blockSchema.Body.Blocks["dynamic"] = buildDynamicBlockSchema(blockSchema.Body)
+			}
+		}
+
 		if block.Body != nil {
 			if blockSchema.Body != nil && blockSchema.Body.Extensions != nil {
 				if blockSchema.Body.Extensions.Count {
@@ -156,8 +161,7 @@ func (d *PathDecoder) tokensForBody(ctx context.Context, body *hclsyntax.Body, b
 			tokens = append(tokens, d.tokensForBody(ctx, block.Body, blockSchema.Body, blockModifiers)...)
 		}
 
-		depSchema, _, ok := NewBlockSchema(blockSchema).DependentBodySchema(block.AsHCLBlock())
-		if ok {
+		if hasDepSchema {
 			tokens = append(tokens, d.tokensForBody(ctx, block.Body, depSchema, []lang.SemanticTokenModifier{})...)
 		}
 	}
