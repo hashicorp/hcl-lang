@@ -55,10 +55,6 @@ func (d *PathDecoder) hoverAtPos(ctx context.Context, body *hclsyntax.Body, body
 		if bodySchema.Extensions.ForEach {
 			ctx = schema.WithActiveForEach(ctx)
 		}
-
-		if bodySchema.Extensions.DynamicBlocks {
-			ctx = schema.WithActiveDynamicBlock(ctx)
-		}
 	}
 
 	for name, attr := range body.Attributes {
@@ -111,31 +107,25 @@ func (d *PathDecoder) hoverAtPos(ctx context.Context, body *hclsyntax.Body, body
 
 	for _, block := range body.Blocks {
 		if block.Range().ContainsPos(pos) {
-			var bSchema *schema.BlockSchema
-			if bodySchema.Extensions != nil && bodySchema.Extensions.DynamicBlocks && block.Type == "dynamic" {
-				bSchema = dynamicBlockSchema()
-			} else {
-				var ok bool
-				bSchema, ok = bodySchema.Blocks[block.Type]
-				if !ok {
-					return nil, &PositionalError{
-						Filename: filename,
-						Pos:      pos,
-						Msg:      fmt.Sprintf("unknown block type %q", block.Type),
-					}
+			blockSchema, ok := bodySchema.Blocks[block.Type]
+			if !ok {
+				return nil, &PositionalError{
+					Filename: filename,
+					Pos:      pos,
+					Msg:      fmt.Sprintf("unknown block type %q", block.Type),
 				}
 			}
 
 			if block.TypeRange.ContainsPos(pos) {
 				return &lang.HoverData{
-					Content: d.hoverContentForBlock(block.Type, bSchema),
+					Content: d.hoverContentForBlock(block.Type, blockSchema),
 					Range:   block.TypeRange,
 				}, nil
 			}
 
 			for i, labelRange := range block.LabelRanges {
 				if labelRange.ContainsPos(pos) {
-					if i+1 > len(bSchema.Labels) {
+					if i+1 > len(blockSchema.Labels) {
 						return nil, &PositionalError{
 							Filename: filename,
 							Pos:      pos,
@@ -144,7 +134,7 @@ func (d *PathDecoder) hoverAtPos(ctx context.Context, body *hclsyntax.Body, body
 					}
 
 					return &lang.HoverData{
-						Content: d.hoverContentForLabel(i, block, bSchema),
+						Content: d.hoverContentForLabel(i, block, blockSchema),
 						Range:   labelRange,
 					}, nil
 				}
@@ -159,7 +149,7 @@ func (d *PathDecoder) hoverAtPos(ctx context.Context, body *hclsyntax.Body, body
 			}
 
 			if block.Body != nil && block.Body.Range().ContainsPos(pos) {
-				mergedSchema, err := mergeBlockBodySchemas(block.AsHCLBlock(), bSchema)
+				mergedSchema, err := mergeBlockBodySchemas(block.AsHCLBlock(), blockSchema)
 				if err != nil {
 					return nil, err
 				}

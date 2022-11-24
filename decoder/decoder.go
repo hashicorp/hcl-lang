@@ -33,10 +33,6 @@ func posEqual(pos, other hcl.Pos) bool {
 }
 
 func mergeBlockBodySchemas(block *hcl.Block, blockSchema *schema.BlockSchema) (*schema.BodySchema, error) {
-	if len(blockSchema.DependentBody) == 0 {
-		return blockSchema.Body, nil
-	}
-
 	mergedSchema := &schema.BodySchema{}
 	if blockSchema.Body != nil {
 		mergedSchema = blockSchema.Body.Copy()
@@ -54,6 +50,10 @@ func mergeBlockBodySchemas(block *hcl.Block, blockSchema *schema.BlockSchema) (*
 		mergedSchema.ImpliedOrigins = make([]schema.ImpliedOrigin, 0)
 	}
 
+	if mergedSchema.Extensions != nil && mergedSchema.Extensions.DynamicBlocks && len(mergedSchema.Blocks) > 0 {
+		mergedSchema.Blocks["dynamic"] = buildDynamicBlockSchema(mergedSchema)
+	}
+
 	depSchema, _, ok := NewBlockSchema(blockSchema).DependentBodySchema(block)
 	if ok {
 		for name, attr := range depSchema.Attributes {
@@ -66,11 +66,21 @@ func mergeBlockBodySchemas(block *hcl.Block, blockSchema *schema.BlockSchema) (*
 		}
 		for bType, block := range depSchema.Blocks {
 			if _, exists := mergedSchema.Blocks[bType]; !exists {
+				if mergedSchema.Extensions != nil && mergedSchema.Extensions.DynamicBlocks {
+					if block.Body.Extensions == nil {
+						block.Body.Extensions = &schema.BodyExtensions{}
+					}
+					block.Body.Extensions.DynamicBlocks = true
+				}
 				mergedSchema.Blocks[bType] = block
 			} else {
 				// Skip duplicate block type
 				continue
 			}
+		}
+
+		if mergedSchema.Extensions != nil && mergedSchema.Extensions.DynamicBlocks && len(depSchema.Blocks) > 0 {
+			mergedSchema.Blocks["dynamic"] = buildDynamicBlockSchema(depSchema)
 		}
 
 		mergedSchema.TargetableAs = append(mergedSchema.TargetableAs, depSchema.TargetableAs...)
@@ -200,12 +210,33 @@ func forEachAttributeSchema() *schema.AttributeSchema {
 	}
 }
 
-func dynamicBlockSchema() *schema.BlockSchema {
+func buildDynamicBlockSchema(inputSchema *schema.BodySchema) *schema.BlockSchema {
+	dependentBody := make(map[schema.SchemaKey]*schema.BodySchema)
+	for blockName, block := range inputSchema.Blocks {
+		dependentBody[schema.NewSchemaKey(schema.DependencyKeys{
+			Labels: []schema.LabelDependent{
+				{Index: 0, Value: blockName},
+			},
+		})] = &schema.BodySchema{
+			Blocks: map[string]*schema.BlockSchema{
+				"content": {
+					Description: lang.PlainText("The body of each generated block"),
+					MaxItems:    1,
+					Body:        block.Body.Copy(),
+				},
+			},
+		}
+	}
+
 	return &schema.BlockSchema{
 		Description: lang.Markdown("A dynamic block to produce blocks dynamically by iterating over a given complex value"),
 		Type:        schema.BlockTypeMap,
 		Labels: []*schema.LabelSchema{
-			{Name: "name"},
+			{
+				Name:        "name",
+				Completable: true,
+				IsDepKey:    true,
+			},
 		},
 		Body: &schema.BodySchema{
 			Attributes: map[string]*schema.AttributeSchema{
@@ -240,13 +271,8 @@ func dynamicBlockSchema() *schema.BlockSchema {
 						"in order, to use for each generated block."),
 				},
 			},
-			Blocks: map[string]*schema.BlockSchema{
-				"content": {
-					Description: lang.PlainText("The body of each generated block"),
-					MaxItems:    1,
-				},
-			},
 		},
+		DependentBody: dependentBody,
 	}
 }
 

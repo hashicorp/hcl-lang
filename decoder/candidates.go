@@ -62,10 +62,6 @@ func (d *PathDecoder) candidatesAtPos(ctx context.Context, body *hclsyntax.Body,
 				ctx = schema.WithActiveForEach(ctx)
 			}
 		}
-
-		if bodySchema.Extensions.DynamicBlocks {
-			ctx = schema.WithActiveDynamicBlock(ctx)
-		}
 	}
 
 	for _, attr := range body.Attributes {
@@ -106,18 +102,12 @@ func (d *PathDecoder) candidatesAtPos(ctx context.Context, body *hclsyntax.Body,
 
 	for _, block := range body.Blocks {
 		if block.Range().ContainsPos(pos) {
-			var bSchema *schema.BlockSchema
-			if bodySchema.Extensions != nil && bodySchema.Extensions.DynamicBlocks && block.Type == "dynamic" {
-				bSchema = dynamicBlockSchema()
-			} else {
-				var ok bool
-				bSchema, ok = bodySchema.Blocks[block.Type]
-				if !ok {
-					return lang.ZeroCandidates(), &PositionalError{
-						Filename: filename,
-						Pos:      pos,
-						Msg:      fmt.Sprintf("unknown block type %q", block.Type),
-					}
+			blockSchema, ok := bodySchema.Blocks[block.Type]
+			if !ok {
+				return lang.ZeroCandidates(), &PositionalError{
+					Filename: filename,
+					Pos:      pos,
+					Msg:      fmt.Sprintf("unknown block type %q", block.Type),
 				}
 			}
 
@@ -129,7 +119,7 @@ func (d *PathDecoder) candidatesAtPos(ctx context.Context, body *hclsyntax.Body,
 
 			for i, labelRange := range block.LabelRanges {
 				if labelRange.ContainsPos(pos) {
-					if i+1 > len(bSchema.Labels) {
+					if i+1 > len(blockSchema.Labels) {
 						return lang.ZeroCandidates(), &PositionalError{
 							Filename: filename,
 							Pos:      pos,
@@ -144,13 +134,13 @@ func (d *PathDecoder) candidatesAtPos(ctx context.Context, body *hclsyntax.Body,
 					}
 					prefixRng.End = pos
 
-					labelSchema := bSchema.Labels[i]
+					labelSchema := blockSchema.Labels[i]
 
 					if !labelSchema.Completable {
 						return lang.ZeroCandidates(), nil
 					}
 
-					return d.labelCandidatesFromDependentSchema(i, bSchema.DependentBody, prefixRng, rng, block, bSchema.Labels)
+					return d.labelCandidatesFromDependentSchema(i, blockSchema.DependentBody, prefixRng, rng, block, blockSchema.Labels)
 				}
 			}
 
@@ -163,7 +153,7 @@ func (d *PathDecoder) candidatesAtPos(ctx context.Context, body *hclsyntax.Body,
 			}
 
 			if block.Body != nil && block.Body.Range().ContainsPos(pos) {
-				mergedSchema, err := mergeBlockBodySchemas(block.AsHCLBlock(), bSchema)
+				mergedSchema, err := mergeBlockBodySchemas(block.AsHCLBlock(), blockSchema)
 				if err != nil {
 					return lang.ZeroCandidates(), err
 				}
