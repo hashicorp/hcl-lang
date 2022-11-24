@@ -98,13 +98,23 @@ func copyHclRangePtr(rng *hcl.Range) *hcl.Range {
 
 // Address returns any of the two non-empty addresses
 // depending on the provided context
-func (r Target) Address(ctx context.Context) lang.Address {
-	addr := r.Addr
+func (r Target) Address(ctx context.Context, pos hcl.Pos) lang.Address {
 	if len(r.LocalAddr) > 0 {
-		addr = r.LocalAddr
+		// If the target has only local address, use it
+		if len(r.Addr) == 0 {
+			return r.LocalAddr
+		}
+
+		// If the target has local self address & self is active
+		if r.LocalAddr[0].String() == "self" && schema.ActiveSelfRefsFromContext(ctx) {
+			// and we targeting it from the expected range
+			if r.TargetableFromRangePtr != nil && r.TargetableFromRangePtr.ContainsPos(pos) {
+				return r.LocalAddr
+			}
+		}
 	}
 
-	return addr
+	return r.Addr
 }
 
 func (r Target) FriendlyName() string {

@@ -64,6 +64,10 @@ func (d *PathDecoder) hoverAtPos(ctx context.Context, body *hclsyntax.Body, body
 	for name, attr := range body.Attributes {
 		if attr.Range().ContainsPos(pos) {
 			var aSchema *schema.AttributeSchema
+			if bodySchema.Extensions != nil && bodySchema.Extensions.SelfRefs {
+				ctx = schema.WithActiveSelfRefs(ctx)
+			}
+
 			if bodySchema.Extensions != nil && bodySchema.Extensions.Count && name == "count" {
 				aSchema = countAttributeSchema()
 			} else if bodySchema.Extensions != nil && bodySchema.Extensions.ForEach && name == "for_each" {
@@ -643,14 +647,14 @@ func (d *PathDecoder) hoverContentForTraversalExpr(ctx context.Context, traversa
 		}
 
 		// TODO: Reflect additional found targets here?
-		return hoverContentForReferenceTarget(ctx, targets[0])
+		return hoverContentForReferenceTarget(ctx, targets[0], pos)
 	}
 
 	return "", &reference.NoTargetFound{}
 }
 
-func hoverContentForReferenceTarget(ctx context.Context, ref reference.Target) (string, error) {
-	content := fmt.Sprintf("`%s`", ref.Address(ctx))
+func hoverContentForReferenceTarget(ctx context.Context, ref reference.Target, pos hcl.Pos) (string, error) {
+	content := fmt.Sprintf("`%s`", ref.Address(ctx, pos))
 
 	var friendlyName string
 	if ref.Type != cty.NilType {

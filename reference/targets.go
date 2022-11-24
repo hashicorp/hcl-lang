@@ -87,6 +87,11 @@ func (refs Targets) MatchWalk(ctx context.Context, te schema.TraversalExpr, pref
 
 func localTargetMatches(ctx context.Context, target Target, te schema.TraversalExpr, prefix string, outermostBodyRng, originRng hcl.Range) bool {
 	if len(target.LocalAddr) > 0 && strings.HasPrefix(target.LocalAddr.String(), prefix) {
+		// reject self references if not enabled
+		if !schema.ActiveSelfRefsFromContext(ctx) && target.LocalAddr[0].String() == "self" {
+			return false
+		}
+
 		hasNestedMatches := target.NestedTargets.containsMatch(ctx, te, prefix, outermostBodyRng, originRng)
 
 		// Avoid suggesting cyclical reference to the same attribute

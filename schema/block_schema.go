@@ -69,6 +69,16 @@ type BlockAddrSchema struct {
 	// blocks and attributes are also walked
 	// and their addresses inferred as data
 	InferDependentBody bool
+
+	// DependentBodySelfRef instructs collection of reference
+	// targets with an additional self.* LocalAddr and
+	// makes those targetable by origins within the block body
+	// via reference.Target.TargetableFromRangePtr.
+	//
+	// The targetting (matching w/ origins) is further limited by
+	// BodySchema.Extensions.SelfRef, where only self.* origins
+	// within a body w/ SelfRef:true will be collected.
+	DependentBodySelfRef bool
 }
 
 type BlockAsTypeOf struct {
@@ -99,6 +109,10 @@ func (bas *BlockAddrSchema) Validate() error {
 		return errors.New("InferDependentBody requires DependentBodyAsData")
 	}
 
+	if bas.DependentBodySelfRef && !bas.InferDependentBody {
+		return errors.New("DependentBodySelfRef requires InferDependentBody")
+	}
+
 	return nil
 }
 
@@ -108,15 +122,16 @@ func (bas *BlockAddrSchema) Copy() *BlockAddrSchema {
 	}
 
 	newBas := &BlockAddrSchema{
-		FriendlyName:        bas.FriendlyName,
-		ScopeId:             bas.ScopeId,
-		AsReference:         bas.AsReference,
-		AsTypeOf:            bas.AsTypeOf.Copy(),
-		BodyAsData:          bas.BodyAsData,
-		InferBody:           bas.InferBody,
-		DependentBodyAsData: bas.DependentBodyAsData,
-		InferDependentBody:  bas.InferDependentBody,
-		Steps:               bas.Steps.Copy(),
+		FriendlyName:         bas.FriendlyName,
+		ScopeId:              bas.ScopeId,
+		AsReference:          bas.AsReference,
+		AsTypeOf:             bas.AsTypeOf.Copy(),
+		BodyAsData:           bas.BodyAsData,
+		InferBody:            bas.InferBody,
+		DependentBodyAsData:  bas.DependentBodyAsData,
+		InferDependentBody:   bas.InferDependentBody,
+		DependentBodySelfRef: bas.DependentBodySelfRef,
+		Steps:                bas.Steps.Copy(),
 	}
 
 	return newBas

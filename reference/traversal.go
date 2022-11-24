@@ -6,9 +6,16 @@ import (
 	"github.com/hashicorp/hcl/v2"
 )
 
-func TraversalsToLocalOrigins(traversals []hcl.Traversal, tes schema.TraversalExprs) Origins {
+func TraversalsToLocalOrigins(traversals []hcl.Traversal, tes schema.TraversalExprs, allowSelfRefs bool) Origins {
 	origins := make(Origins, 0)
 	for _, traversal := range traversals {
+		// traversal should not be relative here, since the input to this
+		// function `expr.Variables()` only returns absolute traversals
+		if !traversal.IsRelative() && traversal.RootName() == "self" && !allowSelfRefs {
+			// Only if a block allows the usage of self.* we create a origin,
+			// else just continue
+			continue
+		}
 		origin, err := TraversalToLocalOrigin(traversal, tes)
 		if err != nil {
 			continue

@@ -181,7 +181,7 @@ func (d *PathDecoder) decodeReferenceTargetsForBody(body hcl.Body, parentBlock *
 
 			if bSchema.Address.InferBody && bSchema.Body != nil {
 				bodyRef.NestedTargets = append(bodyRef.NestedTargets,
-					d.collectInferredReferenceTargetsForBody(addr, bSchema.Address.ScopeId, blk.Body, bSchema.Body)...)
+					d.collectInferredReferenceTargetsForBody(addr, bSchema.Address, blk.Body, bSchema.Body, nil, lang.Address{})...)
 			}
 
 			bodyRef.Type = bodyToDataType(bSchema.Type, bSchema.Body)
@@ -214,8 +214,17 @@ func (d *PathDecoder) decodeReferenceTargetsForBody(body hcl.Body, parentBlock *
 				bodyRef.Type = bodyToDataType(bSchema.Type, fullSchema)
 
 				if bSchema.Address.InferDependentBody && len(bSchema.DependentBody) > 0 {
+					if bSchema.Address.DependentBodySelfRef {
+						bodyRef.LocalAddr = lang.Address{
+							lang.RootStep{Name: "self"},
+						}
+						bodyRef.TargetableFromRangePtr = blk.Range.Ptr()
+					} else {
+						bodyRef.LocalAddr = lang.Address{}
+					}
+
 					bodyRef.NestedTargets = append(bodyRef.NestedTargets,
-						d.collectInferredReferenceTargetsForBody(addr, bSchema.Address.ScopeId, blk.Body, fullSchema)...)
+						d.collectInferredReferenceTargetsForBody(addr, bSchema.Address, blk.Body, fullSchema, nil, bodyRef.LocalAddr)...)
 				}
 
 				if !bSchema.Address.BodyAsData {
@@ -652,10 +661,15 @@ func bodySchemaAsAttrTypes(bodySchema *schema.BodySchema) map[string]cty.Type {
 	return attrTypes
 }
 
-func (d *PathDecoder) collectInferredReferenceTargetsForBody(addr lang.Address, scopeId lang.ScopeId, body hcl.Body, bodySchema *schema.BodySchema) reference.Targets {
+func (d *PathDecoder) collectInferredReferenceTargetsForBody(addr lang.Address, bAddrSchema *schema.BlockAddrSchema, body hcl.Body, bodySchema *schema.BodySchema, selfRefBodyRangePtr *hcl.Range, selfRefAddr lang.Address) reference.Targets {
 	refs := make(reference.Targets, 0)
 
 	content := decodeBody(body, bodySchema)
+	// We don't get body range for JSON here
+	// TODO? calculate or implement upstream
+	if bAddrSchema.DependentBodySelfRef && content.RangePtr != nil && selfRefBodyRangePtr == nil {
+		selfRefBodyRangePtr = content.RangePtr
+	}
 
 	for name, aSchema := range bodySchema.Attributes {
 		attrType, ok := exprConstraintToDataType(aSchema.Expr)
@@ -668,10 +682,19 @@ func (d *PathDecoder) collectInferredReferenceTargetsForBody(addr lang.Address, 
 
 		ref := reference.Target{
 			Addr:        attrAddr,
-			ScopeId:     scopeId,
+			ScopeId:     bAddrSchema.ScopeId,
 			Type:        attrType,
 			Description: aSchema.Description,
 			RangePtr:    body.MissingItemRange().Ptr(),
+		}
+
+		if bAddrSchema.DependentBodySelfRef && selfRefBodyRangePtr != nil {
+			localAddr := make(lang.Address, len(selfRefAddr))
+			copy(localAddr, selfRefAddr)
+			localAddr = append(localAddr, lang.AttrStep{Name: name})
+
+			ref.LocalAddr = localAddr
+			ref.TargetableFromRangePtr = selfRefBodyRangePtr.Ptr()
 		}
 
 		var attrExpr hcl.Expression
@@ -683,7 +706,7 @@ func (d *PathDecoder) collectInferredReferenceTargetsForBody(addr lang.Address, 
 
 		if attrExpr != nil && !attrType.IsPrimitiveType() {
 			ref.NestedTargets = make(reference.Targets, 0)
-			ref.NestedTargets = append(ref.NestedTargets, decodeReferenceTargetsForComplexTypeExpr(attrAddr, attrExpr, attrType, scopeId)...)
+			ref.NestedTargets = append(ref.NestedTargets, decodeReferenceTargetsForComplexTypeExpr(attrAddr, attrExpr, attrType, bAddrSchema.ScopeId)...)
 		}
 
 		refs = append(refs, ref)
@@ -700,14 +723,21 @@ func (d *PathDecoder) collectInferredReferenceTargetsForBody(addr lang.Address, 
 
 		blockRef := reference.Target{
 			Addr:        blockAddr,
-			ScopeId:     scopeId,
+			LocalAddr:   make(lang.Address, len(selfRefAddr)),
+			ScopeId:     bAddrSchema.ScopeId,
 			Type:        cty.Object(bodySchemaAsAttrTypes(bCollection.Schema.Body)),
 			Description: bCollection.Schema.Description,
 			DefRangePtr: blk.DefRange.Ptr(),
 			RangePtr:    blk.Range.Ptr(),
-			NestedTargets: d.collectInferredReferenceTargetsForBody(
-				blockAddr, scopeId, blk.Body, bCollection.Schema.Body),
 		}
+		if bAddrSchema.DependentBodySelfRef && selfRefBodyRangePtr != nil {
+			copy(blockRef.LocalAddr, selfRefAddr)
+			blockRef.LocalAddr = append(blockRef.LocalAddr, lang.AttrStep{Name: bType})
+			blockRef.TargetableFromRangePtr = selfRefBodyRangePtr.Ptr()
+		}
+		blockRef.NestedTargets = d.collectInferredReferenceTargetsForBody(
+			blockAddr, bAddrSchema, blk.Body, bCollection.Schema.Body, selfRefBodyRangePtr, blockRef.LocalAddr)
+
 		sort.Sort(blockRef.NestedTargets)
 		refs = append(refs, blockRef)
 	}
@@ -719,10 +749,16 @@ func (d *PathDecoder) collectInferredReferenceTargetsForBody(addr lang.Address, 
 
 		blockRef := reference.Target{
 			Addr:        blockAddr,
-			ScopeId:     scopeId,
+			LocalAddr:   make(lang.Address, len(selfRefAddr)),
+			ScopeId:     bAddrSchema.ScopeId,
 			Type:        cty.List(cty.Object(bodySchemaAsAttrTypes(bCollection.Schema.Body))),
 			Description: bCollection.Schema.Description,
 			RangePtr:    body.MissingItemRange().Ptr(),
+		}
+		if bAddrSchema.DependentBodySelfRef && selfRefBodyRangePtr != nil {
+			copy(blockRef.LocalAddr, selfRefAddr)
+			blockRef.LocalAddr = append(blockRef.LocalAddr, lang.AttrStep{Name: bType})
+			blockRef.TargetableFromRangePtr = selfRefBodyRangePtr.Ptr()
 		}
 
 		for i, b := range bCollection.Blocks {
@@ -734,14 +770,25 @@ func (d *PathDecoder) collectInferredReferenceTargetsForBody(addr lang.Address, 
 
 			elemRef := reference.Target{
 				Addr:        elemAddr,
-				ScopeId:     scopeId,
+				LocalAddr:   make(lang.Address, len(blockRef.LocalAddr)),
+				ScopeId:     bAddrSchema.ScopeId,
 				Type:        cty.Object(bodySchemaAsAttrTypes(bCollection.Schema.Body)),
 				Description: bCollection.Schema.Description,
 				DefRangePtr: b.DefRange.Ptr(),
 				RangePtr:    b.Range.Ptr(),
-				NestedTargets: d.collectInferredReferenceTargetsForBody(
-					elemAddr, scopeId, b.Body, bCollection.Schema.Body),
 			}
+
+			if bAddrSchema.DependentBodySelfRef && selfRefBodyRangePtr != nil {
+				copy(elemRef.LocalAddr, blockRef.LocalAddr)
+				elemRef.LocalAddr = append(elemRef.LocalAddr, lang.IndexStep{
+					Key: cty.NumberIntVal(int64(i)),
+				})
+				elemRef.TargetableFromRangePtr = selfRefBodyRangePtr.Ptr()
+			}
+
+			elemRef.NestedTargets = d.collectInferredReferenceTargetsForBody(
+				elemAddr, bAddrSchema, b.Body, bCollection.Schema.Body, selfRefBodyRangePtr, elemRef.LocalAddr)
+
 			sort.Sort(elemRef.NestedTargets)
 			blockRef.NestedTargets = append(blockRef.NestedTargets, elemRef)
 
@@ -771,10 +818,16 @@ func (d *PathDecoder) collectInferredReferenceTargetsForBody(addr lang.Address, 
 
 		blockRef := reference.Target{
 			Addr:        blockAddr,
-			ScopeId:     scopeId,
+			LocalAddr:   make(lang.Address, len(selfRefAddr)),
+			ScopeId:     bAddrSchema.ScopeId,
 			Type:        cty.Set(cty.Object(bodySchemaAsAttrTypes(bCollection.Schema.Body))),
 			Description: bCollection.Schema.Description,
 			RangePtr:    body.MissingItemRange().Ptr(),
+		}
+		if bAddrSchema.DependentBodySelfRef && selfRefBodyRangePtr != nil {
+			copy(blockRef.LocalAddr, selfRefAddr)
+			blockRef.LocalAddr = append(blockRef.LocalAddr, lang.AttrStep{Name: bType})
+			blockRef.TargetableFromRangePtr = selfRefBodyRangePtr.Ptr()
 		}
 
 		for i, b := range bCollection.Blocks {
@@ -803,10 +856,16 @@ func (d *PathDecoder) collectInferredReferenceTargetsForBody(addr lang.Address, 
 
 		blockRef := reference.Target{
 			Addr:        blockAddr,
-			ScopeId:     scopeId,
+			LocalAddr:   make(lang.Address, len(selfRefAddr)),
+			ScopeId:     bAddrSchema.ScopeId,
 			Type:        cty.Map(cty.Object(bodySchemaAsAttrTypes(bCollection.Schema.Body))),
 			Description: bCollection.Schema.Description,
 			RangePtr:    body.MissingItemRange().Ptr(),
+		}
+		if bAddrSchema.DependentBodySelfRef && selfRefBodyRangePtr != nil {
+			copy(blockRef.LocalAddr, selfRefAddr)
+			blockRef.LocalAddr = append(blockRef.LocalAddr, lang.AttrStep{Name: bType})
+			blockRef.TargetableFromRangePtr = selfRefBodyRangePtr.Ptr()
 		}
 
 		for i, b := range bCollection.Blocks {
@@ -820,14 +879,23 @@ func (d *PathDecoder) collectInferredReferenceTargetsForBody(addr lang.Address, 
 
 			elemRef := reference.Target{
 				Addr:        elemAddr,
-				ScopeId:     scopeId,
+				LocalAddr:   make(lang.Address, len(blockRef.LocalAddr)),
+				ScopeId:     bAddrSchema.ScopeId,
 				Type:        refType,
 				Description: bCollection.Schema.Description,
 				RangePtr:    b.Range.Ptr(),
 				DefRangePtr: b.DefRange.Ptr(),
-				NestedTargets: d.collectInferredReferenceTargetsForBody(
-					elemAddr, scopeId, b.Body, bCollection.Schema.Body),
 			}
+			if bAddrSchema.DependentBodySelfRef && selfRefBodyRangePtr != nil {
+				copy(elemRef.LocalAddr, blockRef.LocalAddr)
+				elemRef.LocalAddr = append(elemRef.LocalAddr, lang.IndexStep{
+					Key: cty.StringVal(b.Labels[0]),
+				})
+				elemRef.TargetableFromRangePtr = selfRefBodyRangePtr.Ptr()
+			}
+
+			elemRef.NestedTargets = d.collectInferredReferenceTargetsForBody(
+				elemAddr, bAddrSchema, b.Body, bCollection.Schema.Body, selfRefBodyRangePtr, elemRef.LocalAddr)
 			sort.Sort(elemRef.NestedTargets)
 			blockRef.NestedTargets = append(blockRef.NestedTargets, elemRef)
 
