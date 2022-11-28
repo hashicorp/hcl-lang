@@ -1619,6 +1619,76 @@ variable "name" {
 				},
 			},
 		},
+		{
+			"count var reference",
+			&schema.BodySchema{
+				Blocks: map[string]*schema.BlockSchema{
+					"myblock": {
+						Labels: []*schema.LabelSchema{
+							{Name: "type", IsDepKey: true},
+							{Name: "name"},
+						},
+						Body: &schema.BodySchema{
+							Extensions: &schema.BodyExtensions{
+								Count: true,
+							},
+							Attributes: map[string]*schema.AttributeSchema{
+								"foo": {
+									IsOptional: true,
+									Expr: schema.ExprConstraints{
+										schema.TraversalExpr{
+											OfType: cty.Number,
+										},
+									},
+								},
+							},
+						},
+					},
+					"variable": {
+						Address: &schema.BlockAddrSchema{
+							Steps: []schema.AddrStep{
+								schema.StaticStep{Name: "var"},
+								schema.LabelStep{Index: 0},
+							},
+							ScopeId:     lang.ScopeId("variable"),
+							AsReference: true,
+							AsTypeOf: &schema.BlockAsTypeOf{
+								AttributeExpr:  "type",
+								AttributeValue: "default",
+							},
+						},
+						Labels: []*schema.LabelSchema{
+							{Name: "name"},
+						},
+						Body: &schema.BodySchema{
+							Attributes: map[string]*schema.AttributeSchema{
+								"type": {
+									Expr:       schema.ExprConstraints{schema.TypeDeclarationExpr{}},
+									IsOptional: true,
+								},
+							},
+						},
+					},
+				},
+			},
+			`myblock "foo" "bar" {
+  foo = count.index
+  count = var.name
+}
+variable "name" {
+  value = 4
+}
+`,
+			hcl.Pos{Line: 3, Column: 16, Byte: 57},
+			&lang.HoverData{
+				Content: lang.Markdown("`var.name`\n_dynamic_"),
+				Range: hcl.Range{
+					Filename: "test.tf",
+					Start:    hcl.Pos{Line: 3, Column: 11, Byte: 52},
+					End:      hcl.Pos{Line: 3, Column: 19, Byte: 60},
+				},
+			},
+		},
 	}
 
 	for i, tc := range testCases {
