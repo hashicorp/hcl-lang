@@ -935,7 +935,7 @@ func TestDecoder_HoverAtPos_typeDeclaration(t *testing.T) {
 	}
 }
 
-func TestDecoder_HoverAtPos_extension(t *testing.T) {
+func TestDecoder_HoverAtPos_extensions_count(t *testing.T) {
 	testCases := []struct {
 		name         string
 		bodySchema   *schema.BodySchema
@@ -1106,7 +1106,7 @@ func TestDecoder_HoverAtPos_extension(t *testing.T) {
 	}
 }
 
-func TestDecoder_HoverAtPos_foreach_extension(t *testing.T) {
+func TestDecoder_HoverAtPos_extension_for_each(t *testing.T) {
 	testCases := []struct {
 		name         string
 		bodySchema   *schema.BodySchema
@@ -1395,7 +1395,7 @@ func TestDecoder_HoverAtPos_foreach_extension(t *testing.T) {
 	}
 }
 
-func TestDecoder_HoverAtPos_dynamic_extension(t *testing.T) {
+func TestDecoder_HoverAtPos_extensions_dynamic(t *testing.T) {
 	testCases := []struct {
 		name         string
 		bodySchema   *schema.BodySchema
@@ -1528,6 +1528,129 @@ func TestDecoder_HoverAtPos_dynamic_extension(t *testing.T) {
 				Files: map[string]*hcl.File{
 					"test.tf": f,
 				},
+			})
+
+			data, err := d.HoverAtPos(ctx, "test.tf", tc.pos)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if diff := cmp.Diff(tc.expectedData, data, ctydebug.CmpOptions); diff != "" {
+				t.Fatalf("hover data mismatch: %s", diff)
+			}
+		})
+	}
+}
+
+func TestDecoder_HoverAtPos_extensions_references(t *testing.T) {
+	testCases := []struct {
+		name         string
+		bodySchema   *schema.BodySchema
+		config       string
+		pos          hcl.Pos
+		expectedData *lang.HoverData
+	}{
+		{
+			"for_each var reference",
+			&schema.BodySchema{
+				Blocks: map[string]*schema.BlockSchema{
+					"myblock": {
+						Labels: []*schema.LabelSchema{
+							{Name: "type", IsDepKey: true},
+							{Name: "name"},
+						},
+						Body: &schema.BodySchema{
+							Extensions: &schema.BodyExtensions{
+								ForEach: true,
+							},
+							Attributes: map[string]*schema.AttributeSchema{
+								"foo": {
+									IsOptional: true,
+									Expr: schema.ExprConstraints{
+										schema.TraversalExpr{
+											OfType: cty.String,
+										},
+									},
+								},
+							},
+						},
+					},
+					"variable": {
+						Address: &schema.BlockAddrSchema{
+							Steps: []schema.AddrStep{
+								schema.StaticStep{Name: "var"},
+								schema.LabelStep{Index: 0},
+							},
+							ScopeId:     lang.ScopeId("variable"),
+							AsReference: true,
+							AsTypeOf: &schema.BlockAsTypeOf{
+								AttributeExpr:  "type",
+								AttributeValue: "default",
+							},
+						},
+						Labels: []*schema.LabelSchema{
+							{Name: "name"},
+						},
+						Body: &schema.BodySchema{
+							Attributes: map[string]*schema.AttributeSchema{
+								"type": {
+									Expr:       schema.ExprConstraints{schema.TypeDeclarationExpr{}},
+									IsOptional: true,
+								},
+							},
+						},
+					},
+				},
+			},
+			`myblock "foo" "bar" {
+  foo = each.value
+  for_each = var.name
+}
+variable "name" {
+  value = { key = "value" }
+}
+`,
+			hcl.Pos{Line: 3, Column: 19, Byte: 59},
+			&lang.HoverData{
+				Content: lang.Markdown("`var.name`\n_dynamic_"),
+				Range: hcl.Range{
+					Filename: "test.tf",
+					Start:    hcl.Pos{Line: 3, Column: 14, Byte: 54},
+					End:      hcl.Pos{Line: 3, Column: 22, Byte: 62},
+				},
+			},
+		},
+	}
+
+	for i, tc := range testCases {
+		t.Run(fmt.Sprintf("%d-%s", i, tc.name), func(t *testing.T) {
+			ctx := context.Background()
+
+			f, diags := hclsyntax.ParseConfig([]byte(tc.config), "test.tf", hcl.InitialPos)
+			if diags != nil {
+				t.Fatal(diags)
+			}
+
+			d := testPathDecoder(t, &PathContext{
+				Schema: tc.bodySchema,
+				Files: map[string]*hcl.File{
+					"test.tf": f,
+				},
+			})
+			targets, err := d.CollectReferenceTargets()
+			if err != nil {
+				t.Fatal(err)
+			}
+			origins, err := d.CollectReferenceOrigins()
+			if err != nil {
+				t.Fatal(err)
+			}
+			d = testPathDecoder(t, &PathContext{
+				Schema: tc.bodySchema,
+				Files: map[string]*hcl.File{
+					"test.tf": f,
+				},
+				ReferenceTargets: targets,
+				ReferenceOrigins: origins,
 			})
 
 			data, err := d.HoverAtPos(ctx, "test.tf", tc.pos)
