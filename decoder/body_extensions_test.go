@@ -1948,7 +1948,7 @@ resource "aws_elastic_beanstalk_environment" "example" {
 				{
 					Label: "for_each",
 					Description: lang.MarkupContent{
-						Value: "A meta-argument that accepts a map or a set of strings, and creates an instance for each item in that map or set.\n\n**Note**: A given block cannot use both `count` and `for_each`.",
+						Value: "A meta-argument that accepts a map or a set of strings, and creates an instance for each item in that map or set.",
 						Kind:  lang.MarkdownKind,
 					},
 					Detail:         "required, map of any single type or set of string",

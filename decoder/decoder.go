@@ -247,9 +247,8 @@ func buildDynamicBlockSchema(inputSchema *schema.BodySchema) *schema.BlockSchema
 						schema.LiteralTypeExpr{Type: cty.Map(cty.DynamicPseudoType)},
 						schema.LiteralTypeExpr{Type: cty.Set(cty.String)},
 					},
-					IsRequired: true,
-					Description: lang.Markdown("A meta-argument that accepts a map or a set of strings, and creates an instance for each item in that map or set.\n\n" +
-						"**Note**: A given block cannot use both `count` and `for_each`."),
+					IsRequired:  true,
+					Description: lang.Markdown("A meta-argument that accepts a map or a set of strings, and creates an instance for each item in that map or set."),
 				},
 				"iterator": {
 					Expr:       schema.LiteralTypeOnly(cty.String),
