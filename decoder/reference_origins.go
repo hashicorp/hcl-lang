@@ -122,13 +122,21 @@ func (d *PathDecoder) referenceOriginsInBody(body hcl.Body, bodySchema *schema.B
 	content := decodeBody(body, bodySchema)
 
 	for _, attr := range content.Attributes {
-		aSchema, ok := bodySchema.Attributes[attr.Name]
-		if !ok {
-			if bodySchema.AnyAttribute == nil {
-				// skip unknown attribute
-				continue
+		var aSchema *schema.AttributeSchema
+		if bodySchema.Extensions != nil && bodySchema.Extensions.Count && attr.Name == "count" {
+			aSchema = countAttributeSchema()
+		} else if bodySchema.Extensions != nil && bodySchema.Extensions.ForEach && attr.Name == "for_each" {
+			aSchema = forEachAttributeSchema()
+		} else {
+			var ok bool
+			aSchema, ok = bodySchema.Attributes[attr.Name]
+			if !ok {
+				if bodySchema.AnyAttribute == nil {
+					// skip unknown attribute
+					continue
+				}
+				aSchema = bodySchema.AnyAttribute
 			}
-			aSchema = bodySchema.AnyAttribute
 		}
 
 		if aSchema.OriginForTarget != nil {
