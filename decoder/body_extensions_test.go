@@ -2695,7 +2695,7 @@ resource "aws_elastic_beanstalk_environment" "example" {
 						Value: "A dynamic block to produce blocks dynamically by iterating over a given complex value",
 						Kind:  lang.MarkdownKind,
 					},
-					Detail:         "Block, map",
+					Detail:         "Block",
 					Kind:           lang.BlockCandidateKind,
 					TriggerSuggest: true,
 					TextEdit: lang.TextEdit{
