@@ -2156,6 +2156,131 @@ func TestDecoder_SemanticTokensInFile_extensions_dynamic(t *testing.T) {
 				},
 			},
 		},
+		{
+			"deeper nested dynamic blocks",
+			&schema.BodySchema{
+				Blocks: map[string]*schema.BlockSchema{
+					"myblock": {
+						Labels: []*schema.LabelSchema{
+							{
+								Name:                   "type",
+								IsDepKey:               true,
+								Completable:            true,
+								SemanticTokenModifiers: lang.SemanticTokenModifiers{lang.TokenModifierDependent},
+							},
+							{Name: "name"},
+						},
+						Body: &schema.BodySchema{
+							Extensions: &schema.BodyExtensions{
+								DynamicBlocks: true,
+							},
+							Blocks: make(map[string]*schema.BlockSchema, 0),
+						},
+						DependentBody: map[schema.SchemaKey]*schema.BodySchema{
+							schema.NewSchemaKey(schema.DependencyKeys{
+								Labels: []schema.LabelDependent{
+									{Index: 0, Value: "foo"},
+								},
+							}): {
+								Blocks: map[string]*schema.BlockSchema{
+									"setting": {
+										Body: &schema.BodySchema{
+											Blocks: map[string]*schema.BlockSchema{
+												"foo": {
+													Body: &schema.BodySchema{
+														Blocks: map[string]*schema.BlockSchema{
+															"bar": {
+																Body: schema.NewBodySchema(),
+															},
+														},
+													},
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			`myblock "foo" "bar" {
+  setting {
+    foo {
+      dynamic "bar" {
+
+      }
+    }
+  }
+}`,
+			[]lang.SemanticToken{
+				{ // myblock
+					Type:      lang.TokenBlockType,
+					Modifiers: []lang.SemanticTokenModifier{},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
+						End:      hcl.Pos{Line: 1, Column: 8, Byte: 7},
+					},
+				},
+				{ // "foo"
+					Type: lang.TokenBlockLabel,
+					Modifiers: []lang.SemanticTokenModifier{
+						lang.TokenModifierDependent,
+					},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 1, Column: 9, Byte: 8},
+						End:      hcl.Pos{Line: 1, Column: 14, Byte: 13},
+					},
+				},
+				{ // "bar"
+					Type:      lang.TokenBlockLabel,
+					Modifiers: []lang.SemanticTokenModifier{},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 1, Column: 15, Byte: 14},
+						End:      hcl.Pos{Line: 1, Column: 20, Byte: 19},
+					},
+				},
+				{ // setting
+					Type:      lang.TokenBlockType,
+					Modifiers: lang.SemanticTokenModifiers{},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 2, Column: 3, Byte: 24},
+						End:      hcl.Pos{Line: 2, Column: 10, Byte: 31},
+					},
+				},
+				{ // foo
+					Type:      lang.TokenBlockType,
+					Modifiers: lang.SemanticTokenModifiers{},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 3, Column: 5, Byte: 38},
+						End:      hcl.Pos{Line: 3, Column: 8, Byte: 41},
+					},
+				},
+				{ // dynamic
+					Type:      lang.TokenBlockType,
+					Modifiers: lang.SemanticTokenModifiers{},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 4, Column: 7, Byte: 50},
+						End:      hcl.Pos{Line: 4, Column: 14, Byte: 57},
+					},
+				},
+				{ // "bar"
+					Type:      lang.TokenBlockLabel,
+					Modifiers: lang.SemanticTokenModifiers{},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 4, Column: 15, Byte: 58},
+						End:      hcl.Pos{Line: 4, Column: 20, Byte: 63},
+					},
+				},
+			},
+		},
 	}
 
 	for i, tc := range testCases {

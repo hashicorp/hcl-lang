@@ -2553,7 +2553,6 @@ resource "aws_elastic_beanstalk_environment" "example" {
 			}),
 			"",
 		},
-		// never complete dynamic as a dynamic label
 		{
 			"never complete dynamic as a dynamic label",
 			&schema.BodySchema{
@@ -2615,6 +2614,98 @@ resource "aws_elastic_beanstalk_environment" "example" {
 						},
 						NewText: "bar",
 						Snippet: "bar",
+					},
+				},
+			}),
+			"",
+		},
+		{
+			"deeper nesting support",
+			&schema.BodySchema{
+				Blocks: map[string]*schema.BlockSchema{
+					"resource": {
+						Labels: []*schema.LabelSchema{
+							{
+								Name:        "type",
+								IsDepKey:    true,
+								Completable: true,
+							},
+							{Name: "name"},
+						},
+						Body: &schema.BodySchema{
+							Extensions: &schema.BodyExtensions{
+								DynamicBlocks: true,
+							},
+							Blocks: make(map[string]*schema.BlockSchema, 0),
+						},
+						DependentBody: map[schema.SchemaKey]*schema.BodySchema{
+							schema.NewSchemaKey(schema.DependencyKeys{
+								Labels: []schema.LabelDependent{
+									{Index: 0, Value: "aws_instance"},
+								},
+							}): {
+								Blocks: map[string]*schema.BlockSchema{
+									"foo": {
+										Body: &schema.BodySchema{
+											Blocks: map[string]*schema.BlockSchema{
+												"bar": {
+													Body: &schema.BodySchema{
+														Blocks: map[string]*schema.BlockSchema{
+															"baz": {
+																Body: schema.NewBodySchema(),
+															},
+														},
+													},
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			`resource "aws_instance" "example" {
+  foo {
+    bar {
+      
+    }
+  }
+}`,
+			hcl.Pos{Line: 4, Column: 7, Byte: 60},
+			lang.CompleteCandidates([]lang.Candidate{
+				{
+					Label:  "baz",
+					Detail: "Block",
+					Kind:   lang.BlockCandidateKind,
+					TextEdit: lang.TextEdit{
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 4, Column: 7, Byte: 60},
+							End:      hcl.Pos{Line: 4, Column: 7, Byte: 60},
+						},
+						NewText: "baz",
+						Snippet: "baz {\n  ${1}\n}",
+					},
+				},
+				{
+					Label: "dynamic",
+					Description: lang.MarkupContent{
+						Value: "A dynamic block to produce blocks dynamically by iterating over a given complex value",
+						Kind:  lang.MarkdownKind,
+					},
+					Detail:         "Block, map",
+					Kind:           lang.BlockCandidateKind,
+					TriggerSuggest: true,
+					TextEdit: lang.TextEdit{
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 4, Column: 7, Byte: 60},
+							End:      hcl.Pos{Line: 4, Column: 7, Byte: 60},
+						},
+						NewText: "dynamic",
+						Snippet: "dynamic \"${1}\" {\n  ${2}\n}",
 					},
 				},
 			}),
