@@ -245,7 +245,6 @@ func buildDynamicBlockSchema(inputSchema *schema.BodySchema) *schema.BlockSchema
 
 	return &schema.BlockSchema{
 		Description: lang.Markdown("A dynamic block to produce blocks dynamically by iterating over a given complex value"),
-		Type:        schema.BlockTypeMap,
 		Labels: []*schema.LabelSchema{
 			{
 				Name:        "name",

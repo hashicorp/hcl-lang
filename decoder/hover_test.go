@@ -1440,7 +1440,7 @@ func TestDecoder_HoverAtPos_extensions_dynamic(t *testing.T) {
 			hcl.Pos{Line: 2, Column: 5, Byte: 26},
 			&lang.HoverData{
 				Content: lang.MarkupContent{
-					Value: "**dynamic** _Block, map_\n\n" +
+					Value: "**dynamic** _Block_\n\n" +
 						"A dynamic block to produce blocks dynamically by iterating over a given complex value",
 					Kind: lang.MarkdownKind,
 				},
