@@ -1512,6 +1512,77 @@ func TestDecoder_HoverAtPos_extensions_dynamic(t *testing.T) {
 				},
 			},
 		},
+
+		{
+			"deeper nesting support",
+			&schema.BodySchema{
+				Blocks: map[string]*schema.BlockSchema{
+					"resource": {
+						Labels: []*schema.LabelSchema{
+							{
+								Name:        "type",
+								IsDepKey:    true,
+								Completable: true,
+							},
+							{Name: "name"},
+						},
+						Body: &schema.BodySchema{
+							Extensions: &schema.BodyExtensions{
+								DynamicBlocks: true,
+							},
+							Blocks: make(map[string]*schema.BlockSchema, 0),
+						},
+						DependentBody: map[schema.SchemaKey]*schema.BodySchema{
+							schema.NewSchemaKey(schema.DependencyKeys{
+								Labels: []schema.LabelDependent{
+									{Index: 0, Value: "aws_instance"},
+								},
+							}): {
+								Blocks: map[string]*schema.BlockSchema{
+									"foo": {
+										Body: &schema.BodySchema{
+											Blocks: map[string]*schema.BlockSchema{
+												"bar": {
+													Body: &schema.BodySchema{
+														Blocks: map[string]*schema.BlockSchema{
+															"baz": {
+																Body: schema.NewBodySchema(),
+															},
+														},
+													},
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			`resource "aws_instance" "example" {
+  foo {
+    bar {
+      dynamic "baz" {
+
+      }
+    }
+  }
+}`,
+			hcl.Pos{Line: 4, Column: 10, Byte: 63},
+			&lang.HoverData{
+				Content: lang.MarkupContent{
+					Value: "**dynamic** _Block, map_\n\n" +
+						"A dynamic block to produce blocks dynamically by iterating over a given complex value",
+					Kind: lang.MarkdownKind,
+				},
+				Range: hcl.Range{
+					Filename: "test.tf",
+					Start:    hcl.Pos{Line: 4, Column: 7, Byte: 60},
+					End:      hcl.Pos{Line: 4, Column: 14, Byte: 67},
+				},
+			},
+		},
 	}
 
 	for i, tc := range testCases {

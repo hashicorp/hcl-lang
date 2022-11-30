@@ -62,12 +62,14 @@ func mergeBlockBodySchemas(block *hcl.Block, blockSchema *schema.BlockSchema) (*
 		}
 		for bType, block := range depSchema.Blocks {
 			if _, exists := mergedSchema.Blocks[bType]; !exists {
+				// propagate DynamicBlocks extension to any nested blocks
 				if mergedSchema.Extensions != nil && mergedSchema.Extensions.DynamicBlocks {
 					if block.Body.Extensions == nil {
 						block.Body.Extensions = &schema.BodyExtensions{}
 					}
 					block.Body.Extensions.DynamicBlocks = true
 				}
+
 				mergedSchema.Blocks[bType] = block
 			} else {
 				// Skip duplicate block type
@@ -94,6 +96,21 @@ func mergeBlockBodySchemas(block *hcl.Block, blockSchema *schema.BlockSchema) (*
 			mergedSchema.Extensions = depSchema.Extensions.Copy()
 		}
 	} else if !ok && mergedSchema.Extensions != nil && mergedSchema.Extensions.DynamicBlocks && len(mergedSchema.Blocks) > 0 {
+		// dynamic blocks are only relevant for dependent schemas,
+		// but we may end up here because the schema is a result
+		// of merged static + dependent schema from previous iteration
+
+		// propagate DynamicBlocks extension to any nested blocks
+		if mergedSchema.Extensions != nil && mergedSchema.Extensions.DynamicBlocks {
+			for bType, block := range mergedSchema.Blocks {
+				if block.Body.Extensions == nil {
+					block.Body.Extensions = &schema.BodyExtensions{}
+				}
+				block.Body.Extensions.DynamicBlocks = true
+				mergedSchema.Blocks[bType] = block
+			}
+		}
+
 		mergedSchema.Blocks["dynamic"] = buildDynamicBlockSchema(mergedSchema)
 	}
 
