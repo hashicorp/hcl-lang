@@ -93,10 +93,8 @@ func mergeBlockBodySchemas(block *hcl.Block, blockSchema *schema.BlockSchema) (*
 		if depSchema.Extensions != nil {
 			mergedSchema.Extensions = depSchema.Extensions.Copy()
 		}
-	} else {
-		if mergedSchema.Extensions != nil && mergedSchema.Extensions.DynamicBlocks && len(mergedSchema.Blocks) > 0 {
-			mergedSchema.Blocks["dynamic"] = buildDynamicBlockSchema(mergedSchema)
-		}
+	} else if !ok && mergedSchema.Extensions != nil && mergedSchema.Extensions.DynamicBlocks && len(mergedSchema.Blocks) > 0 {
+		mergedSchema.Blocks["dynamic"] = buildDynamicBlockSchema(mergedSchema)
 	}
 
 	return mergedSchema, nil
