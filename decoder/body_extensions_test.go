@@ -1695,6 +1695,7 @@ func TestCompletionAtPos_BodySchema_Extensions_DynamicBlock(t *testing.T) {
 		cfg                string
 		pos                hcl.Pos
 		expectedCandidates lang.Candidates
+		expectedErr        string
 	}{
 		{
 			"dynamic block does not complete if not enabled",
@@ -1728,6 +1729,7 @@ resource "aws_elastic_beanstalk_environment" "example" {
 				Byte:   77,
 			},
 			lang.CompleteCandidates([]lang.Candidate{}),
+			"",
 		},
 		{
 			"dynamic block does not complete without blocks",
@@ -1783,6 +1785,7 @@ resource "aws_elastic_beanstalk_environment" "example" {
 					Kind: lang.AttributeCandidateKind,
 				},
 			}),
+			"",
 		},
 		{
 			"dynamic block completion",
@@ -1878,6 +1881,7 @@ resource "aws_elastic_beanstalk_environment" "example" {
 					},
 				},
 			}),
+			"",
 		},
 		{
 			"dynamic block inner completion",
@@ -2001,6 +2005,7 @@ resource "aws_elastic_beanstalk_environment" "example" {
 					},
 				},
 			}),
+			"",
 		},
 		{
 			"dynamic block content attribute completion",
@@ -2074,6 +2079,7 @@ resource "aws_elastic_beanstalk_environment" "example" {
 					},
 				},
 			}),
+			"",
 		},
 		{
 			"dynamic block label only completes dependent blocks",
@@ -2136,6 +2142,52 @@ resource "aws_elastic_beanstalk_environment" "example" {
 					},
 				},
 			}),
+			"",
+		},
+		{
+			"dynamic block label never completes static blocks",
+			&schema.BodySchema{
+				Blocks: map[string]*schema.BlockSchema{
+					"resource": {
+						Labels: []*schema.LabelSchema{
+							{
+								Name:        "type",
+								IsDepKey:    true,
+								Completable: true,
+							},
+							{Name: "name"},
+						},
+						Body: &schema.BodySchema{
+							Extensions: &schema.BodyExtensions{
+								DynamicBlocks: true,
+							},
+							Blocks: map[string]*schema.BlockSchema{
+								"lifecycle": {
+									Body: schema.NewBodySchema(),
+								},
+							},
+						},
+						DependentBody: map[schema.SchemaKey]*schema.BodySchema{
+							schema.NewSchemaKey(schema.DependencyKeys{
+								Labels: []schema.LabelDependent{
+									{Index: 0, Value: "aws_instance"},
+								},
+							}): {
+								Blocks: make(map[string]*schema.BlockSchema, 0),
+							},
+						},
+					},
+				},
+			},
+			`resource "aws_instance" "example" {
+  name = "example"
+  dynamic "" {
+    
+  }
+}`,
+			hcl.Pos{Line: 3, Column: 12, Byte: 66},
+			lang.CompleteCandidates([]lang.Candidate{}),
+			`test.tf (3,12): unknown block type "dynamic"`,
 		},
 		// completion nesting should work
 		{
@@ -2245,6 +2297,7 @@ resource "aws_elastic_beanstalk_environment" "example" {
 					},
 				},
 			}),
+			"",
 		},
 		// completion after the thing =
 		{
@@ -2333,6 +2386,7 @@ resource "aws_elastic_beanstalk_environment" "example" {
 					},
 				},
 			}),
+			"",
 		},
 		// check allows more than one dynamic
 		{
@@ -2409,6 +2463,7 @@ resource "aws_elastic_beanstalk_environment" "example" {
 					},
 				},
 			}),
+			"",
 		},
 		// allows dynamic blocks in blocks
 		{
@@ -2496,6 +2551,7 @@ resource "aws_elastic_beanstalk_environment" "example" {
 					},
 				},
 			}),
+			"",
 		},
 		// never complete dynamic as a dynamic label
 		{
@@ -2562,6 +2618,7 @@ resource "aws_elastic_beanstalk_environment" "example" {
 					},
 				},
 			}),
+			"",
 		},
 	}
 
@@ -2576,14 +2633,17 @@ resource "aws_elastic_beanstalk_environment" "example" {
 				},
 			})
 
-			// We're triggering completion twice her, to cover any unintended side effects
-			_, err := d.CandidatesAtPos(ctx, "test.tf", tc.pos)
-			if err != nil {
-				t.Fatal(err)
-			}
 			candidates, err := d.CandidatesAtPos(ctx, "test.tf", tc.pos)
+
 			if err != nil {
-				t.Fatal(err)
+				if tc.expectedErr != "" && err.Error() != tc.expectedErr {
+					t.Fatalf("unexpected error: %q\nexpected: %q\n",
+						err, tc.expectedErr)
+				} else if tc.expectedErr == "" {
+					t.Fatal(err)
+				}
+			} else if tc.expectedErr != "" {
+				t.Fatalf("expected error: %q", tc.expectedErr)
 			}
 
 			if diff := cmp.Diff(tc.expectedCandidates, candidates); diff != "" {
