@@ -936,36 +936,6 @@ _object_`),
 			nil,
 		},
 		{
-			"tuple constant expression",
-			map[string]*schema.AttributeSchema{
-				"tuplecons": {Expr: schema.ExprConstraints{
-					schema.TupleConsExpr{
-						Name:    "special tuple",
-						AnyElem: schema.LiteralTypeOnly(cty.String),
-					},
-				}},
-			},
-			`tuplecons = [ "one", "two" ]`,
-			hcl.Pos{Line: 1, Column: 18, Byte: 17},
-			&lang.HoverData{
-				Content: lang.Markdown("_special tuple_"),
-				Range: hcl.Range{
-					Filename: "test.tf",
-					Start: hcl.Pos{
-						Line:   1,
-						Column: 13,
-						Byte:   12,
-					},
-					End: hcl.Pos{
-						Line:   1,
-						Column: 29,
-						Byte:   28,
-					},
-				},
-			},
-			nil,
-		},
-		{
 			"list expression",
 			map[string]*schema.AttributeSchema{
 				"list": {Expr: schema.ExprConstraints{

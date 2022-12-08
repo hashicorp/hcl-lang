@@ -100,15 +100,6 @@ func constraintsAtPos(expr hcl.Expression, constraints ExprConstraints, pos hcl.
 			Filename: rng.Filename,
 		}
 
-		tc, ok := constraints.TupleConsExpr()
-		if ok && len(eType.Exprs) == 0 && tupleConsBody.ContainsPos(pos) {
-			return ExprConstraints(tc.AnyElem), hcl.Range{
-				Start:    pos,
-				End:      pos,
-				Filename: eType.Range().Filename,
-			}
-		}
-
 		se, ok := constraints.SetExpr()
 		if ok && len(eType.Exprs) == 0 && tupleConsBody.ContainsPos(pos) {
 			return ExprConstraints(se.Elem), hcl.Range{
@@ -329,19 +320,6 @@ func (d *PathDecoder) constraintToCandidates(ctx context.Context, constraint sch
 		})
 	case schema.TraversalExpr:
 		candidates = append(candidates, d.candidatesForTraversalConstraint(ctx, c, outerBodyRng, prefixRng, editRng)...)
-	case schema.TupleConsExpr:
-		candidates = append(candidates, lang.Candidate{
-			Label:       fmt.Sprintf(`[%s]`, labelForConstraints(c.AnyElem)),
-			Detail:      c.Name,
-			Description: c.Description,
-			Kind:        lang.TupleCandidateKind,
-			TextEdit: lang.TextEdit{
-				NewText: `[ ]`,
-				Snippet: `[ ${0} ]`,
-				Range:   editRng,
-			},
-			TriggerSuggest: triggerSuggestForExprConstraints(c.AnyElem),
-		})
 	case schema.ListExpr:
 		candidates = append(candidates, lang.Candidate{
 			Label:       fmt.Sprintf(`[%s]`, labelForConstraints(c.Elem)),
@@ -507,11 +485,6 @@ func newTextForConstraints(cons schema.ExprConstraints, isNested bool) string {
 			return newTextForLiteralValue(c.Val)
 		case schema.KeywordExpr:
 			return c.Keyword
-		case schema.TupleConsExpr:
-			if isNested {
-				return "[  ]"
-			}
-			return fmt.Sprintf("[\n  %s\n]", newTextForConstraints(c.AnyElem, true))
 		case schema.ListExpr:
 			if isNested {
 				return "[  ]"
@@ -562,11 +535,6 @@ func snippetForConstraints(placeholder uint, cons schema.ExprConstraints, isNest
 			return snippetForLiteralValue(placeholder, c.Val)
 		case schema.KeywordExpr:
 			return fmt.Sprintf("${%d:%s}", placeholder, c.Keyword)
-		case schema.TupleConsExpr:
-			if isNested {
-				return fmt.Sprintf("[ ${%d} ]", placeholder+1)
-			}
-			return fmt.Sprintf("[\n  %s\n]", snippetForConstraints(placeholder+1, c.AnyElem, true))
 		case schema.ListExpr:
 			if isNested {
 				return fmt.Sprintf("[ ${%d} ]", placeholder+1)
@@ -611,8 +579,6 @@ func labelForConstraints(cons schema.ExprConstraints) string {
 			labels += c.FriendlyName()
 		case schema.TraversalExpr:
 			labels += c.FriendlyName()
-		case schema.TupleConsExpr:
-			labels += fmt.Sprintf("[%s]", labelForConstraints(c.AnyElem))
 		case schema.ListExpr:
 			labels += fmt.Sprintf("[%s]", labelForConstraints(c.Elem))
 		case schema.SetExpr:
@@ -746,8 +712,6 @@ func triggerSuggestForExprConstraints(ec schema.ExprConstraints) bool {
 			return true
 		case schema.TraversalExpr:
 			return true
-		case schema.TupleConsExpr:
-			return triggerSuggestForExprConstraints(et.AnyElem)
 		case schema.ListExpr:
 			return triggerSuggestForExprConstraints(et.Elem)
 		case schema.SetExpr:
@@ -779,12 +743,6 @@ func snippetForExprContraints(placeholder uint, ec schema.ExprConstraints) strin
 				return snippetForLiteralValue(placeholder, et.Val)
 			}
 			return ""
-		case schema.TupleConsExpr:
-			ec := ExprConstraints(et.AnyElem)
-			if ec.HasKeywordsOnly() {
-				return "[ ${0} ]"
-			}
-			return "[\n  ${0}\n]"
 		case schema.ListExpr:
 			ec := ExprConstraints(et.Elem)
 			if ec.HasKeywordsOnly() {
@@ -828,13 +786,6 @@ func snippetForExprContraint(placeholder uint, ec schema.ExprConstraints) string
 	// 		return snippetForLiteralValue(placeholder, et.Val)
 	// 	}
 	// 	return ""
-	if t, ok := e.TupleConsExpr(); ok {
-		ec := ExprConstraints(t.AnyElem)
-		if ec.HasKeywordsOnly() {
-			return "[ ${0} ]"
-		}
-		return "[\n  ${0}\n]"
-	}
 	if t, ok := e.ListExpr(); ok {
 		ec := ExprConstraints(t.Elem)
 		if ec.HasKeywordsOnly() {

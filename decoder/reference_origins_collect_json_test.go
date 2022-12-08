@@ -693,46 +693,6 @@ func TestCollectReferenceOrigins_json(t *testing.T) {
 			},
 		},
 		{
-			"origin inside tuple cons expression",
-			&schema.BodySchema{
-				Attributes: map[string]*schema.AttributeSchema{
-					"tuple_cons": {
-						Expr: schema.ExprConstraints{
-							schema.TupleConsExpr{
-								AnyElem: schema.ExprConstraints{
-									schema.TraversalExpr{
-										OfScopeId: lang.ScopeId("test"),
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-			`{"tuple_cons": [ "${var.one}" ]}`,
-			reference.Origins{
-				reference.LocalOrigin{
-					Addr: lang.Address{
-						lang.RootStep{Name: "var"},
-						lang.AttrStep{Name: "one"},
-					},
-					Range: hcl.Range{
-						Filename: "test.tf.json",
-						Start: hcl.Pos{
-							Line:   1,
-							Column: 21,
-							Byte:   20,
-						},
-						End: hcl.Pos{
-							Line:   1,
-							Column: 28,
-							Byte:   27,
-						},
-					},
-				},
-			},
-		},
-		{
 			"origin inside object and map expression with multiple matches",
 			&schema.BodySchema{
 				Attributes: map[string]*schema.AttributeSchema{
