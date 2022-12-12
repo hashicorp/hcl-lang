@@ -52,13 +52,6 @@ func (d *PathDecoder) tokensForBody(ctx context.Context, body *hclsyntax.Body, b
 	}
 
 	if bodySchema.Extensions != nil {
-		if bodySchema.Extensions.Count {
-			if _, ok := body.Attributes["count"]; ok {
-				// append to context we need count provided
-				ctx = schema.WithActiveCount(ctx)
-			}
-		}
-
 		if bodySchema.Extensions.ForEach {
 			// append to context we need count provided
 			ctx = schema.WithActiveForEach(ctx)
@@ -138,12 +131,6 @@ func (d *PathDecoder) tokensForBody(ctx context.Context, body *hclsyntax.Body, b
 				continue
 			}
 			if blockSchema.Body != nil && blockSchema.Body.Extensions != nil {
-				if blockSchema.Body.Extensions.Count {
-					if _, ok := block.Body.Attributes["count"]; ok {
-						// append to context we need count provided
-						ctx = schema.WithActiveCount(ctx)
-					}
-				}
 				if blockSchema.Body.Extensions.ForEach {
 					// append to context we need each.* provided
 					ctx = schema.WithActiveForEach(ctx)

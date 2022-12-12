@@ -49,13 +49,6 @@ func (d *PathDecoder) candidatesAtPos(ctx context.Context, body *hclsyntax.Body,
 	filename := body.Range().Filename
 
 	if bodySchema.Extensions != nil {
-		if bodySchema.Extensions.Count {
-			if _, ok := body.Attributes["count"]; ok {
-				// append to context we need count completed
-				ctx = schema.WithActiveCount(ctx)
-			}
-		}
-
 		if bodySchema.Extensions.ForEach {
 			if _, present := body.Attributes["for_each"]; present {
 				// append to context we need foreach completed
