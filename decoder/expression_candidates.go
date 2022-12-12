@@ -322,7 +322,7 @@ func (d *PathDecoder) constraintToCandidates(ctx context.Context, constraint sch
 		candidates = append(candidates, d.candidatesForTraversalConstraint(ctx, c, outerBodyRng, prefixRng, editRng)...)
 	case schema.ListExpr:
 		candidates = append(candidates, lang.Candidate{
-			Label:       fmt.Sprintf(`[%s]`, labelForConstraints(c.Elem)),
+			Label:       fmt.Sprintf(`[ %s ]`, labelsForConstraints(c.Elem)),
 			Detail:      c.FriendlyName(),
 			Description: c.Description,
 			Kind:        lang.ListCandidateKind,
@@ -335,7 +335,7 @@ func (d *PathDecoder) constraintToCandidates(ctx context.Context, constraint sch
 		})
 	case schema.SetExpr:
 		candidates = append(candidates, lang.Candidate{
-			Label:       fmt.Sprintf(`[%s]`, labelForConstraints(c.Elem)),
+			Label:       fmt.Sprintf(`[ %s ]`, labelsForConstraints(c.Elem)),
 			Detail:      c.FriendlyName(),
 			Description: c.Description,
 			Kind:        lang.SetCandidateKind,
@@ -352,7 +352,7 @@ func (d *PathDecoder) constraintToCandidates(ctx context.Context, constraint sch
 			triggerSuggest = triggerSuggestForExprConstraints(c.Elems[0])
 		}
 		candidates = append(candidates, lang.Candidate{
-			Label:       fmt.Sprintf(`[%s]`, labelForConstraints(c.Elems[0])),
+			Label:       fmt.Sprintf(`[ %s ]`, labelsForConstraints(c.Elems[0])),
 			Detail:      c.FriendlyName(),
 			Description: c.Description,
 			Kind:        lang.TupleCandidateKind,
@@ -365,7 +365,7 @@ func (d *PathDecoder) constraintToCandidates(ctx context.Context, constraint sch
 		})
 	case schema.MapExpr:
 		candidates = append(candidates, lang.Candidate{
-			Label:       fmt.Sprintf(`{ key =%s}`, labelForConstraints(c.Elem)),
+			Label:       fmt.Sprintf(`{ key = %s }`, labelsForConstraints(c.Elem)),
 			Detail:      c.FriendlyName(),
 			Description: c.Description,
 			Kind:        lang.MapCandidateKind,
@@ -559,38 +559,55 @@ func snippetForConstraints(placeholder uint, cons schema.ExprConstraints, isNest
 	return ""
 }
 
-func labelForConstraints(cons schema.ExprConstraints) string {
-	labels := " "
-	labelsAdded := 0
+type labelSet []string
+
+func (ls labelSet) String() string {
+	if len(ls) > 10 {
+		return strings.Join(ls[:9], " | ") + " …"
+	}
+
+	return strings.Join(ls, " | ")
+}
+
+func (ls labelSet) AddLabelIfNotPresent(label string) labelSet {
+	if !ls.HasLabel(label) {
+		return append(ls, label)
+	}
+	return ls
+}
+
+func (ls labelSet) HasLabel(label string) bool {
+	for _, l := range ls {
+		if l == label {
+			return true
+		}
+	}
+	return false
+}
+
+func labelsForConstraints(cons schema.ExprConstraints) labelSet {
+	ls := make(labelSet, 0)
+
 	for _, constraint := range cons {
-		if len(labels) > 10 {
-			labels += "…"
-			break
-		}
-		if labelsAdded > 0 {
-			labels += "| "
-		}
 		switch c := constraint.(type) {
 		case schema.LiteralTypeExpr:
-			labels += labelForLiteralType(c.Type)
+			ls = ls.AddLabelIfNotPresent(labelForLiteralType(c.Type))
 		case schema.LiteralValue:
 			continue
 		case schema.KeywordExpr:
-			labels += c.FriendlyName()
+			ls = ls.AddLabelIfNotPresent(c.FriendlyName())
 		case schema.TraversalExpr:
-			labels += c.FriendlyName()
+			ls = ls.AddLabelIfNotPresent(c.FriendlyName())
 		case schema.ListExpr:
-			labels += fmt.Sprintf("[%s]", labelForConstraints(c.Elem))
+			ls = ls.AddLabelIfNotPresent(fmt.Sprintf("[ %s ]", labelsForConstraints(c.Elem)))
 		case schema.SetExpr:
-			labels += fmt.Sprintf("[%s]", labelForConstraints(c.Elem))
+			ls = ls.AddLabelIfNotPresent(fmt.Sprintf("[ %s ]", labelsForConstraints(c.Elem)))
 		case schema.TupleExpr:
-			labels += fmt.Sprintf("[%s]", labelForConstraints(c.Elems[0]))
+			ls = ls.AddLabelIfNotPresent(fmt.Sprintf("[ %s ]", labelsForConstraints(c.Elems[0])))
 		}
-		labelsAdded++
 	}
-	labels += " "
 
-	return labels
+	return ls
 }
 
 func typeToCandidates(ofType cty.Type, editRng hcl.Range) []lang.Candidate {
