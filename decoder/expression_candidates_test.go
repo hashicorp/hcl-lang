@@ -1349,6 +1349,70 @@ func TestDecoder_CandidateAtPos_expressions(t *testing.T) {
 				},
 			}),
 		},
+		{
+			"empty list",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Expr: schema.ExprConstraints{
+						schema.ListExpr{},
+					},
+				},
+			},
+			`attr = 
+`,
+			hcl.Pos{Line: 1, Column: 8, Byte: 7},
+			lang.CompleteCandidates([]lang.Candidate{
+				{
+					Label:  "[  ]",
+					Detail: "list",
+					TextEdit: lang.TextEdit{
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 1, Column: 8, Byte: 7},
+							End:      hcl.Pos{Line: 1, Column: 8, Byte: 7},
+						},
+						NewText: "[ ]",
+						Snippet: "[ ${0} ]",
+					},
+					Kind: lang.ListCandidateKind,
+				},
+			}),
+		},
+		{
+			"multiple traversal constraints in set",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Expr: schema.ExprConstraints{
+						schema.SetExpr{
+							Elem: schema.ExprConstraints{
+								schema.TraversalExpr{OfScopeId: lang.ScopeId("one")},
+								schema.TraversalExpr{OfScopeId: lang.ScopeId("two")},
+							},
+						},
+					},
+				},
+			},
+			`attr = 
+`,
+			hcl.Pos{Line: 1, Column: 8, Byte: 7},
+			lang.CompleteCandidates([]lang.Candidate{
+				{
+					Label:  "[ reference ]",
+					Detail: "set of reference",
+					TextEdit: lang.TextEdit{
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 1, Column: 8, Byte: 7},
+							End:      hcl.Pos{Line: 1, Column: 8, Byte: 7},
+						},
+						NewText: "[ ]",
+						Snippet: "[ ${0} ]",
+					},
+					Kind:           lang.SetCandidateKind,
+					TriggerSuggest: true,
+				},
+			}),
+		},
 	}
 
 	for i, tc := range testCases {

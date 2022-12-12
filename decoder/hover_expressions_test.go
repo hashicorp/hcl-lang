@@ -1236,6 +1236,72 @@ _object_`),
 			},
 			nil,
 		},
+		{
+			"attribute with multiple constraints",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Expr: schema.ExprConstraints{
+						schema.SetExpr{
+							Elem: schema.ExprConstraints{
+								schema.TraversalExpr{OfScopeId: lang.ScopeId("one")},
+								schema.TraversalExpr{OfScopeId: lang.ScopeId("two")},
+							},
+						},
+					}},
+			},
+			`attr = []`,
+			hcl.Pos{Line: 1, Column: 3, Byte: 2},
+			&lang.HoverData{
+				Content: lang.Markdown("**attr** _set of reference_"),
+				Range: hcl.Range{
+					Filename: "test.tf",
+					Start: hcl.Pos{
+						Line:   1,
+						Column: 1,
+						Byte:   0,
+					},
+					End: hcl.Pos{
+						Line:   1,
+						Column: 10,
+						Byte:   9,
+					},
+				},
+			},
+			nil,
+		},
+		{
+			"expression with multiple constraints",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Expr: schema.ExprConstraints{
+						schema.SetExpr{
+							Elem: schema.ExprConstraints{
+								schema.TraversalExpr{OfScopeId: lang.ScopeId("one")},
+								schema.TraversalExpr{OfScopeId: lang.ScopeId("two")},
+							},
+						},
+					}},
+			},
+			`attr = [  ]`,
+			hcl.Pos{Line: 1, Column: 10, Byte: 9},
+			&lang.HoverData{
+				Content: lang.Markdown("_set of reference_"),
+				Range: hcl.Range{
+					Filename: "test.tf",
+					Start: hcl.Pos{
+						Line:   1,
+						Column: 8,
+						Byte:   7,
+					},
+					End: hcl.Pos{
+						Line:   1,
+						Column: 12,
+						Byte:   11,
+					},
+				},
+			},
+			nil,
+		},
 	}
 
 	for i, tc := range testCases {
