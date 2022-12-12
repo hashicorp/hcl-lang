@@ -1752,17 +1752,15 @@ func TestDecoder_SemanticTokensInFile_extensions_for_each(t *testing.T) {
 						ForEach: true,
 					},
 					Attributes: map[string]*schema.AttributeSchema{
-						"for_each": {
+						"thing": {
 							Expr: schema.ExprConstraints{
-								schema.TraversalExpr{OfType: cty.Map(cty.String)},
-								schema.LiteralTypeExpr{Type: cty.Set(cty.String)},
+								schema.TraversalExpr{OfType: cty.String},
 							},
 						},
-						"thing": {
-							Expr: schema.LiteralTypeOnly(cty.String),
-						},
 						"thing_other": {
-							Expr: schema.LiteralTypeOnly(cty.String),
+							Expr: schema.ExprConstraints{
+								schema.TraversalExpr{OfType: cty.DynamicPseudoType},
+							},
 						},
 					},
 				},
@@ -1800,6 +1798,24 @@ resource "foobar" "name" {
 		Files: map[string]*hcl.File{
 			"test.tf": f,
 		},
+	})
+
+	targets, err := d.CollectReferenceTargets()
+	if err != nil {
+		t.Fatal(err)
+	}
+	origins, err := d.CollectReferenceOrigins()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	d = testPathDecoder(t, &PathContext{
+		Schema: bodySchema,
+		Files: map[string]*hcl.File{
+			"test.tf": f,
+		},
+		ReferenceTargets: targets,
+		ReferenceOrigins: origins,
 	})
 
 	ctx := context.Background()
@@ -1848,6 +1864,15 @@ resource "foobar" "name" {
 				End:      hcl.Pos{Line: 3, Column: 10, Byte: 37},
 			},
 		},
+		{
+			Type:      lang.TokenMapKey,
+			Modifiers: lang.SemanticTokenModifiers{},
+			Range: hcl.Range{
+				Filename: "test.tf",
+				Start:    hcl.Pos{Line: 4, Column: 3, Byte: 44},
+				End:      hcl.Pos{Line: 4, Column: 10, Byte: 51},
+			},
+		},
 		{ // thing
 			Type:      lang.TokenAttrName,
 			Modifiers: lang.SemanticTokenModifiers{},
@@ -1872,7 +1897,7 @@ resource "foobar" "name" {
 			Range: hcl.Range{
 				Filename: "test.tf",
 				Start:    hcl.Pos{Line: 6, Column: 15, Byte: 80},
-				End:      hcl.Pos{Line: 6, Column: 19, Byte: 84},
+				End:      hcl.Pos{Line: 6, Column: 18, Byte: 83},
 			},
 		},
 		{ // thing_other
@@ -1899,7 +1924,7 @@ resource "foobar" "name" {
 			Range: hcl.Range{
 				Filename: "test.tf",
 				Start:    hcl.Pos{Line: 7, Column: 21, Byte: 104},
-				End:      hcl.Pos{Line: 7, Column: 27, Byte: 110},
+				End:      hcl.Pos{Line: 7, Column: 26, Byte: 109},
 			},
 		},
 	}

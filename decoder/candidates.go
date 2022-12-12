@@ -48,15 +48,6 @@ func (d *PathDecoder) candidatesAtPos(ctx context.Context, body *hclsyntax.Body,
 
 	filename := body.Range().Filename
 
-	if bodySchema.Extensions != nil {
-		if bodySchema.Extensions.ForEach {
-			if _, present := body.Attributes["for_each"]; present {
-				// append to context we need foreach completed
-				ctx = schema.WithActiveForEach(ctx)
-			}
-		}
-	}
-
 	for _, attr := range body.Attributes {
 		if d.isPosInsideAttrExpr(attr, pos) {
 			if bodySchema.Extensions != nil && bodySchema.Extensions.SelfRefs {

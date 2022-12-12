@@ -44,12 +44,6 @@ func (d *PathDecoder) hoverAtPos(ctx context.Context, body *hclsyntax.Body, body
 
 	filename := body.Range().Filename
 
-	if bodySchema.Extensions != nil {
-		if bodySchema.Extensions.ForEach {
-			ctx = schema.WithActiveForEach(ctx)
-		}
-	}
-
 	for name, attr := range body.Attributes {
 		if attr.Range().ContainsPos(pos) {
 			var aSchema *schema.AttributeSchema
