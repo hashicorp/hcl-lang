@@ -51,20 +51,6 @@ func (d *PathDecoder) tokensForBody(ctx context.Context, body *hclsyntax.Body, b
 		return tokens
 	}
 
-	if bodySchema.Extensions != nil {
-		if bodySchema.Extensions.Count {
-			if _, ok := body.Attributes["count"]; ok {
-				// append to context we need count provided
-				ctx = schema.WithActiveCount(ctx)
-			}
-		}
-
-		if bodySchema.Extensions.ForEach {
-			// append to context we need count provided
-			ctx = schema.WithActiveForEach(ctx)
-		}
-	}
-
 	for name, attr := range body.Attributes {
 		attrSchema, ok := bodySchema.Attributes[name]
 		if !ok {
@@ -137,18 +123,7 @@ func (d *PathDecoder) tokensForBody(ctx context.Context, body *hclsyntax.Body, b
 			if err != nil {
 				continue
 			}
-			if blockSchema.Body != nil && blockSchema.Body.Extensions != nil {
-				if blockSchema.Body.Extensions.Count {
-					if _, ok := block.Body.Attributes["count"]; ok {
-						// append to context we need count provided
-						ctx = schema.WithActiveCount(ctx)
-					}
-				}
-				if blockSchema.Body.Extensions.ForEach {
-					// append to context we need each.* provided
-					ctx = schema.WithActiveForEach(ctx)
-				}
-			}
+
 			tokens = append(tokens, d.tokensForBody(ctx, block.Body, mergedSchema, blockModifiers)...)
 		}
 	}
@@ -171,25 +146,6 @@ func (d *PathDecoder) tokensForExpression(ctx context.Context, expr hclsyntax.Ex
 					Range:     eType.Range(),
 				},
 			}
-		}
-
-		address, err := lang.TraversalToAddress(eType.AsTraversal())
-		if err != nil {
-			return tokens
-		}
-
-		foreachAvailable := schema.ActiveForEachFromContext(ctx)
-		eachKeyAddress := lang.Address{
-			lang.RootStep{Name: "each"}, lang.AttrStep{Name: "key"},
-		}
-		eachValueAddress := lang.Address{
-			lang.RootStep{Name: "each"}, lang.AttrStep{Name: "value"},
-		}
-
-		if (address.Equals(eachKeyAddress) || address.Equals(eachValueAddress)) && foreachAvailable {
-			tokens = append(tokens, semanticTokensForTraversalExpression(eType.AsTraversal())...)
-
-			return tokens
 		}
 
 		_, ok = constraints.TraversalExprs()
