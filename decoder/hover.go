@@ -318,17 +318,6 @@ func (d *PathDecoder) hoverDataForExpr(ctx context.Context, expr hcl.Expression,
 			Range:   expr.Range(),
 		}, nil
 	case *hclsyntax.TupleConsExpr:
-		tupleCons, ok := constraints.TupleConsExpr()
-		if ok {
-			content := fmt.Sprintf("_%s_", tupleCons.FriendlyName())
-			if tupleCons.Description.Value != "" {
-				content += "\n\n" + tupleCons.Description.Value
-			}
-			return &lang.HoverData{
-				Content: lang.Markdown(content),
-				Range:   expr.Range(),
-			}, nil
-		}
 		se, ok := constraints.SetExpr()
 		if ok {
 			for _, elemExpr := range e.Exprs {

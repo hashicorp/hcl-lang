@@ -11,7 +11,6 @@ var (
 	_ ExprConstraint = ObjectExpr{}
 	_ ExprConstraint = SetExpr{}
 	_ ExprConstraint = TraversalExpr{}
-	_ ExprConstraint = TupleConsExpr{}
 	_ ExprConstraint = TupleExpr{}
 	_ ExprConstraint = TypeDeclarationExpr{}
 )

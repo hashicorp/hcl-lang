@@ -671,112 +671,6 @@ func TestDecoder_CandidateAtPos_expressions(t *testing.T) {
 			}),
 		},
 		{
-			"tuple constant expression",
-			map[string]*schema.AttributeSchema{
-				"attr": {
-					Expr: schema.ExprConstraints{
-						schema.TupleConsExpr{
-							AnyElem: schema.ExprConstraints{
-								schema.LiteralValue{Val: cty.StringVal("one")},
-								schema.LiteralValue{Val: cty.StringVal("two")},
-							},
-						},
-					},
-				},
-			},
-			`attr = 
-`,
-			hcl.Pos{Line: 1, Column: 8, Byte: 7},
-			lang.CompleteCandidates([]lang.Candidate{
-				{
-					Label: "[  ]",
-					TextEdit: lang.TextEdit{
-						Range: hcl.Range{
-							Filename: "test.tf",
-							Start: hcl.Pos{
-								Line:   1,
-								Column: 8,
-								Byte:   7,
-							},
-							End: hcl.Pos{
-								Line:   1,
-								Column: 8,
-								Byte:   7,
-							},
-						},
-						NewText: "[ ]",
-						Snippet: "[ ${0} ]",
-					},
-					Kind:           lang.TupleCandidateKind,
-					TriggerSuggest: true,
-				},
-			}),
-		},
-		{
-			"tuple constant expression inside",
-			map[string]*schema.AttributeSchema{
-				"attr": {
-					Expr: schema.ExprConstraints{
-						schema.TupleConsExpr{
-							AnyElem: schema.ExprConstraints{
-								schema.LiteralValue{Val: cty.StringVal("one")},
-								schema.LiteralValue{Val: cty.StringVal("two")},
-							},
-						},
-					},
-				},
-			},
-			`attr = [  ]
-`,
-			hcl.Pos{Line: 1, Column: 10, Byte: 9},
-			lang.CompleteCandidates([]lang.Candidate{
-				{
-					Label:  "one",
-					Detail: "string",
-					TextEdit: lang.TextEdit{
-						Range: hcl.Range{
-							Filename: "test.tf",
-							Start: hcl.Pos{
-								Line:   1,
-								Column: 10,
-								Byte:   9,
-							},
-							End: hcl.Pos{
-								Line:   1,
-								Column: 10,
-								Byte:   9,
-							},
-						},
-						NewText: `"one"`,
-						Snippet: `"${1:one}"`,
-					},
-					Kind: lang.StringCandidateKind,
-				},
-				{
-					Label:  "two",
-					Detail: "string",
-					TextEdit: lang.TextEdit{
-						Range: hcl.Range{
-							Filename: "test.tf",
-							Start: hcl.Pos{
-								Line:   1,
-								Column: 10,
-								Byte:   9,
-							},
-							End: hcl.Pos{
-								Line:   1,
-								Column: 10,
-								Byte:   9,
-							},
-						},
-						NewText: `"two"`,
-						Snippet: `"${1:two}"`,
-					},
-					Kind: lang.StringCandidateKind,
-				},
-			}),
-		},
-		{
 			"tuple as list type",
 			map[string]*schema.AttributeSchema{
 				"attr": {
@@ -1282,55 +1176,6 @@ func TestDecoder_CandidateAtPos_expressions(t *testing.T) {
 			}),
 		},
 		{
-			"map expression of tuple expr",
-			map[string]*schema.AttributeSchema{
-				"attr": {
-					Expr: schema.ExprConstraints{
-						schema.MapExpr{
-							Elem: schema.ExprConstraints{
-								schema.TupleConsExpr{
-									Name:    "special tuple",
-									AnyElem: schema.LiteralTypeOnly(cty.Number),
-								},
-							},
-							Name: "special map",
-						},
-					},
-				},
-			},
-			`attr = 
-`,
-			hcl.Pos{Line: 1, Column: 8, Byte: 7},
-			lang.CompleteCandidates([]lang.Candidate{
-				{
-					Label:  "{ key = [ number ] }",
-					Detail: "special map",
-					TextEdit: lang.TextEdit{
-						Range: hcl.Range{
-							Filename: "test.tf",
-							Start: hcl.Pos{
-								Line:   1,
-								Column: 8,
-								Byte:   7,
-							},
-							End: hcl.Pos{
-								Line:   1,
-								Column: 8,
-								Byte:   7,
-							},
-						},
-						NewText: `{
-  name = [  ]
-}`,
-						Snippet: `{
-  ${1:name} = [ ${2} ]
-}`,
-					},
-					Kind: lang.MapCandidateKind,
-				},
-			}),
-		},
-		{
 			"literal of dynamic pseudo type",
 			map[string]*schema.AttributeSchema{
 				"attr": {
@@ -1501,6 +1346,70 @@ func TestDecoder_CandidateAtPos_expressions(t *testing.T) {
 						},
 					}, NewText: "object({})", Snippet: "object({\n ${1:name} = ${2}\n})"},
 					Kind: lang.AttributeCandidateKind,
+				},
+			}),
+		},
+		{
+			"empty list",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Expr: schema.ExprConstraints{
+						schema.ListExpr{},
+					},
+				},
+			},
+			`attr = 
+`,
+			hcl.Pos{Line: 1, Column: 8, Byte: 7},
+			lang.CompleteCandidates([]lang.Candidate{
+				{
+					Label:  "[  ]",
+					Detail: "list",
+					TextEdit: lang.TextEdit{
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 1, Column: 8, Byte: 7},
+							End:      hcl.Pos{Line: 1, Column: 8, Byte: 7},
+						},
+						NewText: "[ ]",
+						Snippet: "[ ${0} ]",
+					},
+					Kind: lang.ListCandidateKind,
+				},
+			}),
+		},
+		{
+			"multiple traversal constraints in set",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Expr: schema.ExprConstraints{
+						schema.SetExpr{
+							Elem: schema.ExprConstraints{
+								schema.TraversalExpr{OfScopeId: lang.ScopeId("one")},
+								schema.TraversalExpr{OfScopeId: lang.ScopeId("two")},
+							},
+						},
+					},
+				},
+			},
+			`attr = 
+`,
+			hcl.Pos{Line: 1, Column: 8, Byte: 7},
+			lang.CompleteCandidates([]lang.Candidate{
+				{
+					Label:  "[ reference ]",
+					Detail: "set of reference",
+					TextEdit: lang.TextEdit{
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 1, Column: 8, Byte: 7},
+							End:      hcl.Pos{Line: 1, Column: 8, Byte: 7},
+						},
+						NewText: "[ ]",
+						Snippet: "[ ${0} ]",
+					},
+					Kind:           lang.SetCandidateKind,
+					TriggerSuggest: true,
 				},
 			}),
 		},

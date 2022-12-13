@@ -197,14 +197,6 @@ func (d *PathDecoder) findOriginsInExpression(expr hcl.Expression, ec schema.Exp
 
 	switch eType := expr.(type) {
 	case *hclsyntax.TupleConsExpr:
-		tce, ok := ExprConstraints(ec).TupleConsExpr()
-		if ok {
-			for _, elemExpr := range eType.ExprList() {
-				origins = append(origins, d.findOriginsInExpression(elemExpr, tce.AnyElem, allowSelfRefs)...)
-			}
-			break
-		}
-
 		le, ok := ExprConstraints(ec).ListExpr()
 		if ok {
 			for _, elemExpr := range eType.ExprList() {

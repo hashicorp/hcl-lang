@@ -629,12 +629,6 @@ func referenceTargetsForExpr(expr hcl.Expression, ec ExprConstraints) reference.
 				refs = append(refs, referenceTargetsForExpr(itemExpr, ExprConstraints(te.Elems[i]))...)
 			}
 		}
-		tce, ok := ec.TupleConsExpr()
-		if ok {
-			for _, itemExpr := range e.Exprs {
-				refs = append(refs, referenceTargetsForExpr(itemExpr, ExprConstraints(tce.AnyElem))...)
-			}
-		}
 	}
 
 	return refs

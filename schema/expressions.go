@@ -124,33 +124,6 @@ func (lv LiteralValue) Copy() ExprConstraint {
 	}
 }
 
-// TODO: Consider removing TupleConsExpr
-// in favour of ListExpr, SetExpr and TupleExpr
-type TupleConsExpr struct {
-	AnyElem     ExprConstraints
-	Name        string
-	Description lang.MarkupContent
-}
-
-func (TupleConsExpr) isExprConstraintImpl() exprConstrSigil {
-	return exprConstrSigil{}
-}
-
-func (tc TupleConsExpr) FriendlyName() string {
-	if tc.Name == "" {
-		return "tuple"
-	}
-	return tc.Name
-}
-
-func (tc TupleConsExpr) Copy() ExprConstraint {
-	return TupleConsExpr{
-		AnyElem:     tc.AnyElem.Copy(),
-		Name:        tc.Name,
-		Description: tc.Description,
-	}
-}
-
 type ListExpr struct {
 	Elem        ExprConstraints
 	Description lang.MarkupContent

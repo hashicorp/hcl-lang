@@ -276,14 +276,6 @@ func (d *PathDecoder) tokensForExpression(ctx context.Context, expr hclsyntax.Ex
 	case *hclsyntax.TemplateWrapExpr:
 		return d.tokensForExpression(ctx, eType.Wrapped, constraints)
 	case *hclsyntax.TupleConsExpr:
-		tc, ok := constraints.TupleConsExpr()
-		if ok {
-			ec := ExprConstraints(tc.AnyElem)
-			for _, expr := range eType.Exprs {
-				tokens = append(tokens, d.tokensForExpression(ctx, expr, ec)...)
-			}
-			return tokens
-		}
 		se, ok := constraints.SetExpr()
 		if ok {
 			ec := ExprConstraints(se.Elem)

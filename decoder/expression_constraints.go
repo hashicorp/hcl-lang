@@ -58,15 +58,6 @@ func (ec ExprConstraints) ObjectExpr() (schema.ObjectExpr, bool) {
 	return schema.ObjectExpr{}, false
 }
 
-func (ec ExprConstraints) TupleConsExpr() (schema.TupleConsExpr, bool) {
-	for _, c := range ec {
-		if tc, ok := c.(schema.TupleConsExpr); ok {
-			return tc, ok
-		}
-	}
-	return schema.TupleConsExpr{}, false
-}
-
 func (ec ExprConstraints) SetExpr() (schema.SetExpr, bool) {
 	for _, c := range ec {
 		if se, ok := c.(schema.SetExpr); ok {
