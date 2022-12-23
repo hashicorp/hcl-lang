@@ -1,6 +1,8 @@
 package schema
 
-import "github.com/zclconf/go-cty/cty"
+import (
+	"github.com/zclconf/go-cty/cty"
+)
 
 // LiteralType represents literal type constraint
 // e.g. any literal string ("foo"), number (42), etc.
@@ -28,4 +30,9 @@ func (lt LiteralType) Copy() Constraint {
 	return LiteralType{
 		Type: lt.Type,
 	}
+}
+
+func (lt LiteralType) EmptyCompletionData(nextPlaceholder int) CompletionData {
+	// TODO
+	return CompletionData{}
 }

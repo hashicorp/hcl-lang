@@ -65,6 +65,11 @@ func (ref Reference) Copy() Constraint {
 	}
 }
 
+func (ref Reference) EmptyCompletionData(nextPlaceholder int) CompletionData {
+	// TODO
+	return CompletionData{}
+}
+
 func (ref Reference) Validate() error {
 	if ref.Address != nil && (ref.OfType != cty.NilType || ref.OfScopeId != "") {
 		return errors.New("cannot have both Address and OfType/OfScopeId set")

@@ -50,3 +50,8 @@ func (m Map) Copy() Constraint {
 		MaxItems:    m.MaxItems,
 	}
 }
+
+func (m Map) EmptyCompletionData(nextPlaceholder int) CompletionData {
+	// TODO
+	return CompletionData{}
+}

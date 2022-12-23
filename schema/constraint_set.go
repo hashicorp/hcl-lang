@@ -43,3 +43,8 @@ func (s Set) Copy() Constraint {
 		MaxItems:    s.MaxItems,
 	}
 }
+
+func (s Set) EmptyCompletionData(nextPlaceholder int) CompletionData {
+	// TODO
+	return CompletionData{}
+}

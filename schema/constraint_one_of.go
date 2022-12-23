@@ -72,3 +72,8 @@ func namesContain(names []string, name string) bool {
 	}
 	return false
 }
+
+func (o OneOf) EmptyCompletionData(nextPlaceholder int) CompletionData {
+	// TODO
+	return CompletionData{}
+}

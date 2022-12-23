@@ -32,3 +32,8 @@ func (lv LiteralValue) Copy() Constraint {
 		Description:  lv.Description,
 	}
 }
+
+func (lv LiteralValue) EmptyCompletionData(nextPlaceholder int) CompletionData {
+	// TODO
+	return CompletionData{}
+}

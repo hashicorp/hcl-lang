@@ -1,6 +1,8 @@
 package schema
 
-import "github.com/hashicorp/hcl-lang/lang"
+import (
+	"github.com/hashicorp/hcl-lang/lang"
+)
 
 // Object represents an object, equivalent of hclsyntax.ObjectConsExpr
 // interpreted as object, i.e. with items of known keys
@@ -37,6 +39,10 @@ func (o Object) Copy() Constraint {
 	}
 }
 
+func (o Object) EmptyCompletionData(placeholder int) CompletionData {
+	return CompletionData{}
+}
+
 func (ObjectAttributes) isConstraintImpl() constraintSigil {
 	return constraintSigil{}
 }
@@ -51,4 +57,9 @@ func (oa ObjectAttributes) Copy() Constraint {
 		m[name] = aSchema.Copy()
 	}
 	return m
+}
+
+func (oa ObjectAttributes) EmptyCompletionData(nextPlaceholder int) CompletionData {
+	// TODO
+	return CompletionData{}
 }

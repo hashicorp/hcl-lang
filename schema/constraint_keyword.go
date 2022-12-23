@@ -1,6 +1,8 @@
 package schema
 
-import "github.com/hashicorp/hcl-lang/lang"
+import (
+	"github.com/hashicorp/hcl-lang/lang"
+)
 
 // Keyword represents a keyword, represented as hcl.Traversal
 // of a single segment.
@@ -32,4 +34,9 @@ func (k Keyword) Copy() Constraint {
 		Name:        k.Name,
 		Description: k.Description,
 	}
+}
+
+func (k Keyword) EmptyCompletionData(nextPlaceholder int) CompletionData {
+	// TODO
+	return CompletionData{}
 }

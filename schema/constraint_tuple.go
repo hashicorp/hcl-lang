@@ -1,6 +1,8 @@
 package schema
 
-import "github.com/hashicorp/hcl-lang/lang"
+import (
+	"github.com/hashicorp/hcl-lang/lang"
+)
 
 // Tuple represents a tuple, equivalent of hclsyntax.TupleConsExpr
 // interpreted as tuple, i.e. collection of items where
@@ -33,4 +35,9 @@ func (t Tuple) Copy() Constraint {
 		}
 	}
 	return newTuple
+}
+
+func (t Tuple) EmptyCompletionData(nextPlaceholder int) CompletionData {
+	// TODO
+	return CompletionData{}
 }

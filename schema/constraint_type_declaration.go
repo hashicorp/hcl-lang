@@ -16,3 +16,8 @@ func (td TypeDeclaration) FriendlyName() string {
 func (td TypeDeclaration) Copy() Constraint {
 	return TypeDeclaration{}
 }
+
+func (td TypeDeclaration) EmptyCompletionData(nextPlaceholder int) CompletionData {
+	// TODO
+	return CompletionData{}
+}
