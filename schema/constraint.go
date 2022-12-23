@@ -7,3 +7,7 @@ type Constraint interface {
 	FriendlyName() string
 	Copy() Constraint
 }
+
+type Validatable interface {
+	Validate() error
+}

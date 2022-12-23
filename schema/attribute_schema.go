@@ -20,6 +20,10 @@ type AttributeSchema struct {
 	// expressions are expected for the attribute
 	Expr ExprConstraints
 
+	// Constraint represents expression constraint e.g. what types of
+	// expressions are expected for the attribute
+	Constraint Constraint
+
 	// IsDepKey describes whether to use this attribute (and its value)
 	// as key when looking up dependent schema
 	IsDepKey bool
@@ -96,7 +100,15 @@ func (as *AttributeSchema) Validate() error {
 		}
 	}
 
-	return as.Expr.Validate()
+	if as.Constraint != nil {
+		if con, ok := as.Constraint.(Validatable); ok {
+			return con.Validate()
+		}
+	} else {
+		return as.Expr.Validate()
+	}
+
+	return nil
 }
 
 func (as *AttributeSchema) Copy() *AttributeSchema {
@@ -117,6 +129,10 @@ func (as *AttributeSchema) Copy() *AttributeSchema {
 		OriginForTarget:        as.OriginForTarget.Copy(),
 		SemanticTokenModifiers: as.SemanticTokenModifiers.Copy(),
 		CompletionHooks:        as.CompletionHooks.Copy(),
+	}
+
+	if as.Constraint != nil {
+		newAs.Constraint = as.Constraint.Copy()
 	}
 
 	return newAs
