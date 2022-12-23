@@ -65,15 +65,6 @@ func (ec ExprConstraints) Validate() error {
 	return errs.ErrorOrNil()
 }
 
-func namesContain(names []string, name string) bool {
-	for _, n := range names {
-		if n == name {
-			return true
-		}
-	}
-	return false
-}
-
 type exprConstrSigil struct{}
 
 type ExprConstraint interface {
