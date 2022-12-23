@@ -1,5 +1,7 @@
 package schema
 
+import "github.com/zclconf/go-cty/cty"
+
 type constraintSigil struct{}
 
 type Constraint interface {
@@ -16,6 +18,13 @@ type Constraint interface {
 
 type Validatable interface {
 	Validate() error
+}
+
+// Conformable represents a constraint which is type-aware,
+// making it possible to test a given type for conformity.
+// This can affect completion hooks.
+type Conformable interface {
+	Conforms(typ cty.Type) bool
 }
 
 type CompletionData struct {
