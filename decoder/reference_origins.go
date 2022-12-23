@@ -168,7 +168,11 @@ func (d *PathDecoder) referenceOriginsInBody(body hcl.Body, bodySchema *schema.B
 		if bodySchema.Extensions != nil && bodySchema.Extensions.SelfRefs {
 			allowSelfRefs = true
 		}
-		origins = append(origins, d.findOriginsInExpression(attr.Expr, aSchema.Expr, allowSelfRefs)...)
+		if aSchema.Constraint != nil {
+			origins = append(origins, NewExpression(attr.Expr, aSchema.Constraint).ReferenceOrigins(allowSelfRefs)...)
+		} else {
+			origins = append(origins, d.legacyFindOriginsInExpression(attr.Expr, aSchema.Expr, allowSelfRefs)...)
+		}
 	}
 
 	for _, block := range content.Blocks {
@@ -192,7 +196,7 @@ func (d *PathDecoder) referenceOriginsInBody(body hcl.Body, bodySchema *schema.B
 	return origins, impliedOrigins
 }
 
-func (d *PathDecoder) findOriginsInExpression(expr hcl.Expression, ec schema.ExprConstraints, allowSelfRefs bool) reference.Origins {
+func (d *PathDecoder) legacyFindOriginsInExpression(expr hcl.Expression, ec schema.ExprConstraints, allowSelfRefs bool) reference.Origins {
 	origins := make(reference.Origins, 0)
 
 	switch eType := expr.(type) {
@@ -200,7 +204,7 @@ func (d *PathDecoder) findOriginsInExpression(expr hcl.Expression, ec schema.Exp
 		le, ok := ExprConstraints(ec).ListExpr()
 		if ok {
 			for _, elemExpr := range eType.ExprList() {
-				origins = append(origins, d.findOriginsInExpression(elemExpr, le.Elem, allowSelfRefs)...)
+				origins = append(origins, d.legacyFindOriginsInExpression(elemExpr, le.Elem, allowSelfRefs)...)
 			}
 			break
 		}
@@ -208,7 +212,7 @@ func (d *PathDecoder) findOriginsInExpression(expr hcl.Expression, ec schema.Exp
 		se, ok := ExprConstraints(ec).SetExpr()
 		if ok {
 			for _, elemExpr := range eType.ExprList() {
-				origins = append(origins, d.findOriginsInExpression(elemExpr, se.Elem, allowSelfRefs)...)
+				origins = append(origins, d.legacyFindOriginsInExpression(elemExpr, se.Elem, allowSelfRefs)...)
 			}
 			break
 		}
@@ -219,7 +223,7 @@ func (d *PathDecoder) findOriginsInExpression(expr hcl.Expression, ec schema.Exp
 				if len(tue.Elems) < i+1 {
 					break
 				}
-				origins = append(origins, d.findOriginsInExpression(elemExpr, tue.Elems[i], allowSelfRefs)...)
+				origins = append(origins, d.legacyFindOriginsInExpression(elemExpr, tue.Elems[i], allowSelfRefs)...)
 			}
 		}
 	case *hclsyntax.ObjectConsExpr:
@@ -239,14 +243,14 @@ func (d *PathDecoder) findOriginsInExpression(expr hcl.Expression, ec schema.Exp
 					continue
 				}
 
-				origins = append(origins, d.findOriginsInExpression(item.ValueExpr, attr.Expr, allowSelfRefs)...)
+				origins = append(origins, d.legacyFindOriginsInExpression(item.ValueExpr, attr.Expr, allowSelfRefs)...)
 			}
 		}
 
 		me, ok := ExprConstraints(ec).MapExpr()
 		if ok {
 			for _, item := range eType.Items {
-				origins = append(origins, d.findOriginsInExpression(item.ValueExpr, me.Elem, allowSelfRefs)...)
+				origins = append(origins, d.legacyFindOriginsInExpression(item.ValueExpr, me.Elem, allowSelfRefs)...)
 			}
 		}
 	case *hclsyntax.AnonSymbolExpr,

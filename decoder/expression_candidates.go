@@ -16,7 +16,6 @@ import (
 )
 
 func (d *PathDecoder) attrValueCandidatesAtPos(ctx context.Context, attr *hclsyntax.Attribute, schema *schema.AttributeSchema, outerBodyRng hcl.Range, pos hcl.Pos) (lang.Candidates, error) {
-	constraints, editRng := constraintsAtPos(attr.Expr, ExprConstraints(schema.Expr), pos)
 	candidates := lang.NewCandidates()
 	candidates.IsComplete = true
 
@@ -24,19 +23,35 @@ func (d *PathDecoder) attrValueCandidatesAtPos(ctx context.Context, attr *hclsyn
 		candidates.IsComplete = false
 		candidates.List = append(candidates.List, d.candidatesFromHooks(ctx, attr, schema, outerBodyRng, pos)...)
 	}
-
 	count := len(candidates.List)
-	if len(constraints) > 0 && uint(count) < d.maxCandidates {
-		prefixRng := editRng
-		prefixRng.End = pos
 
-		for _, cons := range constraints {
-			if uint(count) >= d.maxCandidates {
-				return candidates, nil
+	if schema.Constraint != nil {
+		if uint(count) < d.maxCandidates {
+			expr := NewExpression(attr.Expr, schema.Constraint)
+			for _, candidate := range expr.CompletionAtPos(ctx, pos) {
+				if uint(count) >= d.maxCandidates {
+					return candidates, nil
+				}
+
+				candidates.List = append(candidates.List, candidate)
+				count++
 			}
+		}
+	} else {
+		constraints, editRng := constraintsAtPos(attr.Expr, ExprConstraints(schema.Expr), pos)
 
-			candidates.List = append(candidates.List, d.constraintToCandidates(ctx, cons, attr, outerBodyRng, prefixRng, editRng)...)
-			count++
+		if len(constraints) > 0 && uint(count) < d.maxCandidates {
+			prefixRng := editRng
+			prefixRng.End = pos
+
+			for _, cons := range constraints {
+				if uint(count) >= d.maxCandidates {
+					return candidates, nil
+				}
+
+				candidates.List = append(candidates.List, d.constraintToCandidates(ctx, cons, attr, outerBodyRng, prefixRng, editRng)...)
+				count++
+			}
 		}
 	}
 
@@ -235,13 +250,20 @@ func isMultilineTemplateExpr(expr hclsyntax.Expression) bool {
 	return t.Range().Start.Line != t.Range().End.Line
 }
 
-func (d *PathDecoder) candidatesFromHooks(ctx context.Context, attr *hclsyntax.Attribute, schema *schema.AttributeSchema, outerBodyRng hcl.Range, pos hcl.Pos) []lang.Candidate {
+func (d *PathDecoder) candidatesFromHooks(ctx context.Context, attr *hclsyntax.Attribute, aSchema *schema.AttributeSchema, outerBodyRng hcl.Range, pos hcl.Pos) []lang.Candidate {
 	candidates := make([]lang.Candidate, 0)
-	expr := ExprConstraints(schema.Expr)
-	exprType, ok := expr.LiteralType()
-	if !ok && exprType != cty.String {
-		// Return early as we only support string values for now
-		return candidates
+	if aSchema.Constraint != nil {
+		if con, ok := aSchema.Constraint.(schema.Conformable); ok && con.Conforms(cty.String) {
+			// Return early as we only support string values for now
+			return candidates
+		}
+	} else {
+		expr := ExprConstraints(aSchema.Expr)
+		exprType, ok := expr.LiteralType()
+		if !ok && exprType != cty.String {
+			// Return early as we only support string values for now
+			return candidates
+		}
 	}
 
 	editRng := attr.Expr.Range()
@@ -264,7 +286,7 @@ func (d *PathDecoder) candidatesFromHooks(ctx context.Context, attr *hclsyntax.A
 	ctx = WithMaxCandidates(ctx, d.maxCandidates)
 
 	count := 0
-	for _, hook := range schema.CompletionHooks {
+	for _, hook := range aSchema.CompletionHooks {
 		if completionFunc, ok := d.decoderCtx.CompletionHooks[hook.Name]; ok {
 			res, _ := completionFunc(ctx, cty.StringVal(prefix))
 

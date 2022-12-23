@@ -77,8 +77,12 @@ func (d *PathDecoder) tokensForBody(ctx context.Context, body *hclsyntax.Body, b
 			Range:     attr.NameRange,
 		})
 
-		ec := ExprConstraints(attrSchema.Expr)
-		tokens = append(tokens, d.tokensForExpression(ctx, attr.Expr, ec)...)
+		if attrSchema.Constraint != nil {
+			tokens = append(tokens, NewExpression(attr.Expr, attrSchema.Constraint).SemanticTokens(ctx)...)
+		} else {
+			ec := ExprConstraints(attrSchema.Expr)
+			tokens = append(tokens, d.tokensForExpression(ctx, attr.Expr, ec)...)
+		}
 	}
 
 	for _, block := range body.Blocks {
