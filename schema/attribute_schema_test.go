@@ -16,15 +16,15 @@ func TestAttributeSchema_Validate(t *testing.T) {
 	}{
 		{
 			&AttributeSchema{
-				Expr: LiteralTypeOnly(cty.String),
+				Constraint: LiteralType{Type: cty.String},
 			},
 			errors.New("one of IsRequired, IsOptional, or IsComputed must be set"),
 		},
 		{
 			&AttributeSchema{
-				Expr: ExprConstraints{
-					LiteralTypeExpr{Type: cty.String},
-					LiteralTypeExpr{Type: cty.Number},
+				Constraint: OneOf{
+					LiteralType{Type: cty.String},
+					LiteralType{Type: cty.Number},
 				},
 				IsComputed: true,
 			},
@@ -32,7 +32,7 @@ func TestAttributeSchema_Validate(t *testing.T) {
 		},
 		{
 			&AttributeSchema{
-				Expr:       LiteralTypeOnly(cty.String),
+				Constraint: LiteralType{Type: cty.String},
 				IsRequired: true,
 				IsOptional: true,
 			},
@@ -40,7 +40,7 @@ func TestAttributeSchema_Validate(t *testing.T) {
 		},
 		{
 			&AttributeSchema{
-				Expr:       LiteralTypeOnly(cty.String),
+				Constraint: LiteralType{Type: cty.String},
 				IsRequired: true,
 				IsComputed: true,
 			},
@@ -48,7 +48,7 @@ func TestAttributeSchema_Validate(t *testing.T) {
 		},
 		{
 			&AttributeSchema{
-				Expr:       LiteralTypeOnly(cty.String),
+				Constraint: LiteralType{Type: cty.String},
 				IsOptional: true,
 				IsComputed: true,
 			},
@@ -56,58 +56,42 @@ func TestAttributeSchema_Validate(t *testing.T) {
 		},
 		{
 			&AttributeSchema{
-				Expr: ExprConstraints{
-					TraversalExpr{OfType: cty.String},
-				},
+				Constraint: Reference{OfType: cty.String},
 				IsOptional: true,
 			},
 			nil,
 		},
 		{
 			&AttributeSchema{
-				Expr: ExprConstraints{
-					TraversalExpr{OfScopeId: lang.ScopeId("blah")},
-				},
+				Constraint: Reference{OfScopeId: lang.ScopeId("blah")},
 				IsOptional: true,
 			},
 			nil,
 		},
 		{
 			&AttributeSchema{
-				Expr: ExprConstraints{
-					TraversalExpr{OfType: cty.Number, OfScopeId: lang.ScopeId("blah")},
-				},
+				Constraint: Reference{OfType: cty.Number, OfScopeId: lang.ScopeId("blah")},
 				IsOptional: true,
 			},
 			nil,
 		},
 		{
 			&AttributeSchema{
-				Expr: ExprConstraints{
-					TraversalExpr{OfType: cty.Number, Address: &TraversalAddrSchema{
-						ScopeId: lang.ScopeId("test"),
-					}},
-				},
+				Constraint: Reference{OfType: cty.Number, Address: &ReferenceAddrSchema{ScopeId: lang.ScopeId("test")}},
 				IsOptional: true,
 			},
-			errors.New("(0: schema.TraversalExpr) cannot be have both Address and OfType/OfScopeId set"),
+			errors.New("cannot have both Address and OfType/OfScopeId set"),
 		},
 		{
 			&AttributeSchema{
-				Expr: ExprConstraints{
-					TraversalExpr{Address: &TraversalAddrSchema{}},
-				},
+				Constraint: Reference{Address: &ReferenceAddrSchema{}},
 				IsOptional: true,
 			},
-			errors.New("(0: schema.TraversalExpr) Address requires non-emmpty ScopeId"),
+			errors.New("Address requires non-emmpty ScopeId"),
 		},
 		{
 			&AttributeSchema{
-				Expr: ExprConstraints{
-					TraversalExpr{Address: &TraversalAddrSchema{
-						ScopeId: lang.ScopeId("blah"),
-					}},
-				},
+				Constraint: Reference{Address: &ReferenceAddrSchema{ScopeId: lang.ScopeId("blah")}},
 				IsOptional: true,
 			},
 			nil,
@@ -162,9 +146,7 @@ func TestAttributeSchema_Validate(t *testing.T) {
 		},
 		{
 			&AttributeSchema{
-				Expr: ExprConstraints{
-					TraversalExpr{OfType: cty.Number, OfScopeId: lang.ScopeId("blah")},
-				},
+				Constraint:  Reference{OfType: cty.Number, OfScopeId: lang.ScopeId("blah")},
 				IsRequired:  true,
 				IsSensitive: true,
 			},

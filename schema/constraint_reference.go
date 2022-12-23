@@ -67,7 +67,7 @@ func (ref Reference) Copy() Constraint {
 
 func (ref Reference) Validate() error {
 	if ref.Address != nil && (ref.OfType != cty.NilType || ref.OfScopeId != "") {
-		return errors.New("cannot be have both Address and OfType/OfScopeId set")
+		return errors.New("cannot have both Address and OfType/OfScopeId set")
 	}
 	if ref.Address != nil && ref.Address.ScopeId == "" {
 		return errors.New("Address requires non-emmpty ScopeId")
