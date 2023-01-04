@@ -67,8 +67,11 @@ func (ref Reference) Copy() Constraint {
 }
 
 func (ref Reference) EmptyCompletionData(ctx context.Context, nextPlaceholder int, nestingLevel int) CompletionData {
-	// TODO
-	return CompletionData{}
+	return CompletionData{
+		NewText:        "",
+		Snippet:        "",
+		TriggerSuggest: true,
+	}
 }
 
 func (ref Reference) Validate() error {
