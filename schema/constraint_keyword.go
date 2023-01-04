@@ -37,6 +37,8 @@ func (k Keyword) Copy() Constraint {
 }
 
 func (k Keyword) EmptyCompletionData(nextPlaceholder int) CompletionData {
-	// TODO
-	return CompletionData{}
+	return CompletionData{
+		TriggerSuggest:  true,
+		LastPlaceholder: nextPlaceholder,
+	}
 }
