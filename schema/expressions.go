@@ -101,22 +101,22 @@ func (lt LiteralTypeExpr) Copy() ExprConstraint {
 	}
 }
 
-type LiteralValue struct {
+type LegacyLiteralValue struct {
 	Val          cty.Value
 	IsDeprecated bool
 	Description  lang.MarkupContent
 }
 
-func (LiteralValue) isExprConstraintImpl() exprConstrSigil {
+func (LegacyLiteralValue) isExprConstraintImpl() exprConstrSigil {
 	return exprConstrSigil{}
 }
 
-func (lv LiteralValue) FriendlyName() string {
+func (lv LegacyLiteralValue) FriendlyName() string {
 	return lv.Val.Type().FriendlyNameForConstraint()
 }
 
-func (lv LiteralValue) Copy() ExprConstraint {
-	return LiteralValue{
+func (lv LegacyLiteralValue) Copy() ExprConstraint {
+	return LegacyLiteralValue{
 		// cty.Value is immutable by design
 		Val:          lv.Val,
 		IsDeprecated: lv.IsDeprecated,

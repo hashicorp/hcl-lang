@@ -4,7 +4,7 @@ var (
 	_ ExprConstraint = KeywordExpr{}
 	_ ExprConstraint = ListExpr{}
 	_ ExprConstraint = LiteralTypeExpr{}
-	_ ExprConstraint = LiteralValue{}
+	_ ExprConstraint = LegacyLiteralValue{}
 	_ ExprConstraint = MapExpr{}
 	_ ExprConstraint = MapExpr{}
 	_ ExprConstraint = ObjectExprAttributes{}

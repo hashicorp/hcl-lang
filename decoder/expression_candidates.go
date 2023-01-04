@@ -302,7 +302,7 @@ func (d *PathDecoder) constraintToCandidates(ctx context.Context, constraint sch
 	switch c := constraint.(type) {
 	case schema.LiteralTypeExpr:
 		candidates = append(candidates, typeToCandidates(c.Type, editRng)...)
-	case schema.LiteralValue:
+	case schema.LegacyLiteralValue:
 		if c, ok := valueToCandidate(c.Val, c.Description, c.IsDeprecated, editRng); ok {
 			candidates = append(candidates, c)
 		}
@@ -481,7 +481,7 @@ func newTextForConstraints(cons schema.ExprConstraints, isNested bool) string {
 		switch c := constraint.(type) {
 		case schema.LiteralTypeExpr:
 			return newTextForLiteralType(c.Type)
-		case schema.LiteralValue:
+		case schema.LegacyLiteralValue:
 			return newTextForLiteralValue(c.Val)
 		case schema.KeywordExpr:
 			return c.Keyword
@@ -531,7 +531,7 @@ func snippetForConstraints(placeholder uint, cons schema.ExprConstraints, isNest
 		switch c := constraint.(type) {
 		case schema.LiteralTypeExpr:
 			return snippetForLiteralType(placeholder, c.Type)
-		case schema.LiteralValue:
+		case schema.LegacyLiteralValue:
 			return snippetForLiteralValue(placeholder, c.Val)
 		case schema.KeywordExpr:
 			return fmt.Sprintf("${%d:%s}", placeholder, c.Keyword)
@@ -592,7 +592,7 @@ func labelsForConstraints(cons schema.ExprConstraints) labelSet {
 		switch c := constraint.(type) {
 		case schema.LiteralTypeExpr:
 			ls = ls.AddLabelIfNotPresent(labelForLiteralType(c.Type))
-		case schema.LiteralValue:
+		case schema.LegacyLiteralValue:
 			continue
 		case schema.KeywordExpr:
 			ls = ls.AddLabelIfNotPresent(c.FriendlyName())
@@ -721,7 +721,7 @@ func triggerSuggestForExprConstraints(ec schema.ExprConstraints) bool {
 			if et.Type == cty.Bool {
 				return true
 			}
-		case schema.LiteralValue:
+		case schema.LegacyLiteralValue:
 			if len(ec) > 1 {
 				return true
 			}
@@ -755,7 +755,7 @@ func snippetForExprContraints(placeholder uint, ec schema.ExprConstraints) strin
 		switch et := expr.(type) {
 		case schema.LiteralTypeExpr:
 			return snippetForLiteralType(placeholder, et.Type)
-		case schema.LiteralValue:
+		case schema.LegacyLiteralValue:
 			if len(ec) == 1 {
 				return snippetForLiteralValue(placeholder, et.Val)
 			}
@@ -798,7 +798,7 @@ func snippetForExprContraint(placeholder uint, ec schema.ExprConstraints) string
 	if t, ok := e.LiteralType(); ok {
 		return snippetForLiteralType(placeholder, t)
 	}
-	// case schema.LiteralValue:
+	// case schema.LegacyLiteralValue:
 	// 	if len(ec) == 1 {
 	// 		return snippetForLiteralValue(placeholder, et.Val)
 	// 	}
