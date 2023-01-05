@@ -20,6 +20,30 @@ type Expression interface {
 }
 
 func NewExpression(expr hcl.Expression, cons schema.Constraint) Expression {
-	// TODO
-	return nil
+	switch c := cons.(type) {
+	case schema.LiteralType:
+		return LiteralType{expr: expr, cons: c}
+	case schema.Reference:
+		return Reference{expr: expr, cons: c}
+	case schema.TypeDeclaration:
+		return TypeDeclaration{expr: expr, cons: c}
+	case schema.Keyword:
+		return Keyword{expr: expr, cons: c}
+	case schema.List:
+		return List{expr: expr, cons: c}
+	case schema.Set:
+		return Set{expr: expr, cons: c}
+	case schema.Tuple:
+		return Tuple{expr: expr, cons: c}
+	case schema.Object:
+		return Object{expr: expr, cons: c}
+	case schema.Map:
+		return Map{expr: expr, cons: c}
+	case schema.OneOf:
+		return OneOf{expr: expr, cons: c}
+	case schema.LiteralValue:
+		return LiteralValue{expr: expr, cons: c}
+	}
+
+	return unknownExpression{}
 }
