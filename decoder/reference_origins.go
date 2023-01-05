@@ -289,54 +289,6 @@ func (d *PathDecoder) findOriginsInExpression(expr hcl.Expression, ec schema.Exp
 	return origins
 }
 
-func (d *PathDecoder) referenceOriginAtPos(body *hclsyntax.Body, bodySchema *schema.BodySchema, pos hcl.Pos) (*reference.Origin, error) {
-	for _, attr := range body.Attributes {
-		if d.isPosInsideAttrExpr(attr, pos) {
-			aSchema, ok := bodySchema.Attributes[attr.Name]
-			if !ok {
-				if bodySchema.AnyAttribute == nil {
-					// skip unknown attribute
-					continue
-				}
-				aSchema = bodySchema.AnyAttribute
-			}
-
-			allowSelfRefs := false
-			if bodySchema.Extensions != nil && bodySchema.Extensions.SelfRefs {
-				allowSelfRefs = true
-			}
-			for _, origin := range d.findOriginsInExpression(attr.Expr, aSchema.Expr, allowSelfRefs) {
-				if origin.OriginRange().ContainsPos(pos) {
-					return &origin, nil
-				}
-			}
-
-			return nil, nil
-		}
-	}
-
-	for _, block := range body.Blocks {
-		if block.Range().ContainsPos(pos) {
-			if block.Body != nil && block.Body.Range().ContainsPos(pos) {
-				bSchema, ok := bodySchema.Blocks[block.Type]
-				if !ok {
-					// skip unknown block
-					continue
-				}
-
-				mergedSchema, err := mergeBlockBodySchemas(block.AsHCLBlock(), bSchema)
-				if err != nil {
-					continue
-				}
-
-				return d.referenceOriginAtPos(block.Body, mergedSchema, pos)
-			}
-		}
-	}
-
-	return nil, nil
-}
-
 func (d *PathDecoder) traversalAtPos(expr hclsyntax.Expression, pos hcl.Pos) (hcl.Traversal, bool) {
 	for _, traversal := range expr.Variables() {
 		if traversal.SourceRange().ContainsPos(pos) {
