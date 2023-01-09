@@ -20,11 +20,12 @@ type Validatable interface {
 	Validate() error
 }
 
-// Conformable represents a constraint which is type-aware,
-// making it possible to test a given type for conformity.
+// Comparable represents a constraint which is type-aware,
+// making it possible to compare a given type for conformity.
+//
 // This can affect completion hooks.
-type Conformable interface {
-	Conforms(typ cty.Type) bool
+type Comparable interface {
+	IsCompatible(typ cty.Type) bool
 }
 
 type CompletionData struct {
