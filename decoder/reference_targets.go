@@ -2,6 +2,7 @@ package decoder
 
 import (
 	"bytes"
+	"context"
 	"sort"
 
 	"github.com/hashicorp/hcl-lang/lang"
@@ -268,8 +269,10 @@ func decodeTargetableBody(body hcl.Body, parentBlock *blockContent, tt *schema.T
 func decodeReferenceTargetsForAttribute(attr *hcl.Attribute, attrSchema *schema.AttributeSchema) reference.Targets {
 	refs := make(reference.Targets, 0)
 
+	ctx := context.Background()
+
 	if attrSchema.Constraint != nil {
-		refs = append(refs, NewExpression(attr.Expr, attrSchema.Constraint).ReferenceTargets(attrSchema.Address)...)
+		refs = append(refs, NewExpression(attr.Expr, attrSchema.Constraint).ReferenceTargets(ctx, attrSchema.Address)...)
 	} else {
 		if attrSchema.Address != nil {
 			attrAddr, ok := resolveAttributeAddress(attr, attrSchema.Address.Steps)

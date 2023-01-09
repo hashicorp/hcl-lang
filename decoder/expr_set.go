@@ -29,12 +29,12 @@ func (s Set) SemanticTokens(ctx context.Context) []lang.SemanticToken {
 	return nil
 }
 
-func (s Set) ReferenceOrigins(allowSelfRefs bool) reference.Origins {
+func (s Set) ReferenceOrigins(ctx context.Context, allowSelfRefs bool) reference.Origins {
 	// TODO
 	return nil
 }
 
-func (s Set) ReferenceTargets(attrAddr *schema.AttributeAddrSchema) reference.Targets {
+func (s Set) ReferenceTargets(ctx context.Context, attrAddr *schema.AttributeAddrSchema) reference.Targets {
 	// TODO
 	return nil
 }

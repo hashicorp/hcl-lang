@@ -23,10 +23,10 @@ func (oo unknownExpression) SemanticTokens(ctx context.Context) []lang.SemanticT
 	return []lang.SemanticToken{}
 }
 
-func (oo unknownExpression) ReferenceOrigins(allowSelfRefs bool) reference.Origins {
+func (oo unknownExpression) ReferenceOrigins(ctx context.Context, allowSelfRefs bool) reference.Origins {
 	return reference.Origins{}
 }
 
-func (oo unknownExpression) ReferenceTargets(attrAddr *schema.AttributeAddrSchema) reference.Targets {
+func (oo unknownExpression) ReferenceTargets(ctx context.Context, attrAddr *schema.AttributeAddrSchema) reference.Targets {
 	return reference.Targets{}
 }

@@ -15,8 +15,8 @@ type Expression interface {
 	CompletionAtPos(ctx context.Context, pos hcl.Pos) []lang.Candidate
 	HoverAtPos(ctx context.Context, pos hcl.Pos) *lang.HoverData
 	SemanticTokens(ctx context.Context) []lang.SemanticToken
-	ReferenceOrigins(allowSelfRefs bool) reference.Origins
-	ReferenceTargets(attrAddr *schema.AttributeAddrSchema) reference.Targets
+	ReferenceOrigins(ctx context.Context, allowSelfRefs bool) reference.Origins
+	ReferenceTargets(ctx context.Context, attrAddr *schema.AttributeAddrSchema) reference.Targets
 }
 
 func NewExpression(expr hcl.Expression, cons schema.Constraint) Expression {

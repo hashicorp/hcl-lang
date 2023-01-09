@@ -29,12 +29,12 @@ func (obj Object) SemanticTokens(ctx context.Context) []lang.SemanticToken {
 	return nil
 }
 
-func (obj Object) ReferenceOrigins(allowSelfRefs bool) reference.Origins {
+func (obj Object) ReferenceOrigins(ctx context.Context, allowSelfRefs bool) reference.Origins {
 	// TODO
 	return nil
 }
 
-func (obj Object) ReferenceTargets(attrAddr *schema.AttributeAddrSchema) reference.Targets {
+func (obj Object) ReferenceTargets(ctx context.Context, attrAddr *schema.AttributeAddrSchema) reference.Targets {
 	// TODO
 	return nil
 }
@@ -59,12 +59,12 @@ func (oa ObjectAttributes) SemanticTokens(ctx context.Context) []lang.SemanticTo
 	return nil
 }
 
-func (oa ObjectAttributes) ReferenceOrigins(allowSelfRefs bool) reference.Origins {
+func (oa ObjectAttributes) ReferenceOrigins(ctx context.Context, allowSelfRefs bool) reference.Origins {
 	// TODO
 	return nil
 }
 
-func (oa ObjectAttributes) ReferenceTargets(attrAddr *schema.AttributeAddrSchema) reference.Targets {
+func (oa ObjectAttributes) ReferenceTargets(ctx context.Context, attrAddr *schema.AttributeAddrSchema) reference.Targets {
 	// TODO
 	return nil
 }

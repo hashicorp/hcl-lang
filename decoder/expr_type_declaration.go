@@ -29,12 +29,12 @@ func (td TypeDeclaration) SemanticTokens(ctx context.Context) []lang.SemanticTok
 	return nil
 }
 
-func (td TypeDeclaration) ReferenceOrigins(allowSelfRefs bool) reference.Origins {
+func (td TypeDeclaration) ReferenceOrigins(ctx context.Context, allowSelfRefs bool) reference.Origins {
 	// TODO
 	return nil
 }
 
-func (td TypeDeclaration) ReferenceTargets(attrAddr *schema.AttributeAddrSchema) reference.Targets {
+func (td TypeDeclaration) ReferenceTargets(ctx context.Context, attrAddr *schema.AttributeAddrSchema) reference.Targets {
 	// TODO
 	return nil
 }

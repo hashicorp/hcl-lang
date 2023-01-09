@@ -118,6 +118,8 @@ func (d *PathDecoder) referenceOriginsInBody(body hcl.Body, bodySchema *schema.B
 		return origins, impliedOrigins
 	}
 
+	ctx := context.Background()
+
 	impliedOrigins = append(impliedOrigins, bodySchema.ImpliedOrigins...)
 	content := decodeBody(body, bodySchema)
 
@@ -169,7 +171,7 @@ func (d *PathDecoder) referenceOriginsInBody(body hcl.Body, bodySchema *schema.B
 			allowSelfRefs = true
 		}
 		if aSchema.Constraint != nil {
-			origins = append(origins, NewExpression(attr.Expr, aSchema.Constraint).ReferenceOrigins(allowSelfRefs)...)
+			origins = append(origins, NewExpression(attr.Expr, aSchema.Constraint).ReferenceOrigins(ctx, allowSelfRefs)...)
 		} else {
 			origins = append(origins, d.legacyFindOriginsInExpression(attr.Expr, aSchema.Expr, allowSelfRefs)...)
 		}

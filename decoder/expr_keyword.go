@@ -29,12 +29,12 @@ func (kw Keyword) SemanticTokens(ctx context.Context) []lang.SemanticToken {
 	return nil
 }
 
-func (kw Keyword) ReferenceOrigins(allowSelfRefs bool) reference.Origins {
+func (kw Keyword) ReferenceOrigins(ctx context.Context, allowSelfRefs bool) reference.Origins {
 	// TODO
 	return nil
 }
 
-func (kw Keyword) ReferenceTargets(attrAddr *schema.AttributeAddrSchema) reference.Targets {
+func (kw Keyword) ReferenceTargets(ctx context.Context, attrAddr *schema.AttributeAddrSchema) reference.Targets {
 	// TODO
 	return nil
 }
