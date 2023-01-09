@@ -292,13 +292,3 @@ func (d *PathDecoder) legacyFindOriginsInExpression(expr hcl.Expression, ec sche
 
 	return origins
 }
-
-func (d *PathDecoder) traversalAtPos(expr hclsyntax.Expression, pos hcl.Pos) (hcl.Traversal, bool) {
-	for _, traversal := range expr.Variables() {
-		if traversal.SourceRange().ContainsPos(pos) {
-			return traversal, true
-		}
-	}
-
-	return nil, false
-}
