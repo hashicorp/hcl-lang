@@ -15,7 +15,7 @@ import (
 	"github.com/zclconf/go-cty/cty"
 )
 
-func TestDecoder_CandidateAtPos_expressions(t *testing.T) {
+func TestLegacyDecoder_CandidateAtPos_expressions(t *testing.T) {
 	ctx := context.Background()
 	testCases := []struct {
 		testName           string
@@ -1441,7 +1441,7 @@ func TestDecoder_CandidateAtPos_expressions(t *testing.T) {
 	}
 }
 
-func TestDecoder_CandidateAtPos_traversalExpressions(t *testing.T) {
+func TestLegacyDecoder_CandidateAtPos_traversalExpressions(t *testing.T) {
 	ctx := context.Background()
 	testCases := []struct {
 		testName           string
@@ -2480,7 +2480,7 @@ another_block "meh" {
 	}
 }
 
-func TestDecoder_CandidateAtPos_expressions_crossFileTraversal(t *testing.T) {
+func TestLegacyDecoder_CandidateAtPos_expressions_crossFileTraversal(t *testing.T) {
 	ctx := context.Background()
 	f1, _ := hclsyntax.ParseConfig([]byte(`variable "aaa" {}
 variable "bbb" {}
@@ -2659,7 +2659,7 @@ variable "ccc" {}
 	}
 }
 
-func TestDecoder_CandidateAtPos_expressions_Hooks(t *testing.T) {
+func TestLegacyDecoder_CandidateAtPos_expressions_Hooks(t *testing.T) {
 	ctx := context.Background()
 	testCases := []struct {
 		testName           string
@@ -2835,7 +2835,7 @@ func TestDecoder_CandidateAtPos_expressions_Hooks(t *testing.T) {
 	}
 }
 
-func TestDecoder_CandidateAtPos_maxCandidates(t *testing.T) {
+func TestLegacyDecoder_CandidateAtPos_maxCandidates(t *testing.T) {
 	ctx := context.Background()
 	bodySchema := &schema.BodySchema{
 		Attributes: map[string]*schema.AttributeSchema{

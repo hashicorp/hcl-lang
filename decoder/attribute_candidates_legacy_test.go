@@ -13,7 +13,7 @@ import (
 	"github.com/zclconf/go-cty/cty"
 )
 
-func TestSnippetForAttribute(t *testing.T) {
+func TestLegacyDecoder_CompletionAtPos_EmptyCompletionData(t *testing.T) {
 	testCases := []struct {
 		testName           string
 		attrName           string

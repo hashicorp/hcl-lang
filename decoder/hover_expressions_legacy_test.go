@@ -16,7 +16,7 @@ import (
 	"github.com/zclconf/go-cty/cty"
 )
 
-func TestDecoder_HoverAtPos_expressions(t *testing.T) {
+func TestLegacyDecoder_HoverAtPos_expressions(t *testing.T) {
 	testCases := []struct {
 		name         string
 		attrSchema   map[string]*schema.AttributeSchema
@@ -1340,7 +1340,7 @@ _object_`),
 	}
 }
 
-func TestDecoder_HoverAtPos_traversalExpressions(t *testing.T) {
+func TestLegacyDecoder_HoverAtPos_traversalExpressions(t *testing.T) {
 	testCases := []struct {
 		name         string
 		attrSchema   map[string]*schema.AttributeSchema

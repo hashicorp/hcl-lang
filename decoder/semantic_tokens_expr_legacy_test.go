@@ -14,7 +14,7 @@ import (
 	"github.com/zclconf/go-cty/cty"
 )
 
-func TestDecoder_SemanticTokensInFile_expressions(t *testing.T) {
+func TestLegacyDecoder_SemanticTokensInFile_expressions(t *testing.T) {
 	testCases := []struct {
 		name           string
 		attrSchema     map[string]*schema.AttributeSchema
@@ -1401,7 +1401,7 @@ EOT
 	}
 }
 
-func TestDecoder_SemanticTokensInFile_traversalExpression(t *testing.T) {
+func TestLegacyDecoder_SemanticTokensInFile_traversalExpression(t *testing.T) {
 	testCases := []struct {
 		name           string
 		attrSchema     map[string]*schema.AttributeSchema
@@ -2079,7 +2079,7 @@ func TestDecoder_SemanticTokensInFile_traversalExpression(t *testing.T) {
 	}
 }
 
-func TestDecoder_SemanticTokensInFile_typeDeclaration(t *testing.T) {
+func TestLegacyDecoder_SemanticTokensInFile_typeDeclaration(t *testing.T) {
 	testCases := []struct {
 		name           string
 		attrSchema     map[string]*schema.AttributeSchema
