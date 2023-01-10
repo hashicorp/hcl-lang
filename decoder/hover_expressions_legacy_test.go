@@ -16,7 +16,7 @@ import (
 	"github.com/zclconf/go-cty/cty"
 )
 
-func TestDecoder_HoverAtPos_expressions(t *testing.T) {
+func TestLegacyDecoder_HoverAtPos_expressions(t *testing.T) {
 	testCases := []struct {
 		name         string
 		attrSchema   map[string]*schema.AttributeSchema
@@ -175,7 +175,7 @@ EOT
 			"string as value",
 			map[string]*schema.AttributeSchema{
 				"lit1": {Expr: schema.ExprConstraints{
-					schema.LiteralValue{Val: cty.StringVal("foo")},
+					schema.LegacyLiteralValue{Val: cty.StringVal("foo")},
 				}},
 			},
 			`lit1 = "foo"`,
@@ -202,7 +202,7 @@ EOT
 			"mismatching literal value",
 			map[string]*schema.AttributeSchema{
 				"lit2": {Expr: schema.ExprConstraints{
-					schema.LiteralValue{Val: cty.StringVal("bar")},
+					schema.LegacyLiteralValue{Val: cty.StringVal("bar")},
 				}},
 			},
 			`lit2 = "baz"`,
@@ -791,7 +791,7 @@ _object_`),
 			"map as value",
 			map[string]*schema.AttributeSchema{
 				"nummap": {Expr: schema.ExprConstraints{
-					schema.LiteralValue{
+					schema.LegacyLiteralValue{
 						Val: cty.MapVal(map[string]cty.Value{
 							"first":  cty.NumberIntVal(12),
 							"second": cty.NumberIntVal(24),
@@ -1120,7 +1120,7 @@ _object_`),
 			"object as value",
 			map[string]*schema.AttributeSchema{
 				"objval": {Expr: schema.ExprConstraints{
-					schema.LiteralValue{
+					schema.LegacyLiteralValue{
 						Val: cty.ObjectVal(map[string]cty.Value{
 							"source": cty.StringVal("blah"),
 							"bool":   cty.True,
@@ -1176,7 +1176,7 @@ _object_`),
 			"list as value",
 			map[string]*schema.AttributeSchema{
 				"listval": {Expr: schema.ExprConstraints{
-					schema.LiteralValue{
+					schema.LegacyLiteralValue{
 						Val: cty.ListVal([]cty.Value{
 							cty.StringVal("first"),
 							cty.StringVal("second"),
@@ -1208,7 +1208,7 @@ _object_`),
 			"set as value",
 			map[string]*schema.AttributeSchema{
 				"setval": {Expr: schema.ExprConstraints{
-					schema.LiteralValue{
+					schema.LegacyLiteralValue{
 						Val: cty.SetVal([]cty.Value{
 							cty.StringVal("west"),
 							cty.StringVal("east"),
@@ -1340,7 +1340,7 @@ _object_`),
 	}
 }
 
-func TestDecoder_HoverAtPos_traversalExpressions(t *testing.T) {
+func TestLegacyDecoder_HoverAtPos_traversalExpressions(t *testing.T) {
 	testCases := []struct {
 		name         string
 		attrSchema   map[string]*schema.AttributeSchema

@@ -14,7 +14,7 @@ import (
 	"github.com/zclconf/go-cty/cty"
 )
 
-func TestDecoder_SemanticTokensInFile_expressions(t *testing.T) {
+func TestLegacyDecoder_SemanticTokensInFile_expressions(t *testing.T) {
 	testCases := []struct {
 		name           string
 		attrSchema     map[string]*schema.AttributeSchema
@@ -26,7 +26,7 @@ func TestDecoder_SemanticTokensInFile_expressions(t *testing.T) {
 			map[string]*schema.AttributeSchema{
 				"str": {
 					Expr: schema.ExprConstraints{
-						schema.LiteralValue{
+						schema.LegacyLiteralValue{
 							Val: cty.StringVal("blablah"),
 						},
 					},
@@ -123,7 +123,7 @@ EOT
 			map[string]*schema.AttributeSchema{
 				"str": {
 					Expr: schema.ExprConstraints{
-						schema.LiteralValue{
+						schema.LegacyLiteralValue{
 							Val: cty.StringVal("blablah"),
 						},
 					},
@@ -155,7 +155,7 @@ EOT
 			map[string]*schema.AttributeSchema{
 				"obj": {
 					Expr: schema.ExprConstraints{
-						schema.LiteralValue{
+						schema.LegacyLiteralValue{
 							Val: cty.ObjectVal(map[string]cty.Value{
 								"first":  cty.NumberIntVal(42),
 								"second": cty.StringVal("boo"),
@@ -261,7 +261,7 @@ EOT
 			map[string]*schema.AttributeSchema{
 				"obj": {
 					Expr: schema.ExprConstraints{
-						schema.LiteralValue{
+						schema.LegacyLiteralValue{
 							Val: cty.ObjectVal(map[string]cty.Value{
 								"knownkey": cty.NumberIntVal(43),
 							}),
@@ -1237,7 +1237,7 @@ EOT
 			map[string]*schema.AttributeSchema{
 				"attr": {
 					Expr: schema.ExprConstraints{
-						schema.LiteralValue{
+						schema.LegacyLiteralValue{
 							Val: cty.ListVal([]cty.Value{
 								cty.StringVal("one"),
 								cty.StringVal("two"),
@@ -1401,7 +1401,7 @@ EOT
 	}
 }
 
-func TestDecoder_SemanticTokensInFile_traversalExpression(t *testing.T) {
+func TestLegacyDecoder_SemanticTokensInFile_traversalExpression(t *testing.T) {
 	testCases := []struct {
 		name           string
 		attrSchema     map[string]*schema.AttributeSchema
@@ -2079,7 +2079,7 @@ func TestDecoder_SemanticTokensInFile_traversalExpression(t *testing.T) {
 	}
 }
 
-func TestDecoder_SemanticTokensInFile_typeDeclaration(t *testing.T) {
+func TestLegacyDecoder_SemanticTokensInFile_typeDeclaration(t *testing.T) {
 	testCases := []struct {
 		name           string
 		attrSchema     map[string]*schema.AttributeSchema

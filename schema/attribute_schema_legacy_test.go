@@ -9,22 +9,22 @@ import (
 	"github.com/zclconf/go-cty/cty"
 )
 
-func TestAttributeSchema_Validate(t *testing.T) {
+func TestLegacyAttributeSchema_Validate(t *testing.T) {
 	testCases := []struct {
 		schema      *AttributeSchema
 		expectedErr error
 	}{
 		{
 			&AttributeSchema{
-				Constraint: LiteralType{Type: cty.String},
+				Expr: LiteralTypeOnly(cty.String),
 			},
 			errors.New("one of IsRequired, IsOptional, or IsComputed must be set"),
 		},
 		{
 			&AttributeSchema{
-				Constraint: OneOf{
-					LiteralType{Type: cty.String},
-					LiteralType{Type: cty.Number},
+				Expr: ExprConstraints{
+					LiteralTypeExpr{Type: cty.String},
+					LiteralTypeExpr{Type: cty.Number},
 				},
 				IsComputed: true,
 			},
@@ -32,7 +32,7 @@ func TestAttributeSchema_Validate(t *testing.T) {
 		},
 		{
 			&AttributeSchema{
-				Constraint: LiteralType{Type: cty.String},
+				Expr:       LiteralTypeOnly(cty.String),
 				IsRequired: true,
 				IsOptional: true,
 			},
@@ -40,7 +40,7 @@ func TestAttributeSchema_Validate(t *testing.T) {
 		},
 		{
 			&AttributeSchema{
-				Constraint: LiteralType{Type: cty.String},
+				Expr:       LiteralTypeOnly(cty.String),
 				IsRequired: true,
 				IsComputed: true,
 			},
@@ -48,7 +48,7 @@ func TestAttributeSchema_Validate(t *testing.T) {
 		},
 		{
 			&AttributeSchema{
-				Constraint: LiteralType{Type: cty.String},
+				Expr:       LiteralTypeOnly(cty.String),
 				IsOptional: true,
 				IsComputed: true,
 			},
@@ -56,42 +56,58 @@ func TestAttributeSchema_Validate(t *testing.T) {
 		},
 		{
 			&AttributeSchema{
-				Constraint: Reference{OfType: cty.String},
+				Expr: ExprConstraints{
+					TraversalExpr{OfType: cty.String},
+				},
 				IsOptional: true,
 			},
 			nil,
 		},
 		{
 			&AttributeSchema{
-				Constraint: Reference{OfScopeId: lang.ScopeId("blah")},
+				Expr: ExprConstraints{
+					TraversalExpr{OfScopeId: lang.ScopeId("blah")},
+				},
 				IsOptional: true,
 			},
 			nil,
 		},
 		{
 			&AttributeSchema{
-				Constraint: Reference{OfType: cty.Number, OfScopeId: lang.ScopeId("blah")},
+				Expr: ExprConstraints{
+					TraversalExpr{OfType: cty.Number, OfScopeId: lang.ScopeId("blah")},
+				},
 				IsOptional: true,
 			},
 			nil,
 		},
 		{
 			&AttributeSchema{
-				Constraint: Reference{OfType: cty.Number, Address: &ReferenceAddrSchema{ScopeId: lang.ScopeId("test")}},
+				Expr: ExprConstraints{
+					TraversalExpr{OfType: cty.Number, Address: &TraversalAddrSchema{
+						ScopeId: lang.ScopeId("test"),
+					}},
+				},
 				IsOptional: true,
 			},
-			errors.New("cannot have both Address and OfType/OfScopeId set"),
+			errors.New("(0: schema.TraversalExpr) cannot be have both Address and OfType/OfScopeId set"),
 		},
 		{
 			&AttributeSchema{
-				Constraint: Reference{Address: &ReferenceAddrSchema{}},
+				Expr: ExprConstraints{
+					TraversalExpr{Address: &TraversalAddrSchema{}},
+				},
 				IsOptional: true,
 			},
-			errors.New("Address requires non-emmpty ScopeId"),
+			errors.New("(0: schema.TraversalExpr) Address requires non-emmpty ScopeId"),
 		},
 		{
 			&AttributeSchema{
-				Constraint: Reference{Address: &ReferenceAddrSchema{ScopeId: lang.ScopeId("blah")}},
+				Expr: ExprConstraints{
+					TraversalExpr{Address: &TraversalAddrSchema{
+						ScopeId: lang.ScopeId("blah"),
+					}},
+				},
 				IsOptional: true,
 			},
 			nil,
@@ -146,7 +162,9 @@ func TestAttributeSchema_Validate(t *testing.T) {
 		},
 		{
 			&AttributeSchema{
-				Constraint:  Reference{OfType: cty.Number, OfScopeId: lang.ScopeId("blah")},
+				Expr: ExprConstraints{
+					TraversalExpr{OfType: cty.Number, OfScopeId: lang.ScopeId("blah")},
+				},
 				IsRequired:  true,
 				IsSensitive: true,
 			},

@@ -118,6 +118,8 @@ func (d *PathDecoder) referenceOriginsInBody(body hcl.Body, bodySchema *schema.B
 		return origins, impliedOrigins
 	}
 
+	ctx := context.Background()
+
 	impliedOrigins = append(impliedOrigins, bodySchema.ImpliedOrigins...)
 	content := decodeBody(body, bodySchema)
 
@@ -168,7 +170,11 @@ func (d *PathDecoder) referenceOriginsInBody(body hcl.Body, bodySchema *schema.B
 		if bodySchema.Extensions != nil && bodySchema.Extensions.SelfRefs {
 			allowSelfRefs = true
 		}
-		origins = append(origins, d.findOriginsInExpression(attr.Expr, aSchema.Expr, allowSelfRefs)...)
+		if aSchema.Constraint != nil {
+			origins = append(origins, NewExpression(attr.Expr, aSchema.Constraint).ReferenceOrigins(ctx, allowSelfRefs)...)
+		} else {
+			origins = append(origins, d.legacyFindOriginsInExpression(attr.Expr, aSchema.Expr, allowSelfRefs)...)
+		}
 	}
 
 	for _, block := range content.Blocks {
@@ -192,7 +198,7 @@ func (d *PathDecoder) referenceOriginsInBody(body hcl.Body, bodySchema *schema.B
 	return origins, impliedOrigins
 }
 
-func (d *PathDecoder) findOriginsInExpression(expr hcl.Expression, ec schema.ExprConstraints, allowSelfRefs bool) reference.Origins {
+func (d *PathDecoder) legacyFindOriginsInExpression(expr hcl.Expression, ec schema.ExprConstraints, allowSelfRefs bool) reference.Origins {
 	origins := make(reference.Origins, 0)
 
 	switch eType := expr.(type) {
@@ -200,7 +206,7 @@ func (d *PathDecoder) findOriginsInExpression(expr hcl.Expression, ec schema.Exp
 		le, ok := ExprConstraints(ec).ListExpr()
 		if ok {
 			for _, elemExpr := range eType.ExprList() {
-				origins = append(origins, d.findOriginsInExpression(elemExpr, le.Elem, allowSelfRefs)...)
+				origins = append(origins, d.legacyFindOriginsInExpression(elemExpr, le.Elem, allowSelfRefs)...)
 			}
 			break
 		}
@@ -208,7 +214,7 @@ func (d *PathDecoder) findOriginsInExpression(expr hcl.Expression, ec schema.Exp
 		se, ok := ExprConstraints(ec).SetExpr()
 		if ok {
 			for _, elemExpr := range eType.ExprList() {
-				origins = append(origins, d.findOriginsInExpression(elemExpr, se.Elem, allowSelfRefs)...)
+				origins = append(origins, d.legacyFindOriginsInExpression(elemExpr, se.Elem, allowSelfRefs)...)
 			}
 			break
 		}
@@ -219,7 +225,7 @@ func (d *PathDecoder) findOriginsInExpression(expr hcl.Expression, ec schema.Exp
 				if len(tue.Elems) < i+1 {
 					break
 				}
-				origins = append(origins, d.findOriginsInExpression(elemExpr, tue.Elems[i], allowSelfRefs)...)
+				origins = append(origins, d.legacyFindOriginsInExpression(elemExpr, tue.Elems[i], allowSelfRefs)...)
 			}
 		}
 	case *hclsyntax.ObjectConsExpr:
@@ -239,14 +245,14 @@ func (d *PathDecoder) findOriginsInExpression(expr hcl.Expression, ec schema.Exp
 					continue
 				}
 
-				origins = append(origins, d.findOriginsInExpression(item.ValueExpr, attr.Expr, allowSelfRefs)...)
+				origins = append(origins, d.legacyFindOriginsInExpression(item.ValueExpr, attr.Expr, allowSelfRefs)...)
 			}
 		}
 
 		me, ok := ExprConstraints(ec).MapExpr()
 		if ok {
 			for _, item := range eType.Items {
-				origins = append(origins, d.findOriginsInExpression(item.ValueExpr, me.Elem, allowSelfRefs)...)
+				origins = append(origins, d.legacyFindOriginsInExpression(item.ValueExpr, me.Elem, allowSelfRefs)...)
 			}
 		}
 	case *hclsyntax.AnonSymbolExpr,
@@ -287,62 +293,4 @@ func (d *PathDecoder) findOriginsInExpression(expr hcl.Expression, ec schema.Exp
 	}
 
 	return origins
-}
-
-func (d *PathDecoder) referenceOriginAtPos(body *hclsyntax.Body, bodySchema *schema.BodySchema, pos hcl.Pos) (*reference.Origin, error) {
-	for _, attr := range body.Attributes {
-		if d.isPosInsideAttrExpr(attr, pos) {
-			aSchema, ok := bodySchema.Attributes[attr.Name]
-			if !ok {
-				if bodySchema.AnyAttribute == nil {
-					// skip unknown attribute
-					continue
-				}
-				aSchema = bodySchema.AnyAttribute
-			}
-
-			allowSelfRefs := false
-			if bodySchema.Extensions != nil && bodySchema.Extensions.SelfRefs {
-				allowSelfRefs = true
-			}
-			for _, origin := range d.findOriginsInExpression(attr.Expr, aSchema.Expr, allowSelfRefs) {
-				if origin.OriginRange().ContainsPos(pos) {
-					return &origin, nil
-				}
-			}
-
-			return nil, nil
-		}
-	}
-
-	for _, block := range body.Blocks {
-		if block.Range().ContainsPos(pos) {
-			if block.Body != nil && block.Body.Range().ContainsPos(pos) {
-				bSchema, ok := bodySchema.Blocks[block.Type]
-				if !ok {
-					// skip unknown block
-					continue
-				}
-
-				mergedSchema, err := mergeBlockBodySchemas(block.AsHCLBlock(), bSchema)
-				if err != nil {
-					continue
-				}
-
-				return d.referenceOriginAtPos(block.Body, mergedSchema, pos)
-			}
-		}
-	}
-
-	return nil, nil
-}
-
-func (d *PathDecoder) traversalAtPos(expr hclsyntax.Expression, pos hcl.Pos) (hcl.Traversal, bool) {
-	for _, traversal := range expr.Variables() {
-		if traversal.SourceRange().ContainsPos(pos) {
-			return traversal, true
-		}
-	}
-
-	return nil, false
 }

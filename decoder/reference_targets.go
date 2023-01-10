@@ -2,6 +2,7 @@ package decoder
 
 import (
 	"bytes"
+	"context"
 	"sort"
 
 	"github.com/hashicorp/hcl-lang/lang"
@@ -268,55 +269,62 @@ func decodeTargetableBody(body hcl.Body, parentBlock *blockContent, tt *schema.T
 func decodeReferenceTargetsForAttribute(attr *hcl.Attribute, attrSchema *schema.AttributeSchema) reference.Targets {
 	refs := make(reference.Targets, 0)
 
-	if attrSchema.Address != nil {
-		attrAddr, ok := resolveAttributeAddress(attr, attrSchema.Address.Steps)
-		if ok {
-			if attrSchema.Address.AsReference {
-				ref := reference.Target{
-					Addr:        attrAddr,
-					ScopeId:     attrSchema.Address.ScopeId,
-					DefRangePtr: &attr.NameRange,
-					RangePtr:    attr.Range.Ptr(),
-					Name:        attrSchema.Address.FriendlyName,
-				}
-				refs = append(refs, ref)
-			}
+	ctx := context.Background()
 
-			if attrSchema.Address.AsExprType {
-				t, ok := exprConstraintToDataType(attrSchema.Expr)
-				if ok {
-					if t == cty.DynamicPseudoType && attr.Expr != nil {
-						// attempt to make the type more specific
-						exprVal, diags := attr.Expr.Value(nil)
-						if !diags.HasErrors() {
-							t = exprVal.Type()
-						}
-					}
-
-					scopeId := attrSchema.Address.ScopeId
-
+	if attrSchema.Constraint != nil {
+		refs = append(refs, NewExpression(attr.Expr, attrSchema.Constraint).ReferenceTargets(ctx, attrSchema.Address)...)
+	} else {
+		if attrSchema.Address != nil {
+			attrAddr, ok := resolveAttributeAddress(attr, attrSchema.Address.Steps)
+			if ok {
+				if attrSchema.Address.AsReference {
 					ref := reference.Target{
 						Addr:        attrAddr,
-						Type:        t,
-						ScopeId:     scopeId,
-						DefRangePtr: attr.NameRange.Ptr(),
+						ScopeId:     attrSchema.Address.ScopeId,
+						DefRangePtr: &attr.NameRange,
 						RangePtr:    attr.Range.Ptr(),
 						Name:        attrSchema.Address.FriendlyName,
 					}
-
-					if attr.Expr != nil && !t.IsPrimitiveType() {
-						ref.NestedTargets = make(reference.Targets, 0)
-						ref.NestedTargets = append(ref.NestedTargets, decodeReferenceTargetsForComplexTypeExpr(attrAddr, attr.Expr, t, scopeId)...)
-					}
-
 					refs = append(refs, ref)
+				}
+
+				if attrSchema.Address.AsExprType {
+					t, ok := exprConstraintToDataType(attrSchema.Expr)
+					if ok {
+						if t == cty.DynamicPseudoType && attr.Expr != nil {
+							// attempt to make the type more specific
+							exprVal, diags := attr.Expr.Value(nil)
+							if !diags.HasErrors() {
+								t = exprVal.Type()
+							}
+						}
+
+						scopeId := attrSchema.Address.ScopeId
+
+						ref := reference.Target{
+							Addr:        attrAddr,
+							Type:        t,
+							ScopeId:     scopeId,
+							DefRangePtr: attr.NameRange.Ptr(),
+							RangePtr:    attr.Range.Ptr(),
+							Name:        attrSchema.Address.FriendlyName,
+						}
+
+						if attr.Expr != nil && !t.IsPrimitiveType() {
+							ref.NestedTargets = make(reference.Targets, 0)
+							ref.NestedTargets = append(ref.NestedTargets, decodeReferenceTargetsForComplexTypeExpr(attrAddr, attr.Expr, t, scopeId)...)
+						}
+
+						refs = append(refs, ref)
+					}
 				}
 			}
 		}
+
+		ec := ExprConstraints(attrSchema.Expr)
+		refs = append(refs, referenceTargetsForExpr(attr.Expr, ec)...)
 	}
 
-	ec := ExprConstraints(attrSchema.Expr)
-	refs = append(refs, referenceTargetsForExpr(attr.Expr, ec)...)
 	return refs
 }
 

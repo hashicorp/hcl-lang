@@ -15,7 +15,7 @@ import (
 	"github.com/zclconf/go-cty/cty"
 )
 
-func TestDecoder_CandidateAtPos_expressions(t *testing.T) {
+func TestLegacyDecoder_CandidateAtPos_expressions(t *testing.T) {
 	ctx := context.Background()
 	testCases := []struct {
 		testName           string
@@ -41,7 +41,7 @@ func TestDecoder_CandidateAtPos_expressions(t *testing.T) {
 			map[string]*schema.AttributeSchema{
 				"attr": {
 					Expr: schema.ExprConstraints{
-						schema.LiteralValue{
+						schema.LegacyLiteralValue{
 							Val: cty.ObjectVal(map[string]cty.Value{
 								"first":  cty.StringVal("blah"),
 								"second": cty.NumberIntVal(2345),
@@ -350,7 +350,7 @@ func TestDecoder_CandidateAtPos_expressions(t *testing.T) {
 			map[string]*schema.AttributeSchema{
 				"attr": {
 					Expr: schema.ExprConstraints{
-						schema.LiteralValue{
+						schema.LegacyLiteralValue{
 							Val: cty.ListVal([]cty.Value{
 								cty.StringVal("foo"),
 								cty.StringVal("bar"),
@@ -431,7 +431,7 @@ func TestDecoder_CandidateAtPos_expressions(t *testing.T) {
 			map[string]*schema.AttributeSchema{
 				"attr": {
 					Expr: schema.ExprConstraints{
-						schema.LiteralValue{
+						schema.LegacyLiteralValue{
 							Val: cty.MapVal(map[string]cty.Value{
 								"foo": cty.StringVal("moo"),
 								"bar": cty.StringVal("boo"),
@@ -536,9 +536,9 @@ func TestDecoder_CandidateAtPos_expressions(t *testing.T) {
 			map[string]*schema.AttributeSchema{
 				"attr": {
 					Expr: schema.ExprConstraints{
-						schema.LiteralValue{Val: cty.StringVal("first")},
-						schema.LiteralValue{Val: cty.StringVal("second")},
-						schema.LiteralValue{Val: cty.StringVal("third")},
+						schema.LegacyLiteralValue{Val: cty.StringVal("first")},
+						schema.LegacyLiteralValue{Val: cty.StringVal("second")},
+						schema.LegacyLiteralValue{Val: cty.StringVal("third")},
 					},
 				},
 			},
@@ -616,8 +616,8 @@ func TestDecoder_CandidateAtPos_expressions(t *testing.T) {
 			map[string]*schema.AttributeSchema{
 				"attr": {
 					Expr: schema.ExprConstraints{
-						schema.LiteralValue{Val: cty.StringVal("first")},
-						schema.LiteralValue{Val: cty.StringVal("second"), IsDeprecated: true},
+						schema.LegacyLiteralValue{Val: cty.StringVal("first")},
+						schema.LegacyLiteralValue{Val: cty.StringVal("second"), IsDeprecated: true},
 					},
 				},
 			},
@@ -1441,7 +1441,7 @@ func TestDecoder_CandidateAtPos_expressions(t *testing.T) {
 	}
 }
 
-func TestDecoder_CandidateAtPos_traversalExpressions(t *testing.T) {
+func TestLegacyDecoder_CandidateAtPos_traversalExpressions(t *testing.T) {
 	ctx := context.Background()
 	testCases := []struct {
 		testName           string
@@ -2480,7 +2480,7 @@ another_block "meh" {
 	}
 }
 
-func TestDecoder_CandidateAtPos_expressions_crossFileTraversal(t *testing.T) {
+func TestLegacyDecoder_CandidateAtPos_expressions_crossFileTraversal(t *testing.T) {
 	ctx := context.Background()
 	f1, _ := hclsyntax.ParseConfig([]byte(`variable "aaa" {}
 variable "bbb" {}
@@ -2659,7 +2659,7 @@ variable "ccc" {}
 	}
 }
 
-func TestDecoder_CandidateAtPos_expressions_Hooks(t *testing.T) {
+func TestLegacyDecoder_CandidateAtPos_expressions_Hooks(t *testing.T) {
 	ctx := context.Background()
 	testCases := []struct {
 		testName           string
@@ -2835,7 +2835,7 @@ func TestDecoder_CandidateAtPos_expressions_Hooks(t *testing.T) {
 	}
 }
 
-func TestDecoder_CandidateAtPos_maxCandidates(t *testing.T) {
+func TestLegacyDecoder_CandidateAtPos_maxCandidates(t *testing.T) {
 	ctx := context.Background()
 	bodySchema := &schema.BodySchema{
 		Attributes: map[string]*schema.AttributeSchema{

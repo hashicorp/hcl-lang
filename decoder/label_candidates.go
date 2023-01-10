@@ -162,8 +162,13 @@ func requiredFieldsSnippet(bodySchema *schema.BodySchema, placeholder int, inden
 			continue
 		}
 
-		valueSnippet := snippetForExprContraint(uint(placeholder), attr.Expr)
-		snippetText += fmt.Sprintf("%s%s = %s", indent, attrName, valueSnippet)
+		var snippet string
+		if attr.Constraint != nil {
+			snippet = attr.Constraint.EmptyCompletionData(placeholder).Snippet
+		} else {
+			snippet = snippetForExprContraint(uint(placeholder), attr.Expr)
+		}
+		snippetText += fmt.Sprintf("%s%s = %s", indent, attrName, snippet)
 
 		// attrCount is used to tell if we are at the end of the list of attributes
 		// so we don't add a trailing newline. this will affect both attribute

@@ -16,7 +16,6 @@ import (
 )
 
 func (d *PathDecoder) attrValueCandidatesAtPos(ctx context.Context, attr *hclsyntax.Attribute, schema *schema.AttributeSchema, outerBodyRng hcl.Range, pos hcl.Pos) (lang.Candidates, error) {
-	constraints, editRng := constraintsAtPos(attr.Expr, ExprConstraints(schema.Expr), pos)
 	candidates := lang.NewCandidates()
 	candidates.IsComplete = true
 
@@ -24,19 +23,35 @@ func (d *PathDecoder) attrValueCandidatesAtPos(ctx context.Context, attr *hclsyn
 		candidates.IsComplete = false
 		candidates.List = append(candidates.List, d.candidatesFromHooks(ctx, attr, schema, outerBodyRng, pos)...)
 	}
-
 	count := len(candidates.List)
-	if len(constraints) > 0 && uint(count) < d.maxCandidates {
-		prefixRng := editRng
-		prefixRng.End = pos
 
-		for _, cons := range constraints {
-			if uint(count) >= d.maxCandidates {
-				return candidates, nil
+	if schema.Constraint != nil {
+		if uint(count) < d.maxCandidates {
+			expr := NewExpression(attr.Expr, schema.Constraint)
+			for _, candidate := range expr.CompletionAtPos(ctx, pos) {
+				if uint(count) >= d.maxCandidates {
+					return candidates, nil
+				}
+
+				candidates.List = append(candidates.List, candidate)
+				count++
 			}
+		}
+	} else {
+		constraints, editRng := constraintsAtPos(attr.Expr, ExprConstraints(schema.Expr), pos)
 
-			candidates.List = append(candidates.List, d.constraintToCandidates(ctx, cons, attr, outerBodyRng, prefixRng, editRng)...)
-			count++
+		if len(constraints) > 0 && uint(count) < d.maxCandidates {
+			prefixRng := editRng
+			prefixRng.End = pos
+
+			for _, cons := range constraints {
+				if uint(count) >= d.maxCandidates {
+					return candidates, nil
+				}
+
+				candidates.List = append(candidates.List, d.constraintToCandidates(ctx, cons, attr, outerBodyRng, prefixRng, editRng)...)
+				count++
+			}
 		}
 	}
 
@@ -235,13 +250,21 @@ func isMultilineTemplateExpr(expr hclsyntax.Expression) bool {
 	return t.Range().Start.Line != t.Range().End.Line
 }
 
-func (d *PathDecoder) candidatesFromHooks(ctx context.Context, attr *hclsyntax.Attribute, schema *schema.AttributeSchema, outerBodyRng hcl.Range, pos hcl.Pos) []lang.Candidate {
+func (d *PathDecoder) candidatesFromHooks(ctx context.Context, attr *hclsyntax.Attribute, aSchema *schema.AttributeSchema, outerBodyRng hcl.Range, pos hcl.Pos) []lang.Candidate {
 	candidates := make([]lang.Candidate, 0)
-	expr := ExprConstraints(schema.Expr)
-	exprType, ok := expr.LiteralType()
-	if !ok && exprType != cty.String {
-		// Return early as we only support string values for now
-		return candidates
+	if aSchema.Constraint != nil {
+		con, ok := aSchema.Constraint.(schema.Comparable)
+		if !ok || !con.IsCompatible(cty.String) {
+			// Return early as we only support string values for now
+			return candidates
+		}
+	} else {
+		expr := ExprConstraints(aSchema.Expr)
+		exprType, ok := expr.LiteralType()
+		if !ok && exprType != cty.String {
+			// Return early as we only support string values for now
+			return candidates
+		}
 	}
 
 	editRng := attr.Expr.Range()
@@ -264,7 +287,7 @@ func (d *PathDecoder) candidatesFromHooks(ctx context.Context, attr *hclsyntax.A
 	ctx = WithMaxCandidates(ctx, d.maxCandidates)
 
 	count := 0
-	for _, hook := range schema.CompletionHooks {
+	for _, hook := range aSchema.CompletionHooks {
 		if completionFunc, ok := d.decoderCtx.CompletionHooks[hook.Name]; ok {
 			res, _ := completionFunc(ctx, cty.StringVal(prefix))
 
@@ -302,7 +325,7 @@ func (d *PathDecoder) constraintToCandidates(ctx context.Context, constraint sch
 	switch c := constraint.(type) {
 	case schema.LiteralTypeExpr:
 		candidates = append(candidates, typeToCandidates(c.Type, editRng)...)
-	case schema.LiteralValue:
+	case schema.LegacyLiteralValue:
 		if c, ok := valueToCandidate(c.Val, c.Description, c.IsDeprecated, editRng); ok {
 			candidates = append(candidates, c)
 		}
@@ -481,7 +504,7 @@ func newTextForConstraints(cons schema.ExprConstraints, isNested bool) string {
 		switch c := constraint.(type) {
 		case schema.LiteralTypeExpr:
 			return newTextForLiteralType(c.Type)
-		case schema.LiteralValue:
+		case schema.LegacyLiteralValue:
 			return newTextForLiteralValue(c.Val)
 		case schema.KeywordExpr:
 			return c.Keyword
@@ -531,7 +554,7 @@ func snippetForConstraints(placeholder uint, cons schema.ExprConstraints, isNest
 		switch c := constraint.(type) {
 		case schema.LiteralTypeExpr:
 			return snippetForLiteralType(placeholder, c.Type)
-		case schema.LiteralValue:
+		case schema.LegacyLiteralValue:
 			return snippetForLiteralValue(placeholder, c.Val)
 		case schema.KeywordExpr:
 			return fmt.Sprintf("${%d:%s}", placeholder, c.Keyword)
@@ -592,7 +615,7 @@ func labelsForConstraints(cons schema.ExprConstraints) labelSet {
 		switch c := constraint.(type) {
 		case schema.LiteralTypeExpr:
 			ls = ls.AddLabelIfNotPresent(labelForLiteralType(c.Type))
-		case schema.LiteralValue:
+		case schema.LegacyLiteralValue:
 			continue
 		case schema.KeywordExpr:
 			ls = ls.AddLabelIfNotPresent(c.FriendlyName())
@@ -721,7 +744,7 @@ func triggerSuggestForExprConstraints(ec schema.ExprConstraints) bool {
 			if et.Type == cty.Bool {
 				return true
 			}
-		case schema.LiteralValue:
+		case schema.LegacyLiteralValue:
 			if len(ec) > 1 {
 				return true
 			}
@@ -755,7 +778,7 @@ func snippetForExprContraints(placeholder uint, ec schema.ExprConstraints) strin
 		switch et := expr.(type) {
 		case schema.LiteralTypeExpr:
 			return snippetForLiteralType(placeholder, et.Type)
-		case schema.LiteralValue:
+		case schema.LegacyLiteralValue:
 			if len(ec) == 1 {
 				return snippetForLiteralValue(placeholder, et.Val)
 			}
@@ -798,7 +821,7 @@ func snippetForExprContraint(placeholder uint, ec schema.ExprConstraints) string
 	if t, ok := e.LiteralType(); ok {
 		return snippetForLiteralType(placeholder, t)
 	}
-	// case schema.LiteralValue:
+	// case schema.LegacyLiteralValue:
 	// 	if len(ec) == 1 {
 	// 		return snippetForLiteralValue(placeholder, et.Val)
 	// 	}

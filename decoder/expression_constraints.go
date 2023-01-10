@@ -105,20 +105,20 @@ func (ec ExprConstraints) LiteralType() (cty.Type, bool) {
 
 func (ec ExprConstraints) HasLiteralValueOf(val cty.Value) bool {
 	for _, c := range ec {
-		if lv, ok := c.(schema.LiteralValue); ok && lv.Val.RawEquals(val) {
+		if lv, ok := c.(schema.LegacyLiteralValue); ok && lv.Val.RawEquals(val) {
 			return true
 		}
 	}
 	return false
 }
 
-func (ec ExprConstraints) LiteralValueOf(val cty.Value) (schema.LiteralValue, bool) {
+func (ec ExprConstraints) LiteralValueOf(val cty.Value) (schema.LegacyLiteralValue, bool) {
 	for _, c := range ec {
-		if lv, ok := c.(schema.LiteralValue); ok && lv.Val.RawEquals(val) {
+		if lv, ok := c.(schema.LegacyLiteralValue); ok && lv.Val.RawEquals(val) {
 			return lv, true
 		}
 	}
-	return schema.LiteralValue{}, false
+	return schema.LegacyLiteralValue{}, false
 }
 
 func (ec ExprConstraints) LiteralTypeOfTupleExpr() (schema.LiteralTypeExpr, bool) {
@@ -152,18 +152,18 @@ func (ec ExprConstraints) LiteralTypeOfObjectConsExpr() (schema.LiteralTypeExpr,
 	return schema.LiteralTypeExpr{}, false
 }
 
-func (ec ExprConstraints) LiteralValueOfTupleExpr(expr *hclsyntax.TupleConsExpr) (schema.LiteralValue, bool) {
+func (ec ExprConstraints) LiteralValueOfTupleExpr(expr *hclsyntax.TupleConsExpr) (schema.LegacyLiteralValue, bool) {
 	exprValues := make([]cty.Value, len(expr.Exprs))
 	for i, e := range expr.Exprs {
 		val, _ := e.Value(nil)
 		if !val.IsWhollyKnown() || val.IsNull() {
-			return schema.LiteralValue{}, false
+			return schema.LegacyLiteralValue{}, false
 		}
 		exprValues[i] = val
 	}
 
 	for _, c := range ec {
-		if lv, ok := c.(schema.LiteralValue); ok {
+		if lv, ok := c.(schema.LegacyLiteralValue); ok {
 			valType := lv.Val.Type()
 			if valType.IsListType() && lv.Val.RawEquals(cty.ListVal(exprValues)) {
 				return lv, true
@@ -177,29 +177,29 @@ func (ec ExprConstraints) LiteralValueOfTupleExpr(expr *hclsyntax.TupleConsExpr)
 		}
 	}
 
-	return schema.LiteralValue{}, false
+	return schema.LegacyLiteralValue{}, false
 }
 
-func (ec ExprConstraints) LiteralValueOfObjectConsExpr(expr *hclsyntax.ObjectConsExpr) (schema.LiteralValue, bool) {
+func (ec ExprConstraints) LiteralValueOfObjectConsExpr(expr *hclsyntax.ObjectConsExpr) (schema.LegacyLiteralValue, bool) {
 	exprValues := make(map[string]cty.Value)
 	for _, item := range expr.Items {
 		key, _ := item.KeyExpr.Value(nil)
 		if key.IsNull() || !key.IsWhollyKnown() || key.Type() != cty.String {
 			// Avoid building incomplete object with keys
 			// that can't be interpolated without further context
-			return schema.LiteralValue{}, false
+			return schema.LegacyLiteralValue{}, false
 		}
 
 		val, _ := item.ValueExpr.Value(nil)
 		if !val.IsWhollyKnown() || val.IsNull() {
-			return schema.LiteralValue{}, false
+			return schema.LegacyLiteralValue{}, false
 		}
 
 		exprValues[key.AsString()] = val
 	}
 
 	for _, c := range ec {
-		if lv, ok := c.(schema.LiteralValue); ok {
+		if lv, ok := c.(schema.LegacyLiteralValue); ok {
 			valType := lv.Val.Type()
 			if valType.IsMapType() && lv.Val.RawEquals(cty.MapVal(exprValues)) {
 				return lv, true
@@ -210,7 +210,7 @@ func (ec ExprConstraints) LiteralValueOfObjectConsExpr(expr *hclsyntax.ObjectCon
 		}
 	}
 
-	return schema.LiteralValue{}, false
+	return schema.LegacyLiteralValue{}, false
 }
 
 func (ec ExprConstraints) TypeDeclarationExpr() (schema.TypeDeclarationExpr, bool) {
