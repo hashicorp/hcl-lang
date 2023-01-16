@@ -20,31 +20,79 @@ type Expression interface {
 }
 
 func (d *PathDecoder) newExpression(expr hcl.Expression, cons schema.Constraint) Expression {
+	return newExpression(d.pathCtx, expr, cons)
+}
+
+func newExpression(pathContext *PathContext, expr hcl.Expression, cons schema.Constraint) Expression {
 	switch c := cons.(type) {
 	case schema.AnyExpression:
-		return Any{expr: expr, cons: c, pathCtx: d.pathCtx}
+		return Any{
+			expr:    expr,
+			cons:    c,
+			pathCtx: pathContext,
+		}
 	case schema.LiteralType:
-		return LiteralType{expr: expr, cons: c}
-	case schema.Reference:
-		return Reference{expr: expr, cons: c}
-	case schema.TypeDeclaration:
-		return TypeDeclaration{expr: expr, cons: c}
-	case schema.Keyword:
-		return Keyword{expr: expr, cons: c}
-	case schema.List:
-		return List{expr: expr, cons: c}
-	case schema.Set:
-		return Set{expr: expr, cons: c}
-	case schema.Tuple:
-		return Tuple{expr: expr, cons: c}
-	case schema.Object:
-		return Object{expr: expr, cons: c}
-	case schema.Map:
-		return Map{expr: expr, cons: c}
-	case schema.OneOf:
-		return OneOf{expr: expr, cons: c}
+		return LiteralType{
+			expr: expr,
+			cons: c,
+		}
 	case schema.LiteralValue:
-		return LiteralValue{expr: expr, cons: c}
+		return LiteralValue{
+			expr: expr,
+			cons: c,
+		}
+	case schema.TypeDeclaration:
+		return TypeDeclaration{
+			expr: expr,
+			cons: c,
+		}
+	case schema.Keyword:
+		return Keyword{
+			expr: expr,
+			cons: c,
+		}
+	case schema.Reference:
+		return Reference{
+			expr: expr,
+			cons: c,
+		}
+	case schema.List:
+		return List{
+			expr:    expr,
+			cons:    c,
+			pathCtx: pathContext,
+		}
+	case schema.Set:
+		return Set{
+			expr:    expr,
+			cons:    c,
+			pathCtx: pathContext,
+		}
+	case schema.Tuple:
+		return Tuple{
+			expr:    expr,
+			cons:    c,
+			pathCtx: pathContext,
+		}
+	case schema.Object:
+		return Object{
+			expr:    expr,
+			cons:    c,
+			pathCtx: pathContext,
+		}
+	case schema.Map:
+		return Map{
+			expr:    expr,
+			cons:    c,
+			pathCtx: pathContext,
+		}
+	case schema.OneOf:
+		return OneOf{
+			expr:    expr,
+			cons:    c,
+			pathCtx: pathContext,
+		}
+
 	}
 
 	return unknownExpression{}

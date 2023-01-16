@@ -10,8 +10,9 @@ import (
 )
 
 type Tuple struct {
-	expr hcl.Expression
-	cons schema.Tuple
+	expr    hcl.Expression
+	cons    schema.Tuple
+	pathCtx *PathContext
 }
 
 func (t Tuple) CompletionAtPos(ctx context.Context, pos hcl.Pos) []lang.Candidate {

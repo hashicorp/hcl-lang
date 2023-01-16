@@ -10,8 +10,9 @@ import (
 )
 
 type Set struct {
-	expr hcl.Expression
-	cons schema.Set
+	expr    hcl.Expression
+	cons    schema.Set
+	pathCtx *PathContext
 }
 
 func (s Set) CompletionAtPos(ctx context.Context, pos hcl.Pos) []lang.Candidate {
