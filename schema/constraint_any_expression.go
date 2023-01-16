@@ -4,9 +4,13 @@ import (
 	"github.com/zclconf/go-cty/cty"
 )
 
-// AnyExpression TODO
+// AnyExpression represents any expression type convertible
+// to the given data type (OfType).
+//
+// For example function call returning cty.String complies with
+// AnyExpression{OfType: cty.String}.
 type AnyExpression struct {
-	// OfType defines the type of a type-aware reference
+	// OfType defines the type which the outermost expression is constrained to
 	OfType cty.Type
 }
 
