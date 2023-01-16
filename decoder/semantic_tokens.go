@@ -78,7 +78,7 @@ func (d *PathDecoder) tokensForBody(ctx context.Context, body *hclsyntax.Body, b
 		})
 
 		if attrSchema.Constraint != nil {
-			tokens = append(tokens, NewExpression(attr.Expr, attrSchema.Constraint).SemanticTokens(ctx)...)
+			tokens = append(tokens, d.newExpression(attr.Expr, attrSchema.Constraint).SemanticTokens(ctx)...)
 		} else {
 			ec := ExprConstraints(attrSchema.Expr)
 			tokens = append(tokens, d.tokensForExpression(ctx, attr.Expr, ec)...)

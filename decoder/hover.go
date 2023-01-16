@@ -79,7 +79,7 @@ func (d *PathDecoder) hoverAtPos(ctx context.Context, body *hclsyntax.Body, body
 
 			if attr.Expr.Range().ContainsPos(pos) {
 				if aSchema.Constraint != nil {
-					return NewExpression(attr.Expr, aSchema.Constraint).HoverAtPos(ctx, pos), nil
+					return d.newExpression(attr.Expr, aSchema.Constraint).HoverAtPos(ctx, pos), nil
 				}
 
 				exprCons := ExprConstraints(aSchema.Expr)

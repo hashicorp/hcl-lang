@@ -1,6 +1,7 @@
 package decoder
 
 var (
+	_ Expression = Any{}
 	_ Expression = Keyword{}
 	_ Expression = List{}
 	_ Expression = LiteralType{}

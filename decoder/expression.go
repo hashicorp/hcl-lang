@@ -19,8 +19,10 @@ type Expression interface {
 	ReferenceTargets(ctx context.Context, attrAddr *schema.AttributeAddrSchema) reference.Targets
 }
 
-func NewExpression(expr hcl.Expression, cons schema.Constraint) Expression {
+func (d *PathDecoder) newExpression(expr hcl.Expression, cons schema.Constraint) Expression {
 	switch c := cons.(type) {
+	case schema.AnyExpression:
+		return Any{expr: expr, cons: c, pathCtx: d.pathCtx}
 	case schema.LiteralType:
 		return LiteralType{expr: expr, cons: c}
 	case schema.Reference:

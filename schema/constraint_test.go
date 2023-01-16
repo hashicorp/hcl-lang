@@ -1,6 +1,7 @@
 package schema
 
 var (
+	_ Constraint = AnyExpression{}
 	_ Constraint = Keyword{}
 	_ Constraint = List{}
 	_ Constraint = LiteralType{}
