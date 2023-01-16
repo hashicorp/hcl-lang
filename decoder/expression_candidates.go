@@ -27,7 +27,7 @@ func (d *PathDecoder) attrValueCandidatesAtPos(ctx context.Context, attr *hclsyn
 
 	if schema.Constraint != nil {
 		if uint(count) < d.maxCandidates {
-			expr := NewExpression(attr.Expr, schema.Constraint)
+			expr := d.newExpression(attr.Expr, schema.Constraint)
 			for _, candidate := range expr.CompletionAtPos(ctx, pos) {
 				if uint(count) >= d.maxCandidates {
 					return candidates, nil

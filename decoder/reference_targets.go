@@ -127,7 +127,7 @@ func (d *PathDecoder) decodeReferenceTargetsForBody(body hcl.Body, parentBlock *
 			attrSchema = bodySchema.AnyAttribute
 		}
 
-		refs = append(refs, decodeReferenceTargetsForAttribute(attr, attrSchema)...)
+		refs = append(refs, d.decodeReferenceTargetsForAttribute(attr, attrSchema)...)
 	}
 
 	for _, blk := range content.Blocks {
@@ -266,13 +266,13 @@ func decodeTargetableBody(body hcl.Body, parentBlock *blockContent, tt *schema.T
 	return target
 }
 
-func decodeReferenceTargetsForAttribute(attr *hcl.Attribute, attrSchema *schema.AttributeSchema) reference.Targets {
+func (d *PathDecoder) decodeReferenceTargetsForAttribute(attr *hcl.Attribute, attrSchema *schema.AttributeSchema) reference.Targets {
 	refs := make(reference.Targets, 0)
 
 	ctx := context.Background()
 
 	if attrSchema.Constraint != nil {
-		refs = append(refs, NewExpression(attr.Expr, attrSchema.Constraint).ReferenceTargets(ctx, attrSchema.Address)...)
+		refs = append(refs, d.newExpression(attr.Expr, attrSchema.Constraint).ReferenceTargets(ctx, attrSchema.Address)...)
 	} else {
 		if attrSchema.Address != nil {
 			attrAddr, ok := resolveAttributeAddress(attr, attrSchema.Address.Steps)
