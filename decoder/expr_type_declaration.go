@@ -14,11 +14,6 @@ type TypeDeclaration struct {
 	pathCtx *PathContext
 }
 
-func (td TypeDeclaration) CompletionAtPos(ctx context.Context, pos hcl.Pos) []lang.Candidate {
-	// TODO
-	return nil
-}
-
 func (td TypeDeclaration) HoverAtPos(ctx context.Context, pos hcl.Pos) *lang.HoverData {
 	// TODO
 	return nil
@@ -27,4 +22,8 @@ func (td TypeDeclaration) HoverAtPos(ctx context.Context, pos hcl.Pos) *lang.Hov
 func (td TypeDeclaration) SemanticTokens(ctx context.Context) []lang.SemanticToken {
 	// TODO
 	return nil
+}
+
+func isTypeNameWithElementOnly(name string) bool {
+	return name == "list" || name == "set" || name == "map"
 }
