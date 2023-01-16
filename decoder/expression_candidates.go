@@ -229,19 +229,6 @@ func MaxCandidatesFromContext(ctx context.Context) (uint, bool) {
 	return mc, ok
 }
 
-func isEmptyExpr(expr hclsyntax.Expression) bool {
-	l, ok := expr.(*hclsyntax.LiteralValueExpr)
-	if !ok {
-		return false
-	}
-	if l.Val != cty.DynamicVal {
-		return false
-	}
-	// TODO? more checks
-
-	return true
-}
-
 func isMultilineTemplateExpr(expr hclsyntax.Expression) bool {
 	t, ok := expr.(*hclsyntax.TemplateExpr)
 	if !ok {
@@ -268,7 +255,7 @@ func (d *PathDecoder) candidatesFromHooks(ctx context.Context, attr *hclsyntax.A
 	}
 
 	editRng := attr.Expr.Range()
-	if isEmptyExpr(attr.Expr) || isMultilineTemplateExpr(attr.Expr) {
+	if isEmptyExpression(attr.Expr) || isMultilineTemplateExpr(attr.Expr) {
 		// An empty expression or a string without a closing quote will lead to
 		// an attribute expression spanning multiple lines.
 		// Since text edits only support a single line, we're resetting the End
