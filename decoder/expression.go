@@ -7,6 +7,8 @@ import (
 	"github.com/hashicorp/hcl-lang/reference"
 	"github.com/hashicorp/hcl-lang/schema"
 	"github.com/hashicorp/hcl/v2"
+	"github.com/hashicorp/hcl/v2/hclsyntax"
+	"github.com/zclconf/go-cty/cty"
 )
 
 // Expression represents an expression capable of providing
@@ -96,4 +98,21 @@ func newExpression(pathContext *PathContext, expr hcl.Expression, cons schema.Co
 	}
 
 	return unknownExpression{}
+}
+
+// isEmptyExpression returns true if given expression is suspected
+// to be empty, e.g. newline after equal sign.
+//
+// Because upstream HCL parser doesn't always handle incomplete
+// configuration gracefully, this may not cover all cases.
+func isEmptyExpression(expr hcl.Expression) bool {
+	l, ok := expr.(*hclsyntax.LiteralValueExpr)
+	if !ok {
+		return false
+	}
+	if l.Val != cty.DynamicVal {
+		return false
+	}
+
+	return true
 }
