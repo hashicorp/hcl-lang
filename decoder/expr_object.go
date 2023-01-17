@@ -10,8 +10,9 @@ import (
 )
 
 type Object struct {
-	expr hcl.Expression
-	cons schema.Object
+	expr    hcl.Expression
+	cons    schema.Object
+	pathCtx *PathContext
 }
 
 func (obj Object) CompletionAtPos(ctx context.Context, pos hcl.Pos) []lang.Candidate {

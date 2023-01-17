@@ -10,8 +10,9 @@ import (
 )
 
 type OneOf struct {
-	expr hcl.Expression
-	cons schema.OneOf
+	expr    hcl.Expression
+	cons    schema.OneOf
+	pathCtx *PathContext
 }
 
 func (oo OneOf) CompletionAtPos(ctx context.Context, pos hcl.Pos) []lang.Candidate {
