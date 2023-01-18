@@ -116,3 +116,20 @@ func isEmptyExpression(expr hcl.Expression) bool {
 
 	return true
 }
+
+// newEmptyExpressionAtPos returns a new "artificial" empty expression
+// which can be used during completion inside of another expression
+// in an empty space which isn't already represented by empty expression.
+//
+// For example, new argument after comma in function call,
+// or new element in a list or set.
+func newEmptyExpressionAtPos(filename string, pos hcl.Pos) hcl.Expression {
+	return &hclsyntax.LiteralValueExpr{
+		Val: cty.DynamicVal,
+		SrcRange: hcl.Range{
+			Filename: filename,
+			Start:    pos,
+			End:      pos,
+		},
+	}
+}
