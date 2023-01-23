@@ -32,9 +32,8 @@ func (Map) isConstraintImpl() constraintSigil {
 
 func (m Map) FriendlyName() string {
 	if m.Name == "" {
-		elemName := m.Elem.FriendlyName()
-		if elemName != "" {
-			return fmt.Sprintf("map of %s", elemName)
+		if m.Elem != nil && m.Elem.FriendlyName() != "" {
+			return fmt.Sprintf("map of %s", m.Elem.FriendlyName())
 		}
 		return "map"
 	}
@@ -42,8 +41,12 @@ func (m Map) FriendlyName() string {
 }
 
 func (m Map) Copy() Constraint {
+	var elem Constraint
+	if m.Elem != nil {
+		elem = m.Elem.Copy()
+	}
 	return Map{
-		Elem:        m.Elem.Copy(),
+		Elem:        elem,
 		Name:        m.Name,
 		Description: m.Description,
 		MinItems:    m.MinItems,

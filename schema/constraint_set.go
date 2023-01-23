@@ -28,16 +28,19 @@ func (Set) isConstraintImpl() constraintSigil {
 }
 
 func (s Set) FriendlyName() string {
-	elemName := s.Elem.FriendlyName()
-	if elemName != "" {
-		return fmt.Sprintf("set of %s", elemName)
+	if s.Elem != nil && s.Elem.FriendlyName() != "" {
+		return fmt.Sprintf("set of %s", s.Elem.FriendlyName())
 	}
 	return "set"
 }
 
 func (s Set) Copy() Constraint {
+	var elem Constraint
+	if s.Elem != nil {
+		elem = s.Elem.Copy()
+	}
 	return Set{
-		Elem:        s.Elem.Copy(),
+		Elem:        elem,
 		Description: s.Description,
 		MinItems:    s.MinItems,
 		MaxItems:    s.MaxItems,
