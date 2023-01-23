@@ -17,7 +17,13 @@ type Expression interface {
 	CompletionAtPos(ctx context.Context, pos hcl.Pos) []lang.Candidate
 	HoverAtPos(ctx context.Context, pos hcl.Pos) *lang.HoverData
 	SemanticTokens(ctx context.Context) []lang.SemanticToken
+}
+
+type ReferenceOriginsExpression interface {
 	ReferenceOrigins(ctx context.Context, allowSelfRefs bool) reference.Origins
+}
+
+type ReferenceTargetsExpression interface {
 	ReferenceTargets(ctx context.Context, attrAddr *schema.AttributeAddrSchema) reference.Targets
 }
 

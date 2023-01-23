@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/hashicorp/hcl-lang/lang"
-	"github.com/hashicorp/hcl-lang/reference"
 	"github.com/hashicorp/hcl-lang/schema"
 	"github.com/hashicorp/hcl/v2"
 )
@@ -25,16 +24,6 @@ func (lv LiteralValue) HoverAtPos(ctx context.Context, pos hcl.Pos) *lang.HoverD
 }
 
 func (lv LiteralValue) SemanticTokens(ctx context.Context) []lang.SemanticToken {
-	// TODO
-	return nil
-}
-
-func (lv LiteralValue) ReferenceOrigins(ctx context.Context, allowSelfRefs bool) reference.Origins {
-	// TODO
-	return nil
-}
-
-func (lv LiteralValue) ReferenceTargets(ctx context.Context, attrAddr *schema.AttributeAddrSchema) reference.Targets {
 	// TODO
 	return nil
 }
