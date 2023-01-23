@@ -15,11 +15,6 @@ type OneOf struct {
 	pathCtx *PathContext
 }
 
-func (oo OneOf) CompletionAtPos(ctx context.Context, pos hcl.Pos) []lang.Candidate {
-	// TODO
-	return nil
-}
-
 func (oo OneOf) HoverAtPos(ctx context.Context, pos hcl.Pos) *lang.HoverData {
 	// TODO
 	return nil

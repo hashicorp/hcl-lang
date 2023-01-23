@@ -74,6 +74,18 @@ func namesContain(names []string, name string) bool {
 }
 
 func (o OneOf) EmptyCompletionData(nextPlaceholder int, nestingLevel int) CompletionData {
-	// TODO
-	return CompletionData{}
+	if len(o) == 0 {
+		return CompletionData{
+			LastPlaceholder: nextPlaceholder,
+		}
+	}
+
+	cData := o[0].EmptyCompletionData(nextPlaceholder, nestingLevel)
+
+	return CompletionData{
+		NewText:         cData.NewText,
+		Snippet:         cData.Snippet,
+		LastPlaceholder: cData.LastPlaceholder,
+		TriggerSuggest:  cData.TriggerSuggest,
+	}
 }
