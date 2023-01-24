@@ -13,11 +13,6 @@ type Keyword struct {
 	cons schema.Keyword
 }
 
-func (kw Keyword) HoverAtPos(ctx context.Context, pos hcl.Pos) *lang.HoverData {
-	// TODO
-	return nil
-}
-
 func (kw Keyword) SemanticTokens(ctx context.Context) []lang.SemanticToken {
 	// TODO
 	return nil
