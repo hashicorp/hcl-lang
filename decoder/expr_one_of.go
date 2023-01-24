@@ -15,11 +15,6 @@ type OneOf struct {
 	pathCtx *PathContext
 }
 
-func (oo OneOf) SemanticTokens(ctx context.Context) []lang.SemanticToken {
-	// TODO
-	return nil
-}
-
 func (oo OneOf) ReferenceOrigins(ctx context.Context, allowSelfRefs bool) reference.Origins {
 	// TODO
 	return nil
