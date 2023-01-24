@@ -15,11 +15,6 @@ type OneOf struct {
 	pathCtx *PathContext
 }
 
-func (oo OneOf) HoverAtPos(ctx context.Context, pos hcl.Pos) *lang.HoverData {
-	// TODO
-	return nil
-}
-
 func (oo OneOf) SemanticTokens(ctx context.Context) []lang.SemanticToken {
 	// TODO
 	return nil
