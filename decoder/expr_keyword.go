@@ -13,11 +13,6 @@ type Keyword struct {
 	cons schema.Keyword
 }
 
-func (kw Keyword) CompletionAtPos(ctx context.Context, pos hcl.Pos) []lang.Candidate {
-	// TODO
-	return nil
-}
-
 func (kw Keyword) HoverAtPos(ctx context.Context, pos hcl.Pos) *lang.HoverData {
 	// TODO
 	return nil
