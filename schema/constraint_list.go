@@ -28,16 +28,19 @@ func (List) isConstraintImpl() constraintSigil {
 }
 
 func (l List) FriendlyName() string {
-	elemName := l.Elem.FriendlyName()
-	if elemName != "" {
-		return fmt.Sprintf("list of %s", elemName)
+	if l.Elem != nil && l.Elem.FriendlyName() != "" {
+		return fmt.Sprintf("list of %s", l.Elem.FriendlyName())
 	}
 	return "list"
 }
 
 func (l List) Copy() Constraint {
+	var elem Constraint
+	if l.Elem != nil {
+		elem = l.Elem.Copy()
+	}
 	return List{
-		Elem:        l.Elem.Copy(),
+		Elem:        elem,
 		Description: l.Description,
 		MinItems:    l.MinItems,
 		MaxItems:    l.MaxItems,
