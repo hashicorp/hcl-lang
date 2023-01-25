@@ -15,11 +15,6 @@ type List struct {
 	pathCtx *PathContext
 }
 
-func (l List) CompletionAtPos(ctx context.Context, pos hcl.Pos) []lang.Candidate {
-	// TODO
-	return nil
-}
-
 func (l List) HoverAtPos(ctx context.Context, pos hcl.Pos) *lang.HoverData {
 	// TODO
 	return nil
