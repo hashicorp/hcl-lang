@@ -36,10 +36,20 @@ type BlockSchema struct {
 }
 
 type BlockAddrSchema struct {
+	// Steps describes address steps used to describe the attribute as whole.
+	// The last step would typically be LabelStep{}.
 	Steps Address
 
+	// FriendlyName is (optional) human-readable name of the block as whole
+	// interpreted as reference target.
+	//
+	// The name is used in completion item and in hover data.
 	FriendlyName string
-	ScopeId      lang.ScopeId
+
+	// ScopeId defines scope of a reference to allow for more granular
+	// filtering in completion and accurate matching, which is especially
+	// important for type-less reference targets (i.e. AsReference: true).
+	ScopeId lang.ScopeId
 
 	// AsReference defines whether the block itself
 	// is addressable as a type-less reference
