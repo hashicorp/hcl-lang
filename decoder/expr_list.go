@@ -15,11 +15,6 @@ type List struct {
 	pathCtx *PathContext
 }
 
-func (l List) HoverAtPos(ctx context.Context, pos hcl.Pos) *lang.HoverData {
-	// TODO
-	return nil
-}
-
 func (l List) SemanticTokens(ctx context.Context) []lang.SemanticToken {
 	// TODO
 	return nil
