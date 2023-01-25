@@ -34,7 +34,7 @@ func (ref Reference) ReferenceOrigins(ctx context.Context, allowSelfRefs bool) r
 	return nil
 }
 
-func (ref Reference) ReferenceTargets(ctx context.Context, attrAddr *schema.AttributeAddrSchema) reference.Targets {
+func (ref Reference) ReferenceTargets(ctx context.Context, addr lang.Address, addrCtx AddressContext) reference.Targets {
 	// TODO
 	return nil
 }

@@ -24,7 +24,31 @@ type ReferenceOriginsExpression interface {
 }
 
 type ReferenceTargetsExpression interface {
-	ReferenceTargets(ctx context.Context, attrAddr *schema.AttributeAddrSchema) reference.Targets
+	ReferenceTargets(ctx context.Context, addr lang.Address, addrCtx AddressContext) reference.Targets
+}
+
+// AddressContext describes context for collecting reference targets
+type AddressContext struct {
+	// FriendlyName is (optional) human-readable name of the expression
+	// interpreted as reference target.
+	FriendlyName string
+
+	// ScopeId defines scope of a reference to allow for more granular
+	// filtering in completion and accurate matching, which is especially
+	// important for type-less reference targets (i.e. AsReference: true).
+	ScopeId lang.ScopeId
+
+	// AsExprType defines whether the value of the attribute
+	// is addressable as a matching literal type constraint included
+	// in attribute Expr.
+	//
+	// cty.DynamicPseudoType (also known as "any type") will create
+	// reference of the real type if value is present else cty.DynamicPseudoType.
+	AsExprType bool
+
+	// AsReference defines whether the attribute
+	// is addressable as a type-less reference
+	AsReference bool
 }
 
 func (d *PathDecoder) newExpression(expr hcl.Expression, cons schema.Constraint) Expression {

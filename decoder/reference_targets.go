@@ -274,7 +274,19 @@ func (d *PathDecoder) decodeReferenceTargetsForAttribute(attr *hcl.Attribute, at
 	if attrSchema.Constraint != nil {
 		expr := d.newExpression(attr.Expr, attrSchema.Constraint)
 		if eType, ok := expr.(ReferenceTargetsExpression); ok {
-			refs = append(refs, eType.ReferenceTargets(ctx, attrSchema.Address)...)
+			addrCtx := AddressContext{
+				FriendlyName: attrSchema.Address.FriendlyName,
+				ScopeId:      attrSchema.Address.ScopeId,
+				AsExprType:   attrSchema.Address.AsExprType,
+				AsReference:  attrSchema.Address.AsReference,
+			}
+
+			attrAddr, ok := resolveAttributeAddress(attr, attrSchema.Address.Steps)
+			if !ok {
+				attrAddr = make(lang.Address, 0)
+			}
+
+			refs = append(refs, eType.ReferenceTargets(ctx, attrAddr, addrCtx)...)
 		}
 	} else {
 		if attrSchema.Address != nil {
