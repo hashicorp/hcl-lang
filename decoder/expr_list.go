@@ -14,11 +14,6 @@ type List struct {
 	pathCtx *PathContext
 }
 
-func (l List) ReferenceOrigins(ctx context.Context, allowSelfRefs bool) reference.Origins {
-	// TODO
-	return nil
-}
-
 func (l List) ReferenceTargets(ctx context.Context, targetCtx *TargetContext) reference.Targets {
 	// TODO
 	return nil
