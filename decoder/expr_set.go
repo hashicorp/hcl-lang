@@ -34,8 +34,3 @@ func (s Set) ReferenceOrigins(ctx context.Context, allowSelfRefs bool) reference
 	// TODO
 	return nil
 }
-
-func (s Set) ReferenceTargets(ctx context.Context, attrAddr *schema.AttributeAddrSchema) reference.Targets {
-	// TODO
-	return nil
-}

@@ -35,7 +35,7 @@ func (obj Object) ReferenceOrigins(ctx context.Context, allowSelfRefs bool) refe
 	return nil
 }
 
-func (obj Object) ReferenceTargets(ctx context.Context, attrAddr *schema.AttributeAddrSchema) reference.Targets {
+func (obj Object) ReferenceTargets(ctx context.Context, addr lang.Address, addrCtx AddressContext) reference.Targets {
 	// TODO
 	return nil
 }
@@ -65,7 +65,7 @@ func (oa ObjectAttributes) ReferenceOrigins(ctx context.Context, allowSelfRefs b
 	return nil
 }
 
-func (oa ObjectAttributes) ReferenceTargets(ctx context.Context, attrAddr *schema.AttributeAddrSchema) reference.Targets {
+func (oa ObjectAttributes) ReferenceTargets(ctx context.Context, addr lang.Address, addrCtx AddressContext) reference.Targets {
 	// TODO
 	return nil
 }

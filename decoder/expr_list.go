@@ -35,7 +35,7 @@ func (l List) ReferenceOrigins(ctx context.Context, allowSelfRefs bool) referenc
 	return nil
 }
 
-func (l List) ReferenceTargets(ctx context.Context, attrAddr *schema.AttributeAddrSchema) reference.Targets {
+func (l List) ReferenceTargets(ctx context.Context, addr lang.Address, addrCtx AddressContext) reference.Targets {
 	// TODO
 	return nil
 }

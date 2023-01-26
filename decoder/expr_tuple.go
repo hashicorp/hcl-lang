@@ -35,7 +35,7 @@ func (t Tuple) ReferenceOrigins(ctx context.Context, allowSelfRefs bool) referen
 	return nil
 }
 
-func (t Tuple) ReferenceTargets(ctx context.Context, attrAddr *schema.AttributeAddrSchema) reference.Targets {
+func (t Tuple) ReferenceTargets(ctx context.Context, addr lang.Address, addrCtx AddressContext) reference.Targets {
 	// TODO
 	return nil
 }
