@@ -279,7 +279,7 @@ func (d *PathDecoder) legacyFindOriginsInExpression(expr hcl.Expression, ec sche
 		// see https://github.com/hashicorp/terraform-ls/issues/496
 		tes, ok := ExprConstraints(ec).TraversalExprs()
 		if ok {
-			origins = append(origins, reference.TraversalsToLocalOrigins(expr.Variables(), tes, allowSelfRefs)...)
+			origins = append(origins, reference.LegacyTraversalsToLocalOrigins(expr.Variables(), tes, allowSelfRefs)...)
 		}
 	case *hclsyntax.LiteralValueExpr:
 		// String constant may also be a traversal in some cases, but currently not recognized
@@ -292,7 +292,7 @@ func (d *PathDecoder) legacyFindOriginsInExpression(expr hcl.Expression, ec sche
 		// This may result in less accurate decoding where even origins
 		// which do not actually conform to the constraints are recognized.
 		// TODO: https://github.com/hashicorp/terraform-ls/issues/675
-		origins = append(origins, reference.TraversalsToLocalOrigins(expr.Variables(), schema.TraversalExprs{}, allowSelfRefs)...)
+		origins = append(origins, reference.LegacyTraversalsToLocalOrigins(expr.Variables(), schema.TraversalExprs{}, allowSelfRefs)...)
 	}
 
 	return origins

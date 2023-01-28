@@ -6,7 +6,7 @@ import (
 	"github.com/hashicorp/hcl/v2"
 )
 
-func TraversalsToLocalOrigins(traversals []hcl.Traversal, tes schema.TraversalExprs, allowSelfRefs bool) Origins {
+func LegacyTraversalsToLocalOrigins(traversals []hcl.Traversal, tes schema.TraversalExprs, allowSelfRefs bool) Origins {
 	origins := make(Origins, 0)
 	for _, traversal := range traversals {
 		// traversal should not be relative here, since the input to this
@@ -16,7 +16,7 @@ func TraversalsToLocalOrigins(traversals []hcl.Traversal, tes schema.TraversalEx
 			// else just continue
 			continue
 		}
-		origin, err := TraversalToLocalOrigin(traversal, tes)
+		origin, err := LegacyTraversalToLocalOrigin(traversal, tes)
 		if err != nil {
 			continue
 		}
@@ -26,7 +26,7 @@ func TraversalsToLocalOrigins(traversals []hcl.Traversal, tes schema.TraversalEx
 	return origins
 }
 
-func TraversalToLocalOrigin(traversal hcl.Traversal, tes schema.TraversalExprs) (LocalOrigin, error) {
+func LegacyTraversalToLocalOrigin(traversal hcl.Traversal, tes schema.TraversalExprs) (LocalOrigin, error) {
 	addr, err := lang.TraversalToAddress(traversal)
 	if err != nil {
 		return LocalOrigin{}, err
@@ -35,11 +35,11 @@ func TraversalToLocalOrigin(traversal hcl.Traversal, tes schema.TraversalExprs) 
 	return LocalOrigin{
 		Addr:        addr,
 		Range:       traversal.SourceRange(),
-		Constraints: traversalExpressionsToOriginConstraints(tes),
+		Constraints: legacyTraversalExpressionsToOriginConstraints(tes),
 	}, nil
 }
 
-func traversalExpressionsToOriginConstraints(tes []schema.TraversalExpr) OriginConstraints {
+func legacyTraversalExpressionsToOriginConstraints(tes []schema.TraversalExpr) OriginConstraints {
 	if len(tes) == 0 {
 		return nil
 	}
