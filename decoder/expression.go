@@ -127,8 +127,9 @@ func newExpression(pathContext *PathContext, expr hcl.Expression, cons schema.Co
 		}
 	case schema.Reference:
 		return Reference{
-			expr: expr,
-			cons: c,
+			expr:    expr,
+			cons:    c,
+			pathCtx: pathContext,
 		}
 	case schema.List:
 		return List{

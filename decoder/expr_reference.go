@@ -10,13 +10,9 @@ import (
 )
 
 type Reference struct {
-	expr hcl.Expression
-	cons schema.Reference
-}
-
-func (ref Reference) CompletionAtPos(ctx context.Context, pos hcl.Pos) []lang.Candidate {
-	// TODO
-	return nil
+	expr    hcl.Expression
+	cons    schema.Reference
+	pathCtx *PathContext
 }
 
 func (ref Reference) HoverAtPos(ctx context.Context, pos hcl.Pos) *lang.HoverData {
