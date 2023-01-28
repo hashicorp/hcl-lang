@@ -73,26 +73,26 @@ func (w refTargetDeepWalker) walk(refTargets Targets) {
 	}
 }
 
-func (refs Targets) MatchWalk(ctx context.Context, te schema.TraversalExpr, prefix string, outermostBodyRng, originRng hcl.Range, f TargetWalkFunc) {
+func (refs Targets) LegacyMatchWalk(ctx context.Context, te schema.TraversalExpr, prefix string, outermostBodyRng, originRng hcl.Range, f TargetWalkFunc) {
 	for _, ref := range refs {
-		if localTargetMatches(ctx, ref, te, prefix, outermostBodyRng, originRng) ||
-			absTargetMatches(ctx, ref, te, prefix, outermostBodyRng, originRng) {
+		if legacyLocalTargetMatches(ctx, ref, te, prefix, outermostBodyRng, originRng) ||
+			legacyAbsTargetMatches(ctx, ref, te, prefix, outermostBodyRng, originRng) {
 			f(ref)
 			continue
 		}
 
-		ref.NestedTargets.MatchWalk(ctx, te, prefix, outermostBodyRng, originRng, f)
+		ref.NestedTargets.LegacyMatchWalk(ctx, te, prefix, outermostBodyRng, originRng, f)
 	}
 }
 
-func localTargetMatches(ctx context.Context, target Target, te schema.TraversalExpr, prefix string, outermostBodyRng, originRng hcl.Range) bool {
+func legacyLocalTargetMatches(ctx context.Context, target Target, te schema.TraversalExpr, prefix string, outermostBodyRng, originRng hcl.Range) bool {
 	if len(target.LocalAddr) > 0 && strings.HasPrefix(target.LocalAddr.String(), prefix) {
 		// reject self references if not enabled
 		if !schema.ActiveSelfRefsFromContext(ctx) && target.LocalAddr[0].String() == "self" {
 			return false
 		}
 
-		hasNestedMatches := target.NestedTargets.containsMatch(ctx, te, prefix, outermostBodyRng, originRng)
+		hasNestedMatches := target.NestedTargets.legacyContainsMatch(ctx, te, prefix, outermostBodyRng, originRng)
 
 		// Avoid suggesting cyclical reference to the same attribute
 		// unless it has nested matches - i.e. still consider reference
@@ -118,7 +118,7 @@ func localTargetMatches(ctx context.Context, target Target, te schema.TraversalE
 			return false
 		}
 
-		if target.MatchesConstraint(te) || hasNestedMatches {
+		if target.LegacyMatchesConstraint(te) || hasNestedMatches {
 			return true
 		}
 	}
@@ -126,14 +126,14 @@ func localTargetMatches(ctx context.Context, target Target, te schema.TraversalE
 	return false
 }
 
-func absTargetMatches(ctx context.Context, target Target, te schema.TraversalExpr, prefix string, outermostBodyRng, originRng hcl.Range) bool {
+func legacyAbsTargetMatches(ctx context.Context, target Target, te schema.TraversalExpr, prefix string, outermostBodyRng, originRng hcl.Range) bool {
 	if len(target.Addr) > 0 && strings.HasPrefix(target.Addr.String(), prefix) {
 		// Reject references to block's own fields from within the body
 		if referenceTargetIsInRange(target, outermostBodyRng) {
 			return false
 		}
 
-		if target.MatchesConstraint(te) || target.NestedTargets.containsMatch(ctx, te, prefix, outermostBodyRng, originRng) {
+		if target.LegacyMatchesConstraint(te) || target.NestedTargets.legacyContainsMatch(ctx, te, prefix, outermostBodyRng, originRng) {
 			return true
 		}
 	}
@@ -153,17 +153,17 @@ func posEqual(pos, other hcl.Pos) bool {
 		pos.Byte == other.Byte
 }
 
-func (refs Targets) containsMatch(ctx context.Context, te schema.TraversalExpr, prefix string, outermostBodyRng, originRng hcl.Range) bool {
+func (refs Targets) legacyContainsMatch(ctx context.Context, te schema.TraversalExpr, prefix string, outermostBodyRng, originRng hcl.Range) bool {
 	for _, ref := range refs {
-		if localTargetMatches(ctx, ref, te, prefix, outermostBodyRng, originRng) {
+		if legacyLocalTargetMatches(ctx, ref, te, prefix, outermostBodyRng, originRng) {
 			return true
 		}
-		if absTargetMatches(ctx, ref, te, prefix, outermostBodyRng, originRng) {
+		if legacyAbsTargetMatches(ctx, ref, te, prefix, outermostBodyRng, originRng) {
 			return true
 		}
 
 		if len(ref.NestedTargets) > 0 {
-			if match := ref.NestedTargets.containsMatch(ctx, te, prefix, outermostBodyRng, originRng); match {
+			if match := ref.NestedTargets.legacyContainsMatch(ctx, te, prefix, outermostBodyRng, originRng); match {
 				return true
 			}
 		}

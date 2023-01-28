@@ -611,7 +611,7 @@ func TestTargets_OutermostInFile(t *testing.T) {
 	}
 }
 
-func TestTargets_MatchWalk(t *testing.T) {
+func TestTargets_LegacyMatchWalk(t *testing.T) {
 	testCases := []struct {
 		name             string
 		targets          Targets
@@ -862,7 +862,7 @@ func TestTargets_MatchWalk(t *testing.T) {
 		t.Run(fmt.Sprintf("%d-%s", i, tc.name), func(t *testing.T) {
 			targets := make(Targets, 0)
 			ctx := context.Background()
-			tc.targets.MatchWalk(ctx, tc.traversalConst, tc.prefix, tc.outermostBodyRng, tc.originRng, func(t Target) error {
+			tc.targets.LegacyMatchWalk(ctx, tc.traversalConst, tc.prefix, tc.outermostBodyRng, tc.originRng, func(t Target) error {
 				targets = append(targets, t)
 				return nil
 			})
@@ -873,7 +873,7 @@ func TestTargets_MatchWalk(t *testing.T) {
 	}
 }
 
-func TestTargets_MatchWalk_localRefs(t *testing.T) {
+func TestTargets_LegacyMatchWalk_localRefs(t *testing.T) {
 	testCases := []struct {
 		name             string
 		targets          Targets
@@ -1341,7 +1341,7 @@ func TestTargets_MatchWalk_localRefs(t *testing.T) {
 			if tc.activeSelfRefs {
 				ctx = schema.WithActiveSelfRefs(ctx)
 			}
-			tc.targets.MatchWalk(ctx, tc.traversalConst, tc.prefix, tc.outermostBodyRng, tc.originRng, func(t Target) error {
+			tc.targets.LegacyMatchWalk(ctx, tc.traversalConst, tc.prefix, tc.outermostBodyRng, tc.originRng, func(t Target) error {
 				targets = append(targets, t)
 				return nil
 			})
