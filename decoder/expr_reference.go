@@ -15,11 +15,6 @@ type Reference struct {
 	pathCtx *PathContext
 }
 
-func (ref Reference) HoverAtPos(ctx context.Context, pos hcl.Pos) *lang.HoverData {
-	// TODO
-	return nil
-}
-
 func (ref Reference) SemanticTokens(ctx context.Context) []lang.SemanticToken {
 	// TODO
 	return nil
