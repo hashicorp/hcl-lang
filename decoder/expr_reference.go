@@ -15,11 +15,6 @@ type Reference struct {
 	pathCtx *PathContext
 }
 
-func (ref Reference) SemanticTokens(ctx context.Context) []lang.SemanticToken {
-	// TODO
-	return nil
-}
-
 func (ref Reference) ReferenceOrigins(ctx context.Context, allowSelfRefs bool) reference.Origins {
 	// TODO
 	return nil
