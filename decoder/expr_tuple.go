@@ -15,11 +15,6 @@ type Tuple struct {
 	pathCtx *PathContext
 }
 
-func (t Tuple) CompletionAtPos(ctx context.Context, pos hcl.Pos) []lang.Candidate {
-	// TODO
-	return nil
-}
-
 func (t Tuple) HoverAtPos(ctx context.Context, pos hcl.Pos) *lang.HoverData {
 	// TODO
 	return nil
