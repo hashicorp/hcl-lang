@@ -15,11 +15,6 @@ type Tuple struct {
 	pathCtx *PathContext
 }
 
-func (t Tuple) HoverAtPos(ctx context.Context, pos hcl.Pos) *lang.HoverData {
-	// TODO
-	return nil
-}
-
 func (t Tuple) SemanticTokens(ctx context.Context) []lang.SemanticToken {
 	// TODO
 	return nil
