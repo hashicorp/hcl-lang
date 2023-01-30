@@ -656,10 +656,59 @@ STRING
 				},
 			},
 			CompletionData{
-				NewText:         `{}`,
-				Snippet:         `{ ${1} }`,
+				NewText: `{
+  
+}`,
+				Snippet: `{
+  ${1}
+}`,
 				TriggerSuggest:  true,
 				NextPlaceholder: 2,
+			},
+		},
+		{
+			Map{
+				Elem: Map{
+					Elem: Keyword{
+						Keyword: "kw",
+					},
+				},
+			},
+			CompletionData{
+				NewText: `{
+  "name" = {
+    
+  }
+}`,
+				Snippet: `{
+  "${1:name}" = {
+    ${2}
+  }
+}`,
+				TriggerSuggest:  true,
+				NextPlaceholder: 3,
+			},
+		},
+		{
+			Map{
+				Elem: Map{
+					Elem: LiteralType{
+						Type: cty.String,
+					},
+				},
+			},
+			CompletionData{
+				NewText: `{
+  "name" = {
+    "name" = "value"
+  }
+}`,
+				Snippet: `{
+  "${1:name}" = {
+    "${2:name}" = "${3:value}"
+  }
+}`,
+				NextPlaceholder: 4,
 			},
 		},
 		{
