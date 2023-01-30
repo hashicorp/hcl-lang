@@ -15,11 +15,6 @@ type Tuple struct {
 	pathCtx *PathContext
 }
 
-func (t Tuple) SemanticTokens(ctx context.Context) []lang.SemanticToken {
-	// TODO
-	return nil
-}
-
 func (t Tuple) ReferenceOrigins(ctx context.Context, allowSelfRefs bool) reference.Origins {
 	// TODO
 	return nil
