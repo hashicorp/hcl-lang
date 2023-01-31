@@ -251,7 +251,7 @@ func (d *PathDecoder) hoverDataForExpr(ctx context.Context, expr hcl.Expression,
 
 		tes, ok := constraints.TraversalExprs()
 		if ok {
-			content, err := d.hoverContentForTraversalExpr(ctx, e.AsTraversal(), tes, pos)
+			content, err := d.legacyHoverContentForTraversalExpr(ctx, e.AsTraversal(), tes, pos)
 			if err != nil {
 				return nil, err
 			}
@@ -599,7 +599,7 @@ func stringValFromTemplateExpr(tplExpr *hclsyntax.TemplateExpr) (cty.Value, bool
 	return cty.StringVal(value), true
 }
 
-func (d *PathDecoder) hoverContentForTraversalExpr(ctx context.Context, traversal hcl.Traversal, tes []schema.TraversalExpr, pos hcl.Pos) (string, error) {
+func (d *PathDecoder) legacyHoverContentForTraversalExpr(ctx context.Context, traversal hcl.Traversal, tes []schema.TraversalExpr, pos hcl.Pos) (string, error) {
 	origins, ok := d.pathCtx.ReferenceOrigins.AtPos(traversal.SourceRange().Filename, pos)
 	if !ok {
 		return "", &reference.NoOriginFound{}

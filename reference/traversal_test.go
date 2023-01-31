@@ -13,7 +13,7 @@ import (
 	"github.com/zclconf/go-cty/cty"
 )
 
-func TestTraversalToOrigin(t *testing.T) {
+func TestLegacyTraversalToOrigin(t *testing.T) {
 	testCases := []struct {
 		rawTraversal   string
 		traversalExprs schema.TraversalExprs
@@ -87,7 +87,7 @@ func TestTraversalToOrigin(t *testing.T) {
 				t.Fatal(diags)
 			}
 
-			origin, err := TraversalToLocalOrigin(traversal, tc.traversalExprs)
+			origin, err := LegacyTraversalToLocalOrigin(traversal, tc.traversalExprs)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -99,7 +99,7 @@ func TestTraversalToOrigin(t *testing.T) {
 	}
 }
 
-func TestTraversalsToOrigin(t *testing.T) {
+func TestLegacyTraversalsToOrigin(t *testing.T) {
 	testCases := []struct {
 		testName        string
 		rawTraversals   []string
@@ -169,7 +169,7 @@ func TestTraversalsToOrigin(t *testing.T) {
 				traversals = append(traversals, traversal)
 			}
 
-			origins := TraversalsToLocalOrigins(traversals, tc.traversalExprs, tc.allowSelfRefs)
+			origins := LegacyTraversalsToLocalOrigins(traversals, tc.traversalExprs, tc.allowSelfRefs)
 			if diff := cmp.Diff(tc.expectedOrigins, origins, ctydebug.CmpOptions); diff != "" {
 				t.Fatalf("origin mismatch: %s", diff)
 			}

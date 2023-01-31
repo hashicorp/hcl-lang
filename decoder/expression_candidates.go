@@ -459,7 +459,7 @@ func (d *PathDecoder) candidatesForTraversalConstraint(ctx context.Context, tc s
 
 	prefix, _ := d.bytesFromRange(prefixRng)
 
-	d.pathCtx.ReferenceTargets.MatchWalk(ctx, tc, string(prefix), outermostBodyRng, editRng, func(target reference.Target) error {
+	d.pathCtx.ReferenceTargets.LegacyMatchWalk(ctx, tc, string(prefix), outermostBodyRng, editRng, func(target reference.Target) error {
 		address := target.Address(ctx, editRng.Start).String()
 
 		candidates = append(candidates, lang.Candidate{

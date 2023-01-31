@@ -137,7 +137,7 @@ func (r Target) TargetRange() (hcl.Range, bool) {
 	return *r.RangePtr, true
 }
 
-func (ref Target) MatchesConstraint(te schema.TraversalExpr) bool {
+func (ref Target) LegacyMatchesConstraint(te schema.TraversalExpr) bool {
 	return ref.MatchesScopeId(te.OfScopeId) && ref.ConformsToType(te.OfType)
 }
 
