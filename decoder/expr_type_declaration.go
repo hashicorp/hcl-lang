@@ -9,8 +9,9 @@ import (
 )
 
 type TypeDeclaration struct {
-	expr hcl.Expression
-	cons schema.TypeDeclaration
+	expr    hcl.Expression
+	cons    schema.TypeDeclaration
+	pathCtx *PathContext
 }
 
 func (td TypeDeclaration) CompletionAtPos(ctx context.Context, pos hcl.Pos) []lang.Candidate {
