@@ -201,17 +201,6 @@ func (d *PathDecoder) hoverContentForLabel(i int, block *hclsyntax.Block, bSchem
 	return lang.Markdown(content)
 }
 
-func hoverContentForAttribute(name string, schema *schema.AttributeSchema) lang.MarkupContent {
-	value := fmt.Sprintf("**%s** _%s_", name, detailForAttribute(schema))
-	if schema.Description.Value != "" {
-		value += fmt.Sprintf("\n\n%s", schema.Description.Value)
-	}
-	return lang.MarkupContent{
-		Kind:  lang.MarkdownKind,
-		Value: value,
-	}
-}
-
 func (d *PathDecoder) hoverContentForBlock(bType string, schema *schema.BlockSchema) lang.MarkupContent {
 	value := fmt.Sprintf("**%s** _%s_", bType, detailForBlock(schema))
 	if schema.Description.Value != "" {
