@@ -17,7 +17,6 @@ var (
 	_ Constraint = LiteralType{}
 	_ Constraint = LiteralValue{}
 	_ Constraint = Map{}
-	_ Constraint = ObjectAttributes{}
 	_ Constraint = Object{}
 	_ Constraint = Set{}
 	_ Constraint = Reference{}
@@ -28,7 +27,6 @@ var (
 	_ ConstraintWithHoverData = LiteralType{}
 	_ ConstraintWithHoverData = LiteralValue{}
 	_ ConstraintWithHoverData = Map{}
-	_ ConstraintWithHoverData = ObjectAttributes{}
 	_ ConstraintWithHoverData = Object{}
 	_ ConstraintWithHoverData = Set{}
 	_ ConstraintWithHoverData = Tuple{}

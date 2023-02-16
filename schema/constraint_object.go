@@ -39,7 +39,7 @@ func (o Object) FriendlyName() string {
 
 func (o Object) Copy() Constraint {
 	return Object{
-		Attributes:  o.Attributes.Copy().(ObjectAttributes),
+		Attributes:  o.Attributes.Copy(),
 		Name:        o.Name,
 		Description: o.Description,
 	}
@@ -196,28 +196,10 @@ func (o Object) ConstraintType() (cty.Type, bool) {
 	return cty.Object(objAttributes), true
 }
 
-func (ObjectAttributes) isConstraintImpl() constraintSigil {
-	return constraintSigil{}
-}
-
-func (oa ObjectAttributes) FriendlyName() string {
-	return "attributes"
-}
-
-func (oa ObjectAttributes) Copy() Constraint {
+func (oa ObjectAttributes) Copy() ObjectAttributes {
 	m := make(ObjectAttributes, 0)
 	for name, aSchema := range oa {
 		m[name] = aSchema.Copy()
 	}
 	return m
-}
-
-func (oa ObjectAttributes) EmptyCompletionData(ctx context.Context, nextPlaceholder int, nestingLevel int) CompletionData {
-	// TODO
-	return CompletionData{}
-}
-
-func (oa ObjectAttributes) EmptyHoverData(nestingLevel int) *HoverData {
-	// TODO
-	return nil
 }
