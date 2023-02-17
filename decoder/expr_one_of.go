@@ -35,7 +35,7 @@ func (oo OneOf) ReferenceOrigins(ctx context.Context, allowSelfRefs bool) refere
 	return nil
 }
 
-func (oo OneOf) ReferenceTargets(ctx context.Context, addr lang.Address, addrCtx AddressContext) reference.Targets {
+func (oo OneOf) ReferenceTargets(ctx context.Context, targetCtx *TargetContext) reference.Targets {
 	// TODO
 	return nil
 }

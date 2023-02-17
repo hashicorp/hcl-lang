@@ -24,11 +24,11 @@ type ReferenceOriginsExpression interface {
 }
 
 type ReferenceTargetsExpression interface {
-	ReferenceTargets(ctx context.Context, addr lang.Address, addrCtx AddressContext) reference.Targets
+	ReferenceTargets(ctx context.Context, targetCtx *TargetContext) reference.Targets
 }
 
-// AddressContext describes context for collecting reference targets
-type AddressContext struct {
+// TargetContext describes context for collecting reference targets
+type TargetContext struct {
 	// FriendlyName is (optional) human-readable name of the expression
 	// interpreted as reference target.
 	FriendlyName string
@@ -49,6 +49,10 @@ type AddressContext struct {
 	// AsReference defines whether the attribute
 	// is addressable as a type-less reference
 	AsReference bool
+
+	// AttributeAddress represents a resolved address for the attribute
+	// to which the expression belongs.
+	AttributeAddress lang.Address
 }
 
 func (d *PathDecoder) newExpression(expr hcl.Expression, cons schema.Constraint) Expression {
