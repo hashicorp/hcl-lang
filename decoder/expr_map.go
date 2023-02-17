@@ -35,7 +35,7 @@ func (m Map) ReferenceOrigins(ctx context.Context, allowSelfRefs bool) reference
 	return nil
 }
 
-func (m Map) ReferenceTargets(ctx context.Context, addr lang.Address, addrCtx AddressContext) reference.Targets {
+func (m Map) ReferenceTargets(ctx context.Context, targetCtx *TargetContext) reference.Targets {
 	// TODO
 	return nil
 }
