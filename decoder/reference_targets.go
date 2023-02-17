@@ -499,12 +499,21 @@ func asTypeOfAttrExpr(attrs hcl.Attributes, bSchema *schema.BlockSchema) (cty.Ty
 		return cty.DynamicPseudoType, false
 	}
 
-	ec := ExprConstraints(bSchema.Body.Attributes[attrName].Expr)
-	_, ok = ec.TypeDeclarationExpr()
-	if !ok {
-		return cty.DynamicPseudoType, false
+	aSchema := bSchema.Body.Attributes[attrName]
+	if aSchema.Constraint != nil {
+		_, ok := aSchema.Constraint.(schema.TypeDeclaration)
+		if !ok {
+			return cty.DynamicPseudoType, false
+		}
+	} else {
+		ec := ExprConstraints(aSchema.Expr)
+		_, ok = ec.TypeDeclarationExpr()
+		if !ok {
+			return cty.DynamicPseudoType, false
+		}
 	}
 
+	// TODO: TypeConstraintWithDefaults
 	typeDecl, diags := typeexpr.TypeConstraint(attr.Expr)
 	if diags.HasErrors() {
 		return cty.DynamicPseudoType, false
