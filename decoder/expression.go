@@ -50,8 +50,8 @@ type TargetContext struct {
 	// is addressable as a type-less reference
 	AsReference bool
 
-	// AttributeAddress represents resolved address for the attribute
-	// which the expression belongs to.
+	// AttributeAddress represents a resolved address for the attribute
+	// to which the expression belongs.
 	AttributeAddress lang.Address
 }
 
