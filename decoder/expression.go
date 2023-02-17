@@ -2,6 +2,7 @@ package decoder
 
 import (
 	"context"
+	"unicode/utf8"
 
 	"github.com/hashicorp/hcl-lang/lang"
 	"github.com/hashicorp/hcl-lang/reference"
@@ -166,4 +167,33 @@ func newEmptyExpressionAtPos(filename string, pos hcl.Pos) hcl.Expression {
 			End:      pos,
 		},
 	}
+}
+
+// recoverLeftBytes seeks left from given pos in given slice of bytes
+// and recovers all bytes up until f matches, including that match.
+// This allows recovery of incomplete configuration which is not
+// present in the parsed AST during completion.
+//
+// Zero bytes is returned if no match was found.
+func recoverLeftBytes(b []byte, pos hcl.Pos, f func(byteOffset int, r rune) bool) []byte {
+	lastRune, size := utf8.DecodeLastRune(b[:pos.Byte])
+	offset := pos.Byte - size
+
+	// check for early match
+	if f(pos.Byte, lastRune) {
+		return b[offset:pos.Byte]
+	}
+
+	for offset > 0 {
+		nextRune, size := utf8.DecodeLastRune(b[:offset])
+		if f(offset, nextRune) {
+			// record the matched offset
+			// and include the matched last rune
+			startByte := offset - size
+			return b[startByte:pos.Byte]
+		}
+		offset -= size
+	}
+
+	return []byte{}
 }
