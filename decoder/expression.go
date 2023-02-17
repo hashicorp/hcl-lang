@@ -197,3 +197,10 @@ func recoverLeftBytes(b []byte, pos hcl.Pos, f func(byteOffset int, r rune) bool
 
 	return []byte{}
 }
+
+// isObjectItemTerminatingRune returns true if the given rune
+// is considered a left terminating character for an item
+// in hclsyntax.ObjectConsExpr.
+func isObjectItemTerminatingRune(r rune) bool {
+	return r == '\n' || r == ',' || r == '{'
+}
