@@ -43,6 +43,11 @@ func (o Object) EmptyCompletionData(placeholder int) CompletionData {
 	return CompletionData{}
 }
 
+func (o Object) EmptyHoverData() *HoverData {
+	// TODO
+	return nil
+}
+
 func (ObjectAttributes) isConstraintImpl() constraintSigil {
 	return constraintSigil{}
 }
@@ -62,4 +67,9 @@ func (oa ObjectAttributes) Copy() Constraint {
 func (oa ObjectAttributes) EmptyCompletionData(nextPlaceholder int) CompletionData {
 	// TODO
 	return CompletionData{}
+}
+
+func (oa ObjectAttributes) EmptyHoverData() *HoverData {
+	// TODO
+	return nil
 }

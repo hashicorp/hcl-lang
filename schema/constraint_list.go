@@ -51,3 +51,8 @@ func (l List) EmptyCompletionData(nextPlaceholder int) CompletionData {
 	// TODO
 	return CompletionData{}
 }
+
+func (l List) EmptyHoverData() *HoverData {
+	// TODO
+	return nil
+}

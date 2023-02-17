@@ -37,3 +37,8 @@ func (lv LiteralValue) EmptyCompletionData(nextPlaceholder int) CompletionData {
 	// TODO
 	return CompletionData{}
 }
+
+func (lv LiteralValue) EmptyHoverData() *HoverData {
+	// TODO
+	return nil
+}

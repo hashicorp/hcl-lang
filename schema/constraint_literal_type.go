@@ -36,3 +36,8 @@ func (lt LiteralType) EmptyCompletionData(nextPlaceholder int) CompletionData {
 	// TODO
 	return CompletionData{}
 }
+
+func (lt LiteralType) EmptyHoverData() *HoverData {
+	// TODO
+	return nil
+}
