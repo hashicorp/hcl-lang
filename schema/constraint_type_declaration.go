@@ -3,7 +3,9 @@ package schema
 // TypeDeclaration represents a type declaration as
 // interpreted by HCL's ext/typeexpr package,
 // i.e. declaration of cty.Type in HCL
-type TypeDeclaration struct{}
+type TypeDeclaration struct {
+	// TODO: optional object attribute mode
+}
 
 func (TypeDeclaration) isConstraintImpl() constraintSigil {
 	return constraintSigil{}
