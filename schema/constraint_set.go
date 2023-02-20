@@ -51,3 +51,8 @@ func (s Set) EmptyCompletionData(nextPlaceholder int) CompletionData {
 	// TODO
 	return CompletionData{}
 }
+
+func (s Set) EmptyHoverData() *HoverData {
+	// TODO
+	return nil
+}

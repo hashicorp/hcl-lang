@@ -13,4 +13,13 @@ var (
 	_ Constraint = Reference{}
 	_ Constraint = Tuple{}
 	_ Constraint = TypeDeclaration{}
+
+	_ ConstraintWithHoverData = List{}
+	_ ConstraintWithHoverData = LiteralType{}
+	_ ConstraintWithHoverData = LiteralValue{}
+	_ ConstraintWithHoverData = Map{}
+	_ ConstraintWithHoverData = ObjectAttributes{}
+	_ ConstraintWithHoverData = Object{}
+	_ ConstraintWithHoverData = Set{}
+	_ ConstraintWithHoverData = Tuple{}
 )

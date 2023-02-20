@@ -58,3 +58,8 @@ func (m Map) EmptyCompletionData(nextPlaceholder int) CompletionData {
 	// TODO
 	return CompletionData{}
 }
+
+func (m Map) EmptyHoverData() *HoverData {
+	// TODO
+	return nil
+}

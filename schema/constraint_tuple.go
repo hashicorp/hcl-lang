@@ -41,3 +41,8 @@ func (t Tuple) EmptyCompletionData(nextPlaceholder int) CompletionData {
 	// TODO
 	return CompletionData{}
 }
+
+func (t Tuple) EmptyHoverData() *HoverData {
+	// TODO
+	return nil
+}

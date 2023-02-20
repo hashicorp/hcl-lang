@@ -1,6 +1,9 @@
 package schema
 
-import "github.com/zclconf/go-cty/cty"
+import (
+	"github.com/hashicorp/hcl-lang/lang"
+	"github.com/zclconf/go-cty/cty"
+)
 
 type constraintSigil struct{}
 
@@ -8,12 +11,23 @@ type Constraint interface {
 	isConstraintImpl() constraintSigil
 	FriendlyName() string
 	Copy() Constraint
-	// EmptyCompletionData provides completion data (to be used in text edits),
-	// with snippet placeholder identifiers such as ${4} (if any) starting
-	// from given nextPlaceholder.
-	// 1 is the most appropriate placeholder, if none were yet assigned prior
-	// to rendering completion data for this constraint (e.g. map key).
+
+	// EmptyCompletionData provides completion data in context where
+	// there is no corresponding configuration, such as when the Constraint
+	// is part of another and it is desirable to complete
+	// the parent constraint as whole.
 	EmptyCompletionData(nextPlaceholder int) CompletionData
+}
+
+type ConstraintWithHoverData interface {
+	// EmptyHoverData provides hover data in context where there is
+	// no corresponding configuration, such as when the Constraint
+	// is part of another and more detailed hover data is requested
+	// for the parent.
+	//
+	// This enables e.g. rendering attributes under Object rather
+	// than just "object".
+	EmptyHoverData() *HoverData
 }
 
 type Validatable interface {
@@ -29,8 +43,17 @@ type Comparable interface {
 }
 
 type CompletionData struct {
-	NewText         string
-	Snippet         string
+	NewText string
+
+	// Snippet represents text to be inserted via text edits,
+	// with snippet placeholder identifiers such as ${1} (if any) starting
+	// from given nextPlaceholder (provided as arg to EmptyCompletionData).
+	Snippet string
+
 	TriggerSuggest  bool
 	LastPlaceholder int
+}
+
+type HoverData struct {
+	Content lang.MarkupContent
 }
