@@ -42,7 +42,7 @@ func (t Tuple) EmptyCompletionData(nextPlaceholder int) CompletionData {
 	return CompletionData{}
 }
 
-func (t Tuple) EmptyHoverData() *HoverData {
+func (t Tuple) EmptyHoverData(nestingLevel int) *HoverData {
 	// TODO
 	return nil
 }

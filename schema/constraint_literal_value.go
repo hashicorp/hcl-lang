@@ -38,7 +38,7 @@ func (lv LiteralValue) EmptyCompletionData(nextPlaceholder int) CompletionData {
 	return CompletionData{}
 }
 
-func (lv LiteralValue) EmptyHoverData() *HoverData {
+func (lv LiteralValue) EmptyHoverData(nestingLevel int) *HoverData {
 	// TODO
 	return nil
 }
