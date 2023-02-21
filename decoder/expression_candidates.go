@@ -240,8 +240,13 @@ func isMultilineTemplateExpr(expr hclsyntax.Expression) bool {
 func (d *PathDecoder) candidatesFromHooks(ctx context.Context, attr *hclsyntax.Attribute, aSchema *schema.AttributeSchema, outerBodyRng hcl.Range, pos hcl.Pos) []lang.Candidate {
 	candidates := make([]lang.Candidate, 0)
 	if aSchema.Constraint != nil {
-		con, ok := aSchema.Constraint.(schema.Comparable)
-		if !ok || !con.IsCompatible(cty.String) {
+		con, ok := aSchema.Constraint.(schema.TypeAwareConstraint)
+		if !ok {
+			// Return early as we only support string values for now
+			return candidates
+		}
+		typ, ok := con.ConstraintType()
+		if !ok || typ != cty.String {
 			// Return early as we only support string values for now
 			return candidates
 		}

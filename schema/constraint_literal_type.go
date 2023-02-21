@@ -41,3 +41,7 @@ func (lt LiteralType) EmptyHoverData(nestingLevel int) *HoverData {
 	// TODO
 	return nil
 }
+
+func (lt LiteralType) ConstraintType() (cty.Type, bool) {
+	return lt.Type, true
+}

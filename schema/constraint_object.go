@@ -2,6 +2,7 @@ package schema
 
 import (
 	"github.com/hashicorp/hcl-lang/lang"
+	"github.com/zclconf/go-cty/cty"
 )
 
 // Object represents an object, equivalent of hclsyntax.ObjectConsExpr
@@ -46,6 +47,11 @@ func (o Object) EmptyCompletionData(placeholder int) CompletionData {
 func (o Object) EmptyHoverData(nestingLevel int) *HoverData {
 	// TODO
 	return nil
+}
+
+func (o Object) ConstraintType() (cty.Type, bool) {
+	// TODO
+	return cty.NilType, false
 }
 
 func (ObjectAttributes) isConstraintImpl() constraintSigil {

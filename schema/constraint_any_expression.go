@@ -32,3 +32,8 @@ func (ae AnyExpression) EmptyCompletionData(nextPlaceholder int) CompletionData 
 	// TODO
 	return CompletionData{}
 }
+
+func (ae AnyExpression) ConstraintType() (cty.Type, bool) {
+	// TODO
+	return cty.NilType, false
+}
