@@ -51,10 +51,21 @@ type TargetContext struct {
 	// is addressable as a type-less reference
 	AsReference bool
 
-	// ParentAddress represents a resolved "parent" address.
+	// ParentAddress represents a resolved "parent" absolute address,
+	// such as data.aws_instance.foo.attr_name.
 	// This may be address of the attribute, or implied element/item address
 	// for complex-type expressions such as object, list, map etc.
 	ParentAddress lang.Address
+
+	// ParentLocalAddress represents a resolved "parent" local address,
+	// such as self.attr_name.
+	// This may be address of the attribute, or implied element/item address
+	// for complex-type expressions such as object, list, map etc.
+	ParentLocalAddress lang.Address
+
+	// TargetableFromRangePtr defines where the target is locally targetable
+	// from via the ParentLocalAddress.
+	TargetableFromRangePtr *hcl.Range
 }
 
 func (tctx *TargetContext) Copy() *TargetContext {
