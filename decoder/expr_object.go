@@ -14,11 +14,6 @@ type Object struct {
 	pathCtx *PathContext
 }
 
-func (obj Object) ReferenceOrigins(ctx context.Context, allowSelfRefs bool) reference.Origins {
-	// TODO
-	return nil
-}
-
 func (obj Object) ReferenceTargets(ctx context.Context, targetCtx *TargetContext) reference.Targets {
 	// TODO
 	return nil
