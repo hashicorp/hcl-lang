@@ -34,12 +34,15 @@ type Validatable interface {
 	Validate() error
 }
 
-// Comparable represents a constraint which is type-aware,
-// making it possible to compare a given type for conformity.
+// TypeAwareConstraint represents a constraint which may be type-aware.
+// Most constraints which implement this are always type-aware,
+// but for some this is runtime concern depending on the configuration.
 //
-// This can affect completion hooks.
-type Comparable interface {
-	IsCompatible(typ cty.Type) bool
+// This makes it comparable to another type for conformity during completion
+// and it enables collection of type-aware reference target, if the attribute
+// itself is targetable as type-aware.
+type TypeAwareConstraint interface {
+	ConstraintType() (cty.Type, bool)
 }
 
 type CompletionData struct {

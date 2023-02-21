@@ -22,4 +22,13 @@ var (
 	_ ConstraintWithHoverData = Object{}
 	_ ConstraintWithHoverData = Set{}
 	_ ConstraintWithHoverData = Tuple{}
+
+	_ TypeAwareConstraint = AnyExpression{}
+	_ TypeAwareConstraint = List{}
+	_ TypeAwareConstraint = LiteralType{}
+	_ TypeAwareConstraint = LiteralValue{}
+	_ TypeAwareConstraint = Map{}
+	_ TypeAwareConstraint = Object{}
+	_ TypeAwareConstraint = Set{}
+	_ TypeAwareConstraint = Tuple{}
 )

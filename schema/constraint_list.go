@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/hashicorp/hcl-lang/lang"
+	"github.com/zclconf/go-cty/cty"
 )
 
 // List represents a list, equivalent of hclsyntax.TupleConsExpr
@@ -55,4 +56,9 @@ func (l List) EmptyCompletionData(nextPlaceholder int) CompletionData {
 func (l List) EmptyHoverData(nestingLevel int) *HoverData {
 	// TODO
 	return nil
+}
+
+func (l List) ConstraintType() (cty.Type, bool) {
+	// TODO
+	return cty.NilType, false
 }

@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/hashicorp/hcl-lang/lang"
+	"github.com/zclconf/go-cty/cty"
 )
 
 // Map represents a map, equivalent of hclsyntax.ObjectConsExpr
@@ -62,4 +63,9 @@ func (m Map) EmptyCompletionData(nextPlaceholder int) CompletionData {
 func (m Map) EmptyHoverData(nestingLevel int) *HoverData {
 	// TODO
 	return nil
+}
+
+func (m Map) ConstraintType() (cty.Type, bool) {
+	// TODO
+	return cty.NilType, false
 }

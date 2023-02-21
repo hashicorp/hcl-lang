@@ -2,6 +2,7 @@ package schema
 
 import (
 	"github.com/hashicorp/hcl-lang/lang"
+	"github.com/zclconf/go-cty/cty"
 )
 
 // Tuple represents a tuple, equivalent of hclsyntax.TupleConsExpr
@@ -45,4 +46,9 @@ func (t Tuple) EmptyCompletionData(nextPlaceholder int) CompletionData {
 func (t Tuple) EmptyHoverData(nestingLevel int) *HoverData {
 	// TODO
 	return nil
+}
+
+func (t Tuple) ConstraintType() (cty.Type, bool) {
+	// TODO
+	return cty.NilType, false
 }
