@@ -57,6 +57,19 @@ type TargetContext struct {
 	ParentAddress lang.Address
 }
 
+func (tctx *TargetContext) Copy() *TargetContext {
+	if tctx == nil {
+		return nil
+	}
+	return &TargetContext{
+		FriendlyName:  tctx.FriendlyName,
+		ScopeId:       tctx.ScopeId,
+		AsExprType:    tctx.AsExprType,
+		AsReference:   tctx.AsReference,
+		ParentAddress: tctx.ParentAddress.Copy(),
+	}
+}
+
 func (d *PathDecoder) newExpression(expr hcl.Expression, cons schema.Constraint) Expression {
 	return newExpression(d.pathCtx, expr, cons)
 }
