@@ -51,9 +51,10 @@ type TargetContext struct {
 	// is addressable as a type-less reference
 	AsReference bool
 
-	// AttributeAddress represents a resolved address for the attribute
-	// to which the expression belongs.
-	AttributeAddress lang.Address
+	// ParentAddress represents a resolved "parent" address.
+	// This may be address of the attribute, or implied element/item address
+	// for complex-type expressions such as object, list, map etc.
+	ParentAddress lang.Address
 }
 
 func (d *PathDecoder) newExpression(expr hcl.Expression, cons schema.Constraint) Expression {
