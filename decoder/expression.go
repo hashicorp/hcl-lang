@@ -72,13 +72,23 @@ func (tctx *TargetContext) Copy() *TargetContext {
 	if tctx == nil {
 		return nil
 	}
-	return &TargetContext{
+
+	newCtx := &TargetContext{
 		FriendlyName:  tctx.FriendlyName,
 		ScopeId:       tctx.ScopeId,
 		AsExprType:    tctx.AsExprType,
 		AsReference:   tctx.AsReference,
 		ParentAddress: tctx.ParentAddress.Copy(),
 	}
+
+	if tctx.ParentLocalAddress != nil {
+		newCtx.ParentLocalAddress = tctx.ParentLocalAddress.Copy()
+	}
+	if tctx.TargetableFromRangePtr != nil {
+		newCtx.TargetableFromRangePtr = tctx.TargetableFromRangePtr.Ptr()
+	}
+
+	return newCtx
 }
 
 func (d *PathDecoder) newExpression(expr hcl.Expression, cons schema.Constraint) Expression {
