@@ -700,10 +700,24 @@ func (d *PathDecoder) collectInferredReferenceTargetsForBody(addr lang.Address, 
 	}
 
 	for name, aSchema := range bodySchema.Attributes {
-		attrType, ok := exprConstraintToDataType(aSchema.Expr)
-		if !ok {
-			// unknown type
-			continue
+		var attrType cty.Type
+		if aSchema.Constraint != nil {
+			var ok bool
+			cons, ok := aSchema.Constraint.(schema.TypeAwareConstraint)
+			if !ok {
+				continue
+			}
+			attrType, ok = cons.ConstraintType()
+			if !ok {
+				continue
+			}
+		} else {
+			var ok bool
+			attrType, ok = exprConstraintToDataType(aSchema.Expr)
+			if !ok {
+				// unknown type
+				continue
+			}
 		}
 
 		attrAddr := append(addr.Copy(), lang.AttrStep{Name: name})
@@ -716,6 +730,12 @@ func (d *PathDecoder) collectInferredReferenceTargetsForBody(addr lang.Address, 
 			RangePtr:    body.MissingItemRange().Ptr(),
 		}
 
+		targetCtx := &TargetContext{
+			ParentAddress: attrAddr,
+			ScopeId:       bAddrSchema.ScopeId,
+			AsExprType:    true,
+		}
+
 		if bAddrSchema.DependentBodySelfRef && selfRefBodyRangePtr != nil {
 			localAddr := make(lang.Address, len(selfRefAddr))
 			copy(localAddr, selfRefAddr)
@@ -723,6 +743,9 @@ func (d *PathDecoder) collectInferredReferenceTargetsForBody(addr lang.Address, 
 
 			ref.LocalAddr = localAddr
 			ref.TargetableFromRangePtr = selfRefBodyRangePtr.Ptr()
+
+			targetCtx.ParentLocalAddress = localAddr
+			targetCtx.TargetableFromRangePtr = selfRefBodyRangePtr.Ptr()
 		}
 
 		var attrExpr hcl.Expression
@@ -732,9 +755,18 @@ func (d *PathDecoder) collectInferredReferenceTargetsForBody(addr lang.Address, 
 			attrExpr = attr.Expr
 		}
 
-		if attrExpr != nil && !attrType.IsPrimitiveType() {
+		if aSchema.Constraint != nil {
 			ref.NestedTargets = make(reference.Targets, 0)
-			ref.NestedTargets = append(ref.NestedTargets, decodeReferenceTargetsForComplexTypeExpr(attrAddr, attrExpr, attrType, bAddrSchema.ScopeId)...)
+			expr, ok := newExpression(d.pathCtx, attrExpr, aSchema.Constraint).(ReferenceTargetsExpression)
+			if ok {
+				ctx := context.Background()
+				ref.NestedTargets = append(ref.NestedTargets, expr.ReferenceTargets(ctx, targetCtx)...)
+			}
+		} else {
+			if attrExpr != nil && !attrType.IsPrimitiveType() {
+				ref.NestedTargets = make(reference.Targets, 0)
+				ref.NestedTargets = append(ref.NestedTargets, decodeReferenceTargetsForComplexTypeExpr(attrAddr, attrExpr, attrType, bAddrSchema.ScopeId)...)
+			}
 		}
 
 		refs = append(refs, ref)
