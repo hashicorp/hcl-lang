@@ -204,3 +204,49 @@ func recoverLeftBytes(b []byte, pos hcl.Pos, f func(byteOffset int, r rune) bool
 func isObjectItemTerminatingRune(r rune) bool {
 	return r == '\n' || r == ',' || r == '{'
 }
+
+// rawObjectKey extracts raw key (as string) from KeyExpr of
+// any hclsyntax.ObjectConsExpr along with the corresponding range
+// and boolean indicating whether the extraction was successful.
+//
+// This accounts for the two common key representations (quoted and unquoted)
+// and enables validation, filtering of object attributes and accurate
+// calculation of edit range.
+//
+// It does *not* account for interpolation inside the key,
+// such as { (var.key_name) = "foo" }.
+func rawObjectKey(expr hcl.Expression) (string, *hcl.Range, bool) {
+	// regardless of what expression it is always wrapped
+	keyExpr, ok := expr.(*hclsyntax.ObjectConsKeyExpr)
+	if !ok {
+		return "", nil, false
+	}
+
+	switch eType := keyExpr.Wrapped.(type) {
+	// most common "naked" keys
+	case *hclsyntax.ScopeTraversalExpr:
+		if len(eType.Traversal) != 1 {
+			return "", nil, false
+		}
+		return eType.Traversal.RootName(), eType.Range().Ptr(), true
+
+	// less common quoted keys
+	case *hclsyntax.TemplateExpr:
+		if !eType.IsStringLiteral() {
+			return "", nil, false
+		}
+
+		// string literals imply exactly 1 part
+		lvExpr, ok := eType.Parts[0].(*hclsyntax.LiteralValueExpr)
+		if !ok {
+			return "", nil, false
+		}
+
+		if lvExpr.Val.Type() != cty.String {
+			return "", nil, false
+		}
+		return lvExpr.Val.AsString(), lvExpr.Range().Ptr(), true
+	}
+
+	return "", nil, false
+}
