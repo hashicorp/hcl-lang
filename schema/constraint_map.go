@@ -59,7 +59,7 @@ func (m Map) EmptyCompletionData(nextPlaceholder int) CompletionData {
 	return CompletionData{}
 }
 
-func (m Map) EmptyHoverData() *HoverData {
+func (m Map) EmptyHoverData(nestingLevel int) *HoverData {
 	// TODO
 	return nil
 }

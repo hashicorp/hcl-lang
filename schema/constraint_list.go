@@ -52,7 +52,7 @@ func (l List) EmptyCompletionData(nextPlaceholder int) CompletionData {
 	return CompletionData{}
 }
 
-func (l List) EmptyHoverData() *HoverData {
+func (l List) EmptyHoverData(nestingLevel int) *HoverData {
 	// TODO
 	return nil
 }

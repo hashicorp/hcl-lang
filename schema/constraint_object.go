@@ -43,7 +43,7 @@ func (o Object) EmptyCompletionData(placeholder int) CompletionData {
 	return CompletionData{}
 }
 
-func (o Object) EmptyHoverData() *HoverData {
+func (o Object) EmptyHoverData(nestingLevel int) *HoverData {
 	// TODO
 	return nil
 }
@@ -69,7 +69,7 @@ func (oa ObjectAttributes) EmptyCompletionData(nextPlaceholder int) CompletionDa
 	return CompletionData{}
 }
 
-func (oa ObjectAttributes) EmptyHoverData() *HoverData {
+func (oa ObjectAttributes) EmptyHoverData(nestingLevel int) *HoverData {
 	// TODO
 	return nil
 }

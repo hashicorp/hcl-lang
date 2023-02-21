@@ -27,7 +27,7 @@ type ConstraintWithHoverData interface {
 	//
 	// This enables e.g. rendering attributes under Object rather
 	// than just "object".
-	EmptyHoverData() *HoverData
+	EmptyHoverData(nestingLevel int) *HoverData
 }
 
 type Validatable interface {
