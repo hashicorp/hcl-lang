@@ -176,11 +176,11 @@ func newEmptyExpressionAtPos(filename string, pos hcl.Pos) hcl.Expression {
 //
 // Zero bytes is returned if no match was found.
 func recoverLeftBytes(b []byte, pos hcl.Pos, f func(byteOffset int, r rune) bool) []byte {
-	lastRune, size := utf8.DecodeLastRune(b[:pos.Byte])
+	firstRune, size := utf8.DecodeLastRune(b[:pos.Byte])
 	offset := pos.Byte - size
 
 	// check for early match
-	if f(pos.Byte, lastRune) {
+	if f(pos.Byte, firstRune) {
 		return b[offset:pos.Byte]
 	}
 
