@@ -59,6 +59,19 @@ func (s Set) EmptyHoverData(nestingLevel int) *HoverData {
 }
 
 func (s Set) ConstraintType() (cty.Type, bool) {
-	// TODO
-	return cty.NilType, false
+	if s.Elem == nil {
+		return cty.NilType, false
+	}
+
+	elemCons, ok := s.Elem.(TypeAwareConstraint)
+	if !ok {
+		return cty.NilType, false
+	}
+
+	elemType, ok := elemCons.ConstraintType()
+	if !ok {
+		return cty.NilType, false
+	}
+
+	return cty.Set(elemType), true
 }
