@@ -49,6 +49,20 @@ func (t Tuple) EmptyHoverData(nestingLevel int) *HoverData {
 }
 
 func (t Tuple) ConstraintType() (cty.Type, bool) {
-	// TODO
-	return cty.NilType, false
+	elemCons := make([]cty.Type, 0)
+
+	for _, elem := range t.Elems {
+		cons, ok := elem.(TypeAwareConstraint)
+		if !ok {
+			return cty.NilType, false
+		}
+
+		elemType, ok := cons.ConstraintType()
+		if !ok {
+			return cty.NilType, false
+		}
+		elemCons = append(elemCons, elemType)
+	}
+
+	return cty.Tuple(elemCons), true
 }
