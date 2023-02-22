@@ -48,7 +48,7 @@ func (s Set) Copy() Constraint {
 	}
 }
 
-func (s Set) EmptyCompletionData(nextPlaceholder int) CompletionData {
+func (s Set) EmptyCompletionData(nextPlaceholder int, nestingLevel int) CompletionData {
 	// TODO
 	return CompletionData{}
 }

@@ -164,7 +164,7 @@ func requiredFieldsSnippet(bodySchema *schema.BodySchema, placeholder int, inden
 
 		var snippet string
 		if attr.Constraint != nil {
-			snippet = attr.Constraint.EmptyCompletionData(placeholder).Snippet
+			snippet = attr.Constraint.EmptyCompletionData(placeholder, indentCount).Snippet
 		} else {
 			snippet = snippetForExprContraint(uint(placeholder), attr.Expr)
 		}

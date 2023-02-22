@@ -32,7 +32,7 @@ func (lt LiteralType) Copy() Constraint {
 	}
 }
 
-func (lt LiteralType) EmptyCompletionData(nextPlaceholder int) CompletionData {
+func (lt LiteralType) EmptyCompletionData(nextPlaceholder int, nestingLevel int) CompletionData {
 	// TODO
 	return CompletionData{}
 }

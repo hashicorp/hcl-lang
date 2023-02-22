@@ -48,7 +48,7 @@ func (l List) Copy() Constraint {
 	}
 }
 
-func (l List) EmptyCompletionData(nextPlaceholder int) CompletionData {
+func (l List) EmptyCompletionData(nextPlaceholder int, nestingLevel int) CompletionData {
 	// TODO
 	return CompletionData{}
 }

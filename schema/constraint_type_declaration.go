@@ -19,7 +19,7 @@ func (td TypeDeclaration) Copy() Constraint {
 	return TypeDeclaration{}
 }
 
-func (td TypeDeclaration) EmptyCompletionData(nextPlaceholder int) CompletionData {
+func (td TypeDeclaration) EmptyCompletionData(nextPlaceholder int, nestingLevel int) CompletionData {
 	// TODO
 	return CompletionData{}
 }

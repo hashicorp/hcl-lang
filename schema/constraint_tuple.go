@@ -38,7 +38,7 @@ func (t Tuple) Copy() Constraint {
 	return newTuple
 }
 
-func (t Tuple) EmptyCompletionData(nextPlaceholder int) CompletionData {
+func (t Tuple) EmptyCompletionData(nextPlaceholder int, nestingLevel int) CompletionData {
 	// TODO
 	return CompletionData{}
 }

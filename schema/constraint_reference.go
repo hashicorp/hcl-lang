@@ -65,7 +65,7 @@ func (ref Reference) Copy() Constraint {
 	}
 }
 
-func (ref Reference) EmptyCompletionData(nextPlaceholder int) CompletionData {
+func (ref Reference) EmptyCompletionData(nextPlaceholder int, nestingLevel int) CompletionData {
 	// TODO
 	return CompletionData{}
 }
