@@ -89,6 +89,12 @@ func (o OneOf) ConstraintType() (cty.Type, bool) {
 		if !ok {
 			continue
 		}
+
+		// Picking first type-aware constraint may not always be
+		// appropriate since we cannot match it against configuration,
+		// but it is mostly a pragmatic choice to mimic existing behaviours
+		// based on common schema, such as OneOf{Reference{}, LiteralType{}}.
+		// TODO: Revisit when AnyExpression{} is implemented & rolled out
 		return typ, true
 	}
 
