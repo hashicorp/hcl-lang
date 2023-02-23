@@ -61,8 +61,19 @@ func (m Map) EmptyCompletionData(nextPlaceholder int, nestingLevel int) Completi
 }
 
 func (m Map) EmptyHoverData(nestingLevel int) *HoverData {
-	// TODO
-	return nil
+	elemCons, ok := m.Elem.(ConstraintWithHoverData)
+	if !ok {
+		return nil
+	}
+
+	hoverData := elemCons.EmptyHoverData(nestingLevel)
+	if hoverData == nil {
+		return nil
+	}
+
+	return &HoverData{
+		Content: lang.Markdown(fmt.Sprintf(`map(%s)`, hoverData.Content.Value)),
+	}
 }
 
 func (m Map) ConstraintType() (cty.Type, bool) {
