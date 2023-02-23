@@ -54,8 +54,19 @@ func (s Set) EmptyCompletionData(nextPlaceholder int, nestingLevel int) Completi
 }
 
 func (s Set) EmptyHoverData(nestingLevel int) *HoverData {
-	// TODO
-	return nil
+	elemCons, ok := s.Elem.(ConstraintWithHoverData)
+	if !ok {
+		return nil
+	}
+
+	hoverData := elemCons.EmptyHoverData(nestingLevel)
+	if hoverData == nil {
+		return nil
+	}
+
+	return &HoverData{
+		Content: lang.Markdown(fmt.Sprintf(`set(%s)`, hoverData.Content.Value)),
+	}
 }
 
 func (s Set) ConstraintType() (cty.Type, bool) {
