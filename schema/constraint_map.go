@@ -66,6 +66,19 @@ func (m Map) EmptyHoverData(nestingLevel int) *HoverData {
 }
 
 func (m Map) ConstraintType() (cty.Type, bool) {
-	// TODO
-	return cty.NilType, false
+	if m.Elem == nil {
+		return cty.NilType, false
+	}
+
+	elemCons, ok := m.Elem.(TypeAwareConstraint)
+	if !ok {
+		return cty.NilType, false
+	}
+
+	elemType, ok := elemCons.ConstraintType()
+	if !ok {
+		return cty.NilType, false
+	}
+
+	return cty.Map(elemType), true
 }

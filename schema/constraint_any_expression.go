@@ -34,6 +34,5 @@ func (ae AnyExpression) EmptyCompletionData(nextPlaceholder int, nestingLevel in
 }
 
 func (ae AnyExpression) ConstraintType() (cty.Type, bool) {
-	// TODO
-	return cty.NilType, false
+	return ae.OfType, true
 }

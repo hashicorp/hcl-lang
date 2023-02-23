@@ -50,8 +50,22 @@ func (o Object) EmptyHoverData(nestingLevel int) *HoverData {
 }
 
 func (o Object) ConstraintType() (cty.Type, bool) {
-	// TODO
-	return cty.NilType, false
+	objAttributes := make(map[string]cty.Type)
+
+	for name, attr := range o.Attributes {
+		cons, ok := attr.Constraint.(TypeAwareConstraint)
+		if !ok {
+			return cty.NilType, false
+		}
+		attrType, ok := cons.ConstraintType()
+		if !ok {
+			return cty.NilType, false
+		}
+
+		objAttributes[name] = attrType
+	}
+
+	return cty.Object(objAttributes), true
 }
 
 func (ObjectAttributes) isConstraintImpl() constraintSigil {

@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/hashicorp/go-multierror"
+	"github.com/zclconf/go-cty/cty"
 )
 
 // OneOf represents multiple constraints where any one of them is acceptable.
@@ -76,4 +77,26 @@ func namesContain(names []string, name string) bool {
 func (o OneOf) EmptyCompletionData(nextPlaceholder int, nestingLevel int) CompletionData {
 	// TODO
 	return CompletionData{}
+}
+
+func (o OneOf) ConstraintType() (cty.Type, bool) {
+	for _, cons := range o {
+		c, ok := cons.(TypeAwareConstraint)
+		if !ok {
+			continue
+		}
+		typ, ok := c.ConstraintType()
+		if !ok {
+			continue
+		}
+
+		// Picking first type-aware constraint may not always be
+		// appropriate since we cannot match it against configuration,
+		// but it is mostly a pragmatic choice to mimic existing behaviours
+		// based on common schema, such as OneOf{Reference{}, LiteralType{}}.
+		// TODO: Revisit when AnyExpression{} is implemented & rolled out
+		return typ, true
+	}
+
+	return cty.NilType, false
 }

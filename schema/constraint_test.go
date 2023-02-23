@@ -29,6 +29,7 @@ var (
 	_ TypeAwareConstraint = LiteralValue{}
 	_ TypeAwareConstraint = Map{}
 	_ TypeAwareConstraint = Object{}
+	_ TypeAwareConstraint = OneOf{}
 	_ TypeAwareConstraint = Set{}
 	_ TypeAwareConstraint = Tuple{}
 )
