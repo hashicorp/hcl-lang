@@ -134,6 +134,138 @@ func TestConstraint_EmptyHoverData(t *testing.T) {
 ` + "```\n"),
 			},
 		},
+		// literal value
+		{
+			LiteralValue{
+				Value: cty.StringVal("foobar"),
+			},
+			&HoverData{
+				Content: lang.Markdown(`"foobar"`),
+			},
+		},
+		{
+			LiteralValue{
+				Value: cty.StringVal("foo\nbar"),
+			},
+			&HoverData{
+				Content: lang.Markdown("```\nfoo\nbar\n```\n"),
+			},
+		},
+		{
+			LiteralValue{
+				Value: cty.NumberIntVal(42),
+			},
+			&HoverData{
+				Content: lang.Markdown(`42`),
+			},
+		},
+		{
+			LiteralValue{
+				Value: cty.ObjectVal(map[string]cty.Value{
+					"foo": cty.StringVal("too"),
+					"bar": cty.NumberIntVal(42),
+					"baz": cty.ListVal([]cty.Value{cty.StringVal("toot")}),
+				}),
+			},
+			&HoverData{
+				Content: lang.Markdown("```" + `
+{
+  bar = 42
+  baz = tolist(["toot"])
+  foo = "too"
+}
+` + "```\n"),
+			},
+		},
+		{
+			LiteralValue{
+				Value: cty.MapVal(map[string]cty.Value{
+					"foo": cty.StringVal("too"),
+					"bar": cty.StringVal("boo"),
+				}),
+			},
+			&HoverData{
+				Content: lang.Markdown("```" + `
+tomap({
+  "bar" = "boo"
+  "foo" = "too"
+})
+` + "```\n"),
+			},
+		},
+		{
+			LiteralValue{
+				Value: cty.MapVal(map[string]cty.Value{
+					"foo": cty.MapVal(map[string]cty.Value{
+						"noot": cty.StringVal("noot"),
+					}),
+					"bar": cty.MapVal(map[string]cty.Value{
+						"baz": cty.StringVal("toot"),
+					}),
+				}),
+			},
+			&HoverData{
+				Content: lang.Markdown("```" + `
+tomap({
+  "bar" = tomap({
+    "baz" = "toot"
+  })
+  "foo" = tomap({
+    "noot" = "noot"
+  })
+})
+` + "```\n"),
+			},
+		},
+		{
+			LiteralValue{
+				Value: cty.ObjectVal(map[string]cty.Value{
+					"foo": cty.StringVal("too"),
+					"bar": cty.NumberIntVal(43),
+					"baz": cty.ObjectVal(map[string]cty.Value{
+						"foo": cty.StringVal("boo"),
+						"bar": cty.NumberIntVal(32),
+					}),
+				}),
+			},
+			&HoverData{
+				Content: lang.Markdown("```" + `
+{
+  bar = 43
+  baz = {
+    bar = 32
+    foo = "boo"
+  }
+  foo = "too"
+}
+` + "```\n"),
+			},
+		},
+		{
+			LiteralValue{
+				Value: cty.ObjectVal(map[string]cty.Value{
+					"foo": cty.StringVal("too"),
+					"bar": cty.NumberIntVal(43),
+					"baz": cty.MapVal(map[string]cty.Value{
+						"foo": cty.NumberIntVal(42),
+						"bar": cty.NumberIntVal(32),
+					}),
+				}),
+			},
+			&HoverData{
+				Content: lang.Markdown("```" + `
+{
+  bar = 43
+  baz = tomap({
+    "bar" = 32
+    "foo" = 42
+  })
+  foo = "too"
+}
+` + "```\n"),
+			},
+		},
+
 		// negative tests
 		{
 			List{
