@@ -28,7 +28,7 @@ func (ae AnyExpression) Copy() Constraint {
 	}
 }
 
-func (ae AnyExpression) EmptyCompletionData(nextPlaceholder int) CompletionData {
+func (ae AnyExpression) EmptyCompletionData(nextPlaceholder int, nestingLevel int) CompletionData {
 	// TODO
 	return CompletionData{}
 }

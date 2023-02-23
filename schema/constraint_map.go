@@ -55,7 +55,7 @@ func (m Map) Copy() Constraint {
 	}
 }
 
-func (m Map) EmptyCompletionData(nextPlaceholder int) CompletionData {
+func (m Map) EmptyCompletionData(nextPlaceholder int, nestingLevel int) CompletionData {
 	// TODO
 	return CompletionData{}
 }

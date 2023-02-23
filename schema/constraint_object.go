@@ -40,7 +40,7 @@ func (o Object) Copy() Constraint {
 	}
 }
 
-func (o Object) EmptyCompletionData(placeholder int) CompletionData {
+func (o Object) EmptyCompletionData(placeholder int, nestingLevel int) CompletionData {
 	return CompletionData{}
 }
 
@@ -70,7 +70,7 @@ func (oa ObjectAttributes) Copy() Constraint {
 	return m
 }
 
-func (oa ObjectAttributes) EmptyCompletionData(nextPlaceholder int) CompletionData {
+func (oa ObjectAttributes) EmptyCompletionData(nextPlaceholder int, nestingLevel int) CompletionData {
 	// TODO
 	return CompletionData{}
 }
