@@ -1,6 +1,9 @@
 package schema
 
 import (
+	"fmt"
+	"strings"
+
 	"github.com/hashicorp/hcl-lang/lang"
 	"github.com/zclconf/go-cty/cty"
 )
@@ -44,8 +47,24 @@ func (t Tuple) EmptyCompletionData(nextPlaceholder int, nestingLevel int) Comple
 }
 
 func (t Tuple) EmptyHoverData(nestingLevel int) *HoverData {
-	// TODO
-	return nil
+	elems := make([]string, len(t.Elems))
+	for i, elem := range t.Elems {
+		elemCons, ok := elem.(ConstraintWithHoverData)
+		if !ok {
+			return nil
+		}
+
+		hoverData := elemCons.EmptyHoverData(nestingLevel)
+		if hoverData == nil {
+			return nil
+		}
+
+		elems[i] = hoverData.Content.Value
+	}
+
+	return &HoverData{
+		Content: lang.Markdown(fmt.Sprintf(`tuple([%s])`, strings.Join(elems, ", "))),
+	}
 }
 
 func (t Tuple) ConstraintType() (cty.Type, bool) {
