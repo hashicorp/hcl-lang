@@ -7,15 +7,17 @@ import (
 )
 
 func (oo OneOf) ReferenceTargets(ctx context.Context, targetCtx *TargetContext) reference.Targets {
-	origins := make(reference.Targets, 0)
-
 	for _, con := range oo.cons {
 		expr := newExpression(oo.pathCtx, oo.expr, con)
-		// TODO should we only consider the first non-empty constraint, rather than collect all?
-		if e, ok := expr.(ReferenceTargetsExpression); ok {
-			origins = append(origins, e.ReferenceTargets(ctx, targetCtx)...)
+		e, ok := expr.(ReferenceTargetsExpression)
+		if !ok {
+			continue
+		}
+		targets := e.ReferenceTargets(ctx, targetCtx)
+		if len(targets) > 0 {
+			return targets
 		}
 	}
 
-	return origins
+	return reference.Targets{}
 }
