@@ -3,7 +3,6 @@ package decoder
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	"github.com/hashicorp/hcl-lang/lang"
 	"github.com/hashicorp/hcl/v2"
@@ -49,8 +48,6 @@ func (set Set) CompletionAtPos(ctx context.Context, pos hcl.Pos) []lang.Candidat
 		return []lang.Candidate{}
 	}
 
-	fileBytes := set.pathCtx.Files[set.expr.Range().Filename].Bytes
-
 	betweenBraces := hcl.Range{
 		Filename: eType.Range().Filename,
 		Start:    eType.OpenRange.End,
@@ -66,25 +63,20 @@ func (set Set) CompletionAtPos(ctx context.Context, pos hcl.Pos) []lang.Candidat
 		// TODO: depending on set.cons.Elem (Keyword, LiteralValue, Reference),
 		// filter out declared elements to provide uniqueness as that is the nature of set
 
-		var lastElemEndPos hcl.Pos
 		for _, elemExpr := range eType.Exprs {
+			// We cannot trust ranges of empty expressions, so we imply
+			// that invalid configuration follows and we stop here
+			// e.g. for completion between commas [keyword, ,keyword]
+			if isEmptyExpression(elemExpr) {
+				break
+			}
+			// We overshot the position and stop
+			if elemExpr.Range().Start.Byte > pos.Byte {
+				break
+			}
 			if elemExpr.Range().ContainsPos(pos) || elemExpr.Range().End.Byte == pos.Byte {
 				return newExpression(set.pathCtx, elemExpr, set.cons.Elem).CompletionAtPos(ctx, pos)
 			}
-			lastElemEndPos = elemExpr.Range().End
-		}
-
-		rng := hcl.Range{
-			Filename: eType.Range().Filename,
-			Start:    lastElemEndPos,
-			End:      pos,
-		}
-
-		// TODO: test with multi-line element expressions
-
-		b := rng.SliceBytes(fileBytes)
-		if strings.TrimSpace(string(b)) != "," {
-			return []lang.Candidate{}
 		}
 
 		expr := newEmptyExpressionAtPos(eType.Range().Filename, pos)
