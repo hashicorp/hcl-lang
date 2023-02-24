@@ -1,6 +1,7 @@
 package schema
 
 import (
+	"github.com/hashicorp/hcl-lang/lang"
 	"github.com/zclconf/go-cty/cty"
 )
 
@@ -16,6 +17,7 @@ import (
 // e.g. LiteralType{Type: cty.List(...)}.
 type LiteralType struct {
 	Type cty.Type
+	// TODO: object defaults
 }
 
 func (LiteralType) isConstraintImpl() constraintSigil {
@@ -38,7 +40,71 @@ func (lt LiteralType) EmptyCompletionData(nextPlaceholder int, nestingLevel int)
 }
 
 func (lt LiteralType) EmptyHoverData(nestingLevel int) *HoverData {
-	// TODO
+	if lt.Type.IsPrimitiveType() {
+		return &HoverData{
+			Content: lang.Markdown(lt.Type.FriendlyNameForConstraint()),
+		}
+	}
+	if lt.Type.IsListType() {
+		cons := List{
+			Elem: LiteralType{
+				Type: lt.Type.ElementType(),
+			},
+		}
+		return cons.EmptyHoverData(nestingLevel)
+	}
+	if lt.Type.IsSetType() {
+		cons := Set{
+			Elem: LiteralType{
+				Type: lt.Type.ElementType(),
+			},
+		}
+		return cons.EmptyHoverData(nestingLevel)
+	}
+	if lt.Type.IsMapType() {
+		cons := Map{
+			Elem: LiteralType{
+				Type: lt.Type.ElementType(),
+			},
+		}
+		return cons.EmptyHoverData(nestingLevel)
+	}
+	if lt.Type.IsTupleType() {
+		types := lt.Type.TupleElementTypes()
+		elemCons := make([]Constraint, len(types))
+		for i, typ := range types {
+			elemCons[i] = LiteralType{
+				Type: typ,
+			}
+		}
+		cons := Tuple{
+			Elems: elemCons,
+		}
+		return cons.EmptyHoverData(nestingLevel)
+	}
+	if lt.Type.IsObjectType() {
+		attrTypes := lt.Type.AttributeTypes()
+		attrs := make(ObjectAttributes, 0)
+		for name, attrType := range attrTypes {
+			aSchema := &AttributeSchema{
+				Constraint: LiteralType{
+					Type: attrType,
+				},
+			}
+			if lt.Type.AttributeOptional(name) {
+				aSchema.IsOptional = true
+			} else {
+				aSchema.IsRequired = true
+			}
+
+			attrs[name] = aSchema
+		}
+		cons := Object{
+			Attributes: attrs,
+		}
+		return cons.EmptyHoverData(nestingLevel)
+	}
+
 	return nil
 }
 
