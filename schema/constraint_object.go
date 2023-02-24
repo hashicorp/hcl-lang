@@ -49,7 +49,7 @@ func (o Object) EmptyCompletionData(placeholder int, nestingLevel int) Completio
 		return CompletionData{
 			NewText:         "{}",
 			Snippet:         fmt.Sprintf("{ ${%d} }", placeholder),
-			LastPlaceholder: placeholder + 1,
+			NextPlaceholder: placeholder + 1,
 		}
 	}
 
@@ -69,13 +69,13 @@ func (o Object) EmptyCompletionData(placeholder int, nestingLevel int) Completio
 				NewText:         "{}",
 				Snippet:         fmt.Sprintf("{ ${%d} }", placeholder),
 				TriggerSuggest:  cData.TriggerSuggest,
-				LastPlaceholder: placeholder + 1,
+				NextPlaceholder: placeholder + 1,
 			}
 		}
 
 		newText += fmt.Sprintf("%s%s = %s\n", nesting, name, cData.NewText)
 		snippet += fmt.Sprintf("%s%s = %s\n", nesting, name, cData.Snippet)
-		lastPlaceholder = cData.LastPlaceholder
+		lastPlaceholder = cData.NextPlaceholder
 	}
 
 	if nestingLevel > 0 {
@@ -89,7 +89,7 @@ func (o Object) EmptyCompletionData(placeholder int, nestingLevel int) Completio
 	return CompletionData{
 		NewText:         newText,
 		Snippet:         snippet,
-		LastPlaceholder: lastPlaceholder,
+		NextPlaceholder: lastPlaceholder,
 	}
 }
 

@@ -46,7 +46,7 @@ func (t Tuple) EmptyCompletionData(nextPlaceholder int, nestingLevel int) Comple
 		return CompletionData{
 			NewText:         "[]",
 			Snippet:         fmt.Sprintf("[ ${%d} ]", nextPlaceholder),
-			LastPlaceholder: nextPlaceholder + 1,
+			NextPlaceholder: nextPlaceholder + 1,
 		}
 	}
 
@@ -61,18 +61,18 @@ func (t Tuple) EmptyCompletionData(nextPlaceholder int, nestingLevel int) Comple
 				NewText:         "[]",
 				Snippet:         fmt.Sprintf("[ ${%d} ]", nextPlaceholder),
 				TriggerSuggest:  cData.TriggerSuggest,
-				LastPlaceholder: nextPlaceholder + 1,
+				NextPlaceholder: nextPlaceholder + 1,
 			}
 		}
 		elemNewText[i] = cData.NewText
 		elemSnippets[i] = cData.NewText
-		lastPlaceholder = cData.LastPlaceholder
+		lastPlaceholder = cData.NextPlaceholder
 	}
 
 	return CompletionData{
 		NewText:         fmt.Sprintf("[ %s ]", strings.Join(elemNewText, ", ")),
 		Snippet:         fmt.Sprintf("[ %s ]", strings.Join(elemSnippets, ", ")),
-		LastPlaceholder: lastPlaceholder,
+		NextPlaceholder: lastPlaceholder,
 	}
 }
 

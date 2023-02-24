@@ -59,7 +59,7 @@ func (lt LiteralType) EmptyCompletionData(nextPlaceholder int, nestingLevel int)
 		return CompletionData{
 			NewText:         newText,
 			Snippet:         snippet,
-			LastPlaceholder: nextPlaceholder,
+			NextPlaceholder: nextPlaceholder,
 		}
 	}
 
@@ -121,7 +121,7 @@ func (lt LiteralType) EmptyCompletionData(nextPlaceholder int, nestingLevel int)
 	}
 
 	return CompletionData{
-		LastPlaceholder: nextPlaceholder,
+		NextPlaceholder: nextPlaceholder,
 	}
 }
 

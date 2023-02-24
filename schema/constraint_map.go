@@ -61,7 +61,7 @@ func (m Map) EmptyCompletionData(nextPlaceholder int, nestingLevel int) Completi
 		return CompletionData{
 			NewText:         "{}",
 			Snippet:         fmt.Sprintf("{ ${%d} }", nextPlaceholder),
-			LastPlaceholder: nextPlaceholder + 1,
+			NextPlaceholder: nextPlaceholder + 1,
 		}
 	}
 
@@ -70,7 +70,7 @@ func (m Map) EmptyCompletionData(nextPlaceholder int, nestingLevel int) Completi
 		return CompletionData{
 			NewText:         "{}",
 			Snippet:         fmt.Sprintf("{ ${%d} }", nextPlaceholder),
-			LastPlaceholder: nextPlaceholder + 1,
+			NextPlaceholder: nextPlaceholder + 1,
 			TriggerSuggest:  elemData.TriggerSuggest,
 		}
 	}
@@ -80,7 +80,7 @@ func (m Map) EmptyCompletionData(nextPlaceholder int, nestingLevel int) Completi
 	return CompletionData{
 		NewText:         fmt.Sprintf("{\n%s\"name\" = %s\n}", nesting, elemData.NewText),
 		Snippet:         fmt.Sprintf("{\n%s\"${%d:name}\" = %s\n}", nesting, nextPlaceholder, elemData.Snippet),
-		LastPlaceholder: elemData.LastPlaceholder,
+		NextPlaceholder: elemData.NextPlaceholder,
 		TriggerSuggest:  elemData.TriggerSuggest,
 	}
 }

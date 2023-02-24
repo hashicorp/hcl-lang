@@ -54,7 +54,7 @@ type CompletionData struct {
 	Snippet string
 
 	TriggerSuggest  bool
-	LastPlaceholder int
+	NextPlaceholder int
 }
 
 type HoverData struct {

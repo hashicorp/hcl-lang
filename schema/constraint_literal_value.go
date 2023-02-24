@@ -62,7 +62,7 @@ func (lv LiteralValue) EmptyCompletionData(nextPlaceholder int, nestingLevel int
 		return CompletionData{
 			NewText:         value,
 			Snippet:         value,
-			LastPlaceholder: nextPlaceholder,
+			NextPlaceholder: nextPlaceholder,
 		}
 	}
 	if lv.Value.Type().IsListType() {
@@ -78,19 +78,19 @@ func (lv LiteralValue) EmptyCompletionData(nextPlaceholder int, nestingLevel int
 			cData := c.EmptyCompletionData(lastPlaceholder, nestingLevel)
 			if cData.NewText == "" || cData.Snippet == "" {
 				return CompletionData{
-					LastPlaceholder: lastPlaceholder,
+					NextPlaceholder: lastPlaceholder,
 				}
 			}
 			elemNewText[i] = cData.NewText
 			elemSnippets[i] = cData.Snippet
-			lastPlaceholder = cData.LastPlaceholder
+			lastPlaceholder = cData.NextPlaceholder
 		}
 
 		return CompletionData{
 			// TODO: consider wrapping this in tolist()
 			NewText:         fmt.Sprintf("[%s]", strings.Join(elemNewText, ", ")),
 			Snippet:         fmt.Sprintf("[%s]", strings.Join(elemSnippets, ", ")),
-			LastPlaceholder: lastPlaceholder,
+			NextPlaceholder: lastPlaceholder,
 		}
 	}
 	if lv.Value.Type().IsSetType() {
@@ -106,19 +106,19 @@ func (lv LiteralValue) EmptyCompletionData(nextPlaceholder int, nestingLevel int
 			cData := c.EmptyCompletionData(lastPlaceholder, nestingLevel)
 			if cData.NewText == "" || cData.Snippet == "" {
 				return CompletionData{
-					LastPlaceholder: lastPlaceholder,
+					NextPlaceholder: lastPlaceholder,
 				}
 			}
 			elemNewText[i] = cData.NewText
 			elemSnippets[i] = cData.Snippet
-			lastPlaceholder = cData.LastPlaceholder
+			lastPlaceholder = cData.NextPlaceholder
 		}
 
 		return CompletionData{
 			// TODO: consider wrapping this in toset()
 			NewText:         fmt.Sprintf("[%s]", strings.Join(elemNewText, ", ")),
 			Snippet:         fmt.Sprintf("[%s]", strings.Join(elemSnippets, ", ")),
-			LastPlaceholder: lastPlaceholder,
+			NextPlaceholder: lastPlaceholder,
 		}
 	}
 	if lv.Value.Type().IsTupleType() {
@@ -134,18 +134,18 @@ func (lv LiteralValue) EmptyCompletionData(nextPlaceholder int, nestingLevel int
 			cData := c.EmptyCompletionData(lastPlaceholder, nestingLevel)
 			if cData.NewText == "" || cData.Snippet == "" {
 				return CompletionData{
-					LastPlaceholder: lastPlaceholder,
+					NextPlaceholder: lastPlaceholder,
 				}
 			}
 			elemNewText[i] = cData.NewText
 			elemSnippets[i] = cData.Snippet
-			lastPlaceholder = cData.LastPlaceholder
+			lastPlaceholder = cData.NextPlaceholder
 		}
 
 		return CompletionData{
 			NewText:         fmt.Sprintf("[%s]", strings.Join(elemNewText, ", ")),
 			Snippet:         fmt.Sprintf("[%s]", strings.Join(elemSnippets, ", ")),
-			LastPlaceholder: lastPlaceholder,
+			NextPlaceholder: lastPlaceholder,
 		}
 	}
 	if lv.Value.Type().IsMapType() {
@@ -166,7 +166,7 @@ func (lv LiteralValue) EmptyCompletionData(nextPlaceholder int, nestingLevel int
 			cData := cons.EmptyCompletionData(lastPlaceholder, nestingLevel+1)
 			if cData.NewText == "" || cData.Snippet == "" {
 				return CompletionData{
-					LastPlaceholder: lastPlaceholder,
+					NextPlaceholder: lastPlaceholder,
 				}
 			}
 
@@ -176,7 +176,7 @@ func (lv LiteralValue) EmptyCompletionData(nextPlaceholder int, nestingLevel int
 			snippet += fmt.Sprintf("%s%q = %s\n",
 				strings.Repeat("  ", nestingLevel+1),
 				name, cData.Snippet)
-			lastPlaceholder = cData.LastPlaceholder
+			lastPlaceholder = cData.NextPlaceholder
 		}
 		newText += fmt.Sprintf("%s}", strings.Repeat("  ", nestingLevel))
 		snippet += fmt.Sprintf("%s}", strings.Repeat("  ", nestingLevel))
@@ -184,7 +184,7 @@ func (lv LiteralValue) EmptyCompletionData(nextPlaceholder int, nestingLevel int
 		return CompletionData{
 			NewText:         newText,
 			Snippet:         snippet,
-			LastPlaceholder: lastPlaceholder,
+			NextPlaceholder: lastPlaceholder,
 		}
 	}
 	if lv.Value.Type().IsObjectType() {
@@ -210,7 +210,7 @@ func (lv LiteralValue) EmptyCompletionData(nextPlaceholder int, nestingLevel int
 	}
 
 	return CompletionData{
-		LastPlaceholder: nextPlaceholder,
+		NextPlaceholder: nextPlaceholder,
 	}
 }
 

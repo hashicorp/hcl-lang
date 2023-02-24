@@ -336,7 +336,7 @@ func TestConstraint_EmptyCompletionData(t *testing.T) {
 			CompletionData{
 				NewText:         `"value"`,
 				Snippet:         `"${1:value}"`,
-				LastPlaceholder: 2,
+				NextPlaceholder: 2,
 			},
 		},
 		{
@@ -348,7 +348,7 @@ func TestConstraint_EmptyCompletionData(t *testing.T) {
 			CompletionData{
 				NewText:         `[ "value" ]`,
 				Snippet:         `[ "${1:value}" ]`,
-				LastPlaceholder: 2,
+				NextPlaceholder: 2,
 			},
 		},
 		{
@@ -358,7 +358,7 @@ func TestConstraint_EmptyCompletionData(t *testing.T) {
 			CompletionData{
 				NewText:         `[ "value" ]`,
 				Snippet:         `[ "${1:value}" ]`,
-				LastPlaceholder: 2,
+				NextPlaceholder: 2,
 			},
 		},
 		{
@@ -370,7 +370,7 @@ func TestConstraint_EmptyCompletionData(t *testing.T) {
 			CompletionData{
 				NewText:         `[ "value" ]`,
 				Snippet:         `[ "${1:value}" ]`,
-				LastPlaceholder: 2,
+				NextPlaceholder: 2,
 			},
 		},
 		{
@@ -380,7 +380,7 @@ func TestConstraint_EmptyCompletionData(t *testing.T) {
 			CompletionData{
 				NewText:         `[ "value" ]`,
 				Snippet:         `[ "${1:value}" ]`,
-				LastPlaceholder: 2,
+				NextPlaceholder: 2,
 			},
 		},
 		{
@@ -402,7 +402,7 @@ func TestConstraint_EmptyCompletionData(t *testing.T) {
   baz = [ "${2:value}" ]
   foo = "${3:value}"
 }`,
-				LastPlaceholder: 4,
+				NextPlaceholder: 4,
 			},
 		},
 		{
@@ -433,7 +433,7 @@ func TestConstraint_EmptyCompletionData(t *testing.T) {
   }
   foo = "${4:value}"
 }`,
-				LastPlaceholder: 5,
+				NextPlaceholder: 5,
 			},
 		},
 		{
@@ -443,7 +443,7 @@ func TestConstraint_EmptyCompletionData(t *testing.T) {
 			CompletionData{
 				NewText:         `"foobar"`,
 				Snippet:         `"foobar"`,
-				LastPlaceholder: 1,
+				NextPlaceholder: 1,
 			},
 		},
 		{
@@ -461,7 +461,7 @@ foo
 bar
 STRING
 `,
-				LastPlaceholder: 1,
+				NextPlaceholder: 1,
 			},
 		},
 		{
@@ -471,7 +471,7 @@ STRING
 			CompletionData{
 				NewText:         "42",
 				Snippet:         "42",
-				LastPlaceholder: 1,
+				NextPlaceholder: 1,
 			},
 		},
 		{
@@ -493,7 +493,7 @@ STRING
   baz = ["toot"]
   foo = "too"
 }`,
-				LastPlaceholder: 1,
+				NextPlaceholder: 1,
 			},
 		},
 		{
@@ -512,7 +512,7 @@ STRING
   "bar" = "boo"
   "foo" = "too"
 }`,
-				LastPlaceholder: 1,
+				NextPlaceholder: 1,
 			},
 		},
 		{
@@ -543,7 +543,7 @@ STRING
     "noot" = "noot"
   }
 }`,
-				LastPlaceholder: 1,
+				NextPlaceholder: 1,
 			},
 		},
 		{
@@ -574,7 +574,7 @@ STRING
   }
   foo = "too"
 }`,
-				LastPlaceholder: 1,
+				NextPlaceholder: 1,
 			},
 		},
 		{
@@ -605,7 +605,7 @@ STRING
   }
   foo = "too"
 }`,
-				LastPlaceholder: 1,
+				NextPlaceholder: 1,
 			},
 		},
 		{
@@ -618,7 +618,7 @@ STRING
 				NewText:         "[]",
 				Snippet:         "[ ${1} ]",
 				TriggerSuggest:  true,
-				LastPlaceholder: 2,
+				NextPlaceholder: 2,
 			},
 		},
 		{
@@ -631,7 +631,7 @@ STRING
 				NewText:         "[]",
 				Snippet:         "[ ${1} ]",
 				TriggerSuggest:  true,
-				LastPlaceholder: 2,
+				NextPlaceholder: 2,
 			},
 		},
 		{
@@ -646,7 +646,7 @@ STRING
 				NewText:         "[]",
 				Snippet:         "[ ${1} ]",
 				TriggerSuggest:  true,
-				LastPlaceholder: 2,
+				NextPlaceholder: 2,
 			},
 		},
 		{
@@ -659,7 +659,7 @@ STRING
 				NewText:         `{}`,
 				Snippet:         `{ ${1} }`,
 				TriggerSuggest:  true,
-				LastPlaceholder: 2,
+				NextPlaceholder: 2,
 			},
 		},
 		{
@@ -676,7 +676,7 @@ STRING
 				NewText:         `{}`,
 				Snippet:         `{ ${1} }`,
 				TriggerSuggest:  true,
-				LastPlaceholder: 2,
+				NextPlaceholder: 2,
 			},
 		},
 	}
