@@ -2,6 +2,7 @@ package schema
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/hashicorp/hcl-lang/lang"
 	"github.com/zclconf/go-cty/cty"
@@ -56,8 +57,32 @@ func (m Map) Copy() Constraint {
 }
 
 func (m Map) EmptyCompletionData(nextPlaceholder int, nestingLevel int) CompletionData {
-	// TODO
-	return CompletionData{}
+	if m.Elem == nil {
+		return CompletionData{
+			NewText:         "{}",
+			Snippet:         fmt.Sprintf("{ ${%d} }", nextPlaceholder),
+			LastPlaceholder: nextPlaceholder + 1,
+		}
+	}
+
+	elemData := m.Elem.EmptyCompletionData(nextPlaceholder+1, nestingLevel+1)
+	if elemData.NewText == "" || elemData.Snippet == "" {
+		return CompletionData{
+			NewText:         "{}",
+			Snippet:         fmt.Sprintf("{ ${%d} }", nextPlaceholder),
+			LastPlaceholder: nextPlaceholder + 1,
+			TriggerSuggest:  elemData.TriggerSuggest,
+		}
+	}
+
+	nesting := strings.Repeat("  ", nestingLevel)
+
+	return CompletionData{
+		NewText:         fmt.Sprintf("{\n%s\"name\" = %s\n}", nesting, elemData.NewText),
+		Snippet:         fmt.Sprintf("{\n%s\"${%d:name}\" = %s\n}", nesting, nextPlaceholder, elemData.Snippet),
+		LastPlaceholder: elemData.LastPlaceholder,
+		TriggerSuggest:  elemData.TriggerSuggest,
+	}
 }
 
 func (m Map) EmptyHoverData(nestingLevel int) *HoverData {
