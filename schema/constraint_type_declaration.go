@@ -20,6 +20,8 @@ func (td TypeDeclaration) Copy() Constraint {
 }
 
 func (td TypeDeclaration) EmptyCompletionData(nextPlaceholder int, nestingLevel int) CompletionData {
-	// TODO
-	return CompletionData{}
+	return CompletionData{
+		TriggerSuggest:  true,
+		NextPlaceholder: nextPlaceholder,
+	}
 }

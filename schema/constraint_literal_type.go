@@ -1,6 +1,8 @@
 package schema
 
 import (
+	"fmt"
+
 	"github.com/hashicorp/hcl-lang/lang"
 	"github.com/zclconf/go-cty/cty"
 )
@@ -35,8 +37,92 @@ func (lt LiteralType) Copy() Constraint {
 }
 
 func (lt LiteralType) EmptyCompletionData(nextPlaceholder int, nestingLevel int) CompletionData {
-	// TODO
-	return CompletionData{}
+	if lt.Type.IsPrimitiveType() {
+		var newText, snippet string
+
+		switch lt.Type {
+		case cty.Bool:
+			newText = fmt.Sprintf("%t", false)
+			// TODO: consider using snippet "choice"
+			// https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#snippet_syntax
+			snippet = fmt.Sprintf("${%d:false}", nextPlaceholder)
+		case cty.String:
+			newText = fmt.Sprintf("%q", "value")
+			snippet = fmt.Sprintf("\"${%d:%s}\"", nextPlaceholder, "value")
+		case cty.Number:
+			newText = "0"
+			snippet = fmt.Sprintf("${%d:0}", nextPlaceholder)
+		}
+
+		nextPlaceholder++
+
+		return CompletionData{
+			NewText:         newText,
+			Snippet:         snippet,
+			NextPlaceholder: nextPlaceholder,
+		}
+	}
+
+	if lt.Type.IsListType() {
+		listCons := List{
+			Elem: LiteralType{
+				Type: lt.Type.ElementType(),
+			},
+		}
+		return listCons.EmptyCompletionData(nextPlaceholder, nestingLevel)
+	}
+	if lt.Type.IsSetType() {
+		setCons := Set{
+			Elem: LiteralType{
+				Type: lt.Type.ElementType(),
+			},
+		}
+		return setCons.EmptyCompletionData(nextPlaceholder, nestingLevel)
+	}
+	if lt.Type.IsMapType() {
+		mapCons := Map{
+			Elem: LiteralType{
+				Type: lt.Type.ElementType(),
+			},
+		}
+		return mapCons.EmptyCompletionData(nextPlaceholder, nestingLevel)
+	}
+	if lt.Type.IsTupleType() {
+		types := lt.Type.TupleElementTypes()
+		tupleCons := Tuple{}
+		for i, typ := range types {
+			tupleCons.Elems[i] = LiteralType{
+				Type: typ,
+			}
+		}
+		return tupleCons.EmptyCompletionData(nextPlaceholder, nestingLevel)
+	}
+	if lt.Type.IsObjectType() {
+		attrTypes := lt.Type.AttributeTypes()
+		attrs := make(ObjectAttributes, 0)
+		for name, attrType := range attrTypes {
+			aSchema := &AttributeSchema{
+				Constraint: LiteralType{
+					Type: attrType,
+				},
+			}
+			if lt.Type.AttributeOptional(name) {
+				aSchema.IsOptional = true
+			} else {
+				aSchema.IsRequired = true
+			}
+
+			attrs[name] = aSchema
+		}
+		cons := Object{
+			Attributes: attrs,
+		}
+		return cons.EmptyCompletionData(nextPlaceholder, nestingLevel)
+	}
+
+	return CompletionData{
+		NextPlaceholder: nextPlaceholder,
+	}
 }
 
 func (lt LiteralType) EmptyHoverData(nestingLevel int) *HoverData {

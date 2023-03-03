@@ -49,8 +49,29 @@ func (l List) Copy() Constraint {
 }
 
 func (l List) EmptyCompletionData(nextPlaceholder int, nestingLevel int) CompletionData {
-	// TODO
-	return CompletionData{}
+	if l.Elem == nil {
+		return CompletionData{
+			NewText:         "[]",
+			Snippet:         fmt.Sprintf("[ ${%d} ]", nextPlaceholder),
+			NextPlaceholder: nextPlaceholder + 1,
+		}
+	}
+
+	elemData := l.Elem.EmptyCompletionData(nextPlaceholder, nestingLevel)
+	if elemData.NewText == "" || elemData.Snippet == "" {
+		return CompletionData{
+			NewText:         "[]",
+			Snippet:         fmt.Sprintf("[ ${%d} ]", nextPlaceholder),
+			TriggerSuggest:  elemData.TriggerSuggest,
+			NextPlaceholder: nextPlaceholder + 1,
+		}
+	}
+
+	return CompletionData{
+		NewText:         fmt.Sprintf("[ %s ]", elemData.NewText),
+		Snippet:         fmt.Sprintf("[ %s ]", elemData.Snippet),
+		NextPlaceholder: elemData.NextPlaceholder,
+	}
 }
 
 func (l List) EmptyHoverData(nestingLevel int) *HoverData {

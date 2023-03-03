@@ -45,7 +45,52 @@ func (o Object) Copy() Constraint {
 }
 
 func (o Object) EmptyCompletionData(placeholder int, nestingLevel int) CompletionData {
-	return CompletionData{}
+	if len(o.Attributes) == 0 {
+		return CompletionData{
+			NewText:         "{}",
+			Snippet:         fmt.Sprintf("{ ${%d} }", placeholder),
+			NextPlaceholder: placeholder + 1,
+		}
+	}
+
+	newText := "{\n"
+	snippet := "{\n"
+
+	nesting := strings.Repeat("  ", nestingLevel+1)
+	lastPlaceholder := placeholder
+
+	attrNames := sortedObjectExprAttrNames(o.Attributes)
+
+	for _, name := range attrNames {
+		attr := o.Attributes[name]
+		cData := attr.Constraint.EmptyCompletionData(lastPlaceholder, nestingLevel+1)
+		if cData.NewText == "" || cData.Snippet == "" {
+			return CompletionData{
+				NewText:         "{}",
+				Snippet:         fmt.Sprintf("{ ${%d} }", placeholder),
+				TriggerSuggest:  cData.TriggerSuggest,
+				NextPlaceholder: placeholder + 1,
+			}
+		}
+
+		newText += fmt.Sprintf("%s%s = %s\n", nesting, name, cData.NewText)
+		snippet += fmt.Sprintf("%s%s = %s\n", nesting, name, cData.Snippet)
+		lastPlaceholder = cData.NextPlaceholder
+	}
+
+	if nestingLevel > 0 {
+		newText += fmt.Sprintf("%s}", strings.Repeat("  ", nestingLevel))
+		snippet += fmt.Sprintf("%s}", strings.Repeat("  ", nestingLevel))
+	} else {
+		newText += "}"
+		snippet += "}"
+	}
+
+	return CompletionData{
+		NewText:         newText,
+		Snippet:         snippet,
+		NextPlaceholder: lastPlaceholder,
+	}
 }
 
 func (o Object) EmptyHoverData(nestingLevel int) *HoverData {

@@ -42,8 +42,38 @@ func (t Tuple) Copy() Constraint {
 }
 
 func (t Tuple) EmptyCompletionData(nextPlaceholder int, nestingLevel int) CompletionData {
-	// TODO
-	return CompletionData{}
+	if len(t.Elems) == 0 {
+		return CompletionData{
+			NewText:         "[]",
+			Snippet:         fmt.Sprintf("[ ${%d} ]", nextPlaceholder),
+			NextPlaceholder: nextPlaceholder + 1,
+		}
+	}
+
+	elemNewText := make([]string, len(t.Elems))
+	elemSnippets := make([]string, len(t.Elems))
+	lastPlaceholder := nextPlaceholder
+
+	for i, elem := range t.Elems {
+		cData := elem.EmptyCompletionData(lastPlaceholder, nestingLevel)
+		if cData.NewText == "" || cData.Snippet == "" {
+			return CompletionData{
+				NewText:         "[]",
+				Snippet:         fmt.Sprintf("[ ${%d} ]", nextPlaceholder),
+				TriggerSuggest:  cData.TriggerSuggest,
+				NextPlaceholder: nextPlaceholder + 1,
+			}
+		}
+		elemNewText[i] = cData.NewText
+		elemSnippets[i] = cData.Snippet
+		lastPlaceholder = cData.NextPlaceholder
+	}
+
+	return CompletionData{
+		NewText:         fmt.Sprintf("[ %s ]", strings.Join(elemNewText, ", ")),
+		Snippet:         fmt.Sprintf("[ %s ]", strings.Join(elemSnippets, ", ")),
+		NextPlaceholder: lastPlaceholder,
+	}
 }
 
 func (t Tuple) EmptyHoverData(nestingLevel int) *HoverData {
