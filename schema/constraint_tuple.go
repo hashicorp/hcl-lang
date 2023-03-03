@@ -65,7 +65,7 @@ func (t Tuple) EmptyCompletionData(nextPlaceholder int, nestingLevel int) Comple
 			}
 		}
 		elemNewText[i] = cData.NewText
-		elemSnippets[i] = cData.NewText
+		elemSnippets[i] = cData.Snippet
 		lastPlaceholder = cData.NextPlaceholder
 	}
 
