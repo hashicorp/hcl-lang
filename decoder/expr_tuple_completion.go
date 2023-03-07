@@ -1,6 +1,7 @@
 package decoder
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"strings"
@@ -56,17 +57,10 @@ func (tuple Tuple) CompletionAtPos(ctx context.Context, pos hcl.Pos) []lang.Cand
 		return []lang.Candidate{}
 	}
 
-	fileBytes := tuple.pathCtx.Files[tuple.expr.Range().Filename].Bytes
-
 	betweenBraces := hcl.Range{
 		Filename: eType.Range().Filename,
 		Start:    eType.OpenRange.End,
-		End: hcl.Pos{
-			// account for the trailing brace }
-			Line:   eType.Range().End.Line,
-			Column: eType.Range().End.Column - 1,
-			Byte:   eType.Range().End.Byte - 1,
-		},
+		End:      eType.Range().End,
 	}
 
 	if betweenBraces.ContainsPos(pos) {
@@ -76,13 +70,25 @@ func (tuple Tuple) CompletionAtPos(ctx context.Context, pos hcl.Pos) []lang.Cand
 		}
 
 		if len(eType.Exprs) <= len(tuple.cons.Elems) {
-			var lastElemEndPos hcl.Pos
+			lastElemEndPos := eType.OpenRange.Start
+			lastElemIdx := 0
 			// check for completion inside individual elements
 			for i, elemExpr := range eType.Exprs {
-				if elemExpr.Range().ContainsPos(pos) {
+				// We cannot trust ranges of empty expressions, so we imply
+				// that invalid configuration follows and we stop here
+				// e.g. for completion between commas [keyword, ,keyword]
+				if isEmptyExpression(elemExpr) {
+					break
+				}
+				// We overshot the position and stop
+				if elemExpr.Range().Start.Byte > pos.Byte {
+					break
+				}
+				if elemExpr.Range().ContainsPos(pos) || elemExpr.Range().End.Byte == pos.Byte {
 					return newExpression(tuple.pathCtx, elemExpr, tuple.cons.Elems[i]).CompletionAtPos(ctx, pos)
 				}
 				lastElemEndPos = elemExpr.Range().End
+				lastElemIdx = i
 			}
 
 			if pos.Byte > lastElemEndPos.Byte {
@@ -91,18 +97,29 @@ func (tuple Tuple) CompletionAtPos(ctx context.Context, pos hcl.Pos) []lang.Cand
 					return []lang.Candidate{}
 				}
 
-				rng := hcl.Range{
-					Filename: eType.Range().Filename,
-					Start:    lastElemEndPos,
-					End:      pos,
-				}
-				// TODO: test with multi-line element expressions
-				b := rng.SliceBytes(fileBytes)
-				if strings.TrimSpace(string(b)) != "," {
+				fileBytes := tuple.pathCtx.Files[eType.Range().Filename].Bytes
+				recoveredBytes := recoverLeftBytes(fileBytes, pos, func(byteOffset int, r rune) bool {
+					return (r == '[' || r == ',') && byteOffset > lastElemEndPos.Byte
+				})
+				trimmedBytes := bytes.TrimRight(recoveredBytes, " \t\n")
+
+				if len(trimmedBytes) == 0 {
 					return []lang.Candidate{}
 				}
 
 				nextIdx := len(eType.Exprs)
+				if string(trimmedBytes) == "[" {
+					// We're at the beginning of a tuple and want the
+					// to complete the first element
+					nextIdx = 0
+				}
+				if string(trimmedBytes) == "," {
+					// We're likely within an empty expression and
+					// want to provide completion for the current element
+					// instead of the next one
+					nextIdx = lastElemIdx + 1
+				}
+
 				expr := newEmptyExpressionAtPos(eType.Range().Filename, pos)
 				return newExpression(tuple.pathCtx, expr, tuple.cons.Elems[nextIdx]).CompletionAtPos(ctx, pos)
 			}
