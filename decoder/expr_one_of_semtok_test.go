@@ -12,7 +12,7 @@ import (
 	"github.com/hashicorp/hcl/v2/hclsyntax"
 )
 
-func TestSemanticTokens_exprTypeDeclaration(t *testing.T) {
+func TestSemanticTokens_exprOneOf(t *testing.T) {
 	testCases := []struct {
 		testName       string
 		attrSchema     map[string]*schema.AttributeSchema
