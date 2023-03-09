@@ -51,7 +51,7 @@ func (l List) Copy() Constraint {
 func (l List) EmptyCompletionData(nextPlaceholder int, nestingLevel int) CompletionData {
 	if l.Elem == nil {
 		return CompletionData{
-			NewText:         "[]",
+			NewText:         "[ ]",
 			Snippet:         fmt.Sprintf("[ ${%d} ]", nextPlaceholder),
 			NextPlaceholder: nextPlaceholder + 1,
 		}
@@ -60,7 +60,7 @@ func (l List) EmptyCompletionData(nextPlaceholder int, nestingLevel int) Complet
 	elemData := l.Elem.EmptyCompletionData(nextPlaceholder, nestingLevel)
 	if elemData.NewText == "" || elemData.Snippet == "" {
 		return CompletionData{
-			NewText:         "[]",
+			NewText:         "[ ]",
 			Snippet:         fmt.Sprintf("[ ${%d} ]", nextPlaceholder),
 			TriggerSuggest:  elemData.TriggerSuggest,
 			NextPlaceholder: nextPlaceholder + 1,

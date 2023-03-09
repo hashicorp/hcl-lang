@@ -74,7 +74,7 @@ func TestCompletionAtPos_exprList(t *testing.T) {
 							End:      hcl.Pos{Line: 1, Column: 8, Byte: 7},
 						},
 						NewText: "[ ]",
-						Snippet: "[ ${0} ]",
+						Snippet: "[ ${1} ]",
 					},
 					Kind: lang.ListCandidateKind,
 				},
@@ -85,8 +85,8 @@ func TestCompletionAtPos_exprList(t *testing.T) {
 			map[string]*schema.AttributeSchema{
 				"attr": {
 					Constraint: schema.List{
-						Elem: schema.Keyword{
-							Keyword: "keyword",
+						Elem: schema.LiteralType{
+							Type: cty.String,
 						},
 					},
 				},
@@ -96,19 +96,19 @@ func TestCompletionAtPos_exprList(t *testing.T) {
 			hcl.Pos{Line: 1, Column: 8, Byte: 7},
 			lang.CompleteCandidates([]lang.Candidate{
 				{
-					Label:  `[ keyword ]`,
-					Detail: "list of keyword",
+					Label:  `[ string ]`,
+					Detail: "list of string",
 					TextEdit: lang.TextEdit{
 						Range: hcl.Range{
 							Filename: "test.tf",
 							Start:    hcl.Pos{Line: 1, Column: 8, Byte: 7},
 							End:      hcl.Pos{Line: 1, Column: 8, Byte: 7},
 						},
-						NewText: "[ keyword ]",
-						Snippet: "[ ${0:keyword} ]",
+						NewText: "[ \"value\" ]",
+						Snippet: "[ \"${1:value}\" ]",
 					},
 					Kind:           lang.ListCandidateKind,
-					TriggerSuggest: true,
+					TriggerSuggest: false,
 				},
 			}),
 		},
