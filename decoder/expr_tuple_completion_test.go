@@ -10,6 +10,7 @@ import (
 	"github.com/hashicorp/hcl-lang/schema"
 	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hclsyntax"
+	"github.com/zclconf/go-cty/cty"
 )
 
 func TestCompletionAtPos_exprTuple(t *testing.T) {
@@ -78,20 +79,23 @@ func TestCompletionAtPos_exprTuple(t *testing.T) {
 							End:      hcl.Pos{Line: 1, Column: 8, Byte: 7},
 						},
 						NewText: "[ ]",
-						Snippet: "[ ${0} ]",
+						Snippet: "[ ${1} ]",
 					},
 					Kind: lang.TupleCandidateKind,
 				},
 			}),
 		},
 		{
-			"empty expression with element",
+			"empty expression with elements",
 			map[string]*schema.AttributeSchema{
 				"attr": {
 					Constraint: schema.Tuple{
 						Elems: []schema.Constraint{
-							schema.Keyword{
-								Keyword: "keyword",
+							schema.LiteralType{
+								Type: cty.String,
+							},
+							schema.LiteralType{
+								Type: cty.Bool,
 							},
 						},
 					},
@@ -102,7 +106,7 @@ func TestCompletionAtPos_exprTuple(t *testing.T) {
 			hcl.Pos{Line: 1, Column: 8, Byte: 7},
 			lang.CompleteCandidates([]lang.Candidate{
 				{
-					Label:  `[ keyword ]`,
+					Label:  `[ string, bool ]`,
 					Detail: "tuple",
 					TextEdit: lang.TextEdit{
 						Range: hcl.Range{
@@ -110,11 +114,54 @@ func TestCompletionAtPos_exprTuple(t *testing.T) {
 							Start:    hcl.Pos{Line: 1, Column: 8, Byte: 7},
 							End:      hcl.Pos{Line: 1, Column: 8, Byte: 7},
 						},
-						NewText: "[ keyword ]",
-						Snippet: "[ ${0:keyword} ]",
+						NewText: `[ "value", false ]`,
+						Snippet: `[ "${1:value}", ${2:false} ]`,
 					},
 					Kind:           lang.TupleCandidateKind,
-					TriggerSuggest: true,
+					TriggerSuggest: false,
+				},
+			}),
+		},
+		{
+			"empty expression with many elements",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.Tuple{
+						Elems: []schema.Constraint{
+							schema.LiteralType{
+								Type: cty.String,
+							},
+							schema.LiteralType{
+								Type: cty.Bool,
+							},
+							schema.LiteralType{
+								Type: cty.Number,
+							},
+							schema.LiteralType{
+								Type: cty.String,
+							},
+						},
+					},
+				},
+			},
+			`attr = 
+`,
+			hcl.Pos{Line: 1, Column: 8, Byte: 7},
+			lang.CompleteCandidates([]lang.Candidate{
+				{
+					Label:  `[ string, bool, numbe… ]`,
+					Detail: "tuple",
+					TextEdit: lang.TextEdit{
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 1, Column: 8, Byte: 7},
+							End:      hcl.Pos{Line: 1, Column: 8, Byte: 7},
+						},
+						NewText: `[ "value", false, 0, "value" ]`,
+						Snippet: `[ "${1:value}", ${2:false}, ${3:0}, "${4:value}" ]`,
+					},
+					Kind:           lang.TupleCandidateKind,
+					TriggerSuggest: false,
 				},
 			}),
 		},

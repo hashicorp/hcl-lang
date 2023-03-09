@@ -14,19 +14,21 @@ import (
 func (tuple Tuple) CompletionAtPos(ctx context.Context, pos hcl.Pos) []lang.Candidate {
 	if isEmptyExpression(tuple.expr) {
 		label := "[ ]"
-		triggerSuggest := false
 
 		if len(tuple.cons.Elems) > 0 {
-			elemLabel := ""
+			names := make([]string, 0, len(tuple.cons.Elems))
 			for _, elemCons := range tuple.cons.Elems {
-				elemLabel += fmt.Sprintf("%s, ", elemCons.FriendlyName())
+				names = append(names, elemCons.FriendlyName())
 			}
+
+			elemLabel := strings.Join(names, ", ")
 			if len(elemLabel) > 20 {
 				elemLabel = fmt.Sprintf("%s…", elemLabel[0:19])
 			}
 			label = fmt.Sprintf("[ %s ]", elemLabel)
-			triggerSuggest = true
 		}
+
+		d := tuple.cons.EmptyCompletionData(1, 0)
 
 		return []lang.Candidate{
 			{
@@ -35,15 +37,15 @@ func (tuple Tuple) CompletionAtPos(ctx context.Context, pos hcl.Pos) []lang.Cand
 				Kind:        lang.TupleCandidateKind,
 				Description: tuple.cons.Description,
 				TextEdit: lang.TextEdit{
-					NewText: "[ ]",
-					Snippet: "[ ${0} ]",
+					NewText: d.NewText,
+					Snippet: d.Snippet,
 					Range: hcl.Range{
 						Filename: tuple.expr.Range().Filename,
 						Start:    pos,
 						End:      pos,
 					},
 				},
-				TriggerSuggest: triggerSuggest,
+				TriggerSuggest: d.TriggerSuggest,
 			},
 		}
 	}
