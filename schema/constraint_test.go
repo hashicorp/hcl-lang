@@ -628,7 +628,7 @@ STRING
 				},
 			},
 			CompletionData{
-				NewText:         "[]",
+				NewText:         "[ ]",
 				Snippet:         "[ ${1} ]",
 				TriggerSuggest:  true,
 				NextPlaceholder: 2,

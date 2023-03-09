@@ -12,12 +12,12 @@ import (
 func (set Set) CompletionAtPos(ctx context.Context, pos hcl.Pos) []lang.Candidate {
 	if isEmptyExpression(set.expr) {
 		label := "[ ]"
-		triggerSuggest := false
 
 		if set.cons.Elem != nil {
 			label = fmt.Sprintf("[ %s ]", set.cons.Elem.FriendlyName())
-			triggerSuggest = true
 		}
+
+		d := set.cons.EmptyCompletionData(1, 0)
 
 		return []lang.Candidate{
 			{
@@ -26,15 +26,15 @@ func (set Set) CompletionAtPos(ctx context.Context, pos hcl.Pos) []lang.Candidat
 				Kind:        lang.SetCandidateKind,
 				Description: set.cons.Description,
 				TextEdit: lang.TextEdit{
-					NewText: "[ ]",
-					Snippet: "[ ${0} ]",
+					NewText: d.NewText,
+					Snippet: d.Snippet,
 					Range: hcl.Range{
 						Filename: set.expr.Range().Filename,
 						Start:    pos,
 						End:      pos,
 					},
 				},
-				TriggerSuggest: triggerSuggest,
+				TriggerSuggest: d.TriggerSuggest,
 			},
 		}
 	}

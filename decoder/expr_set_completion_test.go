@@ -10,6 +10,7 @@ import (
 	"github.com/hashicorp/hcl-lang/schema"
 	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hclsyntax"
+	"github.com/zclconf/go-cty/cty"
 )
 
 func TestCompletionAtPos_exprSet(t *testing.T) {
@@ -73,7 +74,7 @@ func TestCompletionAtPos_exprSet(t *testing.T) {
 							End:      hcl.Pos{Line: 1, Column: 8, Byte: 7},
 						},
 						NewText: "[ ]",
-						Snippet: "[ ${0} ]",
+						Snippet: "[ ${1} ]",
 					},
 					Kind: lang.SetCandidateKind,
 				},
@@ -84,8 +85,8 @@ func TestCompletionAtPos_exprSet(t *testing.T) {
 			map[string]*schema.AttributeSchema{
 				"attr": {
 					Constraint: schema.Set{
-						Elem: schema.Keyword{
-							Keyword: "keyword",
+						Elem: schema.LiteralType{
+							Type: cty.String,
 						},
 					},
 				},
@@ -95,19 +96,19 @@ func TestCompletionAtPos_exprSet(t *testing.T) {
 			hcl.Pos{Line: 1, Column: 8, Byte: 7},
 			lang.CompleteCandidates([]lang.Candidate{
 				{
-					Label:  `[ keyword ]`,
-					Detail: "set of keyword",
+					Label:  `[ string ]`,
+					Detail: "set of string",
 					TextEdit: lang.TextEdit{
 						Range: hcl.Range{
 							Filename: "test.tf",
 							Start:    hcl.Pos{Line: 1, Column: 8, Byte: 7},
 							End:      hcl.Pos{Line: 1, Column: 8, Byte: 7},
 						},
-						NewText: "[ keyword ]",
-						Snippet: "[ ${0:keyword} ]",
+						NewText: "[ \"value\" ]",
+						Snippet: "[ \"${1:value}\" ]",
 					},
 					Kind:           lang.SetCandidateKind,
-					TriggerSuggest: true,
+					TriggerSuggest: false,
 				},
 			}),
 		},
