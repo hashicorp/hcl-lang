@@ -111,8 +111,7 @@ func (m Map) CompletionAtPos(ctx context.Context, pos hcl.Pos) []lang.Candidate 
 			}
 		}
 
-		recoveryPos := eType.OpenRange.End
-		var lastItemRange, nextItemRange *hcl.Range
+		recoveryPos := eType.OpenRange.Start
 		for _, item := range eType.Items {
 			emptyRange := hcl.Range{
 				Filename: eType.Range().Filename,
@@ -127,14 +126,9 @@ func (m Map) CompletionAtPos(ctx context.Context, pos hcl.Pos) []lang.Candidate 
 			// check if we've just missed the position
 			if pos.Byte < item.KeyExpr.Range().Start.Byte {
 				// enable recovery between last item's end and position
-
-				// record current (next) item so we can avoid
-				// completion on the same line
-				nextItemRange = hcl.RangeBetween(item.KeyExpr.Range(), item.ValueExpr.Range()).Ptr()
 				break
 			}
 
-			lastItemRange = hcl.RangeBetween(item.KeyExpr.Range(), item.ValueExpr.Range()).Ptr()
 			recoveryPos = item.ValueExpr.Range().End
 
 			if item.KeyExpr.Range().ContainsPos(pos) {
@@ -154,23 +148,12 @@ func (m Map) CompletionAtPos(ctx context.Context, pos hcl.Pos) []lang.Candidate 
 		trimmedBytes := bytes.TrimRight(recoveredBytes, " \t")
 
 		if len(trimmedBytes) == 0 {
-			return []lang.Candidate{}
+			return []lang.Candidate{
+				mapItemCandidate,
+			}
 		}
 
 		if len(trimmedBytes) == 1 && isObjectItemTerminatingRune(rune(trimmedBytes[0])) {
-			// avoid completing on the same line as next item
-			if nextItemRange != nil && nextItemRange.Start.Line == pos.Line {
-				return []lang.Candidate{}
-			}
-
-			// avoid completing on the same line as last item
-			if lastItemRange != nil && lastItemRange.End.Line == pos.Line {
-				// if it is not single-line notation
-				if trimmedBytes[0] != ',' {
-					return []lang.Candidate{}
-				}
-			}
-
 			return []lang.Candidate{
 				mapItemCandidate,
 			}

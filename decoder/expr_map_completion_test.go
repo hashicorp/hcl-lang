@@ -345,7 +345,22 @@ func TestCompletionAtPos_exprTypeDeclaration(t *testing.T) {
 			`attr = {  foo = kw }
 `,
 			hcl.Pos{Line: 1, Column: 10, Byte: 9},
-			lang.CompleteCandidates([]lang.Candidate{}),
+			lang.CompleteCandidates([]lang.Candidate{
+				{
+					Label:  `"key" = keyword`,
+					Detail: "keyword",
+					TextEdit: lang.TextEdit{
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 1, Column: 10, Byte: 9},
+							End:      hcl.Pos{Line: 1, Column: 10, Byte: 9},
+						},
+						NewText: `"key" = `,
+						Snippet: `"${1:key}" = `,
+					},
+					Kind: lang.AttributeCandidateKind,
+				},
+			}),
 		},
 		{
 			"single-line after previous item with comma",
@@ -392,7 +407,22 @@ func TestCompletionAtPos_exprTypeDeclaration(t *testing.T) {
 			`attr = { foo = kw  }
 `,
 			hcl.Pos{Line: 1, Column: 19, Byte: 18},
-			lang.CompleteCandidates([]lang.Candidate{}),
+			lang.CompleteCandidates([]lang.Candidate{
+				{
+					Label:  `"key" = keyword`,
+					Detail: "keyword",
+					TextEdit: lang.TextEdit{
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 1, Column: 19, Byte: 18},
+							End:      hcl.Pos{Line: 1, Column: 19, Byte: 18},
+						},
+						NewText: `"key" = `,
+						Snippet: `"${1:key}" = `,
+					},
+					Kind: lang.AttributeCandidateKind,
+				},
+			}),
 		},
 		{
 			"single-line between items with commas",
@@ -439,7 +469,22 @@ func TestCompletionAtPos_exprTypeDeclaration(t *testing.T) {
 			`attr = { foo = kw,   bar = kw }
 `,
 			hcl.Pos{Line: 1, Column: 20, Byte: 19},
-			lang.CompleteCandidates([]lang.Candidate{}),
+			lang.CompleteCandidates([]lang.Candidate{
+				{
+					Label:  `"key" = keyword`,
+					Detail: "keyword",
+					TextEdit: lang.TextEdit{
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 1, Column: 20, Byte: 19},
+							End:      hcl.Pos{Line: 1, Column: 20, Byte: 19},
+						},
+						NewText: `"key" = `,
+						Snippet: `"${1:key}" = `,
+					},
+					Kind: lang.AttributeCandidateKind,
+				},
+			}),
 		},
 
 		// multi line tests
@@ -731,7 +776,22 @@ func TestCompletionAtPos_exprTypeDeclaration(t *testing.T) {
 }
 `,
 			hcl.Pos{Line: 2, Column: 2, Byte: 10},
-			lang.CompleteCandidates([]lang.Candidate{}),
+			lang.CompleteCandidates([]lang.Candidate{
+				{
+					Label:  `"key" = keyword`,
+					Detail: "keyword",
+					TextEdit: lang.TextEdit{
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 2, Column: 2, Byte: 10},
+							End:      hcl.Pos{Line: 2, Column: 2, Byte: 10},
+						},
+						NewText: `"key" = `,
+						Snippet: `"${1:key}" = `,
+					},
+					Kind: lang.AttributeCandidateKind,
+				},
+			}),
 		},
 		{
 			"multi-line before attribute separate line",
@@ -884,7 +944,22 @@ func TestCompletionAtPos_exprTypeDeclaration(t *testing.T) {
 }
 `,
 			hcl.Pos{Line: 2, Column: 17, Byte: 25},
-			lang.CompleteCandidates([]lang.Candidate{}),
+			lang.CompleteCandidates([]lang.Candidate{
+				{
+					Label:  `"key" = keyword`,
+					Detail: "keyword",
+					TextEdit: lang.TextEdit{
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 2, Column: 17, Byte: 25},
+							End:      hcl.Pos{Line: 2, Column: 17, Byte: 25},
+						},
+						NewText: `"key" = `,
+						Snippet: `"${1:key}" = `,
+					},
+					Kind: lang.AttributeCandidateKind,
+				},
+			}),
 		},
 		{
 			"multi-line between attributes without commas",
