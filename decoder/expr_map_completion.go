@@ -81,7 +81,6 @@ func (m Map) CompletionAtPos(ctx context.Context, pos hcl.Pos) []lang.Candidate 
 				Snippet: fmt.Sprintf("\"${1:key}\" = %s", cData.Snippet),
 				Range:   editRange,
 			},
-			TriggerSuggest: cData.TriggerSuggest,
 		}
 
 		if len(eType.Items) == 0 {
