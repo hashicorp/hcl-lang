@@ -57,10 +57,13 @@ func (m Map) Copy() Constraint {
 }
 
 func (m Map) EmptyCompletionData(nextPlaceholder int, nestingLevel int) CompletionData {
+	rootNesting := strings.Repeat("  ", nestingLevel)
+	insideNesting := strings.Repeat("  ", nestingLevel+1)
+
 	if m.Elem == nil {
 		return CompletionData{
-			NewText:         "{}",
-			Snippet:         fmt.Sprintf("{ ${%d} }", nextPlaceholder),
+			NewText:         fmt.Sprintf("{\n%s\n%s}", insideNesting, rootNesting),
+			Snippet:         fmt.Sprintf("{\n%s${%d}\n%s}", insideNesting, nextPlaceholder, rootNesting),
 			NextPlaceholder: nextPlaceholder + 1,
 		}
 	}
@@ -68,18 +71,16 @@ func (m Map) EmptyCompletionData(nextPlaceholder int, nestingLevel int) Completi
 	elemData := m.Elem.EmptyCompletionData(nextPlaceholder+1, nestingLevel+1)
 	if elemData.NewText == "" || elemData.Snippet == "" {
 		return CompletionData{
-			NewText:         "{}",
-			Snippet:         fmt.Sprintf("{ ${%d} }", nextPlaceholder),
+			NewText:         fmt.Sprintf("{\n%s\n%s}", insideNesting, rootNesting),
+			Snippet:         fmt.Sprintf("{\n%s${%d}\n%s}", insideNesting, nextPlaceholder, rootNesting),
 			NextPlaceholder: nextPlaceholder + 1,
 			TriggerSuggest:  elemData.TriggerSuggest,
 		}
 	}
 
-	nesting := strings.Repeat("  ", nestingLevel)
-
 	return CompletionData{
-		NewText:         fmt.Sprintf("{\n%s\"name\" = %s\n}", nesting, elemData.NewText),
-		Snippet:         fmt.Sprintf("{\n%s\"${%d:name}\" = %s\n}", nesting, nextPlaceholder, elemData.Snippet),
+		NewText:         fmt.Sprintf("{\n%s\"name\" = %s\n%s}", insideNesting, elemData.NewText, rootNesting),
+		Snippet:         fmt.Sprintf("{\n%s\"${%d:name}\" = %s\n%s}", insideNesting, nextPlaceholder, elemData.Snippet, rootNesting),
 		NextPlaceholder: elemData.NextPlaceholder,
 		TriggerSuggest:  elemData.TriggerSuggest,
 	}
