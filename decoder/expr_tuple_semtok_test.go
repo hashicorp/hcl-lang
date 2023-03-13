@@ -197,6 +197,9 @@ func TestSemanticTokens_exprTuple(t *testing.T) {
 								Keyword: "keyword",
 							},
 							schema.Keyword{
+								Keyword: "valid",
+							},
+							schema.Keyword{
 								Keyword: "drowyek",
 							},
 						},
@@ -205,8 +208,8 @@ func TestSemanticTokens_exprTuple(t *testing.T) {
 			},
 			`attr = [
   keyword,
-  drowyek,
   invalid,
+  drowyek,
 ]`,
 			[]lang.SemanticToken{
 				{
@@ -232,8 +235,8 @@ func TestSemanticTokens_exprTuple(t *testing.T) {
 					Modifiers: lang.SemanticTokenModifiers{},
 					Range: hcl.Range{
 						Filename: "test.tf",
-						Start:    hcl.Pos{Line: 3, Column: 3, Byte: 22},
-						End:      hcl.Pos{Line: 3, Column: 10, Byte: 29},
+						Start:    hcl.Pos{Line: 4, Column: 3, Byte: 33},
+						End:      hcl.Pos{Line: 4, Column: 10, Byte: 40},
 					},
 				},
 			},
