@@ -22,6 +22,7 @@ func (list List) ReferenceTargets(ctx context.Context, targetCtx *TargetContext)
 	targets := make(reference.Targets, 0)
 
 	// TODO: collect parent target for the whole list
+	// See https://github.com/hashicorp/hcl-lang/issues/228
 
 	for i, elemExpr := range eType.Exprs {
 		expr := newExpression(list.pathCtx, elemExpr, list.cons.Elem)
