@@ -20,6 +20,7 @@ func (set Set) ReferenceTargets(ctx context.Context, targetCtx *TargetContext) r
 	targets := make(reference.Targets, 0)
 
 	// TODO: collect parent target for the whole set
+	// See https://github.com/hashicorp/hcl-lang/issues/228
 
 	return targets
 }

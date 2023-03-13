@@ -61,7 +61,8 @@ func (set Set) CompletionAtPos(ctx context.Context, pos hcl.Pos) []lang.Candidat
 		}
 
 		// TODO: depending on set.cons.Elem (Keyword, LiteralValue, Reference),
-		// filter out declared elements to provide uniqueness as that is the nature of set
+		// filter out declared elements to provide uniqueness as that is the nature of set.
+		// See https://github.com/hashicorp/hcl-lang/issues/225
 
 		for _, elemExpr := range eType.Exprs {
 			// We cannot trust ranges of empty expressions, so we imply
