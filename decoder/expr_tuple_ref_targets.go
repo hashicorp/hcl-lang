@@ -22,6 +22,7 @@ func (tuple Tuple) ReferenceTargets(ctx context.Context, targetCtx *TargetContex
 	targets := make(reference.Targets, 0)
 
 	// TODO: collect parent target for the whole tuple
+	// See https://github.com/hashicorp/hcl-lang/issues/228
 
 	for i, elemExpr := range eType.Exprs {
 		if i+1 > len(tuple.cons.Elems) {
