@@ -44,7 +44,7 @@ func (t Tuple) Copy() Constraint {
 func (t Tuple) EmptyCompletionData(nextPlaceholder int, nestingLevel int) CompletionData {
 	if len(t.Elems) == 0 {
 		return CompletionData{
-			NewText:         "[]",
+			NewText:         "[ ]",
 			Snippet:         fmt.Sprintf("[ ${%d} ]", nextPlaceholder),
 			NextPlaceholder: nextPlaceholder + 1,
 		}
@@ -58,7 +58,7 @@ func (t Tuple) EmptyCompletionData(nextPlaceholder int, nestingLevel int) Comple
 		cData := elem.EmptyCompletionData(lastPlaceholder, nestingLevel)
 		if cData.NewText == "" || cData.Snippet == "" {
 			return CompletionData{
-				NewText:         "[]",
+				NewText:         "[ ]",
 				Snippet:         fmt.Sprintf("[ ${%d} ]", nextPlaceholder),
 				TriggerSuggest:  cData.TriggerSuggest,
 				NextPlaceholder: nextPlaceholder + 1,
