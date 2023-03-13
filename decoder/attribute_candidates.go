@@ -15,7 +15,7 @@ func attributeSchemaToCandidate(name string, attr *schema.AttributeSchema, rng h
 	var snippet string
 	var triggerSuggest bool
 	if attr.Constraint != nil {
-		cData := attr.Constraint.EmptyCompletionData(1, 1)
+		cData := attr.Constraint.EmptyCompletionData(1, 0)
 		snippet = fmt.Sprintf("%s = %s", name, cData.Snippet)
 		triggerSuggest = cData.TriggerSuggest
 	} else {
