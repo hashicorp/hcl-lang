@@ -1,6 +1,7 @@
 package schema
 
 import (
+	"context"
 	"errors"
 
 	"github.com/hashicorp/hcl-lang/lang"
@@ -65,7 +66,7 @@ func (ref Reference) Copy() Constraint {
 	}
 }
 
-func (ref Reference) EmptyCompletionData(nextPlaceholder int, nestingLevel int) CompletionData {
+func (ref Reference) EmptyCompletionData(ctx context.Context, nextPlaceholder int, nestingLevel int) CompletionData {
 	// TODO
 	return CompletionData{}
 }

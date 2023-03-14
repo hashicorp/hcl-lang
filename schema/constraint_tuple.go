@@ -1,6 +1,7 @@
 package schema
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -41,7 +42,7 @@ func (t Tuple) Copy() Constraint {
 	return newTuple
 }
 
-func (t Tuple) EmptyCompletionData(nextPlaceholder int, nestingLevel int) CompletionData {
+func (t Tuple) EmptyCompletionData(ctx context.Context, nextPlaceholder int, nestingLevel int) CompletionData {
 	if len(t.Elems) == 0 {
 		return CompletionData{
 			NewText:         "[ ]",
@@ -55,7 +56,7 @@ func (t Tuple) EmptyCompletionData(nextPlaceholder int, nestingLevel int) Comple
 	lastPlaceholder := nextPlaceholder
 
 	for i, elem := range t.Elems {
-		cData := elem.EmptyCompletionData(lastPlaceholder, nestingLevel)
+		cData := elem.EmptyCompletionData(ctx, lastPlaceholder, nestingLevel)
 		if cData.NewText == "" || cData.Snippet == "" {
 			return CompletionData{
 				NewText:         "[ ]",

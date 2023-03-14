@@ -38,6 +38,8 @@ func (d *PathDecoder) CandidatesAtPos(ctx context.Context, filename string, pos 
 		outerBodyRng = ob.Range()
 	}
 
+	ctx = schema.WithPrefillRequiredFields(ctx, d.PrefillRequiredFields)
+
 	return d.candidatesAtPos(ctx, rootBody, outerBodyRng, d.pathCtx.Schema, pos)
 }
 
@@ -71,7 +73,7 @@ func (d *PathDecoder) candidatesAtPos(ctx context.Context, body *hclsyntax.Body,
 		if attr.NameRange.ContainsPos(pos) {
 			prefixRng := attr.NameRange
 			prefixRng.End = pos
-			return d.bodySchemaCandidates(body, bodySchema, prefixRng, attr.Range()), nil
+			return d.bodySchemaCandidates(ctx, body, bodySchema, prefixRng, attr.Range()), nil
 		}
 		if attr.EqualsRange.ContainsPos(pos) {
 			return lang.ZeroCandidates(), nil
@@ -98,7 +100,7 @@ func (d *PathDecoder) candidatesAtPos(ctx context.Context, body *hclsyntax.Body,
 			if block.TypeRange.ContainsPos(pos) {
 				prefixRng := block.TypeRange
 				prefixRng.End = pos
-				return d.bodySchemaCandidates(body, bodySchema, prefixRng, block.Range()), nil
+				return d.bodySchemaCandidates(ctx, body, bodySchema, prefixRng, block.Range()), nil
 			}
 
 			for i, labelRange := range block.LabelRanges {
@@ -152,7 +154,7 @@ func (d *PathDecoder) candidatesAtPos(ctx context.Context, body *hclsyntax.Body,
 		rng = tokenRng
 	}
 
-	return d.bodySchemaCandidates(body, bodySchema, rng, rng), nil
+	return d.bodySchemaCandidates(ctx, body, bodySchema, rng, rng), nil
 }
 
 func (d *PathDecoder) isPosInsideAttrExpr(attr *hclsyntax.Attribute, pos hcl.Pos) bool {

@@ -1,6 +1,7 @@
 package schema
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/hashicorp/hcl-lang/lang"
@@ -48,7 +49,7 @@ func (l List) Copy() Constraint {
 	}
 }
 
-func (l List) EmptyCompletionData(nextPlaceholder int, nestingLevel int) CompletionData {
+func (l List) EmptyCompletionData(ctx context.Context, nextPlaceholder int, nestingLevel int) CompletionData {
 	if l.Elem == nil {
 		return CompletionData{
 			NewText:         "[ ]",
@@ -57,7 +58,7 @@ func (l List) EmptyCompletionData(nextPlaceholder int, nestingLevel int) Complet
 		}
 	}
 
-	elemData := l.Elem.EmptyCompletionData(nextPlaceholder, nestingLevel)
+	elemData := l.Elem.EmptyCompletionData(ctx, nextPlaceholder, nestingLevel)
 	if elemData.NewText == "" || elemData.Snippet == "" {
 		return CompletionData{
 			NewText:         "[ ]",

@@ -1,6 +1,7 @@
 package schema
 
 import (
+	"context"
 	"fmt"
 	"sort"
 	"strings"
@@ -44,7 +45,21 @@ func (o Object) Copy() Constraint {
 	}
 }
 
-func (o Object) EmptyCompletionData(placeholder int, nestingLevel int) CompletionData {
+type prefillRequiredFieldsCtxKey struct{}
+
+func WithPrefillRequiredFields(ctx context.Context, enabled bool) context.Context {
+	return context.WithValue(ctx, prefillRequiredFieldsCtxKey{}, enabled)
+}
+
+func prefillRequiredFields(ctx context.Context) bool {
+	enabled, ok := ctx.Value(prefillRequiredFieldsCtxKey{}).(bool)
+	if !ok {
+		return false
+	}
+	return enabled
+}
+
+func (o Object) EmptyCompletionData(ctx context.Context, placeholder int, nestingLevel int) CompletionData {
 	if len(o.Attributes) == 0 {
 		return CompletionData{
 			NewText:         "{}",
@@ -63,7 +78,7 @@ func (o Object) EmptyCompletionData(placeholder int, nestingLevel int) Completio
 
 	for _, name := range attrNames {
 		attr := o.Attributes[name]
-		cData := attr.Constraint.EmptyCompletionData(lastPlaceholder, nestingLevel+1)
+		cData := attr.Constraint.EmptyCompletionData(ctx, lastPlaceholder, nestingLevel+1)
 		if cData.NewText == "" || cData.Snippet == "" {
 			return CompletionData{
 				NewText:         "{}",
@@ -197,7 +212,7 @@ func (oa ObjectAttributes) Copy() Constraint {
 	return m
 }
 
-func (oa ObjectAttributes) EmptyCompletionData(nextPlaceholder int, nestingLevel int) CompletionData {
+func (oa ObjectAttributes) EmptyCompletionData(ctx context.Context, nextPlaceholder int, nestingLevel int) CompletionData {
 	// TODO
 	return CompletionData{}
 }

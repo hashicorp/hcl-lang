@@ -1,6 +1,7 @@
 package schema
 
 import (
+	"context"
 	"fmt"
 	"sort"
 	"strconv"
@@ -38,7 +39,7 @@ func (lv LiteralValue) Copy() Constraint {
 	}
 }
 
-func (lv LiteralValue) EmptyCompletionData(nextPlaceholder int, nestingLevel int) CompletionData {
+func (lv LiteralValue) EmptyCompletionData(ctx context.Context, nextPlaceholder int, nestingLevel int) CompletionData {
 	if lv.Value.Type().IsPrimitiveType() {
 		var value string
 		switch lv.Value.Type() {
@@ -75,7 +76,7 @@ func (lv LiteralValue) EmptyCompletionData(nextPlaceholder int, nestingLevel int
 			c := LiteralValue{
 				Value: val,
 			}
-			cData := c.EmptyCompletionData(lastPlaceholder, nestingLevel)
+			cData := c.EmptyCompletionData(ctx, lastPlaceholder, nestingLevel)
 			if cData.NewText == "" || cData.Snippet == "" {
 				return CompletionData{
 					NextPlaceholder: lastPlaceholder,
@@ -103,7 +104,7 @@ func (lv LiteralValue) EmptyCompletionData(nextPlaceholder int, nestingLevel int
 			c := LiteralValue{
 				Value: val,
 			}
-			cData := c.EmptyCompletionData(lastPlaceholder, nestingLevel)
+			cData := c.EmptyCompletionData(ctx, lastPlaceholder, nestingLevel)
 			if cData.NewText == "" || cData.Snippet == "" {
 				return CompletionData{
 					NextPlaceholder: lastPlaceholder,
@@ -131,7 +132,7 @@ func (lv LiteralValue) EmptyCompletionData(nextPlaceholder int, nestingLevel int
 			c := LiteralValue{
 				Value: val,
 			}
-			cData := c.EmptyCompletionData(lastPlaceholder, nestingLevel)
+			cData := c.EmptyCompletionData(ctx, lastPlaceholder, nestingLevel)
 			if cData.NewText == "" || cData.Snippet == "" {
 				return CompletionData{
 					NextPlaceholder: lastPlaceholder,
@@ -163,7 +164,7 @@ func (lv LiteralValue) EmptyCompletionData(nextPlaceholder int, nestingLevel int
 				Value: val,
 			}
 
-			cData := cons.EmptyCompletionData(lastPlaceholder, nestingLevel+1)
+			cData := cons.EmptyCompletionData(ctx, lastPlaceholder, nestingLevel+1)
 			if cData.NewText == "" || cData.Snippet == "" {
 				return CompletionData{
 					NextPlaceholder: lastPlaceholder,
@@ -206,7 +207,7 @@ func (lv LiteralValue) EmptyCompletionData(nextPlaceholder int, nestingLevel int
 		cons := Object{
 			Attributes: attrs,
 		}
-		return cons.EmptyCompletionData(nextPlaceholder, nestingLevel)
+		return cons.EmptyCompletionData(ctx, nextPlaceholder, nestingLevel)
 	}
 
 	return CompletionData{

@@ -1,6 +1,7 @@
 package schema
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/hashicorp/hcl-lang/lang"
@@ -36,7 +37,7 @@ func (lt LiteralType) Copy() Constraint {
 	}
 }
 
-func (lt LiteralType) EmptyCompletionData(nextPlaceholder int, nestingLevel int) CompletionData {
+func (lt LiteralType) EmptyCompletionData(ctx context.Context, nextPlaceholder int, nestingLevel int) CompletionData {
 	if lt.Type.IsPrimitiveType() {
 		var newText, snippet string
 
@@ -69,7 +70,7 @@ func (lt LiteralType) EmptyCompletionData(nextPlaceholder int, nestingLevel int)
 				Type: lt.Type.ElementType(),
 			},
 		}
-		return listCons.EmptyCompletionData(nextPlaceholder, nestingLevel)
+		return listCons.EmptyCompletionData(ctx, nextPlaceholder, nestingLevel)
 	}
 	if lt.Type.IsSetType() {
 		setCons := Set{
@@ -77,7 +78,7 @@ func (lt LiteralType) EmptyCompletionData(nextPlaceholder int, nestingLevel int)
 				Type: lt.Type.ElementType(),
 			},
 		}
-		return setCons.EmptyCompletionData(nextPlaceholder, nestingLevel)
+		return setCons.EmptyCompletionData(ctx, nextPlaceholder, nestingLevel)
 	}
 	if lt.Type.IsMapType() {
 		mapCons := Map{
@@ -85,7 +86,7 @@ func (lt LiteralType) EmptyCompletionData(nextPlaceholder int, nestingLevel int)
 				Type: lt.Type.ElementType(),
 			},
 		}
-		return mapCons.EmptyCompletionData(nextPlaceholder, nestingLevel)
+		return mapCons.EmptyCompletionData(ctx, nextPlaceholder, nestingLevel)
 	}
 	if lt.Type.IsTupleType() {
 		types := lt.Type.TupleElementTypes()
@@ -95,7 +96,7 @@ func (lt LiteralType) EmptyCompletionData(nextPlaceholder int, nestingLevel int)
 				Type: typ,
 			}
 		}
-		return tupleCons.EmptyCompletionData(nextPlaceholder, nestingLevel)
+		return tupleCons.EmptyCompletionData(ctx, nextPlaceholder, nestingLevel)
 	}
 	if lt.Type.IsObjectType() {
 		attrTypes := lt.Type.AttributeTypes()
@@ -117,7 +118,7 @@ func (lt LiteralType) EmptyCompletionData(nextPlaceholder int, nestingLevel int)
 		cons := Object{
 			Attributes: attrs,
 		}
-		return cons.EmptyCompletionData(nextPlaceholder, nestingLevel)
+		return cons.EmptyCompletionData(ctx, nextPlaceholder, nestingLevel)
 	}
 
 	return CompletionData{

@@ -1,6 +1,7 @@
 package schema
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
@@ -731,7 +732,8 @@ STRING
 	}
 	for i, tc := range testCases {
 		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
-			data := tc.cons.EmptyCompletionData(1, 0)
+			ctx := context.Background()
+			data := tc.cons.EmptyCompletionData(ctx, 1, 0)
 			if diff := cmp.Diff(tc.expectedCompData, data); diff != "" {
 				t.Fatalf("unexpected completion  data: %s", diff)
 			}
