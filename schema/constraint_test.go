@@ -325,13 +325,15 @@ tomap({
 
 func TestConstraint_EmptyCompletionData(t *testing.T) {
 	testCases := []struct {
-		cons             Constraint
-		expectedCompData CompletionData
+		cons                  Constraint
+		prefillRequiredFields bool
+		expectedCompData      CompletionData
 	}{
 		{
 			LiteralType{
 				Type: cty.String,
 			},
+			false,
 			CompletionData{
 				NewText:         `"value"`,
 				Snippet:         `"${1:value}"`,
@@ -344,6 +346,7 @@ func TestConstraint_EmptyCompletionData(t *testing.T) {
 					Type: cty.String,
 				},
 			},
+			false,
 			CompletionData{
 				NewText:         `[ "value" ]`,
 				Snippet:         `[ "${1:value}" ]`,
@@ -354,6 +357,7 @@ func TestConstraint_EmptyCompletionData(t *testing.T) {
 			LiteralType{
 				Type: cty.List(cty.String),
 			},
+			false,
 			CompletionData{
 				NewText:         `[ "value" ]`,
 				Snippet:         `[ "${1:value}" ]`,
@@ -366,6 +370,7 @@ func TestConstraint_EmptyCompletionData(t *testing.T) {
 					Type: cty.String,
 				},
 			},
+			false,
 			CompletionData{
 				NewText:         `[ "value" ]`,
 				Snippet:         `[ "${1:value}" ]`,
@@ -376,6 +381,7 @@ func TestConstraint_EmptyCompletionData(t *testing.T) {
 			LiteralType{
 				Type: cty.Set(cty.String),
 			},
+			false,
 			CompletionData{
 				NewText:         `[ "value" ]`,
 				Snippet:         `[ "${1:value}" ]`,
@@ -390,6 +396,7 @@ func TestConstraint_EmptyCompletionData(t *testing.T) {
 					"baz": cty.List(cty.String),
 				}),
 			},
+			true,
 			CompletionData{
 				NewText: `{
   bar = 0
@@ -415,6 +422,7 @@ func TestConstraint_EmptyCompletionData(t *testing.T) {
 					}),
 				}),
 			},
+			true,
 			CompletionData{
 				NewText: `{
   bar = 0
@@ -439,6 +447,7 @@ func TestConstraint_EmptyCompletionData(t *testing.T) {
 			LiteralValue{
 				Value: cty.StringVal("foobar"),
 			},
+			false,
 			CompletionData{
 				NewText:         `"foobar"`,
 				Snippet:         `"foobar"`,
@@ -449,6 +458,7 @@ func TestConstraint_EmptyCompletionData(t *testing.T) {
 			LiteralValue{
 				Value: cty.StringVal("foo\nbar"),
 			},
+			false,
 			CompletionData{
 				NewText: `<<<STRING
 foo
@@ -467,6 +477,7 @@ STRING
 			LiteralValue{
 				Value: cty.NumberIntVal(42),
 			},
+			false,
 			CompletionData{
 				NewText:         "42",
 				Snippet:         "42",
@@ -481,6 +492,7 @@ STRING
 					"baz": cty.ListVal([]cty.Value{cty.StringVal("toot")}),
 				}),
 			},
+			true,
 			CompletionData{
 				NewText: `{
   bar = 42
@@ -502,6 +514,7 @@ STRING
 					"bar": cty.StringVal("boo"),
 				}),
 			},
+			false,
 			CompletionData{
 				NewText: `{
   "bar" = "boo"
@@ -525,6 +538,7 @@ STRING
 					}),
 				}),
 			},
+			false,
 			CompletionData{
 				NewText: `{
   "bar" = {
@@ -556,6 +570,7 @@ STRING
 					}),
 				}),
 			},
+			true,
 			CompletionData{
 				NewText: `{
   bar = 43
@@ -587,6 +602,7 @@ STRING
 					}),
 				}),
 			},
+			true,
 			CompletionData{
 				NewText: `{
   bar = 43
@@ -613,6 +629,7 @@ STRING
 					Keyword: "kw",
 				},
 			},
+			false,
 			CompletionData{
 				NewText:         "[ ]",
 				Snippet:         "[ ${1} ]",
@@ -626,6 +643,7 @@ STRING
 					Keyword: "kw",
 				},
 			},
+			false,
 			CompletionData{
 				NewText:         "[ ]",
 				Snippet:         "[ ${1} ]",
@@ -641,6 +659,7 @@ STRING
 					},
 				},
 			},
+			false,
 			CompletionData{
 				NewText:         "[ ]",
 				Snippet:         "[ ${1} ]",
@@ -654,6 +673,7 @@ STRING
 					Keyword: "kw",
 				},
 			},
+			false,
 			CompletionData{
 				NewText: `{
   
@@ -673,6 +693,7 @@ STRING
 					},
 				},
 			},
+			false,
 			CompletionData{
 				NewText: `{
   "name" = {
@@ -696,6 +717,7 @@ STRING
 					},
 				},
 			},
+			false,
 			CompletionData{
 				NewText: `{
   "name" = {
@@ -720,6 +742,7 @@ STRING
 					},
 				},
 			},
+			false,
 			CompletionData{
 				NewText: `{
   
@@ -748,6 +771,7 @@ STRING
 					},
 				},
 			},
+			true,
 			CompletionData{
 				NewText: `{
   bar = "value"
@@ -758,6 +782,35 @@ STRING
   foo = ${2:false}
 }`,
 				NextPlaceholder: 3,
+			},
+		},
+		{
+			Object{
+				Attributes: map[string]*AttributeSchema{
+					"foo": {
+						Constraint: LiteralType{
+							Type: cty.Bool,
+						},
+						IsRequired: true,
+					},
+					"bar": {
+						Constraint: LiteralType{
+							Type: cty.String,
+						},
+						IsRequired: true,
+					},
+				},
+			},
+			false,
+			CompletionData{
+				NewText: `{
+  
+}`,
+				Snippet: `{
+  ${1}
+}`,
+				NextPlaceholder: 2,
+				TriggerSuggest:  true,
 			},
 		},
 		{
@@ -784,6 +837,7 @@ STRING
 					},
 				},
 			},
+			true,
 			CompletionData{
 				NewText: `{
   bar = {
@@ -804,6 +858,7 @@ STRING
 	for i, tc := range testCases {
 		t.Run(fmt.Sprintf("%2d", i), func(t *testing.T) {
 			ctx := context.Background()
+			ctx = WithPrefillRequiredFields(ctx, tc.prefillRequiredFields)
 			data := tc.cons.EmptyCompletionData(ctx, 1, 0)
 			if diff := cmp.Diff(tc.expectedCompData, data); diff != "" {
 				t.Fatalf("unexpected completion  data: %s", diff)

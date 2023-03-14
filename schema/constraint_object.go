@@ -74,6 +74,10 @@ func (o Object) EmptyCompletionData(ctx context.Context, placeholder int, nestin
 		TriggerSuggest:  triggerSuggest,
 	}
 
+	if !prefillRequiredFields(ctx) {
+		return emptyObjectData
+	}
+
 	attrData, ok := o.attributesCompletionData(ctx, placeholder, nestingLevel)
 	if !ok {
 		return emptyObjectData
