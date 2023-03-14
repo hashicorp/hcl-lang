@@ -721,10 +721,78 @@ STRING
 				},
 			},
 			CompletionData{
-				NewText:         `{}`,
-				Snippet:         `{ ${1} }`,
+				NewText: `{
+  
+}`,
+				Snippet: `{
+  ${1}
+}`,
 				TriggerSuggest:  true,
 				NextPlaceholder: 2,
+			},
+		},
+		{
+			Object{
+				Attributes: map[string]*AttributeSchema{
+					"foo": {
+						Constraint: LiteralType{
+							Type: cty.Bool,
+						},
+					},
+					"bar": {
+						Constraint: LiteralType{
+							Type: cty.String,
+						},
+					},
+				},
+			},
+			CompletionData{
+				NewText: `{
+  bar = "value"
+  foo = false
+}`,
+				Snippet: `{
+  bar = "${1:value}"
+  foo = ${2:false}
+}`,
+				NextPlaceholder: 3,
+			},
+		},
+		{
+			Object{
+				Attributes: map[string]*AttributeSchema{
+					"foo": {
+						Constraint: LiteralType{
+							Type: cty.Bool,
+						},
+					},
+					"bar": {
+						Constraint: Object{
+							Attributes: map[string]*AttributeSchema{
+								"baz": {
+									Constraint: LiteralType{
+										Type: cty.String,
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			CompletionData{
+				NewText: `{
+  bar = {
+    baz = "value"
+  }
+  foo = false
+}`,
+				Snippet: `{
+  bar = {
+    baz = "${1:value}"
+  }
+  foo = ${2:false}
+}`,
+				NextPlaceholder: 3,
 			},
 		},
 	}

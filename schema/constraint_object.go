@@ -60,10 +60,13 @@ func prefillRequiredFields(ctx context.Context) bool {
 }
 
 func (o Object) EmptyCompletionData(ctx context.Context, placeholder int, nestingLevel int) CompletionData {
+	rootNesting := strings.Repeat("  ", nestingLevel)
+	attrNesting := strings.Repeat("  ", nestingLevel+1)
+
 	if len(o.Attributes) == 0 {
 		return CompletionData{
-			NewText:         "{}",
-			Snippet:         fmt.Sprintf("{ ${%d} }", placeholder),
+			NewText:         fmt.Sprintf("{\n%s\n%s}", attrNesting, rootNesting),
+			Snippet:         fmt.Sprintf("{\n%s${%d}\n%s}", attrNesting, placeholder, rootNesting),
 			NextPlaceholder: placeholder + 1,
 		}
 	}
@@ -71,7 +74,6 @@ func (o Object) EmptyCompletionData(ctx context.Context, placeholder int, nestin
 	newText := "{\n"
 	snippet := "{\n"
 
-	nesting := strings.Repeat("  ", nestingLevel+1)
 	lastPlaceholder := placeholder
 
 	attrNames := sortedObjectExprAttrNames(o.Attributes)
@@ -81,15 +83,15 @@ func (o Object) EmptyCompletionData(ctx context.Context, placeholder int, nestin
 		cData := attr.Constraint.EmptyCompletionData(ctx, lastPlaceholder, nestingLevel+1)
 		if cData.NewText == "" || cData.Snippet == "" {
 			return CompletionData{
-				NewText:         "{}",
-				Snippet:         fmt.Sprintf("{ ${%d} }", placeholder),
+				NewText:         fmt.Sprintf("{\n%s\n%s}", attrNesting, rootNesting),
+				Snippet:         fmt.Sprintf("{\n%s${%d}\n%s}", attrNesting, placeholder, rootNesting),
 				TriggerSuggest:  cData.TriggerSuggest,
 				NextPlaceholder: placeholder + 1,
 			}
 		}
 
-		newText += fmt.Sprintf("%s%s = %s\n", nesting, name, cData.NewText)
-		snippet += fmt.Sprintf("%s%s = %s\n", nesting, name, cData.Snippet)
+		newText += fmt.Sprintf("%s%s = %s\n", attrNesting, name, cData.NewText)
+		snippet += fmt.Sprintf("%s%s = %s\n", attrNesting, name, cData.Snippet)
 		lastPlaceholder = cData.NextPlaceholder
 	}
 
