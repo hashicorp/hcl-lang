@@ -3,8 +3,10 @@ package decoder
 import (
 	"bytes"
 	"fmt"
+	"strings"
 
 	"github.com/hashicorp/hcl-lang/lang"
+	"github.com/hashicorp/hcl-lang/schema"
 	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hclsyntax"
 )
@@ -40,7 +42,7 @@ func (d *PathDecoder) SignatureAtPos(filename string, pos hcl.Pos) (*lang.Functi
 
 		if len(f.Params) == 0 && f.VarParam == nil {
 			signature = &lang.FunctionSignature{
-				Name:        fmt.Sprintf("%s(%s) %s", fNode.Name, f.ParameterSignature(), f.ReturnType.FriendlyName()),
+				Name:        fmt.Sprintf("%s(%s) %s", fNode.Name, parameterNamesAsString(f), f.ReturnType.FriendlyName()),
 				Description: lang.Markdown(f.Description),
 			}
 
@@ -110,7 +112,7 @@ func (d *PathDecoder) SignatureAtPos(filename string, pos hcl.Pos) (*lang.Functi
 			})
 		}
 		signature = &lang.FunctionSignature{
-			Name:            fmt.Sprintf("%s(%s) %s", fNode.Name, f.ParameterSignature(), f.ReturnType.FriendlyName()),
+			Name:            fmt.Sprintf("%s(%s) %s", fNode.Name, parameterNamesAsString(f), f.ReturnType.FriendlyName()),
 			Description:     lang.Markdown(f.Description),
 			Parameters:      parameters,
 			ActiveParameter: uint32(activePar),
@@ -120,4 +122,25 @@ func (d *PathDecoder) SignatureAtPos(filename string, pos hcl.Pos) (*lang.Functi
 	})
 
 	return signature, nil
+}
+
+// parameterNamesAsString returns a string containing all function parameters
+// with their respective types.
+//
+// Useful for displaying as part of a function signature.
+func parameterNamesAsString(fs schema.FunctionSignature) string {
+	paramsLen := len(fs.Params)
+	if fs.VarParam != nil {
+		paramsLen += 1
+	}
+	names := make([]string, 0, paramsLen)
+
+	for _, p := range fs.Params {
+		names = append(names, fmt.Sprintf("%s %s", p.Name, p.Type.FriendlyName()))
+	}
+	if fs.VarParam != nil {
+		names = append(names, fmt.Sprintf("…%s %s", fs.VarParam.Name, fs.VarParam.Type.FriendlyName()))
+	}
+
+	return strings.Join(names, ", ")
 }

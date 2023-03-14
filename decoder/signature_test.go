@@ -175,7 +175,7 @@ func TestSignatureAtPos(t *testing.T) {
 			`x = foo("a", )`,
 			hcl.Pos{Line: 1, Column: 12, Byte: 13},
 			&lang.FunctionSignature{
-				Name:        "foo(input string, ...vinput number) string",
+				Name:        "foo(input string, …vinput number) string",
 				Description: lang.Markdown("`foo` description"),
 				Parameters: []lang.FunctionParameter{
 					{
@@ -213,7 +213,7 @@ func TestSignatureAtPos(t *testing.T) {
 			`x = foo("a", 1, 2, )`,
 			hcl.Pos{Line: 1, Column: 18, Byte: 19},
 			&lang.FunctionSignature{
-				Name:        "foo(input string, ...vinput number) string",
+				Name:        "foo(input string, …vinput number) string",
 				Description: lang.Markdown("`foo` description"),
 				Parameters: []lang.FunctionParameter{
 					{
@@ -353,7 +353,7 @@ func TestSignatureAtPos(t *testing.T) {
 			`x = foo(1, 2, 3, )`,
 			hcl.Pos{Line: 1, Column: 16, Byte: 17},
 			&lang.FunctionSignature{
-				Name:        "foo(...vinput number) string",
+				Name:        "foo(…vinput number) string",
 				Description: lang.Markdown("`foo` description"),
 				Parameters: []lang.FunctionParameter{
 					{
@@ -379,7 +379,7 @@ func TestSignatureAtPos(t *testing.T) {
 			`x = concat([],)`,
 			hcl.Pos{Line: 1, Column: 13, Byte: 14},
 			&lang.FunctionSignature{
-				Name:        "concat(...seqs dynamic) dynamic",
+				Name:        "concat(…seqs dynamic) dynamic",
 				Description: lang.Markdown("`concat` description"),
 				Parameters: []lang.FunctionParameter{
 					{
