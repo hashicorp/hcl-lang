@@ -738,11 +738,13 @@ STRING
 						Constraint: LiteralType{
 							Type: cty.Bool,
 						},
+						IsRequired: true,
 					},
 					"bar": {
 						Constraint: LiteralType{
 							Type: cty.String,
 						},
+						IsRequired: true,
 					},
 				},
 			},
@@ -765,6 +767,7 @@ STRING
 						Constraint: LiteralType{
 							Type: cty.Bool,
 						},
+						IsRequired: true,
 					},
 					"bar": {
 						Constraint: Object{
@@ -773,9 +776,11 @@ STRING
 									Constraint: LiteralType{
 										Type: cty.String,
 									},
+									IsRequired: true,
 								},
 							},
 						},
+						IsRequired: true,
 					},
 				},
 			},
@@ -797,7 +802,7 @@ STRING
 		},
 	}
 	for i, tc := range testCases {
-		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
+		t.Run(fmt.Sprintf("%2d", i), func(t *testing.T) {
 			ctx := context.Background()
 			data := tc.cons.EmptyCompletionData(ctx, 1, 0)
 			if diff := cmp.Diff(tc.expectedCompData, data); diff != "" {
