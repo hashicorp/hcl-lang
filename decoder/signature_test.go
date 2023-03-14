@@ -1,6 +1,7 @@
 package decoder
 
 import (
+	"errors"
 	"fmt"
 	"testing"
 
@@ -9,6 +10,7 @@ import (
 	"github.com/hashicorp/hcl-lang/schema"
 	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hclsyntax"
+	"github.com/hashicorp/hcl/v2/json"
 	"github.com/zclconf/go-cty/cty"
 	"github.com/zclconf/go-cty/cty/function"
 )
@@ -492,4 +494,25 @@ func TestSignatureAtPos(t *testing.T) {
 		})
 	}
 
+}
+
+func TestSignatureAtPos_json(t *testing.T) {
+	f, pDiags := json.Parse([]byte(`{
+		"attribute": "${abs(-1)}"
+	}`), "test.tf.json")
+	if len(pDiags) > 0 {
+		t.Fatal(pDiags)
+	}
+
+	d := testPathDecoder(t, &PathContext{
+		Files: map[string]*hcl.File{
+			"test.tf.json": f,
+		},
+	})
+
+	_, err := d.SignatureAtPos("test.tf.json", hcl.InitialPos)
+	unknownFormatErr := &UnknownFileFormatError{}
+	if !errors.As(err, &unknownFormatErr) {
+		t.Fatal("expected UnknownFileFormatError for JSON body")
+	}
 }
