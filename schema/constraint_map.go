@@ -1,6 +1,7 @@
 package schema
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -56,7 +57,7 @@ func (m Map) Copy() Constraint {
 	}
 }
 
-func (m Map) EmptyCompletionData(nextPlaceholder int, nestingLevel int) CompletionData {
+func (m Map) EmptyCompletionData(ctx context.Context, nextPlaceholder int, nestingLevel int) CompletionData {
 	rootNesting := strings.Repeat("  ", nestingLevel)
 	insideNesting := strings.Repeat("  ", nestingLevel+1)
 
@@ -68,7 +69,7 @@ func (m Map) EmptyCompletionData(nextPlaceholder int, nestingLevel int) Completi
 		}
 	}
 
-	elemData := m.Elem.EmptyCompletionData(nextPlaceholder+1, nestingLevel+1)
+	elemData := m.Elem.EmptyCompletionData(ctx, nextPlaceholder+1, nestingLevel+1)
 	if elemData.NewText == "" || elemData.Snippet == "" {
 		return CompletionData{
 			NewText:         fmt.Sprintf("{\n%s\n%s}", insideNesting, rootNesting),

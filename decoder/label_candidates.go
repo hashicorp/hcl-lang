@@ -1,6 +1,7 @@
 package decoder
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"sort"
@@ -164,7 +165,11 @@ func requiredFieldsSnippet(bodySchema *schema.BodySchema, placeholder int, inden
 
 		var snippet string
 		if attr.Constraint != nil {
-			snippet = attr.Constraint.EmptyCompletionData(placeholder, indentCount).Snippet
+			// We already know we want to do pre-filling at this point
+			// We could plumb through the context here, but it saves us
+			// an argument in multiple functions above.
+			ctx := schema.WithPrefillRequiredFields(context.Background(), true)
+			snippet = attr.Constraint.EmptyCompletionData(ctx, placeholder, indentCount).Snippet
 		} else {
 			snippet = snippetForExprContraint(uint(placeholder), attr.Expr)
 		}

@@ -1,6 +1,8 @@
 package schema
 
 import (
+	"context"
+
 	"github.com/hashicorp/hcl-lang/lang"
 	"github.com/zclconf/go-cty/cty"
 )
@@ -16,7 +18,7 @@ type Constraint interface {
 	// there is no corresponding configuration, such as when the Constraint
 	// is part of another and it is desirable to complete
 	// the parent constraint as whole.
-	EmptyCompletionData(nextPlaceholder int, nestingLevel int) CompletionData
+	EmptyCompletionData(ctx context.Context, nextPlaceholder int, nestingLevel int) CompletionData
 }
 
 type ConstraintWithHoverData interface {

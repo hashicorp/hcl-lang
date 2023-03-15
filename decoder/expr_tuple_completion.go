@@ -28,7 +28,7 @@ func (tuple Tuple) CompletionAtPos(ctx context.Context, pos hcl.Pos) []lang.Cand
 			label = fmt.Sprintf("[ %s ]", elemLabel)
 		}
 
-		d := tuple.cons.EmptyCompletionData(1, 0)
+		d := tuple.cons.EmptyCompletionData(ctx, 1, 0)
 
 		return []lang.Candidate{
 			{

@@ -1,6 +1,7 @@
 package schema
 
 import (
+	"context"
 	"fmt"
 	"sort"
 	"strings"
@@ -38,59 +39,92 @@ func (o Object) FriendlyName() string {
 
 func (o Object) Copy() Constraint {
 	return Object{
-		Attributes:  o.Attributes.Copy().(ObjectAttributes),
+		Attributes:  o.Attributes.Copy(),
 		Name:        o.Name,
 		Description: o.Description,
 	}
 }
 
-func (o Object) EmptyCompletionData(placeholder int, nestingLevel int) CompletionData {
-	if len(o.Attributes) == 0 {
-		return CompletionData{
-			NewText:         "{}",
-			Snippet:         fmt.Sprintf("{ ${%d} }", placeholder),
-			NextPlaceholder: placeholder + 1,
-		}
+type prefillRequiredFieldsCtxKey struct{}
+
+func WithPrefillRequiredFields(ctx context.Context, enabled bool) context.Context {
+	return context.WithValue(ctx, prefillRequiredFieldsCtxKey{}, enabled)
+}
+
+func prefillRequiredFields(ctx context.Context) bool {
+	enabled, ok := ctx.Value(prefillRequiredFieldsCtxKey{}).(bool)
+	if !ok {
+		return false
+	}
+	return enabled
+}
+
+func (o Object) EmptyCompletionData(ctx context.Context, placeholder int, nestingLevel int) CompletionData {
+	nesting := strings.Repeat("  ", nestingLevel)
+	attrNesting := strings.Repeat("  ", nestingLevel+1)
+	triggerSuggest := false
+	if len(o.Attributes) > 0 {
+		triggerSuggest = true
 	}
 
-	newText := "{\n"
-	snippet := "{\n"
+	emptyObjectData := CompletionData{
+		NewText:         fmt.Sprintf("{\n%s\n%s}", attrNesting, nesting),
+		Snippet:         fmt.Sprintf("{\n%s${%d}\n%s}", attrNesting, placeholder, nesting),
+		NextPlaceholder: placeholder + 1,
+		TriggerSuggest:  triggerSuggest,
+	}
 
-	nesting := strings.Repeat("  ", nestingLevel+1)
-	lastPlaceholder := placeholder
+	if !prefillRequiredFields(ctx) {
+		return emptyObjectData
+	}
+
+	attrData, ok := o.attributesCompletionData(ctx, placeholder, nestingLevel)
+	if !ok {
+		return emptyObjectData
+	}
+
+	return CompletionData{
+		NewText:         fmt.Sprintf("{\n%s%s}", attrData.NewText, nesting),
+		Snippet:         fmt.Sprintf("{\n%s%s}", attrData.Snippet, nesting),
+		NextPlaceholder: attrData.NextPlaceholder,
+	}
+}
+
+func (o Object) attributesCompletionData(ctx context.Context, placeholder, nestingLevel int) (CompletionData, bool) {
+	newText, snippet := "", ""
+	anyRequiredFields := false
+	attrNesting := strings.Repeat("  ", nestingLevel+1)
+	nextPlaceholder := placeholder
 
 	attrNames := sortedObjectExprAttrNames(o.Attributes)
 
 	for _, name := range attrNames {
 		attr := o.Attributes[name]
-		cData := attr.Constraint.EmptyCompletionData(lastPlaceholder, nestingLevel+1)
-		if cData.NewText == "" || cData.Snippet == "" {
-			return CompletionData{
-				NewText:         "{}",
-				Snippet:         fmt.Sprintf("{ ${%d} }", placeholder),
-				TriggerSuggest:  cData.TriggerSuggest,
-				NextPlaceholder: placeholder + 1,
-			}
+		attrData := attr.Constraint.EmptyCompletionData(ctx, nextPlaceholder, nestingLevel+1)
+		if attrData.NewText == "" || attrData.Snippet == "" {
+			return CompletionData{}, false
 		}
 
-		newText += fmt.Sprintf("%s%s = %s\n", nesting, name, cData.NewText)
-		snippet += fmt.Sprintf("%s%s = %s\n", nesting, name, cData.Snippet)
-		lastPlaceholder = cData.NextPlaceholder
+		if attr.IsRequired {
+			anyRequiredFields = true
+		} else {
+			continue
+		}
+
+		newText += fmt.Sprintf("%s%s = %s\n", attrNesting, name, attrData.NewText)
+		snippet += fmt.Sprintf("%s%s = %s\n", attrNesting, name, attrData.Snippet)
+		nextPlaceholder = attrData.NextPlaceholder
 	}
 
-	if nestingLevel > 0 {
-		newText += fmt.Sprintf("%s}", strings.Repeat("  ", nestingLevel))
-		snippet += fmt.Sprintf("%s}", strings.Repeat("  ", nestingLevel))
-	} else {
-		newText += "}"
-		snippet += "}"
+	if anyRequiredFields {
+		return CompletionData{
+			NewText:         newText,
+			Snippet:         snippet,
+			NextPlaceholder: nextPlaceholder,
+		}, true
 	}
 
-	return CompletionData{
-		NewText:         newText,
-		Snippet:         snippet,
-		NextPlaceholder: lastPlaceholder,
-	}
+	return CompletionData{}, false
 }
 
 func (o Object) EmptyHoverData(nestingLevel int) *HoverData {
@@ -181,28 +215,10 @@ func (o Object) ConstraintType() (cty.Type, bool) {
 	return cty.Object(objAttributes), true
 }
 
-func (ObjectAttributes) isConstraintImpl() constraintSigil {
-	return constraintSigil{}
-}
-
-func (oa ObjectAttributes) FriendlyName() string {
-	return "attributes"
-}
-
-func (oa ObjectAttributes) Copy() Constraint {
+func (oa ObjectAttributes) Copy() ObjectAttributes {
 	m := make(ObjectAttributes, 0)
 	for name, aSchema := range oa {
 		m[name] = aSchema.Copy()
 	}
 	return m
-}
-
-func (oa ObjectAttributes) EmptyCompletionData(nextPlaceholder int, nestingLevel int) CompletionData {
-	// TODO
-	return CompletionData{}
-}
-
-func (oa ObjectAttributes) EmptyHoverData(nestingLevel int) *HoverData {
-	// TODO
-	return nil
 }

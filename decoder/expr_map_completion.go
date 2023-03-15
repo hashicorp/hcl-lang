@@ -18,7 +18,7 @@ func (m Map) CompletionAtPos(ctx context.Context, pos hcl.Pos) []lang.Candidate 
 			label = fmt.Sprintf(`{ "key" = %s }`, m.cons.Elem.FriendlyName())
 		}
 
-		cData := m.cons.EmptyCompletionData(1, 0)
+		cData := m.cons.EmptyCompletionData(ctx, 1, 0)
 
 		return []lang.Candidate{
 			{
@@ -62,7 +62,7 @@ func (m Map) CompletionAtPos(ctx context.Context, pos hcl.Pos) []lang.Candidate 
 			return []lang.Candidate{}
 		}
 
-		cData := m.cons.Elem.EmptyCompletionData(2, 0)
+		cData := m.cons.Elem.EmptyCompletionData(ctx, 2, 0)
 		kind := lang.AttributeCandidateKind
 		// TODO: replace "attribute" kind w/ Elem type
 

@@ -1,6 +1,7 @@
 package schema
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -74,14 +75,14 @@ func namesContain(names []string, name string) bool {
 	return false
 }
 
-func (o OneOf) EmptyCompletionData(nextPlaceholder int, nestingLevel int) CompletionData {
+func (o OneOf) EmptyCompletionData(ctx context.Context, nextPlaceholder int, nestingLevel int) CompletionData {
 	if len(o) == 0 {
 		return CompletionData{
 			NextPlaceholder: nextPlaceholder,
 		}
 	}
 
-	cData := o[0].EmptyCompletionData(nextPlaceholder, nestingLevel)
+	cData := o[0].EmptyCompletionData(ctx, nextPlaceholder, nestingLevel)
 
 	return CompletionData{
 		NewText:         cData.NewText,

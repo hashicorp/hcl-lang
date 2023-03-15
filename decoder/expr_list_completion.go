@@ -17,7 +17,7 @@ func (list List) CompletionAtPos(ctx context.Context, pos hcl.Pos) []lang.Candid
 			label = fmt.Sprintf("[ %s ]", list.cons.Elem.FriendlyName())
 		}
 
-		d := list.cons.EmptyCompletionData(1, 0)
+		d := list.cons.EmptyCompletionData(ctx, 1, 0)
 
 		return []lang.Candidate{
 			{

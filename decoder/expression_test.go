@@ -18,7 +18,6 @@ var (
 	_ Expression = LiteralType{}
 	_ Expression = LiteralValue{}
 	_ Expression = Map{}
-	_ Expression = ObjectAttributes{}
 	_ Expression = Object{}
 	_ Expression = Set{}
 	_ Expression = Reference{}
@@ -29,7 +28,6 @@ var (
 	_ ReferenceOriginsExpression = List{}
 	_ ReferenceOriginsExpression = LiteralType{}
 	_ ReferenceOriginsExpression = Map{}
-	_ ReferenceOriginsExpression = ObjectAttributes{}
 	_ ReferenceOriginsExpression = Object{}
 	_ ReferenceOriginsExpression = Set{}
 	_ ReferenceOriginsExpression = Reference{}
@@ -39,7 +37,6 @@ var (
 	_ ReferenceTargetsExpression = List{}
 	_ ReferenceTargetsExpression = LiteralType{}
 	_ ReferenceTargetsExpression = Map{}
-	_ ReferenceTargetsExpression = ObjectAttributes{}
 	_ ReferenceTargetsExpression = Object{}
 	_ ReferenceTargetsExpression = Reference{}
 	_ ReferenceTargetsExpression = Tuple{}

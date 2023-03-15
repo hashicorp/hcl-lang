@@ -1,6 +1,8 @@
 package schema
 
 import (
+	"context"
+
 	"github.com/zclconf/go-cty/cty"
 )
 
@@ -28,7 +30,7 @@ func (ae AnyExpression) Copy() Constraint {
 	}
 }
 
-func (ae AnyExpression) EmptyCompletionData(nextPlaceholder int, nestingLevel int) CompletionData {
+func (ae AnyExpression) EmptyCompletionData(ctx context.Context, nextPlaceholder int, nestingLevel int) CompletionData {
 	// TODO
 	return CompletionData{}
 }

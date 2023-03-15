@@ -1,6 +1,7 @@
 package decoder
 
 import (
+	"context"
 	"sort"
 	"strings"
 
@@ -11,7 +12,7 @@ import (
 )
 
 // bodySchemaCandidates returns candidates for completion of fields inside a body or block.
-func (d *PathDecoder) bodySchemaCandidates(body *hclsyntax.Body, schema *schema.BodySchema, prefixRng, editRng hcl.Range) lang.Candidates {
+func (d *PathDecoder) bodySchemaCandidates(ctx context.Context, body *hclsyntax.Body, schema *schema.BodySchema, prefixRng, editRng hcl.Range) lang.Candidates {
 	prefix, _ := d.bytesFromRange(prefixRng)
 
 	candidates := lang.NewCandidates()
@@ -23,7 +24,7 @@ func (d *PathDecoder) bodySchemaCandidates(body *hclsyntax.Body, schema *schema.
 			// check if count attribute is already declared, so we don't
 			// suggest a duplicate
 			if _, ok := body.Attributes["count"]; !ok {
-				candidates.List = append(candidates.List, attributeSchemaToCandidate("count", countAttributeSchema(), editRng))
+				candidates.List = append(candidates.List, attributeSchemaToCandidate(ctx, "count", countAttributeSchema(), editRng))
 			}
 		}
 
@@ -31,7 +32,7 @@ func (d *PathDecoder) bodySchemaCandidates(body *hclsyntax.Body, schema *schema.
 			// check if for_each attribute is already declared, so we don't
 			// suggest a duplicate
 			if _, present := body.Attributes["for_each"]; !present {
-				candidates.List = append(candidates.List, attributeSchemaToCandidate("for_each", forEachAttributeSchema(), editRng))
+				candidates.List = append(candidates.List, attributeSchemaToCandidate(ctx, "for_each", forEachAttributeSchema(), editRng))
 			}
 		}
 	}
@@ -51,7 +52,7 @@ func (d *PathDecoder) bodySchemaCandidates(body *hclsyntax.Body, schema *schema.
 				return candidates
 			}
 
-			candidates.List = append(candidates.List, attributeSchemaToCandidate(name, attr, editRng))
+			candidates.List = append(candidates.List, attributeSchemaToCandidate(ctx, name, attr, editRng))
 			count++
 		}
 	} else if attr := schema.AnyAttribute; attr != nil && len(prefix) == 0 {
@@ -59,7 +60,7 @@ func (d *PathDecoder) bodySchemaCandidates(body *hclsyntax.Body, schema *schema.
 			return candidates
 		}
 
-		candidates.List = append(candidates.List, attributeSchemaToCandidate("name", attr, editRng))
+		candidates.List = append(candidates.List, attributeSchemaToCandidate(ctx, "name", attr, editRng))
 		count++
 	}
 

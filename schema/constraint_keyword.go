@@ -1,6 +1,8 @@
 package schema
 
 import (
+	"context"
+
 	"github.com/hashicorp/hcl-lang/lang"
 )
 
@@ -36,7 +38,7 @@ func (k Keyword) Copy() Constraint {
 	}
 }
 
-func (k Keyword) EmptyCompletionData(nextPlaceholder int, nestingLevel int) CompletionData {
+func (k Keyword) EmptyCompletionData(ctx context.Context, nextPlaceholder int, nestingLevel int) CompletionData {
 	return CompletionData{
 		TriggerSuggest:  true,
 		NextPlaceholder: nextPlaceholder,
