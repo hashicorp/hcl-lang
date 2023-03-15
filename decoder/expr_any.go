@@ -18,11 +18,6 @@ type Any struct {
 	pathCtx *PathContext
 }
 
-func (a Any) CompletionAtPos(ctx context.Context, pos hcl.Pos) []lang.Candidate {
-	// TODO
-	return nil
-}
-
 func (a Any) HoverAtPos(ctx context.Context, pos hcl.Pos) *lang.HoverData {
 	// TODO
 	return nil
