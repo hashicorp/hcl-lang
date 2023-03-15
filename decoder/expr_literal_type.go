@@ -15,11 +15,6 @@ type LiteralType struct {
 	pathCtx *PathContext
 }
 
-func (lt LiteralType) ReferenceOrigins(ctx context.Context, allowSelfRefs bool) reference.Origins {
-	// TODO
-	return nil
-}
-
 func (lt LiteralType) ReferenceTargets(ctx context.Context, targetCtx *TargetContext) reference.Targets {
 	// TODO
 	return nil
