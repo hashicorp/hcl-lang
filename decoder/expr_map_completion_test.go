@@ -12,7 +12,7 @@ import (
 	"github.com/hashicorp/hcl/v2/hclsyntax"
 )
 
-func TestCompletionAtPos_exprTypeDeclaration(t *testing.T) {
+func TestCompletionAtPos_exprMap(t *testing.T) {
 	testCases := []struct {
 		testName           string
 		attrSchema         map[string]*schema.AttributeSchema
