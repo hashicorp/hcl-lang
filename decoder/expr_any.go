@@ -18,11 +18,6 @@ type Any struct {
 	pathCtx *PathContext
 }
 
-func (a Any) HoverAtPos(ctx context.Context, pos hcl.Pos) *lang.HoverData {
-	// TODO
-	return nil
-}
-
 func (a Any) SemanticTokens(ctx context.Context) []lang.SemanticToken {
 	// TODO
 	return nil
