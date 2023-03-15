@@ -12,11 +12,8 @@ import (
 type LiteralType struct {
 	expr hcl.Expression
 	cons schema.LiteralType
-}
 
-func (lt LiteralType) CompletionAtPos(ctx context.Context, pos hcl.Pos) []lang.Candidate {
-	// TODO
-	return nil
+	pathCtx *PathContext
 }
 
 func (lt LiteralType) HoverAtPos(ctx context.Context, pos hcl.Pos) *lang.HoverData {
