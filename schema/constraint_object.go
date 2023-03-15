@@ -129,6 +129,11 @@ func (o Object) attributesCompletionData(ctx context.Context, placeholder, nesti
 
 func (o Object) EmptyHoverData(nestingLevel int) *HoverData {
 	if len(o.Attributes) == 0 {
+		if nestingLevel > 0 {
+			return &HoverData{
+				Content: lang.Markdown(`{}`),
+			}
+		}
 		return nil
 	}
 
