@@ -255,11 +255,9 @@ func objectAttributesToCandidates(ctx context.Context, prefix string, attrs sche
 }
 
 func sortedObjectAttributeNames(objAttributes schema.ObjectAttributes) []string {
-	names := make([]string, len(objAttributes))
-	i := 0
+	names := make([]string, 0, len(objAttributes))
 	for name := range objAttributes {
-		names[i] = name
-		i++
+		names = append(names, name)
 	}
 
 	sort.Strings(names)
