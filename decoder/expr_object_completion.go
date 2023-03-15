@@ -167,7 +167,7 @@ func (obj Object) CompletionAtPos(ctx context.Context, pos hcl.Pos) []lang.Candi
 	})
 
 	// if last byte is =, then it's incomplete attribute
-	if trimmedBytes[len(trimmedBytes)-1] == '=' {
+	if len(trimmedBytes) > 0 && trimmedBytes[len(trimmedBytes)-1] == '=' {
 		emptyExpr := newEmptyExpressionAtPos(eType.Range().Filename, pos)
 
 		attrName := string(bytes.TrimFunc(trimmedBytes[:len(trimmedBytes)-1], func(r rune) bool {
