@@ -16,11 +16,6 @@ type LiteralType struct {
 	pathCtx *PathContext
 }
 
-func (lt LiteralType) HoverAtPos(ctx context.Context, pos hcl.Pos) *lang.HoverData {
-	// TODO
-	return nil
-}
-
 func (lt LiteralType) SemanticTokens(ctx context.Context) []lang.SemanticToken {
 	// TODO
 	return nil
