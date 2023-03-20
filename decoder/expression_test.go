@@ -26,7 +26,6 @@ var (
 
 	_ ReferenceOriginsExpression = Any{}
 	_ ReferenceOriginsExpression = List{}
-	_ ReferenceOriginsExpression = LiteralType{}
 	_ ReferenceOriginsExpression = Map{}
 	_ ReferenceOriginsExpression = Object{}
 	_ ReferenceOriginsExpression = Set{}

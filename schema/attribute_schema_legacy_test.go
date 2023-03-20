@@ -114,6 +114,9 @@ func TestLegacyAttributeSchema_Validate(t *testing.T) {
 		},
 		{
 			&AttributeSchema{
+				Expr: ExprConstraints{
+					LiteralTypeExpr{Type: cty.String},
+				},
 				Address: &AttributeAddrSchema{
 					Steps: []AddrStep{
 						LabelStep{Index: 0},
@@ -126,6 +129,9 @@ func TestLegacyAttributeSchema_Validate(t *testing.T) {
 		},
 		{
 			&AttributeSchema{
+				Expr: ExprConstraints{
+					LiteralTypeExpr{Type: cty.String},
+				},
 				Address: &AttributeAddrSchema{
 					Steps: []AddrStep{
 						AttrValueStep{Name: "unknown"},
@@ -138,6 +144,9 @@ func TestLegacyAttributeSchema_Validate(t *testing.T) {
 		},
 		{
 			&AttributeSchema{
+				Expr: ExprConstraints{
+					LiteralTypeExpr{Type: cty.String},
+				},
 				Address: &AttributeAddrSchema{
 					Steps: []AddrStep{
 						AttrNameStep{},
@@ -149,6 +158,9 @@ func TestLegacyAttributeSchema_Validate(t *testing.T) {
 		},
 		{
 			&AttributeSchema{
+				Expr: ExprConstraints{
+					LiteralTypeExpr{Type: cty.String},
+				},
 				Address: &AttributeAddrSchema{
 					Steps: []AddrStep{
 						AttrNameStep{},

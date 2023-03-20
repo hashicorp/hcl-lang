@@ -560,18 +560,6 @@ func sortedObjectExprAttrNames(attributes schema.ObjectExprAttributes) []string 
 	return names
 }
 
-func isMultilineStringLiteral(tplExpr *hclsyntax.TemplateExpr) bool {
-	if len(tplExpr.Parts) < 1 {
-		return false
-	}
-	for _, part := range tplExpr.Parts {
-		if _, ok := part.(*hclsyntax.LiteralValueExpr); !ok {
-			return false
-		}
-	}
-	return true
-}
-
 func stringValFromTemplateExpr(tplExpr *hclsyntax.TemplateExpr) (cty.Value, bool) {
 	value := ""
 	for _, part := range tplExpr.Parts {
