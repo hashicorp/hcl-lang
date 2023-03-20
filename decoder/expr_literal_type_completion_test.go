@@ -1071,6 +1071,108 @@ func TestCompletionAtPos_exprLiteralType(t *testing.T) {
 				},
 			}),
 		},
+
+		{
+			"map expr inside object",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.LiteralType{
+						Type: cty.Object(map[string]cty.Type{
+							"mymap": cty.Map(cty.String),
+						}),
+					},
+				},
+			},
+			`attr = {
+
+}
+`,
+			hcl.Pos{Line: 2, Column: 1, Byte: 9},
+			lang.CompleteCandidates([]lang.Candidate{
+				{
+					Label:  "mymap",
+					Detail: "required, map of string",
+					TextEdit: lang.TextEdit{
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 2, Column: 1, Byte: 9},
+							End:      hcl.Pos{Line: 2, Column: 1, Byte: 9},
+						},
+						NewText: "mymap",
+						Snippet: "mymap = {\n  \"${1:name}\" = \"${2:value}\"\n}",
+					},
+					Kind: lang.AttributeCandidateKind,
+				},
+			}),
+		},
+		{
+			"new map entry inside object",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.LiteralType{
+						Type: cty.Object(map[string]cty.Type{
+							"mymap": cty.Map(cty.String),
+						}),
+					},
+				},
+			},
+			`attr = {
+  mymap = 
+}
+`,
+			hcl.Pos{Line: 2, Column: 11, Byte: 19},
+			lang.CompleteCandidates([]lang.Candidate{
+				{
+					Label:  `{ "key" = string }`,
+					Detail: "map of string",
+					TextEdit: lang.TextEdit{
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 2, Column: 11, Byte: 19},
+							End:      hcl.Pos{Line: 2, Column: 11, Byte: 19},
+						},
+						NewText: "{\n  \"key\" = \"\"\n}",
+						Snippet: "{\n  \"${1:key}\" = \"${2:value}\"\n}",
+					},
+					Kind: lang.MapCandidateKind,
+				},
+			}),
+		},
+		{
+			"inside map expr inside object",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.LiteralType{
+						Type: cty.Object(map[string]cty.Type{
+							"mymap": cty.Map(cty.String),
+						}),
+					},
+				},
+			},
+			`attr = {
+  mymap = {
+    
+  }
+}
+`,
+			hcl.Pos{Line: 3, Column: 5, Byte: 25},
+			lang.CompleteCandidates([]lang.Candidate{
+				{
+					Label:  "\"key\" = string",
+					Detail: "string",
+					TextEdit: lang.TextEdit{
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 3, Column: 5, Byte: 25},
+							End:      hcl.Pos{Line: 3, Column: 5, Byte: 25},
+						},
+						NewText: "\"key\" = \"value\"",
+						Snippet: "\"${1:key}\" = \"${2:value}\"",
+					},
+					Kind: lang.AttributeCandidateKind,
+				},
+			}),
+		},
 	}
 
 	for i, tc := range testCases {
