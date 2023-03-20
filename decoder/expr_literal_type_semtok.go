@@ -36,7 +36,7 @@ func (lt LiteralType) SemanticTokens(ctx context.Context) []lang.SemanticToken {
 			}
 		}
 
-		// TODO: report multiline/HEREDOC notation
+		// TODO: consider reporting multiline/HEREDOC notation as a different token
 
 		return []lang.SemanticToken{}
 	}

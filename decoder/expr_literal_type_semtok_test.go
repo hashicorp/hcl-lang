@@ -87,7 +87,7 @@ func TestSemanticTokens_exprLiteralType(t *testing.T) {
 
 		// string
 		{
-			"string",
+			"single-line string",
 			map[string]*schema.AttributeSchema{
 				"attr": {
 					Constraint: schema.LiteralType{
@@ -113,6 +113,41 @@ func TestSemanticTokens_exprLiteralType(t *testing.T) {
 						Filename: "test.tf",
 						Start:    hcl.Pos{Line: 1, Column: 8, Byte: 7},
 						End:      hcl.Pos{Line: 1, Column: 16, Byte: 15},
+					},
+				},
+			},
+		},
+		{
+			"multi-line string",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.LiteralType{
+						Type: cty.String,
+					},
+				},
+			},
+			`attr = <<TEXT
+foo
+bar
+TEXT
+`,
+			[]lang.SemanticToken{
+				{
+					Type:      lang.TokenAttrName,
+					Modifiers: lang.SemanticTokenModifiers{},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
+						End:      hcl.Pos{Line: 1, Column: 5, Byte: 4},
+					},
+				},
+				{
+					Type:      lang.TokenString,
+					Modifiers: lang.SemanticTokenModifiers{},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 1, Column: 8, Byte: 7},
+						End:      hcl.Pos{Line: 4, Column: 5, Byte: 26},
 					},
 				},
 			},
