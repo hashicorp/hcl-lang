@@ -2,6 +2,7 @@ package schema
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/hashicorp/hcl-lang/lang"
@@ -35,6 +36,13 @@ func (lt LiteralType) Copy() Constraint {
 	return LiteralType{
 		Type: lt.Type,
 	}
+}
+
+func (lt LiteralType) Validate() error {
+	if lt.Type == cty.NilType {
+		return errors.New("expected Type not to be nil")
+	}
+	return nil
 }
 
 func (lt LiteralType) EmptyCompletionData(ctx context.Context, nextPlaceholder int, nestingLevel int) CompletionData {

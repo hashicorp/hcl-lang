@@ -110,9 +110,17 @@ func (as *AttributeSchema) Validate() error {
 		}
 	}
 
+	if (as.Constraint == nil && len(as.Expr) == 0) ||
+		(as.Constraint != nil && len(as.Expr) > 0) {
+		return errors.New("expected one of Constraint or Expr")
+	}
+
 	if as.Constraint != nil {
 		if con, ok := as.Constraint.(Validatable); ok {
-			return con.Validate()
+			err := con.Validate()
+			if err != nil {
+				return fmt.Errorf("Constraint: %T: %s", as.Constraint, err)
+			}
 		}
 	} else {
 		return as.Expr.Validate()

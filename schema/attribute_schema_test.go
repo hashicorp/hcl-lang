@@ -80,14 +80,14 @@ func TestAttributeSchema_Validate(t *testing.T) {
 				Constraint: Reference{OfType: cty.Number, Address: &ReferenceAddrSchema{ScopeId: lang.ScopeId("test")}},
 				IsOptional: true,
 			},
-			errors.New("cannot have both Address and OfType/OfScopeId set"),
+			errors.New("Constraint: schema.Reference: cannot have both Address and OfType/OfScopeId set"),
 		},
 		{
 			&AttributeSchema{
 				Constraint: Reference{Address: &ReferenceAddrSchema{}},
 				IsOptional: true,
 			},
-			errors.New("Address requires non-emmpty ScopeId"),
+			errors.New("Constraint: schema.Reference: Address requires non-emmpty ScopeId"),
 		},
 		{
 			&AttributeSchema{
@@ -98,6 +98,7 @@ func TestAttributeSchema_Validate(t *testing.T) {
 		},
 		{
 			&AttributeSchema{
+				Constraint: LiteralType{Type: cty.String},
 				Address: &AttributeAddrSchema{
 					Steps: []AddrStep{
 						LabelStep{Index: 0},
@@ -110,6 +111,7 @@ func TestAttributeSchema_Validate(t *testing.T) {
 		},
 		{
 			&AttributeSchema{
+				Constraint: LiteralType{Type: cty.String},
 				Address: &AttributeAddrSchema{
 					Steps: []AddrStep{
 						AttrValueStep{Name: "unknown"},
@@ -122,6 +124,7 @@ func TestAttributeSchema_Validate(t *testing.T) {
 		},
 		{
 			&AttributeSchema{
+				Constraint: LiteralType{Type: cty.String},
 				Address: &AttributeAddrSchema{
 					Steps: []AddrStep{
 						AttrNameStep{},
@@ -133,6 +136,7 @@ func TestAttributeSchema_Validate(t *testing.T) {
 		},
 		{
 			&AttributeSchema{
+				Constraint: LiteralType{Type: cty.String},
 				Address: &AttributeAddrSchema{
 					Steps: []AddrStep{
 						AttrNameStep{},
@@ -151,6 +155,32 @@ func TestAttributeSchema_Validate(t *testing.T) {
 				IsSensitive: true,
 			},
 			nil,
+		},
+		{
+			&AttributeSchema{
+				Constraint:  LiteralType{},
+				IsRequired:  true,
+				IsSensitive: true,
+			},
+			errors.New("Constraint: schema.LiteralType: expected Type not to be nil"),
+		},
+		{
+			&AttributeSchema{
+				IsRequired:  true,
+				IsSensitive: true,
+			},
+			errors.New("expected one of Constraint or Expr"),
+		},
+		{
+			&AttributeSchema{
+				Constraint: LiteralType{Type: cty.String},
+				Expr: ExprConstraints{
+					LiteralTypeExpr{Type: cty.String},
+				},
+				IsRequired:  true,
+				IsSensitive: true,
+			},
+			errors.New("expected one of Constraint or Expr"),
 		},
 	}
 
