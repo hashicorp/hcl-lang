@@ -28,6 +28,13 @@ func (tuple Tuple) ReferenceTargets(ctx context.Context, targetCtx *TargetContex
 
 		expr := newExpression(tuple.pathCtx, elemExpr, tuple.cons.Elems[i])
 		if e, ok := expr.(ReferenceTargetsExpression); ok {
+			if targetCtx == nil {
+				// collect any targets inside the expression
+				// if attribute itself isn't targetable
+				elemTargets = append(elemTargets, e.ReferenceTargets(ctx, nil)...)
+				continue
+			}
+
 			elemCtx := targetCtx.Copy()
 			elemCtx.ParentAddress = append(elemCtx.ParentAddress, lang.IndexStep{
 				Key: cty.NumberIntVal(int64(i)),

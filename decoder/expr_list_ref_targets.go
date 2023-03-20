@@ -25,6 +25,13 @@ func (list List) ReferenceTargets(ctx context.Context, targetCtx *TargetContext)
 	for i, elemExpr := range eType.Exprs {
 		expr := newExpression(list.pathCtx, elemExpr, list.cons.Elem)
 		if e, ok := expr.(ReferenceTargetsExpression); ok {
+			if targetCtx == nil {
+				// collect any targets inside the expression
+				// if attribute itself isn't targetable
+				elemTargets = append(elemTargets, e.ReferenceTargets(ctx, nil)...)
+				continue
+			}
+
 			elemCtx := targetCtx.Copy()
 			elemCtx.ParentAddress = append(elemCtx.ParentAddress, lang.IndexStep{
 				Key: cty.NumberIntVal(int64(i)),
