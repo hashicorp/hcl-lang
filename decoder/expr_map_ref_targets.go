@@ -7,6 +7,7 @@ import (
 	"github.com/hashicorp/hcl-lang/lang"
 	"github.com/hashicorp/hcl-lang/reference"
 	"github.com/hashicorp/hcl-lang/schema"
+	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hclsyntax"
 	"github.com/hashicorp/hcl/v2/json"
 	"github.com/zclconf/go-cty/cty"
@@ -45,6 +46,10 @@ func (m Map) ReferenceTargets(ctx context.Context, targetCtx *TargetContext) ref
 			}
 
 			elemCtx := targetCtx.Copy()
+
+			elemCtx.ParentDefRangePtr = item.KeyExpr.Range().Ptr()
+			elemCtx.ParentRangePtr = hcl.RangeBetween(item.KeyExpr.Range(), item.ValueExpr.Range()).Ptr()
+
 			elemCtx.ParentAddress = append(elemCtx.ParentAddress, lang.IndexStep{
 				Key: cty.StringVal(keyName),
 			})
@@ -65,6 +70,13 @@ func (m Map) ReferenceTargets(ctx context.Context, targetCtx *TargetContext) ref
 	if targetCtx != nil {
 		// collect target for the whole map
 
+		var rangePtr *hcl.Range
+		if targetCtx.ParentRangePtr != nil {
+			rangePtr = targetCtx.ParentRangePtr
+		} else {
+			rangePtr = m.expr.Range().Ptr()
+		}
+
 		// type-aware
 		elemCons, ok := m.cons.Elem.(schema.TypeAwareConstraint)
 		if targetCtx.AsExprType && ok {
@@ -75,7 +87,8 @@ func (m Map) ReferenceTargets(ctx context.Context, targetCtx *TargetContext) ref
 					Name:                   targetCtx.FriendlyName,
 					Type:                   cty.Map(elemType),
 					ScopeId:                targetCtx.ScopeId,
-					RangePtr:               m.expr.Range().Ptr(),
+					RangePtr:               rangePtr,
+					DefRangePtr:            targetCtx.ParentDefRangePtr,
 					NestedTargets:          elemTargets,
 					LocalAddr:              targetCtx.ParentLocalAddress,
 					TargetableFromRangePtr: targetCtx.TargetableFromRangePtr,
@@ -89,7 +102,8 @@ func (m Map) ReferenceTargets(ctx context.Context, targetCtx *TargetContext) ref
 				Addr:                   targetCtx.ParentAddress,
 				Name:                   targetCtx.FriendlyName,
 				ScopeId:                targetCtx.ScopeId,
-				RangePtr:               m.expr.Range().Ptr(),
+				RangePtr:               rangePtr,
+				DefRangePtr:            targetCtx.ParentDefRangePtr,
 				NestedTargets:          elemTargets,
 				LocalAddr:              targetCtx.ParentLocalAddress,
 				TargetableFromRangePtr: targetCtx.TargetableFromRangePtr,

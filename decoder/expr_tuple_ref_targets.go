@@ -53,6 +53,13 @@ func (tuple Tuple) ReferenceTargets(ctx context.Context, targetCtx *TargetContex
 	if targetCtx != nil {
 		// collect target for the whole tuple
 
+		var rangePtr *hcl.Range
+		if targetCtx.ParentRangePtr != nil {
+			rangePtr = targetCtx.ParentRangePtr
+		} else {
+			rangePtr = tuple.expr.Range().Ptr()
+		}
+
 		// type-aware
 		elemType, ok := tuple.cons.ConstraintType()
 		if targetCtx.AsExprType && ok {
@@ -62,7 +69,8 @@ func (tuple Tuple) ReferenceTargets(ctx context.Context, targetCtx *TargetContex
 					Name:                   targetCtx.FriendlyName,
 					Type:                   elemType,
 					ScopeId:                targetCtx.ScopeId,
-					RangePtr:               tuple.expr.Range().Ptr(),
+					RangePtr:               rangePtr,
+					DefRangePtr:            targetCtx.ParentDefRangePtr,
 					NestedTargets:          elemTargets,
 					LocalAddr:              targetCtx.ParentLocalAddress,
 					TargetableFromRangePtr: targetCtx.TargetableFromRangePtr,
@@ -76,7 +84,8 @@ func (tuple Tuple) ReferenceTargets(ctx context.Context, targetCtx *TargetContex
 				Addr:                   targetCtx.ParentAddress,
 				Name:                   targetCtx.FriendlyName,
 				ScopeId:                targetCtx.ScopeId,
-				RangePtr:               tuple.expr.Range().Ptr(),
+				RangePtr:               rangePtr,
+				DefRangePtr:            targetCtx.ParentDefRangePtr,
 				NestedTargets:          elemTargets,
 				LocalAddr:              targetCtx.ParentLocalAddress,
 				TargetableFromRangePtr: targetCtx.TargetableFromRangePtr,

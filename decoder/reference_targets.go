@@ -279,11 +279,13 @@ func (d *PathDecoder) decodeReferenceTargetsForAttribute(attr *hcl.Attribute, at
 				attrAddr, ok := resolveAttributeAddress(attr, attrSchema.Address.Steps)
 				if ok {
 					targetCtx = &TargetContext{
-						FriendlyName:  attrSchema.Address.FriendlyName,
-						ScopeId:       attrSchema.Address.ScopeId,
-						AsExprType:    attrSchema.Address.AsExprType,
-						AsReference:   attrSchema.Address.AsReference,
-						ParentAddress: attrAddr,
+						FriendlyName:      attrSchema.Address.FriendlyName,
+						ScopeId:           attrSchema.Address.ScopeId,
+						AsExprType:        attrSchema.Address.AsExprType,
+						AsReference:       attrSchema.Address.AsReference,
+						ParentAddress:     attrAddr,
+						ParentRangePtr:    attr.Range.Ptr(),
+						ParentDefRangePtr: attr.NameRange.Ptr(),
 					}
 				}
 			}
@@ -751,7 +753,9 @@ func (d *PathDecoder) collectInferredReferenceTargetsForBody(addr lang.Address, 
 		var attrExpr hcl.Expression
 		if attr, ok := content.Attributes[name]; ok {
 			ref.RangePtr = attr.Range.Ptr()
+			targetCtx.ParentRangePtr = attr.Range.Ptr()
 			ref.DefRangePtr = attr.NameRange.Ptr()
+			targetCtx.ParentDefRangePtr = attr.NameRange.Ptr()
 			attrExpr = attr.Expr
 		}
 

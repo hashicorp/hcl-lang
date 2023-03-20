@@ -89,8 +89,8 @@ func (obj Object) ReferenceTargets(ctx context.Context, targetCtx *TargetContext
 	attrNames := sortedAttributeNames(obj.cons.Attributes)
 	for _, name := range attrNames {
 		var valueExpr hcl.Expression
-		item, ok := declaredAttributes[name]
-		if ok {
+		item, attrDeclared := declaredAttributes[name]
+		if attrDeclared {
 			valueExpr = item.ValueExpr
 		} else {
 			valueExpr = newEmptyExpressionAtPos(eType.Range().Filename, eType.Range().Start)
@@ -107,6 +107,11 @@ func (obj Object) ReferenceTargets(ctx context.Context, targetCtx *TargetContext
 			}
 
 			elemCtx := targetCtx.Copy()
+
+			if attrDeclared {
+				elemCtx.ParentDefRangePtr = item.KeyExpr.Range().Ptr()
+				elemCtx.ParentRangePtr = hcl.RangeBetween(item.KeyExpr.Range(), item.ValueExpr.Range()).Ptr()
+			}
 
 			if hclsyntax.ValidIdentifier(name) {
 				// Prefer simpler syntax - e.g. myobj.attribute if possible
@@ -139,6 +144,13 @@ func (obj Object) ReferenceTargets(ctx context.Context, targetCtx *TargetContext
 	if targetCtx != nil {
 		// collect target for the whole object
 
+		var rangePtr *hcl.Range
+		if targetCtx.ParentRangePtr != nil {
+			rangePtr = targetCtx.ParentRangePtr
+		} else {
+			rangePtr = obj.expr.Range().Ptr()
+		}
+
 		// type-aware
 		if targetCtx.AsExprType {
 			objType, ok := obj.cons.ConstraintType()
@@ -148,7 +160,8 @@ func (obj Object) ReferenceTargets(ctx context.Context, targetCtx *TargetContext
 					Name:                   targetCtx.FriendlyName,
 					Type:                   objType,
 					ScopeId:                targetCtx.ScopeId,
-					RangePtr:               obj.expr.Range().Ptr(),
+					DefRangePtr:            targetCtx.ParentDefRangePtr,
+					RangePtr:               rangePtr,
 					NestedTargets:          attrTargets,
 					LocalAddr:              targetCtx.ParentLocalAddress,
 					TargetableFromRangePtr: targetCtx.TargetableFromRangePtr,
@@ -162,7 +175,8 @@ func (obj Object) ReferenceTargets(ctx context.Context, targetCtx *TargetContext
 				Addr:                   targetCtx.ParentAddress,
 				Name:                   targetCtx.FriendlyName,
 				ScopeId:                targetCtx.ScopeId,
-				RangePtr:               obj.expr.Range().Ptr(),
+				DefRangePtr:            targetCtx.ParentDefRangePtr,
+				RangePtr:               rangePtr,
 				NestedTargets:          attrTargets,
 				LocalAddr:              targetCtx.ParentLocalAddress,
 				TargetableFromRangePtr: targetCtx.TargetableFromRangePtr,

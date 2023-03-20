@@ -5,15 +5,32 @@ import (
 
 	"github.com/hashicorp/hcl-lang/reference"
 	"github.com/hashicorp/hcl-lang/schema"
+	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hclsyntax"
 )
 
 func (lt LiteralType) ReferenceTargets(ctx context.Context, targetCtx *TargetContext) reference.Targets {
 	typ := lt.cons.Type
 
-	// Primitive types are collected separately on attribute level
 	if typ.IsPrimitiveType() {
-		return reference.Targets{}
+		var rangePtr *hcl.Range
+		if targetCtx.ParentRangePtr != nil {
+			rangePtr = targetCtx.ParentRangePtr
+		} else {
+			rangePtr = lt.expr.Range().Ptr()
+		}
+
+		return reference.Targets{
+			{
+				Addr:                   targetCtx.ParentAddress,
+				LocalAddr:              targetCtx.ParentLocalAddress,
+				TargetableFromRangePtr: targetCtx.TargetableFromRangePtr,
+				ScopeId:                targetCtx.ScopeId,
+				RangePtr:               rangePtr,
+				DefRangePtr:            targetCtx.ParentDefRangePtr,
+				Type:                   typ,
+			},
+		}
 	}
 
 	if typ.IsListType() {

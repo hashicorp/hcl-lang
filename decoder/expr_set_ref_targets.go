@@ -38,6 +38,13 @@ func (set Set) ReferenceTargets(ctx context.Context, targetCtx *TargetContext) r
 	if targetCtx != nil {
 		// collect target for the whole set
 
+		var rangePtr *hcl.Range
+		if targetCtx.ParentRangePtr != nil {
+			rangePtr = targetCtx.ParentRangePtr
+		} else {
+			rangePtr = set.expr.Range().Ptr()
+		}
+
 		// type-aware
 		elemCons, ok := set.cons.Elem.(schema.TypeAwareConstraint)
 		if targetCtx.AsExprType && ok {
@@ -48,7 +55,8 @@ func (set Set) ReferenceTargets(ctx context.Context, targetCtx *TargetContext) r
 					Name:                   targetCtx.FriendlyName,
 					Type:                   cty.Set(elemType),
 					ScopeId:                targetCtx.ScopeId,
-					RangePtr:               set.expr.Range().Ptr(),
+					RangePtr:               rangePtr,
+					DefRangePtr:            targetCtx.ParentDefRangePtr,
 					NestedTargets:          elemTargets,
 					LocalAddr:              targetCtx.ParentLocalAddress,
 					TargetableFromRangePtr: targetCtx.TargetableFromRangePtr,
@@ -62,7 +70,8 @@ func (set Set) ReferenceTargets(ctx context.Context, targetCtx *TargetContext) r
 				Addr:                   targetCtx.ParentAddress,
 				Name:                   targetCtx.FriendlyName,
 				ScopeId:                targetCtx.ScopeId,
-				RangePtr:               set.expr.Range().Ptr(),
+				RangePtr:               rangePtr,
+				DefRangePtr:            targetCtx.ParentDefRangePtr,
 				NestedTargets:          elemTargets,
 				LocalAddr:              targetCtx.ParentLocalAddress,
 				TargetableFromRangePtr: targetCtx.TargetableFromRangePtr,

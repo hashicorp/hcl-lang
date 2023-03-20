@@ -66,6 +66,14 @@ type TargetContext struct {
 	// TargetableFromRangePtr defines where the target is locally targetable
 	// from via the ParentLocalAddress.
 	TargetableFromRangePtr *hcl.Range
+
+	// ParentRangePtr represents the range of the parent target being collected
+	// e.g. whole object/map item
+	ParentRangePtr *hcl.Range
+
+	// ParentDefRangePtr represents the range of the parent target's definition
+	// e.g. object attribute name or map key
+	ParentDefRangePtr *hcl.Range
 }
 
 func (tctx *TargetContext) Copy() *TargetContext {
