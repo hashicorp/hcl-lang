@@ -19,10 +19,7 @@ func (tuple Tuple) ReferenceTargets(ctx context.Context, targetCtx *TargetContex
 		return reference.Targets{}
 	}
 
-	targets := make(reference.Targets, 0)
-
-	// TODO: collect parent target for the whole tuple
-	// See https://github.com/hashicorp/hcl-lang/issues/228
+	elemTargets := make(reference.Targets, 0)
 
 	for i, elemExpr := range eType.Exprs {
 		if i+1 > len(tuple.cons.Elems) {
@@ -40,8 +37,48 @@ func (tuple Tuple) ReferenceTargets(ctx context.Context, targetCtx *TargetContex
 					Key: cty.NumberIntVal(int64(i)),
 				})
 			}
-			targets = append(targets, e.ReferenceTargets(ctx, elemCtx)...)
+			elemTargets = append(elemTargets, e.ReferenceTargets(ctx, elemCtx)...)
 		}
+	}
+
+	targets := make(reference.Targets, 0)
+
+	if targetCtx != nil {
+		// collect target for the whole tuple
+
+		// type-aware
+		elemType, ok := tuple.cons.ConstraintType()
+		if targetCtx.AsExprType && ok {
+			if ok {
+				targets = append(targets, reference.Target{
+					Addr:                   targetCtx.ParentAddress,
+					Name:                   targetCtx.FriendlyName,
+					Type:                   elemType,
+					ScopeId:                targetCtx.ScopeId,
+					RangePtr:               tuple.expr.Range().Ptr(),
+					NestedTargets:          elemTargets,
+					LocalAddr:              targetCtx.ParentLocalAddress,
+					TargetableFromRangePtr: targetCtx.TargetableFromRangePtr,
+				})
+			}
+		}
+
+		// type-unaware
+		if targetCtx.AsReference {
+			targets = append(targets, reference.Target{
+				Addr:                   targetCtx.ParentAddress,
+				Name:                   targetCtx.FriendlyName,
+				ScopeId:                targetCtx.ScopeId,
+				RangePtr:               tuple.expr.Range().Ptr(),
+				NestedTargets:          elemTargets,
+				LocalAddr:              targetCtx.ParentLocalAddress,
+				TargetableFromRangePtr: targetCtx.TargetableFromRangePtr,
+			})
+		}
+	} else {
+		// treat element targets as 1st class ones
+		// if the tuple itself isn't targetable
+		targets = elemTargets
 	}
 
 	return targets
