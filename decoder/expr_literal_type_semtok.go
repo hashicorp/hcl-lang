@@ -13,8 +13,8 @@ func (lt LiteralType) SemanticTokens(ctx context.Context) []lang.SemanticToken {
 	typ := lt.cons.Type
 
 	if typ == cty.DynamicPseudoType {
-		val, _ := lt.expr.Value(nil)
-		if val.IsKnown() && !val.IsNull() {
+		val, diags := lt.expr.Value(nil)
+		if !diags.HasErrors() {
 			typ = val.Type()
 		}
 	}

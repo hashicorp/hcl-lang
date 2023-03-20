@@ -15,8 +15,8 @@ func (lt LiteralType) HoverAtPos(ctx context.Context, pos hcl.Pos) *lang.HoverDa
 	typ := lt.cons.Type
 
 	if typ == cty.DynamicPseudoType {
-		val, _ := lt.expr.Value(nil)
-		if val.IsKnown() && !val.IsNull() {
+		val, diags := lt.expr.Value(nil)
+		if !diags.HasErrors() {
 			typ = val.Type()
 		}
 	}
