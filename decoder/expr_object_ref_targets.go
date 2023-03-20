@@ -5,6 +5,7 @@ import (
 
 	"github.com/hashicorp/hcl-lang/lang"
 	"github.com/hashicorp/hcl-lang/reference"
+	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hclsyntax"
 	"github.com/hashicorp/hcl/v2/json"
 	"github.com/zclconf/go-cty/cty"
@@ -68,6 +69,7 @@ func (obj Object) ReferenceTargets(ctx context.Context, targetCtx *TargetContext
 
 	attrTargets := make(reference.Targets, 0)
 
+	declaredAttributes := make(map[string]hclsyntax.ObjectConsItem, 0)
 	for _, item := range eType.Items {
 		keyName, _, ok := rawObjectKey(item.KeyExpr)
 		if !ok {
@@ -75,13 +77,27 @@ func (obj Object) ReferenceTargets(ctx context.Context, targetCtx *TargetContext
 			continue
 		}
 
-		aSchema, ok := obj.cons.Attributes[keyName]
+		_, ok = obj.cons.Attributes[keyName]
 		if !ok {
 			// avoid collecting for unknown attribute
 			continue
 		}
 
-		expr := newExpression(obj.pathCtx, item.ValueExpr, aSchema.Constraint)
+		declaredAttributes[keyName] = item
+	}
+
+	attrNames := sortedAttributeNames(obj.cons.Attributes)
+	for _, name := range attrNames {
+		var valueExpr hcl.Expression
+		item, ok := declaredAttributes[name]
+		if ok {
+			valueExpr = item.ValueExpr
+		} else {
+			valueExpr = newEmptyExpressionAtPos(eType.Range().Filename, eType.Range().Start)
+		}
+
+		aSchema := obj.cons.Attributes[name]
+		expr := newExpression(obj.pathCtx, valueExpr, aSchema.Constraint)
 		if e, ok := expr.(ReferenceTargetsExpression); ok {
 			if targetCtx == nil {
 				// collect any targets inside the expression
@@ -103,8 +119,6 @@ func (obj Object) ReferenceTargets(ctx context.Context, targetCtx *TargetContext
 			attrTargets = append(attrTargets, e.ReferenceTargets(ctx, elemCtx)...)
 		}
 	}
-
-	// TODO: targets for undeclared attributes w/out range
 
 	targets := make(reference.Targets, 0)
 
