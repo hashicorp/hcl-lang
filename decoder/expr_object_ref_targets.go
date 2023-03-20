@@ -107,13 +107,27 @@ func (obj Object) ReferenceTargets(ctx context.Context, targetCtx *TargetContext
 			}
 
 			elemCtx := targetCtx.Copy()
-			elemCtx.ParentAddress = append(elemCtx.ParentAddress, lang.IndexStep{
-				Key: cty.StringVal(keyName),
-			})
-			if elemCtx.ParentLocalAddress != nil {
-				elemCtx.ParentLocalAddress = append(elemCtx.ParentLocalAddress, lang.IndexStep{
-					Key: cty.StringVal(keyName),
+
+			if hclsyntax.ValidIdentifier(name) {
+				// Prefer simpler syntax - e.g. myobj.attribute if possible
+				elemCtx.ParentAddress = append(elemCtx.ParentAddress, lang.AttrStep{
+					Name: name,
 				})
+				if elemCtx.ParentLocalAddress != nil {
+					elemCtx.ParentLocalAddress = append(elemCtx.ParentLocalAddress, lang.AttrStep{
+						Name: name,
+					})
+				}
+			} else {
+				// Fall back to indexing syntax - e.g. myobj["attr-foo"]
+				elemCtx.ParentAddress = append(elemCtx.ParentAddress, lang.IndexStep{
+					Key: cty.StringVal(name),
+				})
+				if elemCtx.ParentLocalAddress != nil {
+					elemCtx.ParentLocalAddress = append(elemCtx.ParentLocalAddress, lang.IndexStep{
+						Key: cty.StringVal(name),
+					})
+				}
 			}
 
 			attrTargets = append(attrTargets, e.ReferenceTargets(ctx, elemCtx)...)
