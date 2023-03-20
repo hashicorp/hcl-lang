@@ -13,11 +13,6 @@ type LiteralValue struct {
 	cons schema.LiteralValue
 }
 
-func (lv LiteralValue) CompletionAtPos(ctx context.Context, pos hcl.Pos) []lang.Candidate {
-	// TODO
-	return nil
-}
-
 func (lv LiteralValue) HoverAtPos(ctx context.Context, pos hcl.Pos) *lang.HoverData {
 	// TODO
 	return nil
