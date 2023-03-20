@@ -12,12 +12,21 @@ import (
 func (lt LiteralType) ReferenceTargets(ctx context.Context, targetCtx *TargetContext) reference.Targets {
 	typ := lt.cons.Type
 
+	if targetCtx == nil || len(targetCtx.ParentAddress) == 0 {
+		return reference.Targets{}
+	}
+
 	if typ.IsPrimitiveType() {
 		var rangePtr *hcl.Range
 		if targetCtx.ParentRangePtr != nil {
 			rangePtr = targetCtx.ParentRangePtr
 		} else {
 			rangePtr = lt.expr.Range().Ptr()
+		}
+
+		var refType cty.Type
+		if targetCtx.AsExprType {
+			refType = typ
 		}
 
 		return reference.Targets{
@@ -28,7 +37,7 @@ func (lt LiteralType) ReferenceTargets(ctx context.Context, targetCtx *TargetCon
 				ScopeId:                targetCtx.ScopeId,
 				RangePtr:               rangePtr,
 				DefRangePtr:            targetCtx.ParentDefRangePtr,
-				Type:                   typ,
+				Type:                   refType,
 			},
 		}
 	}
