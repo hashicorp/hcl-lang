@@ -177,6 +177,22 @@ func TestCompletionAtPos_exprTypeDeclaration(t *testing.T) {
 			}),
 		},
 		{
+			"tuple inside brackets single-line",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.TypeDeclaration{},
+				},
+			},
+			`attr = tuple([  ])
+`,
+			hcl.Pos{Line: 1, Column: 15, Byte: 14},
+			lang.CompleteCandidates(allTypeDeclarationsAsCandidates("", hcl.Range{
+				Filename: "test.tf",
+				Start:    hcl.Pos{Line: 1, Column: 15, Byte: 14},
+				End:      hcl.Pos{Line: 1, Column: 15, Byte: 14},
+			})),
+		},
+		{
 			"inside tuple - second type after comma",
 			map[string]*schema.AttributeSchema{
 				"attr": {
@@ -340,6 +356,42 @@ func TestCompletionAtPos_exprTypeDeclaration(t *testing.T) {
 					},
 				},
 			}),
+		},
+		{
+			"missing object notation single-line new element inside quoted key name with no equal sign",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.TypeDeclaration{},
+				},
+			},
+			`attr = { "foo" }
+`,
+			hcl.Pos{Line: 1, Column: 12, Byte: 11},
+			lang.CompleteCandidates([]lang.Candidate{}),
+		},
+		{
+			"missing object notation single-line new element inside key name with no equal sign",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.TypeDeclaration{},
+				},
+			},
+			`attr = { foo }
+`,
+			hcl.Pos{Line: 1, Column: 11, Byte: 10},
+			lang.CompleteCandidates([]lang.Candidate{}),
+		},
+		{
+			"missing object notation single-line new element value after equal sign",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.TypeDeclaration{},
+				},
+			},
+			`attr = { foo =  }
+`,
+			hcl.Pos{Line: 1, Column: 16, Byte: 15},
+			lang.CompleteCandidates([]lang.Candidate{}),
 		},
 		{
 			"single-line object value",
