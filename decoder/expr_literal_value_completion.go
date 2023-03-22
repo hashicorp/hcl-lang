@@ -4,7 +4,9 @@ import (
 	"context"
 
 	"github.com/hashicorp/hcl-lang/lang"
+	"github.com/hashicorp/hcl-lang/schema"
 	"github.com/hashicorp/hcl/v2"
+	"github.com/hashicorp/hcl/v2/hclsyntax"
 	"github.com/zclconf/go-cty/cty"
 )
 
@@ -18,45 +20,79 @@ func (lv LiteralValue) CompletionAtPos(ctx context.Context, pos hcl.Pos) []lang.
 			End:      pos,
 		}
 
-		if typ.IsPrimitiveType() {
-			if typ == cty.Bool {
-				label := "false"
-				if lv.cons.Value.True() {
-					label = "true"
-				}
+		// We expect values to be always fully populated
+		ctx = schema.WithPrefillRequiredFields(ctx, true)
 
-				return []lang.Candidate{
-					{
-						Label:  label,
-						Detail: typ.FriendlyName(),
-						Kind:   lang.BoolCandidateKind,
-						TextEdit: lang.TextEdit{
-							NewText: label,
-							Snippet: label,
-							Range:   editRange,
-						},
-					},
-				}
-			}
-			return []lang.Candidate{}
+		cd := lv.cons.EmptyCompletionData(ctx, 1, 0)
+
+		return []lang.Candidate{
+			{
+				Label:  labelForLiteralValue(lv.cons.Value, false),
+				Detail: typ.FriendlyName(),
+				Kind:   candidateKindForType(typ),
+				TextEdit: lang.TextEdit{
+					Range:   editRange,
+					NewText: cd.NewText,
+					Snippet: cd.Snippet,
+				},
+				TriggerSuggest: cd.TriggerSuggest,
+			},
 		}
-
-		if typ == cty.DynamicPseudoType {
-			return []lang.Candidate{}
-		}
-
-		return []lang.Candidate{}
 	}
 
 	if typ == cty.Bool {
-		return []lang.Candidate{}
+		return lv.completeBoolAtPos(ctx, pos)
 	}
 
-	// TODO: delegate cty.Map to Map
-	// TODO: delegate cty.Object to Object
-	// TODO: delegate cty.Tuple to Tuple
-	// TODO: delegate cty.Set to Set
-	// TODO: delegate cty.List to List
+	editRange := lv.expr.Range()
+	if editRange.End.Line != pos.Line {
+		// account for quotes or brackets that are not closed
+		editRange.End = pos
+	}
 
-	return nil
+	if !editRange.ContainsPos(pos) {
+		// account for trailing character(s) which doesn't appear in AST
+		// such as dot, opening bracket etc.
+		editRange.End = pos
+	}
+
+	cd := lv.cons.EmptyCompletionData(ctx, 1, 0)
+	return []lang.Candidate{
+		{
+			Label:  labelForLiteralValue(lv.cons.Value, false),
+			Detail: typ.FriendlyName(),
+			Kind:   candidateKindForType(typ),
+			TextEdit: lang.TextEdit{
+				Range:   editRange,
+				NewText: cd.NewText,
+				Snippet: cd.Snippet,
+			},
+			TriggerSuggest: cd.TriggerSuggest,
+		},
+	}
+
+	// Avoid partial completion inside complex types for now
+}
+
+func (lt LiteralValue) completeBoolAtPos(ctx context.Context, pos hcl.Pos) []lang.Candidate {
+	switch eType := lt.expr.(type) {
+
+	case *hclsyntax.ScopeTraversalExpr:
+		prefixLen := pos.Byte - eType.Range().Start.Byte
+		prefix := eType.Traversal.RootName()[0:prefixLen]
+		return boolLiteralCandidates(prefix, eType.Range())
+
+	case *hclsyntax.LiteralValueExpr:
+		if eType.Val.Type() == cty.Bool {
+			value := "false"
+			if eType.Val.True() {
+				value = "true"
+			}
+			prefixLen := pos.Byte - eType.Range().Start.Byte
+			prefix := value[0:prefixLen]
+			return boolLiteralCandidates(prefix, eType.Range())
+		}
+	}
+
+	return []lang.Candidate{}
 }
