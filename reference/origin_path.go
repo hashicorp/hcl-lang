@@ -43,6 +43,11 @@ func (po PathOrigin) OriginConstraints() OriginConstraints {
 	return po.Constraints
 }
 
+func (po PathOrigin) AppendConstraints(oc OriginConstraints) MatchableOrigin {
+	po.Constraints = append(po.Constraints, oc...)
+	return po
+}
+
 func (po PathOrigin) Address() lang.Address {
 	return po.TargetAddr
 }
