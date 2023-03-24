@@ -2,21 +2,27 @@ package decoder
 
 import (
 	"context"
+	"sort"
 
 	"github.com/hashicorp/hcl-lang/lang"
 	"github.com/hashicorp/hcl-lang/reference"
 	"github.com/hashicorp/hcl-lang/schema"
 	"github.com/hashicorp/hcl/v2/hclsyntax"
+	"github.com/hashicorp/hcl/v2/json"
 	"github.com/zclconf/go-cty/cty"
 )
 
 func (m Map) ReferenceTargets(ctx context.Context, targetCtx *TargetContext) reference.Targets {
+	if json.IsJSONExpression(m.expr) {
+		// TODO
+	}
+
 	eType, ok := m.expr.(*hclsyntax.ObjectConsExpr)
 	if !ok {
 		return reference.Targets{}
 	}
 
-	if len(eType.Items) == 0 || m.cons.Elem == nil {
+	if m.cons.Elem == nil {
 		return reference.Targets{}
 	}
 
@@ -51,6 +57,8 @@ func (m Map) ReferenceTargets(ctx context.Context, targetCtx *TargetContext) ref
 			elemTargets = append(elemTargets, e.ReferenceTargets(ctx, elemCtx)...)
 		}
 	}
+
+	sort.Sort(elemTargets)
 
 	targets := make(reference.Targets, 0)
 
