@@ -6,16 +6,63 @@ import (
 	"github.com/hashicorp/hcl-lang/lang"
 	"github.com/hashicorp/hcl-lang/reference"
 	"github.com/hashicorp/hcl/v2/hclsyntax"
+	"github.com/hashicorp/hcl/v2/json"
 	"github.com/zclconf/go-cty/cty"
 )
 
 func (obj Object) ReferenceTargets(ctx context.Context, targetCtx *TargetContext) reference.Targets {
+	if json.IsJSONExpression(obj.expr) {
+		targets := make(reference.Targets, 0)
+
+		if targetCtx != nil {
+			// collect target for the whole object
+			rangePtr := obj.expr.Range().Ptr()
+			if targetCtx.ParentRangePtr != nil {
+				rangePtr = targetCtx.ParentRangePtr
+			}
+
+			// type-aware
+			if targetCtx.AsExprType {
+				objType, ok := obj.cons.ConstraintType()
+				if ok {
+					targets = append(targets, reference.Target{
+						Addr:                   targetCtx.ParentAddress,
+						Name:                   targetCtx.FriendlyName,
+						Type:                   objType,
+						ScopeId:                targetCtx.ScopeId,
+						DefRangePtr:            targetCtx.ParentDefRangePtr,
+						RangePtr:               rangePtr,
+						NestedTargets:          reference.Targets{},
+						LocalAddr:              targetCtx.ParentLocalAddress,
+						TargetableFromRangePtr: targetCtx.TargetableFromRangePtr,
+					})
+				}
+			}
+
+			// type-unaware
+			if targetCtx.AsReference {
+				targets = append(targets, reference.Target{
+					Addr:                   targetCtx.ParentAddress,
+					Name:                   targetCtx.FriendlyName,
+					ScopeId:                targetCtx.ScopeId,
+					DefRangePtr:            targetCtx.ParentDefRangePtr,
+					RangePtr:               rangePtr,
+					NestedTargets:          reference.Targets{},
+					LocalAddr:              targetCtx.ParentLocalAddress,
+					TargetableFromRangePtr: targetCtx.TargetableFromRangePtr,
+				})
+			}
+		}
+
+		return targets
+	}
+
 	eType, ok := obj.expr.(*hclsyntax.ObjectConsExpr)
 	if !ok {
 		return reference.Targets{}
 	}
 
-	if len(eType.Items) == 0 || len(obj.cons.Attributes) == 0 {
+	if len(obj.cons.Attributes) == 0 {
 		return reference.Targets{}
 	}
 
