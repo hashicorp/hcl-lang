@@ -6,6 +6,41 @@ import (
 	"github.com/hashicorp/hcl/v2"
 )
 
+func TraversalToLocalOrigin(traversal hcl.Traversal, cons schema.Reference, allowSelfRefs bool) (LocalOrigin, bool) {
+	// traversal should not be relative here, since the input to this
+	// function `expr.Variables()` only returns absolute traversals
+	if !traversal.IsRelative() && traversal.RootName() == "self" && !allowSelfRefs {
+		// Only if a block allows the usage of self.* we create a origin,
+		// else just continue
+		return LocalOrigin{}, false
+	}
+
+	addr, err := lang.TraversalToAddress(traversal)
+	if err != nil {
+		return LocalOrigin{}, false
+	}
+
+	return LocalOrigin{
+		Addr:        addr,
+		Range:       traversal.SourceRange(),
+		Constraints: refrenceConstraintToOriginConstraints(cons),
+	}, true
+}
+
+func refrenceConstraintToOriginConstraints(cons schema.Reference) OriginConstraints {
+	if cons.Address != nil {
+		// skip traversals which are targets by themselves (not origins)
+		return OriginConstraints{}
+	}
+
+	return []OriginConstraint{
+		{
+			OfType:    cons.OfType,
+			OfScopeId: cons.OfScopeId,
+		},
+	}
+}
+
 func LegacyTraversalsToLocalOrigins(traversals []hcl.Traversal, tes schema.TraversalExprs, allowSelfRefs bool) Origins {
 	origins := make(Origins, 0)
 	for _, traversal := range traversals {
