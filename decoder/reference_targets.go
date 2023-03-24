@@ -701,17 +701,32 @@ func (d *PathDecoder) collectInferredReferenceTargetsForBody(addr lang.Address, 
 		selfRefBodyRangePtr = content.RangePtr
 	}
 
+	rawAttributes, _ := body.JustAttributes()
+
 	for name, aSchema := range bodySchema.Attributes {
 		var attrType cty.Type
 		if aSchema.Constraint != nil {
 			var ok bool
-			cons, ok := aSchema.Constraint.(schema.TypeAwareConstraint)
-			if !ok {
-				continue
-			}
-			attrType, ok = cons.ConstraintType()
-			if !ok {
-				continue
+			rawAttr, ok := rawAttributes[name]
+			if ok {
+				// try to infer type if attribute is declared
+				expr, ok := newExpression(d.pathCtx, rawAttr.Expr, aSchema.Constraint).(CanInferTypeExpression)
+				if !ok {
+					continue
+				}
+				attrType, ok = expr.InferType()
+				if !ok {
+					continue
+				}
+			} else {
+				cons, ok := aSchema.Constraint.(schema.TypeAwareConstraint)
+				if !ok {
+					continue
+				}
+				attrType, ok = cons.ConstraintType()
+				if !ok {
+					continue
+				}
 			}
 		} else {
 			var ok bool

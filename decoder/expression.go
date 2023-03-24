@@ -28,6 +28,10 @@ type ReferenceTargetsExpression interface {
 	ReferenceTargets(ctx context.Context, targetCtx *TargetContext) reference.Targets
 }
 
+type CanInferTypeExpression interface {
+	InferType() (cty.Type, bool)
+}
+
 // TargetContext describes context for collecting reference targets
 type TargetContext struct {
 	// FriendlyName is (optional) human-readable name of the expression
