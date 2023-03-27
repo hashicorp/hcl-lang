@@ -9,6 +9,7 @@ import (
 	"github.com/hashicorp/hcl-lang/schema"
 	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hclsyntax"
+	"github.com/hashicorp/hcl/v2/json"
 	"github.com/zclconf/go-cty/cty"
 )
 
@@ -254,6 +255,18 @@ func isObjectItemTerminatingRune(r rune) bool {
 // It does *not* account for interpolation inside the key,
 // such as { (var.key_name) = "foo" }.
 func rawObjectKey(expr hcl.Expression) (string, *hcl.Range, bool) {
+	if json.IsJSONExpression(expr) {
+		val, diags := expr.Value(&hcl.EvalContext{})
+		if diags.HasErrors() {
+			return "", nil, false
+		}
+		if val.Type() != cty.String {
+			return "", nil, false
+		}
+
+		return val.AsString(), expr.Range().Ptr(), true
+	}
+
 	// regardless of what expression it is always wrapped
 	keyExpr, ok := expr.(*hclsyntax.ObjectConsKeyExpr)
 	if !ok {
