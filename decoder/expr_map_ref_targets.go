@@ -8,18 +8,12 @@ import (
 	"github.com/hashicorp/hcl-lang/reference"
 	"github.com/hashicorp/hcl-lang/schema"
 	"github.com/hashicorp/hcl/v2"
-	"github.com/hashicorp/hcl/v2/hclsyntax"
-	"github.com/hashicorp/hcl/v2/json"
 	"github.com/zclconf/go-cty/cty"
 )
 
 func (m Map) ReferenceTargets(ctx context.Context, targetCtx *TargetContext) reference.Targets {
-	if json.IsJSONExpression(m.expr) {
-		// TODO
-	}
-
-	eType, ok := m.expr.(*hclsyntax.ObjectConsExpr)
-	if !ok {
+	items, diags := hcl.ExprMap(m.expr)
+	if diags.HasErrors() {
 		return reference.Targets{}
 	}
 
@@ -29,14 +23,14 @@ func (m Map) ReferenceTargets(ctx context.Context, targetCtx *TargetContext) ref
 
 	elemTargets := make(reference.Targets, 0)
 
-	for _, item := range eType.Items {
-		keyName, _, ok := rawObjectKey(item.KeyExpr)
+	for _, item := range items {
+		keyName, _, ok := rawObjectKey(item.Key)
 		if !ok {
 			// avoid collecting item w/ invalid key
 			continue
 		}
 
-		expr := newExpression(m.pathCtx, item.ValueExpr, m.cons.Elem)
+		expr := newExpression(m.pathCtx, item.Value, m.cons.Elem)
 		if e, ok := expr.(ReferenceTargetsExpression); ok {
 			if targetCtx == nil {
 				// collect any targets inside the expression
@@ -47,8 +41,8 @@ func (m Map) ReferenceTargets(ctx context.Context, targetCtx *TargetContext) ref
 
 			elemCtx := targetCtx.Copy()
 
-			elemCtx.ParentDefRangePtr = item.KeyExpr.Range().Ptr()
-			elemCtx.ParentRangePtr = hcl.RangeBetween(item.KeyExpr.Range(), item.ValueExpr.Range()).Ptr()
+			elemCtx.ParentDefRangePtr = item.Key.Range().Ptr()
+			elemCtx.ParentRangePtr = hcl.RangeBetween(item.Key.Range(), item.Value.Range()).Ptr()
 
 			elemCtx.ParentAddress = append(elemCtx.ParentAddress, lang.IndexStep{
 				Key: cty.StringVal(keyName),

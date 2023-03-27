@@ -7,59 +7,12 @@ import (
 	"github.com/hashicorp/hcl-lang/reference"
 	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hclsyntax"
-	"github.com/hashicorp/hcl/v2/json"
 	"github.com/zclconf/go-cty/cty"
 )
 
 func (obj Object) ReferenceTargets(ctx context.Context, targetCtx *TargetContext) reference.Targets {
-	if json.IsJSONExpression(obj.expr) {
-		targets := make(reference.Targets, 0)
-
-		if targetCtx != nil {
-			// collect target for the whole object
-			rangePtr := obj.expr.Range().Ptr()
-			if targetCtx.ParentRangePtr != nil {
-				rangePtr = targetCtx.ParentRangePtr
-			}
-
-			// type-aware
-			if targetCtx.AsExprType {
-				objType, ok := obj.cons.ConstraintType()
-				if ok {
-					targets = append(targets, reference.Target{
-						Addr:                   targetCtx.ParentAddress,
-						Name:                   targetCtx.FriendlyName,
-						Type:                   objType,
-						ScopeId:                targetCtx.ScopeId,
-						DefRangePtr:            targetCtx.ParentDefRangePtr,
-						RangePtr:               rangePtr,
-						NestedTargets:          reference.Targets{},
-						LocalAddr:              targetCtx.ParentLocalAddress,
-						TargetableFromRangePtr: targetCtx.TargetableFromRangePtr,
-					})
-				}
-			}
-
-			// type-unaware
-			if targetCtx.AsReference {
-				targets = append(targets, reference.Target{
-					Addr:                   targetCtx.ParentAddress,
-					Name:                   targetCtx.FriendlyName,
-					ScopeId:                targetCtx.ScopeId,
-					DefRangePtr:            targetCtx.ParentDefRangePtr,
-					RangePtr:               rangePtr,
-					NestedTargets:          reference.Targets{},
-					LocalAddr:              targetCtx.ParentLocalAddress,
-					TargetableFromRangePtr: targetCtx.TargetableFromRangePtr,
-				})
-			}
-		}
-
-		return targets
-	}
-
-	eType, ok := obj.expr.(*hclsyntax.ObjectConsExpr)
-	if !ok {
+	items, diags := hcl.ExprMap(obj.expr)
+	if diags.HasErrors() {
 		return reference.Targets{}
 	}
 
@@ -69,9 +22,9 @@ func (obj Object) ReferenceTargets(ctx context.Context, targetCtx *TargetContext
 
 	attrTargets := make(reference.Targets, 0)
 
-	declaredAttributes := make(map[string]hclsyntax.ObjectConsItem, 0)
-	for _, item := range eType.Items {
-		keyName, _, ok := rawObjectKey(item.KeyExpr)
+	declaredAttributes := make(map[string]hcl.KeyValuePair, 0)
+	for _, item := range items {
+		keyName, _, ok := rawObjectKey(item.Key)
 		if !ok {
 			// avoid collecting item w/ invalid key
 			continue
@@ -91,9 +44,9 @@ func (obj Object) ReferenceTargets(ctx context.Context, targetCtx *TargetContext
 		var valueExpr hcl.Expression
 		item, attrDeclared := declaredAttributes[name]
 		if attrDeclared {
-			valueExpr = item.ValueExpr
+			valueExpr = item.Value
 		} else {
-			valueExpr = newEmptyExpressionAtPos(eType.Range().Filename, eType.Range().Start)
+			valueExpr = newEmptyExpressionAtPos(obj.expr.Range().Filename, obj.expr.Range().Start)
 		}
 
 		aSchema := obj.cons.Attributes[name]
@@ -109,8 +62,8 @@ func (obj Object) ReferenceTargets(ctx context.Context, targetCtx *TargetContext
 			elemCtx := targetCtx.Copy()
 
 			if attrDeclared {
-				elemCtx.ParentDefRangePtr = item.KeyExpr.Range().Ptr()
-				elemCtx.ParentRangePtr = hcl.RangeBetween(item.KeyExpr.Range(), item.ValueExpr.Range()).Ptr()
+				elemCtx.ParentDefRangePtr = item.Key.Range().Ptr()
+				elemCtx.ParentRangePtr = hcl.RangeBetween(item.Key.Range(), item.Value.Range()).Ptr()
 			}
 
 			if hclsyntax.ValidIdentifier(name) {
