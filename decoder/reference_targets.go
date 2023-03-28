@@ -277,7 +277,7 @@ func (d *PathDecoder) decodeReferenceTargetsForAttribute(attr *hcl.Attribute, at
 			var targetCtx *TargetContext
 			if attrSchema.Address != nil {
 				attrAddr, ok := resolveAttributeAddress(attr, attrSchema.Address.Steps)
-				if ok {
+				if ok && (attrSchema.Address.AsExprType || attrSchema.Address.AsReference) {
 					targetCtx = &TargetContext{
 						FriendlyName:      attrSchema.Address.FriendlyName,
 						ScopeId:           attrSchema.Address.ScopeId,
