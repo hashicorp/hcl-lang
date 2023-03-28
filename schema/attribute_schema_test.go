@@ -87,7 +87,7 @@ func TestAttributeSchema_Validate(t *testing.T) {
 				Constraint: Reference{Address: &ReferenceAddrSchema{}},
 				IsOptional: true,
 			},
-			errors.New("Constraint: schema.Reference: Address requires non-emmpty ScopeId"),
+			errors.New("Constraint: schema.Reference: Address requires non-empty ScopeId"),
 		},
 		{
 			&AttributeSchema{
