@@ -1,29 +1,29 @@
 package decoder
 
 import (
-	"context"
+	"fmt"
+	"strconv"
 
-	"github.com/hashicorp/hcl-lang/lang"
 	"github.com/hashicorp/hcl-lang/schema"
 	"github.com/hashicorp/hcl/v2"
+	"github.com/zclconf/go-cty/cty"
 )
 
 type LiteralValue struct {
-	expr hcl.Expression
-	cons schema.LiteralValue
+	expr    hcl.Expression
+	cons    schema.LiteralValue
+	pathCtx *PathContext
 }
 
-func (lv LiteralValue) CompletionAtPos(ctx context.Context, pos hcl.Pos) []lang.Candidate {
-	// TODO
-	return nil
-}
+func formatNumberVal(val cty.Value) string {
+	bf := val.AsBigFloat()
 
-func (lv LiteralValue) HoverAtPos(ctx context.Context, pos hcl.Pos) *lang.HoverData {
-	// TODO
-	return nil
-}
+	if bf.IsInt() {
+		intNum, _ := bf.Int64()
+		return fmt.Sprintf("%d", intNum)
+	}
 
-func (lv LiteralValue) SemanticTokens(ctx context.Context) []lang.SemanticToken {
-	// TODO
-	return nil
+	fNum, _ := bf.Float64()
+	return strconv.FormatFloat(fNum, 'f', -1, 64)
+
 }

@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"sort"
-	"strconv"
 	"strings"
 
 	"github.com/hashicorp/hcl-lang/lang"
@@ -1001,19 +1000,6 @@ func labelForLiteralValue(val cty.Value, isNested bool) string {
 	}
 
 	return ""
-}
-
-func formatNumberVal(val cty.Value) string {
-	bf := val.AsBigFloat()
-
-	if bf.IsInt() {
-		intNum, _ := bf.Int64()
-		return fmt.Sprintf("%d", intNum)
-	}
-
-	fNum, _ := bf.Float64()
-	return strconv.FormatFloat(fNum, 'f', -1, 64)
-
 }
 
 func labelForLiteralType(attrType cty.Type) string {
