@@ -15,7 +15,7 @@ import (
 	"github.com/zclconf/go-cty/cty"
 )
 
-func TestCollectRefTargets_exprOneOf_hcl(t *testing.T) {
+func TestCollectRefTargets_exprSet_hcl(t *testing.T) {
 	testCases := []struct {
 		testName           string
 		attrSchema         map[string]*schema.AttributeSchema
@@ -26,9 +26,8 @@ func TestCollectRefTargets_exprOneOf_hcl(t *testing.T) {
 			"constraint mismatch",
 			map[string]*schema.AttributeSchema{
 				"attr": {
-					Constraint: schema.OneOf{
-						schema.LiteralType{Type: cty.Number},
-						schema.LiteralType{Type: cty.String},
+					Constraint: schema.Set{
+						Elem: schema.LiteralType{Type: cty.Bool},
 					},
 					IsOptional: true,
 					Address: &schema.AttributeAddrSchema{
@@ -43,12 +42,11 @@ func TestCollectRefTargets_exprOneOf_hcl(t *testing.T) {
 			reference.Targets{},
 		},
 		{
-			"first constraint match",
+			"set of keyword",
 			map[string]*schema.AttributeSchema{
 				"attr": {
-					Constraint: schema.OneOf{
-						schema.LiteralType{Type: cty.Bool},
-						schema.LiteralType{Type: cty.String},
+					Constraint: schema.Set{
+						Elem: schema.Keyword{Keyword: "foo"},
 					},
 					IsOptional: true,
 					Address: &schema.AttributeAddrSchema{
@@ -59,111 +57,198 @@ func TestCollectRefTargets_exprOneOf_hcl(t *testing.T) {
 					},
 				},
 			},
-			`attr = true`,
+			`attr = [foo]`,
+			reference.Targets{},
+		},
+		{
+			"set of addressable reference",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.Set{
+						Elem: schema.Reference{
+							Address: &schema.ReferenceAddrSchema{
+								ScopeId: lang.ScopeId("test"),
+							},
+						},
+					},
+					IsOptional: true,
+				},
+			},
+			`attr = [foo]`,
 			reference.Targets{
 				{
 					Addr: lang.Address{
-						lang.RootStep{Name: "attr"},
+						lang.RootStep{Name: "foo"},
 					},
+					ScopeId: lang.ScopeId("test"),
 					RangePtr: &hcl.Range{
 						Filename: "test.hcl",
-						Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
+						Start:    hcl.Pos{Line: 1, Column: 9, Byte: 8},
 						End:      hcl.Pos{Line: 1, Column: 12, Byte: 11},
 					},
-					DefRangePtr: &hcl.Range{
-						Filename: "test.hcl",
-						Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
-						End:      hcl.Pos{Line: 1, Column: 5, Byte: 4},
-					},
-					Type: cty.Bool,
 				},
 			},
 		},
 		{
-			"second constraint match",
+			"empty type-aware",
 			map[string]*schema.AttributeSchema{
 				"attr": {
-					Constraint: schema.OneOf{
-						schema.LiteralType{Type: cty.String},
-						schema.LiteralType{Type: cty.Bool},
-					},
-					IsOptional: true,
-					Address: &schema.AttributeAddrSchema{
-						Steps: schema.Address{
-							schema.AttrNameStep{},
-						},
-						AsExprType: true,
-					},
-				},
-			},
-			`attr = true`,
-			reference.Targets{
-				{
-					Addr: lang.Address{
-						lang.RootStep{Name: "attr"},
-					},
-					RangePtr: &hcl.Range{
-						Filename: "test.hcl",
-						Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
-						End:      hcl.Pos{Line: 1, Column: 12, Byte: 11},
-					},
-					DefRangePtr: &hcl.Range{
-						Filename: "test.hcl",
-						Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
-						End:      hcl.Pos{Line: 1, Column: 5, Byte: 4},
-					},
-					Type: cty.Bool,
-				},
-			},
-		},
-		{
-			"double constraint match",
-			map[string]*schema.AttributeSchema{
-				"attr": {
-					Constraint: schema.OneOf{
-						schema.List{Elem: schema.LiteralType{Type: cty.String}},
-						schema.Set{Elem: schema.LiteralType{Type: cty.String}},
-					},
-					IsOptional: true,
-					Address: &schema.AttributeAddrSchema{
-						Steps: schema.Address{
-							schema.AttrNameStep{},
-						},
-						AsExprType: true,
-					},
-				},
-			},
-			`attr = ["foo"]`,
-			reference.Targets{
-				{
-					Addr: lang.Address{
-						lang.RootStep{Name: "attr"},
-					},
-					RangePtr: &hcl.Range{
-						Filename: "test.hcl",
-						Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
-						End:      hcl.Pos{Line: 1, Column: 15, Byte: 14},
-					},
-					DefRangePtr: &hcl.Range{
-						Filename: "test.hcl",
-						Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
-						End:      hcl.Pos{Line: 1, Column: 5, Byte: 4},
-					},
-					Type: cty.List(cty.String),
-					NestedTargets: reference.Targets{
-						{
-							Addr: lang.Address{
-								lang.RootStep{Name: "attr"},
-								lang.IndexStep{Key: cty.NumberIntVal(0)},
-							},
-							RangePtr: &hcl.Range{
-								Filename: "test.hcl",
-								Start:    hcl.Pos{Line: 1, Column: 9, Byte: 8},
-								End:      hcl.Pos{Line: 1, Column: 14, Byte: 13},
-							},
+					Constraint: schema.Set{
+						Elem: schema.LiteralType{
 							Type: cty.String,
 						},
 					},
+					IsOptional: true,
+					Address: &schema.AttributeAddrSchema{
+						Steps: schema.Address{
+							schema.AttrNameStep{},
+						},
+						AsExprType: true,
+					},
+				},
+			},
+			`attr = []`,
+			reference.Targets{
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "attr"},
+					},
+					RangePtr: &hcl.Range{
+						Filename: "test.hcl",
+						Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
+						End:      hcl.Pos{Line: 1, Column: 10, Byte: 9},
+					},
+					DefRangePtr: &hcl.Range{
+						Filename: "test.hcl",
+						Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
+						End:      hcl.Pos{Line: 1, Column: 5, Byte: 4},
+					},
+					Type:          cty.Set(cty.String),
+					NestedTargets: reference.Targets{},
+				},
+			},
+		},
+		{
+			"type-aware with invalid element",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.Set{
+						Elem: schema.LiteralType{
+							Type: cty.String,
+						},
+					},
+					IsOptional: true,
+					Address: &schema.AttributeAddrSchema{
+						Steps: schema.Address{
+							schema.AttrNameStep{},
+						},
+						AsExprType: true,
+					},
+				},
+			},
+			`attr = ["one", foo, "two"]`,
+			reference.Targets{
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "attr"},
+					},
+					RangePtr: &hcl.Range{
+						Filename: "test.hcl",
+						Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
+						End:      hcl.Pos{Line: 1, Column: 27, Byte: 26},
+					},
+					DefRangePtr: &hcl.Range{
+						Filename: "test.hcl",
+						Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
+						End:      hcl.Pos{Line: 1, Column: 5, Byte: 4},
+					},
+					Type:          cty.Set(cty.String),
+					NestedTargets: reference.Targets{},
+				},
+			},
+		},
+		{
+			"type-unaware",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.Set{
+						Elem: schema.LiteralType{
+							Type: cty.String,
+						},
+					},
+					IsOptional: true,
+					Address: &schema.AttributeAddrSchema{
+						Steps: schema.Address{
+							schema.AttrNameStep{},
+						},
+						ScopeId:     lang.ScopeId("test"),
+						AsReference: true,
+					},
+				},
+			},
+			`attr = ["one", "two"]`,
+			reference.Targets{
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "attr"},
+					},
+					RangePtr: &hcl.Range{
+						Filename: "test.hcl",
+						Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
+						End:      hcl.Pos{Line: 1, Column: 22, Byte: 21},
+					},
+					DefRangePtr: &hcl.Range{
+						Filename: "test.hcl",
+						Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
+						End:      hcl.Pos{Line: 1, Column: 5, Byte: 4},
+					},
+					ScopeId:       lang.ScopeId("test"),
+					NestedTargets: reference.Targets{},
+				},
+			},
+		},
+		{
+			"type-aware nested",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.Set{
+						Elem: schema.Set{
+							Elem: schema.LiteralType{
+								Type: cty.String,
+							},
+						},
+					},
+					IsOptional: true,
+					Address: &schema.AttributeAddrSchema{
+						Steps: schema.Address{
+							schema.AttrNameStep{},
+						},
+						AsExprType: true,
+					},
+				},
+			},
+			`attr = [
+  ["one"],
+  ["two"],
+]
+`,
+			reference.Targets{
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "attr"},
+					},
+					RangePtr: &hcl.Range{
+						Filename: "test.hcl",
+						Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
+						End:      hcl.Pos{Line: 4, Column: 2, Byte: 32},
+					},
+					DefRangePtr: &hcl.Range{
+						Filename: "test.hcl",
+						Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
+						End:      hcl.Pos{Line: 1, Column: 5, Byte: 4},
+					},
+					Type:          cty.Set(cty.Set(cty.String)),
+					NestedTargets: reference.Targets{},
 				},
 			},
 		},
@@ -197,7 +282,7 @@ func TestCollectRefTargets_exprOneOf_hcl(t *testing.T) {
 	}
 }
 
-func TestCollectRefTargets_exprOneOf_json(t *testing.T) {
+func TestCollectRefTargets_exprSet_json(t *testing.T) {
 	testCases := []struct {
 		testName           string
 		attrSchema         map[string]*schema.AttributeSchema
@@ -208,9 +293,8 @@ func TestCollectRefTargets_exprOneOf_json(t *testing.T) {
 			"constraint mismatch",
 			map[string]*schema.AttributeSchema{
 				"attr": {
-					Constraint: schema.OneOf{
-						schema.LiteralType{Type: cty.Number},
-						schema.LiteralType{Type: cty.String},
+					Constraint: schema.Set{
+						Elem: schema.LiteralType{Type: cty.Bool},
 					},
 					IsOptional: true,
 					Address: &schema.AttributeAddrSchema{
@@ -225,94 +309,11 @@ func TestCollectRefTargets_exprOneOf_json(t *testing.T) {
 			reference.Targets{},
 		},
 		{
-			"first constraint match",
+			"set of keyword",
 			map[string]*schema.AttributeSchema{
 				"attr": {
-					Constraint: schema.OneOf{
-						schema.LiteralType{Type: cty.Bool},
-						schema.LiteralType{Type: cty.String},
-					},
-					IsOptional: true,
-					Address: &schema.AttributeAddrSchema{
-						Steps: schema.Address{
-							schema.AttrNameStep{},
-						},
-						AsExprType: true,
-					},
-				},
-			},
-			`{"attr": true}`,
-			reference.Targets{
-				{
-					Addr: lang.Address{
-						lang.RootStep{Name: "attr"},
-					},
-					RangePtr: &hcl.Range{
-						Filename: "test.hcl.json",
-						Start:    hcl.Pos{Line: 1, Column: 2, Byte: 1},
-						End:      hcl.Pos{Line: 1, Column: 14, Byte: 13},
-					},
-					DefRangePtr: &hcl.Range{
-						Filename: "test.hcl.json",
-						Start:    hcl.Pos{Line: 1, Column: 2, Byte: 1},
-						End:      hcl.Pos{Line: 1, Column: 8, Byte: 7},
-					},
-					Type: cty.Bool,
-				},
-			},
-		},
-		{
-			"second constraint match",
-			map[string]*schema.AttributeSchema{
-				"attr": {
-					Constraint: schema.OneOf{
-						schema.LiteralType{Type: cty.String},
-						schema.LiteralType{Type: cty.Bool},
-					},
-					IsOptional: true,
-					Address: &schema.AttributeAddrSchema{
-						Steps: schema.Address{
-							schema.AttrNameStep{},
-						},
-						AsExprType: true,
-					},
-				},
-			},
-			`{"attr": true}`,
-			reference.Targets{
-				{
-					Addr: lang.Address{
-						lang.RootStep{Name: "attr"},
-					},
-					RangePtr: &hcl.Range{
-						Filename: "test.hcl.json",
-						Start:    hcl.Pos{Line: 1, Column: 2, Byte: 1},
-						End:      hcl.Pos{Line: 1, Column: 14, Byte: 13},
-					},
-					DefRangePtr: &hcl.Range{
-						Filename: "test.hcl.json",
-						Start:    hcl.Pos{Line: 1, Column: 2, Byte: 1},
-						End:      hcl.Pos{Line: 1, Column: 8, Byte: 7},
-					},
-					Type: cty.Bool,
-				},
-			},
-		},
-		{
-			"double constraint match",
-			map[string]*schema.AttributeSchema{
-				"attr": {
-					Constraint: schema.OneOf{
-						schema.List{
-							Elem: schema.LiteralType{
-								Type: cty.String,
-							},
-						},
-						schema.Set{
-							Elem: schema.LiteralType{
-								Type: cty.String,
-							},
-						},
+					Constraint: schema.Set{
+						Elem: schema.Keyword{Keyword: "foo"},
 					},
 					IsOptional: true,
 					Address: &schema.AttributeAddrSchema{
@@ -324,6 +325,61 @@ func TestCollectRefTargets_exprOneOf_json(t *testing.T) {
 				},
 			},
 			`{"attr": ["foo"]}`,
+			reference.Targets{},
+		},
+		{
+			"set of addressable reference",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.Set{
+						Elem: schema.Reference{
+							Address: &schema.ReferenceAddrSchema{
+								ScopeId: lang.ScopeId("test"),
+							},
+						},
+					},
+					IsOptional: true,
+					Address: &schema.AttributeAddrSchema{
+						Steps: schema.Address{
+							schema.AttrNameStep{},
+						},
+					},
+				},
+			},
+			`{"attr": ["foo"]}`,
+			reference.Targets{
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "foo"},
+					},
+					ScopeId: lang.ScopeId("test"),
+					RangePtr: &hcl.Range{
+						Filename: "test.hcl.json",
+						Start:    hcl.Pos{Line: 1, Column: 12, Byte: 11},
+						End:      hcl.Pos{Line: 1, Column: 15, Byte: 14},
+					},
+				},
+			},
+		},
+		{
+			"empty type-aware",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.Set{
+						Elem: schema.LiteralType{
+							Type: cty.String,
+						},
+					},
+					IsOptional: true,
+					Address: &schema.AttributeAddrSchema{
+						Steps: schema.Address{
+							schema.AttrNameStep{},
+						},
+						AsExprType: true,
+					},
+				},
+			},
+			`{"attr": []}`,
 			reference.Targets{
 				{
 					Addr: lang.Address{
@@ -332,28 +388,138 @@ func TestCollectRefTargets_exprOneOf_json(t *testing.T) {
 					RangePtr: &hcl.Range{
 						Filename: "test.hcl.json",
 						Start:    hcl.Pos{Line: 1, Column: 2, Byte: 1},
-						End:      hcl.Pos{Line: 1, Column: 17, Byte: 16},
+						End:      hcl.Pos{Line: 1, Column: 12, Byte: 11},
 					},
 					DefRangePtr: &hcl.Range{
 						Filename: "test.hcl.json",
 						Start:    hcl.Pos{Line: 1, Column: 2, Byte: 1},
 						End:      hcl.Pos{Line: 1, Column: 8, Byte: 7},
 					},
-					Type: cty.List(cty.String),
-					NestedTargets: reference.Targets{
-						{
-							Addr: lang.Address{
-								lang.RootStep{Name: "attr"},
-								lang.IndexStep{Key: cty.NumberIntVal(0)},
-							},
-							RangePtr: &hcl.Range{
-								Filename: "test.hcl.json",
-								Start:    hcl.Pos{Line: 1, Column: 11, Byte: 10},
-								End:      hcl.Pos{Line: 1, Column: 16, Byte: 15},
-							},
+					Type:          cty.Set(cty.String),
+					NestedTargets: reference.Targets{},
+				},
+			},
+		},
+		{
+			"type-aware with invalid element",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.Set{
+						Elem: schema.LiteralType{
 							Type: cty.String,
 						},
 					},
+					IsOptional: true,
+					Address: &schema.AttributeAddrSchema{
+						Steps: schema.Address{
+							schema.AttrNameStep{},
+						},
+						AsExprType: true,
+					},
+				},
+			},
+			`{"attr": ["one", 422, "two"]}`,
+			reference.Targets{
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "attr"},
+					},
+					RangePtr: &hcl.Range{
+						Filename: "test.hcl.json",
+						Start:    hcl.Pos{Line: 1, Column: 2, Byte: 1},
+						End:      hcl.Pos{Line: 1, Column: 29, Byte: 28},
+					},
+					DefRangePtr: &hcl.Range{
+						Filename: "test.hcl.json",
+						Start:    hcl.Pos{Line: 1, Column: 2, Byte: 1},
+						End:      hcl.Pos{Line: 1, Column: 8, Byte: 7},
+					},
+					Type:          cty.Set(cty.String),
+					NestedTargets: reference.Targets{},
+				},
+			},
+		},
+		{
+			"type-unaware",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.Set{
+						Elem: schema.LiteralType{
+							Type: cty.String,
+						},
+					},
+					IsOptional: true,
+					Address: &schema.AttributeAddrSchema{
+						Steps: schema.Address{
+							schema.AttrNameStep{},
+						},
+						ScopeId:     lang.ScopeId("test"),
+						AsReference: true,
+					},
+				},
+			},
+			`{"attr": ["one", "two"]}`,
+			reference.Targets{
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "attr"},
+					},
+					RangePtr: &hcl.Range{
+						Filename: "test.hcl.json",
+						Start:    hcl.Pos{Line: 1, Column: 2, Byte: 1},
+						End:      hcl.Pos{Line: 1, Column: 24, Byte: 23},
+					},
+					DefRangePtr: &hcl.Range{
+						Filename: "test.hcl.json",
+						Start:    hcl.Pos{Line: 1, Column: 2, Byte: 1},
+						End:      hcl.Pos{Line: 1, Column: 8, Byte: 7},
+					},
+					ScopeId:       lang.ScopeId("test"),
+					NestedTargets: reference.Targets{},
+				},
+			},
+		},
+		{
+			"type-aware nested",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.Set{
+						Elem: schema.Set{
+							Elem: schema.LiteralType{
+								Type: cty.String,
+							},
+						},
+					},
+					IsOptional: true,
+					Address: &schema.AttributeAddrSchema{
+						Steps: schema.Address{
+							schema.AttrNameStep{},
+						},
+						AsExprType: true,
+					},
+				},
+			},
+			`{"attr": [
+  ["one"],
+  ["two"]
+]}`,
+			reference.Targets{
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "attr"},
+					},
+					RangePtr: &hcl.Range{
+						Filename: "test.hcl.json",
+						Start:    hcl.Pos{Line: 1, Column: 2, Byte: 1},
+						End:      hcl.Pos{Line: 4, Column: 2, Byte: 33},
+					},
+					DefRangePtr: &hcl.Range{
+						Filename: "test.hcl.json",
+						Start:    hcl.Pos{Line: 1, Column: 2, Byte: 1},
+						End:      hcl.Pos{Line: 1, Column: 8, Byte: 7},
+					},
+					Type:          cty.Set(cty.Set(cty.String)),
+					NestedTargets: reference.Targets{},
 				},
 			},
 		},

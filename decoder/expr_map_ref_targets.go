@@ -2,34 +2,35 @@ package decoder
 
 import (
 	"context"
+	"sort"
 
 	"github.com/hashicorp/hcl-lang/lang"
 	"github.com/hashicorp/hcl-lang/reference"
 	"github.com/hashicorp/hcl-lang/schema"
-	"github.com/hashicorp/hcl/v2/hclsyntax"
+	"github.com/hashicorp/hcl/v2"
 	"github.com/zclconf/go-cty/cty"
 )
 
 func (m Map) ReferenceTargets(ctx context.Context, targetCtx *TargetContext) reference.Targets {
-	eType, ok := m.expr.(*hclsyntax.ObjectConsExpr)
-	if !ok {
+	items, diags := hcl.ExprMap(m.expr)
+	if diags.HasErrors() {
 		return reference.Targets{}
 	}
 
-	if len(eType.Items) == 0 || m.cons.Elem == nil {
+	if m.cons.Elem == nil {
 		return reference.Targets{}
 	}
 
 	elemTargets := make(reference.Targets, 0)
 
-	for _, item := range eType.Items {
-		keyName, _, ok := rawObjectKey(item.KeyExpr)
+	for _, item := range items {
+		keyName, _, ok := rawObjectKey(item.Key)
 		if !ok {
 			// avoid collecting item w/ invalid key
 			continue
 		}
 
-		expr := newExpression(m.pathCtx, item.ValueExpr, m.cons.Elem)
+		expr := newExpression(m.pathCtx, item.Value, m.cons.Elem)
 		if e, ok := expr.(ReferenceTargetsExpression); ok {
 			if targetCtx == nil {
 				// collect any targets inside the expression
@@ -39,6 +40,10 @@ func (m Map) ReferenceTargets(ctx context.Context, targetCtx *TargetContext) ref
 			}
 
 			elemCtx := targetCtx.Copy()
+
+			elemCtx.ParentDefRangePtr = item.Key.Range().Ptr()
+			elemCtx.ParentRangePtr = hcl.RangeBetween(item.Key.Range(), item.Value.Range()).Ptr()
+
 			elemCtx.ParentAddress = append(elemCtx.ParentAddress, lang.IndexStep{
 				Key: cty.StringVal(keyName),
 			})
@@ -52,10 +57,19 @@ func (m Map) ReferenceTargets(ctx context.Context, targetCtx *TargetContext) ref
 		}
 	}
 
+	sort.Sort(elemTargets)
+
 	targets := make(reference.Targets, 0)
 
 	if targetCtx != nil {
 		// collect target for the whole map
+
+		var rangePtr *hcl.Range
+		if targetCtx.ParentRangePtr != nil {
+			rangePtr = targetCtx.ParentRangePtr
+		} else {
+			rangePtr = m.expr.Range().Ptr()
+		}
 
 		// type-aware
 		elemCons, ok := m.cons.Elem.(schema.TypeAwareConstraint)
@@ -67,7 +81,8 @@ func (m Map) ReferenceTargets(ctx context.Context, targetCtx *TargetContext) ref
 					Name:                   targetCtx.FriendlyName,
 					Type:                   cty.Map(elemType),
 					ScopeId:                targetCtx.ScopeId,
-					RangePtr:               m.expr.Range().Ptr(),
+					RangePtr:               rangePtr,
+					DefRangePtr:            targetCtx.ParentDefRangePtr,
 					NestedTargets:          elemTargets,
 					LocalAddr:              targetCtx.ParentLocalAddress,
 					TargetableFromRangePtr: targetCtx.TargetableFromRangePtr,
@@ -81,7 +96,8 @@ func (m Map) ReferenceTargets(ctx context.Context, targetCtx *TargetContext) ref
 				Addr:                   targetCtx.ParentAddress,
 				Name:                   targetCtx.FriendlyName,
 				ScopeId:                targetCtx.ScopeId,
-				RangePtr:               m.expr.Range().Ptr(),
+				RangePtr:               rangePtr,
+				DefRangePtr:            targetCtx.ParentDefRangePtr,
 				NestedTargets:          elemTargets,
 				LocalAddr:              targetCtx.ParentLocalAddress,
 				TargetableFromRangePtr: targetCtx.TargetableFromRangePtr,

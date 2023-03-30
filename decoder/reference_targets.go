@@ -277,13 +277,15 @@ func (d *PathDecoder) decodeReferenceTargetsForAttribute(attr *hcl.Attribute, at
 			var targetCtx *TargetContext
 			if attrSchema.Address != nil {
 				attrAddr, ok := resolveAttributeAddress(attr, attrSchema.Address.Steps)
-				if ok {
+				if ok && (attrSchema.Address.AsExprType || attrSchema.Address.AsReference) {
 					targetCtx = &TargetContext{
-						FriendlyName:  attrSchema.Address.FriendlyName,
-						ScopeId:       attrSchema.Address.ScopeId,
-						AsExprType:    attrSchema.Address.AsExprType,
-						AsReference:   attrSchema.Address.AsReference,
-						ParentAddress: attrAddr,
+						FriendlyName:      attrSchema.Address.FriendlyName,
+						ScopeId:           attrSchema.Address.ScopeId,
+						AsExprType:        attrSchema.Address.AsExprType,
+						AsReference:       attrSchema.Address.AsReference,
+						ParentAddress:     attrAddr,
+						ParentRangePtr:    attr.Range.Ptr(),
+						ParentDefRangePtr: attr.NameRange.Ptr(),
 					}
 				}
 			}
@@ -676,9 +678,21 @@ func bodySchemaAsAttrTypes(bodySchema *schema.BodySchema) map[string]cty.Type {
 	}
 
 	for name, attr := range bodySchema.Attributes {
-		attrType, ok := exprConstraintToDataType(attr.Expr)
-		if ok {
-			attrTypes[name] = attrType
+		if attr.Constraint != nil {
+			cons, ok := attr.Constraint.(schema.TypeAwareConstraint)
+			if !ok {
+				continue
+			}
+			typ, ok := cons.ConstraintType()
+			if !ok {
+				continue
+			}
+			attrTypes[name] = typ
+		} else {
+			attrType, ok := exprConstraintToDataType(attr.Expr)
+			if ok {
+				attrTypes[name] = attrType
+			}
 		}
 	}
 
@@ -699,17 +713,32 @@ func (d *PathDecoder) collectInferredReferenceTargetsForBody(addr lang.Address, 
 		selfRefBodyRangePtr = content.RangePtr
 	}
 
+	rawAttributes, _ := body.JustAttributes()
+
 	for name, aSchema := range bodySchema.Attributes {
 		var attrType cty.Type
 		if aSchema.Constraint != nil {
 			var ok bool
-			cons, ok := aSchema.Constraint.(schema.TypeAwareConstraint)
-			if !ok {
-				continue
-			}
-			attrType, ok = cons.ConstraintType()
-			if !ok {
-				continue
+			rawAttr, ok := rawAttributes[name]
+			if ok {
+				// try to infer type if attribute is declared
+				expr, ok := newExpression(d.pathCtx, rawAttr.Expr, aSchema.Constraint).(CanInferTypeExpression)
+				if !ok {
+					continue
+				}
+				attrType, ok = expr.InferType()
+				if !ok {
+					continue
+				}
+			} else {
+				cons, ok := aSchema.Constraint.(schema.TypeAwareConstraint)
+				if !ok {
+					continue
+				}
+				attrType, ok = cons.ConstraintType()
+				if !ok {
+					continue
+				}
 			}
 		} else {
 			var ok bool
@@ -722,7 +751,7 @@ func (d *PathDecoder) collectInferredReferenceTargetsForBody(addr lang.Address, 
 
 		attrAddr := append(addr.Copy(), lang.AttrStep{Name: name})
 
-		ref := reference.Target{
+		legacyRef := reference.Target{
 			Addr:        attrAddr,
 			ScopeId:     bAddrSchema.ScopeId,
 			Type:        attrType,
@@ -741,8 +770,8 @@ func (d *PathDecoder) collectInferredReferenceTargetsForBody(addr lang.Address, 
 			copy(localAddr, selfRefAddr)
 			localAddr = append(localAddr, lang.AttrStep{Name: name})
 
-			ref.LocalAddr = localAddr
-			ref.TargetableFromRangePtr = selfRefBodyRangePtr.Ptr()
+			legacyRef.LocalAddr = localAddr
+			legacyRef.TargetableFromRangePtr = selfRefBodyRangePtr.Ptr()
 
 			targetCtx.ParentLocalAddress = localAddr
 			targetCtx.TargetableFromRangePtr = selfRefBodyRangePtr.Ptr()
@@ -750,26 +779,29 @@ func (d *PathDecoder) collectInferredReferenceTargetsForBody(addr lang.Address, 
 
 		var attrExpr hcl.Expression
 		if attr, ok := content.Attributes[name]; ok {
-			ref.RangePtr = attr.Range.Ptr()
-			ref.DefRangePtr = attr.NameRange.Ptr()
+			legacyRef.RangePtr = attr.Range.Ptr()
+			targetCtx.ParentRangePtr = attr.Range.Ptr()
+			legacyRef.DefRangePtr = attr.NameRange.Ptr()
+			targetCtx.ParentDefRangePtr = attr.NameRange.Ptr()
 			attrExpr = attr.Expr
 		}
 
 		if aSchema.Constraint != nil {
-			ref.NestedTargets = make(reference.Targets, 0)
+			if attrExpr == nil {
+				attrExpr = newEmptyExpressionAtPos(content.RangePtr.Filename, body.MissingItemRange().Start)
+			}
 			expr, ok := newExpression(d.pathCtx, attrExpr, aSchema.Constraint).(ReferenceTargetsExpression)
 			if ok {
 				ctx := context.Background()
-				ref.NestedTargets = append(ref.NestedTargets, expr.ReferenceTargets(ctx, targetCtx)...)
+				refs = append(refs, expr.ReferenceTargets(ctx, targetCtx)...)
 			}
 		} else {
 			if attrExpr != nil && !attrType.IsPrimitiveType() {
-				ref.NestedTargets = make(reference.Targets, 0)
-				ref.NestedTargets = append(ref.NestedTargets, decodeReferenceTargetsForComplexTypeExpr(attrAddr, attrExpr, attrType, bAddrSchema.ScopeId)...)
+				legacyRef.NestedTargets = make(reference.Targets, 0)
+				legacyRef.NestedTargets = append(legacyRef.NestedTargets, decodeReferenceTargetsForComplexTypeExpr(attrAddr, attrExpr, attrType, bAddrSchema.ScopeId)...)
 			}
+			refs = append(refs, legacyRef)
 		}
-
-		refs = append(refs, ref)
 	}
 
 	bTypes := blocksTypesWithSchema(body, bodySchema)

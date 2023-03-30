@@ -4732,10 +4732,197 @@ module "different" {
 `,
 			reference.Targets{},
 		},
+		{
+			"inferred body targets which are missing",
+			&schema.BodySchema{
+				Blocks: map[string]*schema.BlockSchema{
+					"block": {
+						Address: &schema.BlockAddrSchema{
+							Steps: []schema.AddrStep{
+								schema.StaticStep{Name: "blk"},
+							},
+							BodyAsData: true,
+							InferBody:  true,
+						},
+						Body: &schema.BodySchema{
+							Attributes: map[string]*schema.AttributeSchema{
+								"foo": {
+									Constraint: schema.LiteralType{
+										Type: cty.String,
+									},
+								},
+								"bar": {
+									Constraint: schema.LiteralType{
+										Type: cty.Number,
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			`block { foo = "" }`,
+			reference.Targets{
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "blk"},
+					},
+					RangePtr: &hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
+						End:      hcl.Pos{Line: 1, Column: 19, Byte: 18},
+					},
+					DefRangePtr: &hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
+						End:      hcl.Pos{Line: 1, Column: 6, Byte: 5},
+					},
+					Type: cty.Object(map[string]cty.Type{
+						"foo": cty.String,
+						"bar": cty.Number,
+					}),
+					NestedTargets: reference.Targets{
+						{
+							Addr: lang.Address{
+								lang.RootStep{Name: "blk"},
+								lang.AttrStep{Name: "bar"},
+							},
+							RangePtr: &hcl.Range{
+								Filename: "test.tf",
+								Start:    hcl.Pos{Line: 1, Column: 9, Byte: 8},
+								End:      hcl.Pos{Line: 1, Column: 9, Byte: 8},
+							},
+							Type: cty.Number,
+						},
+						{
+							Addr: lang.Address{
+								lang.RootStep{Name: "blk"},
+								lang.AttrStep{Name: "foo"},
+							},
+							RangePtr: &hcl.Range{
+								Filename: "test.tf",
+								Start:    hcl.Pos{Line: 1, Column: 9, Byte: 8},
+								End:      hcl.Pos{Line: 1, Column: 17, Byte: 16},
+							},
+							DefRangePtr: &hcl.Range{
+								Filename: "test.tf",
+								Start:    hcl.Pos{Line: 1, Column: 9, Byte: 8},
+								End:      hcl.Pos{Line: 1, Column: 12, Byte: 11},
+							},
+							Type: cty.String,
+						},
+					},
+				},
+			},
+		},
+		{
+			"dependent inferred body",
+			&schema.BodySchema{
+				Blocks: map[string]*schema.BlockSchema{
+					"provider": {
+						Labels: []*schema.LabelSchema{
+							{Name: "name", IsDepKey: true},
+						},
+						Address: &schema.BlockAddrSchema{
+							Steps: []schema.AddrStep{
+								schema.LabelStep{Index: 0},
+							},
+							DependentBodyAsData: true,
+							ScopeId:             lang.ScopeId("test"),
+							InferDependentBody:  true,
+						},
+						Type: schema.BlockTypeObject,
+						DependentBody: map[schema.SchemaKey]*schema.BodySchema{
+							schema.NewSchemaKey(schema.DependencyKeys{
+								Labels: []schema.LabelDependent{
+									{Index: 0, Value: "aws"},
+								},
+							}): {
+								Attributes: map[string]*schema.AttributeSchema{
+									"attr_map": {
+										Constraint: schema.LiteralType{Type: cty.Map(cty.String)},
+										IsOptional: true,
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			`provider "aws" {
+  attr_map = {
+    foo = "bar"
+  }
+}
+`,
+			reference.Targets{
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "aws"},
+					},
+					LocalAddr: lang.Address{},
+					ScopeId:   "test",
+					RangePtr: &hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
+						End:      hcl.Pos{Line: 5, Column: 2, Byte: 53},
+					},
+					DefRangePtr: &hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
+						End:      hcl.Pos{Line: 1, Column: 15, Byte: 14},
+					},
+					Type: cty.Object(map[string]cty.Type{
+						"attr_map": cty.Map(cty.String),
+					}),
+					NestedTargets: reference.Targets{
+						{
+							Addr: lang.Address{
+								lang.RootStep{Name: "aws"},
+								lang.AttrStep{Name: "attr_map"},
+							},
+							ScopeId: lang.ScopeId("test"),
+							RangePtr: &hcl.Range{
+								Filename: "test.tf",
+								Start:    hcl.Pos{Line: 2, Column: 3, Byte: 19},
+								End:      hcl.Pos{Line: 4, Column: 4, Byte: 51},
+							},
+							DefRangePtr: &hcl.Range{
+								Filename: "test.tf",
+								Start:    hcl.Pos{Line: 2, Column: 3, Byte: 19},
+								End:      hcl.Pos{Line: 2, Column: 11, Byte: 27},
+							},
+							Type: cty.Map(cty.String),
+							NestedTargets: reference.Targets{
+								{
+									Addr: lang.Address{
+										lang.RootStep{Name: "aws"},
+										lang.AttrStep{Name: "attr_map"},
+										lang.IndexStep{Key: cty.StringVal("foo")},
+									},
+									ScopeId: lang.ScopeId("test"),
+									RangePtr: &hcl.Range{
+										Filename: "test.tf",
+										Start:    hcl.Pos{Line: 3, Column: 5, Byte: 36},
+										End:      hcl.Pos{Line: 3, Column: 16, Byte: 47},
+									},
+									DefRangePtr: &hcl.Range{
+										Filename: "test.tf",
+										Start:    hcl.Pos{Line: 3, Column: 5, Byte: 36},
+										End:      hcl.Pos{Line: 3, Column: 8, Byte: 39},
+									},
+									Type: cty.String,
+								},
+							},
+						},
+					},
+				},
+			},
+		},
 	}
 
 	for i, tc := range testCases {
-		t.Run(fmt.Sprintf("%d-%s", i, tc.name), func(t *testing.T) {
+		t.Run(fmt.Sprintf("%2d-%s", i, tc.name), func(t *testing.T) {
 			f, _ := hclsyntax.ParseConfig([]byte(tc.cfg), "test.tf", hcl.InitialPos)
 
 			d := testPathDecoder(t, &PathContext{

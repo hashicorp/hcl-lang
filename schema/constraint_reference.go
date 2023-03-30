@@ -79,7 +79,7 @@ func (ref Reference) Validate() error {
 		return errors.New("cannot have both Address and OfType/OfScopeId set")
 	}
 	if ref.Address != nil && ref.Address.ScopeId == "" {
-		return errors.New("Address requires non-emmpty ScopeId")
+		return errors.New("Address requires non-empty ScopeId")
 	}
 	return nil
 }

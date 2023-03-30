@@ -159,7 +159,7 @@ func TestCollectRefTargets_exprReference_json(t *testing.T) {
 					IsOptional: true,
 				},
 			},
-			`{"attr": "foo"}`,
+			`{"attr": 422}`,
 			reference.Targets{},
 		},
 		{
