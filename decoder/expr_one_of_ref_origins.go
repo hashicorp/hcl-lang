@@ -30,23 +30,24 @@ func appendOrigins(origins, newOrigins reference.Origins) reference.Origins {
 	// and maintains all possible ScopeIds & Types as a *single* slice.
 	for _, newOrigin := range newOrigins {
 		newMatchableOrigin, ok := newOrigin.(reference.MatchableOrigin)
-		if ok {
-			foundMatch := false
-			for i, origin := range origins {
-				existingOrigin, ok := origin.(reference.MatchableOrigin)
-				if ok &&
-					existingOrigin.Address().Equals(newMatchableOrigin.Address()) &&
-					rangesEqual(existingOrigin.OriginRange(), newMatchableOrigin.OriginRange()) {
+		if !ok {
+			origins = append(origins, newOrigin)
+			continue
+		}
 
-					origins[i] = existingOrigin.AppendConstraints(newMatchableOrigin.OriginConstraints())
-					foundMatch = true
-					break
-				}
+		foundMatch := false
+		for i, origin := range origins {
+			existingOrigin, ok := origin.(reference.MatchableOrigin)
+			if ok &&
+				existingOrigin.Address().Equals(newMatchableOrigin.Address()) &&
+				rangesEqual(existingOrigin.OriginRange(), newMatchableOrigin.OriginRange()) {
+
+				origins[i] = existingOrigin.AppendConstraints(newMatchableOrigin.OriginConstraints())
+				foundMatch = true
+				break
 			}
-			if !foundMatch {
-				origins = append(origins, newOrigin)
-			}
-		} else {
+		}
+		if !foundMatch {
 			origins = append(origins, newOrigin)
 		}
 	}
