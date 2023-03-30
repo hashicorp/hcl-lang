@@ -16,5 +16,6 @@ type Origin interface {
 type MatchableOrigin interface {
 	Origin
 	OriginConstraints() OriginConstraints
+	AppendConstraints(OriginConstraints) MatchableOrigin
 	Address() lang.Address
 }

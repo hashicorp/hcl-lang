@@ -4,23 +4,23 @@ import (
 	"context"
 
 	"github.com/hashicorp/hcl-lang/reference"
-	"github.com/hashicorp/hcl/v2/hclsyntax"
+	"github.com/hashicorp/hcl/v2"
 )
 
 func (m Map) ReferenceOrigins(ctx context.Context, allowSelfRefs bool) reference.Origins {
-	eType, ok := m.expr.(*hclsyntax.ObjectConsExpr)
-	if !ok {
+	items, diags := hcl.ExprMap(m.expr)
+	if diags.HasErrors() {
 		return reference.Origins{}
 	}
 
-	if len(eType.Items) == 0 || m.cons.Elem == nil {
+	if len(items) == 0 || m.cons.Elem == nil {
 		return reference.Origins{}
 	}
 
 	origins := make(reference.Origins, 0)
 
-	for _, item := range eType.Items {
-		expr := newExpression(m.pathCtx, item.ValueExpr, m.cons.Elem)
+	for _, item := range items {
+		expr := newExpression(m.pathCtx, item.Value, m.cons.Elem)
 
 		if elemExpr, ok := expr.(ReferenceOriginsExpression); ok {
 			origins = append(origins, elemExpr.ReferenceOrigins(ctx, allowSelfRefs)...)

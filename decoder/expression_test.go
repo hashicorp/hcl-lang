@@ -9,6 +9,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hclsyntax"
+	"github.com/hashicorp/hcl/v2/json"
 )
 
 var (
@@ -119,6 +120,26 @@ func TestRawObjectKey(t *testing.T) {
 			false,
 		},
 		{
+			`attr = { "42" = "bar" }`,
+			"42",
+			&hcl.Range{
+				Filename: "test.hcl",
+				Start:    hcl.Pos{Line: 1, Column: 11, Byte: 10},
+				End:      hcl.Pos{Line: 1, Column: 13, Byte: 12},
+			},
+			true,
+		},
+		{
+			`attr = { "foo-bar" = "bar" }`,
+			"foo-bar",
+			&hcl.Range{
+				Filename: "test.hcl",
+				Start:    hcl.Pos{Line: 1, Column: 11, Byte: 10},
+				End:      hcl.Pos{Line: 1, Column: 18, Byte: 17},
+			},
+			true,
+		},
+		{
 			`attr = { foo.x = "bar" }`,
 			"",
 			nil,
@@ -174,21 +195,132 @@ func TestRawObjectKey(t *testing.T) {
 				t.Fatalf("expected to find attribute %q", "attr")
 			}
 
-			objConsExpr, ok := attr.Expr.(*hclsyntax.ObjectConsExpr)
-			if !ok {
-				t.Fatalf("expected expression to be ObjectConsExpr, %T given", attr.Expr)
+			items, diags := hcl.ExprMap(attr.Expr)
+			if diags.HasErrors() {
+				t.Fatal(diags)
 			}
 
-			if len(objConsExpr.Items) != 1 {
-				t.Fatalf("expected exactly 1 object item, %d given", len(objConsExpr.Items))
+			if len(items) != 1 {
+				t.Fatalf("expected exactly 1 object item, %d given", len(items))
 			}
 
-			rawKey, rng, ok := rawObjectKey(objConsExpr.Items[0].KeyExpr)
+			rawKey, rng, ok := rawObjectKey(items[0].Key)
 			if !tc.expectedOk && ok {
-				t.Fatal("expected parsing to fail")
+				t.Fatalf("expected parsing to fail, produced: %q at %#v", rawKey, rng)
 			}
 			if tc.expectedOk && !ok {
-				t.Fatal("expected parsing to succeed")
+				t.Fatalf("expected parsing to succeed and produce %q at %#v",
+					tc.expectedKey, tc.expectedRange)
+			}
+			if tc.expectedKey != rawKey {
+				t.Fatalf("extracted key mismatch\nexpected: %q\ngiven: %q", tc.expectedKey, rawKey)
+			}
+			if diff := cmp.Diff(tc.expectedRange, rng); diff != "" {
+				t.Fatalf("unexpected range: %s", diff)
+			}
+		})
+	}
+}
+
+func TestRawObjectKey_json(t *testing.T) {
+	testCases := []struct {
+		cfg           string
+		expectedKey   string
+		expectedRange *hcl.Range
+		expectedOk    bool
+	}{
+		{
+			`{"attr": { "foo": "bar" }}`,
+			"foo",
+			&hcl.Range{
+				Filename: "test.hcl.json",
+				Start:    hcl.Pos{Line: 1, Column: 12, Byte: 11},
+				End:      hcl.Pos{Line: 1, Column: 17, Byte: 16},
+			},
+			true,
+		},
+		{
+			`{"attr": { "42": "bar" }}`,
+			"42",
+			&hcl.Range{
+				Filename: "test.hcl.json",
+				Start:    hcl.Pos{Line: 1, Column: 12, Byte: 11},
+				End:      hcl.Pos{Line: 1, Column: 16, Byte: 15},
+			},
+			true,
+		},
+		{
+			`{"attr": { "foo-bar": "bar" }}`,
+			"foo-bar",
+			&hcl.Range{
+				Filename: "test.hcl.json",
+				Start:    hcl.Pos{Line: 1, Column: 12, Byte: 11},
+				End:      hcl.Pos{Line: 1, Column: 21, Byte: 20},
+			},
+			true,
+		},
+		{
+			`{"attr": { "${foo.x}": "bar" }}`,
+			"",
+			nil,
+			false,
+		},
+		{
+			`{"attr": { "${(foo)}": "bar" }}`,
+			"",
+			nil,
+			false,
+		},
+		{
+			`{"attr": { "${(var.foo)}": "bar" }}`,
+			"",
+			nil,
+			false,
+		},
+		{
+			`{"attr": { "${foo}": "bar" }}`,
+			"",
+			nil,
+			false,
+		},
+	}
+	for i, tc := range testCases {
+		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
+			f, diags := json.ParseWithStartPos([]byte(tc.cfg), "test.hcl.json", hcl.InitialPos)
+			if len(diags) > 0 {
+				t.Fatal(diags)
+			}
+
+			attrs, diags := f.Body.JustAttributes()
+			if len(diags) > 0 {
+				t.Fatal(diags)
+			}
+
+			if len(attrs) != 1 {
+				t.Fatalf("expected exactly 1 attribute, %d given", len(attrs))
+			}
+
+			attr, ok := attrs["attr"]
+			if !ok {
+				t.Fatalf("expected to find attribute %q", "attr")
+			}
+
+			items, diags := hcl.ExprMap(attr.Expr)
+			if diags.HasErrors() {
+				t.Fatal(diags)
+			}
+
+			if len(items) != 1 {
+				t.Fatalf("expected exactly 1 object item, %d given", len(items))
+			}
+
+			rawKey, rng, ok := rawObjectKey(items[0].Key)
+			if !tc.expectedOk && ok {
+				t.Fatalf("expected parsing to fail, produced: %q at %#v", rawKey, rng)
+			}
+			if tc.expectedOk && !ok {
+				t.Fatalf("expected parsing to succeed and produce %q at %#v",
+					tc.expectedKey, tc.expectedRange)
 			}
 			if tc.expectedKey != rawKey {
 				t.Fatalf("extracted key mismatch\nexpected: %q\ngiven: %q", tc.expectedKey, rawKey)
