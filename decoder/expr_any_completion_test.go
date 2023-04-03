@@ -7,6 +7,7 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/hashicorp/hcl-lang/lang"
+	"github.com/hashicorp/hcl-lang/reference"
 	"github.com/hashicorp/hcl-lang/schema"
 	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hclsyntax"
@@ -18,6 +19,7 @@ func TestCompletionAtPos_exprAny_functions(t *testing.T) {
 	testCases := []struct {
 		testName           string
 		attrSchema         map[string]*schema.AttributeSchema
+		refTargets         reference.Targets
 		cfg                string
 		pos                hcl.Pos
 		expectedCandidates lang.Candidates
@@ -31,6 +33,7 @@ func TestCompletionAtPos_exprAny_functions(t *testing.T) {
 					},
 				},
 			},
+			reference.Targets{},
 			`attr = 
 `,
 			hcl.Pos{Line: 1, Column: 8, Byte: 7},
@@ -106,6 +109,7 @@ func TestCompletionAtPos_exprAny_functions(t *testing.T) {
 					},
 				},
 			},
+			reference.Targets{},
 			`attr = j
 `,
 			hcl.Pos{Line: 1, Column: 9, Byte: 8},
@@ -128,7 +132,7 @@ func TestCompletionAtPos_exprAny_functions(t *testing.T) {
 			}),
 		},
 		{
-			"first argument of a function ",
+			"first argument of a function",
 			map[string]*schema.AttributeSchema{
 				"attr": {
 					Constraint: schema.AnyExpression{
@@ -136,10 +140,38 @@ func TestCompletionAtPos_exprAny_functions(t *testing.T) {
 					},
 				},
 			},
+			reference.Targets{
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "foo"},
+						lang.AttrStep{Name: "bar"},
+					},
+					RangePtr: &hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 2, Column: 1, Byte: 17},
+						End:      hcl.Pos{Line: 2, Column: 3, Byte: 19},
+					},
+					Type: cty.String,
+				},
+			},
 			`attr = element()
 `,
 			hcl.Pos{Line: 1, Column: 14, Byte: 15},
 			lang.CompleteCandidates([]lang.Candidate{
+				{
+					Label:  "foo.bar",
+					Detail: "string",
+					Kind:   lang.TraversalCandidateKind,
+					TextEdit: lang.TextEdit{
+						NewText: "foo.bar",
+						Snippet: "foo.bar",
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 1, Column: 14, Byte: 15},
+							End:      hcl.Pos{Line: 1, Column: 14, Byte: 15},
+						},
+					},
+				},
 				{
 					Label:       "element",
 					Detail:      "element(list dynamic, index number) dynamic",
@@ -181,6 +213,7 @@ func TestCompletionAtPos_exprAny_functions(t *testing.T) {
 					},
 				},
 			},
+			reference.Targets{},
 			`attr = element(["e1", "e2"], )
 `,
 			hcl.Pos{Line: 1, Column: 28, Byte: 29},
@@ -241,6 +274,7 @@ func TestCompletionAtPos_exprAny_functions(t *testing.T) {
 					},
 				},
 			},
+			reference.Targets{},
 			`attr = join("-", split())
 `,
 			hcl.Pos{Line: 1, Column: 22, Byte: 23},
@@ -321,7 +355,8 @@ func TestCompletionAtPos_exprAny_functions(t *testing.T) {
 				Files: map[string]*hcl.File{
 					"test.tf": f,
 				},
-				Functions: testFunctionSignatures(),
+				Functions:        testFunctionSignatures(),
+				ReferenceTargets: tc.refTargets,
 			})
 
 			ctx := context.Background()
