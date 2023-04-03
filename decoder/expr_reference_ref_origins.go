@@ -7,6 +7,7 @@ import (
 	"context"
 
 	"github.com/hashicorp/hcl-lang/reference"
+	"github.com/hashicorp/hcl-lang/schema"
 	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hclsyntax"
 	"github.com/hashicorp/hcl/v2/json"
@@ -17,7 +18,7 @@ func (ref Reference) ReferenceOrigins(ctx context.Context, allowSelfRefs bool) r
 	// deal with native HCL syntax first
 	te, ok := ref.expr.(*hclsyntax.ScopeTraversalExpr)
 	if ok {
-		origin, ok := reference.TraversalToLocalOrigin(te.Traversal, ref.cons, allowSelfRefs)
+		origin, ok := reference.TraversalToLocalOrigin(te.Traversal, originConstraintsFromCons(ref.cons), allowSelfRefs)
 		if ok {
 			return reference.Origins{origin}
 		}
@@ -46,7 +47,7 @@ func (ref Reference) ReferenceOrigins(ctx context.Context, allowSelfRefs bool) r
 			}
 
 			if rangesEqual(expectedExprRange, ref.expr.Range()) {
-				origin, ok := reference.TraversalToLocalOrigin(vars[0], ref.cons, allowSelfRefs)
+				origin, ok := reference.TraversalToLocalOrigin(vars[0], originConstraintsFromCons(ref.cons), allowSelfRefs)
 				if ok {
 					return reference.Origins{origin}
 				}
@@ -73,7 +74,7 @@ func (ref Reference) ReferenceOrigins(ctx context.Context, allowSelfRefs bool) r
 		if diags.HasErrors() {
 			return reference.Origins{}
 		}
-		origin, ok := reference.TraversalToLocalOrigin(traversal, ref.cons, allowSelfRefs)
+		origin, ok := reference.TraversalToLocalOrigin(traversal, originConstraintsFromCons(ref.cons), allowSelfRefs)
 		if ok {
 			return reference.Origins{origin}
 		}
@@ -84,4 +85,18 @@ func (ref Reference) ReferenceOrigins(ctx context.Context, allowSelfRefs bool) r
 
 func rangesEqual(first, second hcl.Range) bool {
 	return posEqual(first.Start, second.Start) && posEqual(first.End, second.End)
+}
+
+func originConstraintsFromCons(cons schema.Reference) reference.OriginConstraints {
+	if cons.Address != nil {
+		// skip traversals which are targets by themselves (not origins)
+		return reference.OriginConstraints{}
+	}
+
+	return []reference.OriginConstraint{
+		{
+			OfType:    cons.OfType,
+			OfScopeId: cons.OfScopeId,
+		},
+	}
 }
