@@ -386,6 +386,64 @@ func TestCompletionAtPos_exprAny_functions(t *testing.T) {
 			}),
 		},
 		{
+			"reference as argument partial",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.AnyExpression{
+						OfType: cty.List(cty.String),
+					},
+				},
+			},
+			reference.Targets{
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "lst"},
+					},
+					RangePtr: &hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 2, Column: 5, Byte: 27},
+						End:      hcl.Pos{Line: 2, Column: 15, Byte: 37},
+					},
+					Type: cty.List(cty.String),
+					NestedTargets: reference.Targets{
+						{
+							Addr: lang.Address{
+								lang.RootStep{Name: "var"},
+								lang.AttrStep{Name: "lst"},
+								lang.IndexStep{Key: cty.NumberIntVal(0)},
+							},
+							RangePtr: &hcl.Range{
+								Filename: "test.tf",
+								Start:    hcl.Pos{Line: 2, Column: 8, Byte: 30},
+								End:      hcl.Pos{Line: 2, Column: 13, Byte: 35},
+							},
+							Type: cty.String,
+						},
+					},
+				},
+			},
+			`attr = split(va)
+`,
+			hcl.Pos{Line: 1, Column: 16, Byte: 15},
+			lang.CompleteCandidates([]lang.Candidate{
+				{
+					Label:  "var.lst",
+					Detail: "list of string",
+					Kind:   lang.TraversalCandidateKind,
+					TextEdit: lang.TextEdit{
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 1, Column: 14, Byte: 13},
+							End:      hcl.Pos{Line: 1, Column: 16, Byte: 15},
+						},
+						NewText: "var.lst",
+						Snippet: "var.lst",
+					},
+				},
+			}),
+		},
+		{
 			"reference as argument with trailing dot",
 			map[string]*schema.AttributeSchema{
 				"attr": {
