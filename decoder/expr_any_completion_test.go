@@ -205,6 +205,167 @@ func TestCompletionAtPos_exprAny_functions(t *testing.T) {
 			}),
 		},
 		{
+			"reference as argument with trailing dot",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.AnyExpression{
+						OfType: cty.List(cty.String),
+					},
+				},
+			},
+			reference.Targets{
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "obj"},
+					},
+					RangePtr: &hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 2, Column: 5, Byte: 27},
+						End:      hcl.Pos{Line: 2, Column: 15, Byte: 37},
+					},
+					Type: cty.List(cty.String),
+					NestedTargets: reference.Targets{
+						{
+							Addr: lang.Address{
+								lang.RootStep{Name: "var"},
+								lang.AttrStep{Name: "obj"},
+								lang.AttrStep{Name: "foo"},
+							},
+							RangePtr: &hcl.Range{
+								Filename: "test.tf",
+								Start:    hcl.Pos{Line: 2, Column: 8, Byte: 30},
+								End:      hcl.Pos{Line: 2, Column: 13, Byte: 35},
+							},
+							Type: cty.String,
+						},
+					},
+				},
+			},
+			`attr = split(var.obj.)
+`,
+			hcl.Pos{Line: 1, Column: 22, Byte: 21},
+			lang.CompleteCandidates([]lang.Candidate{
+				{
+					Label:  "var.obj.foo",
+					Detail: "string",
+					Kind:   lang.TraversalCandidateKind,
+					TextEdit: lang.TextEdit{
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 1, Column: 14, Byte: 13},
+							End:      hcl.Pos{Line: 1, Column: 22, Byte: 21},
+						},
+						NewText: "var.obj.foo",
+						Snippet: "var.obj.foo",
+					},
+				},
+			}),
+		},
+		{
+			"reference as argument within brackets",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.AnyExpression{
+						OfType: cty.String,
+					},
+				},
+			},
+			reference.Targets{
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "map"},
+					},
+					RangePtr: &hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 2, Column: 5, Byte: 27},
+						End:      hcl.Pos{Line: 2, Column: 15, Byte: 37},
+					},
+					Type: cty.List(cty.String),
+					NestedTargets: reference.Targets{
+						{
+							Addr: lang.Address{
+								lang.RootStep{Name: "var"},
+								lang.AttrStep{Name: "map"},
+								lang.IndexStep{Key: cty.StringVal("foo")},
+							},
+							RangePtr: &hcl.Range{
+								Filename: "test.tf",
+								Start:    hcl.Pos{Line: 2, Column: 8, Byte: 30},
+								End:      hcl.Pos{Line: 2, Column: 13, Byte: 35},
+							},
+							Type: cty.String,
+						},
+					},
+				},
+			},
+			`attr = split(var.map[])
+`,
+			hcl.Pos{Line: 1, Column: 22, Byte: 21},
+			lang.CompleteCandidates([]lang.Candidate{
+				{
+					Label:  `var.map["foo"]`,
+					Detail: "string",
+					Kind:   lang.TraversalCandidateKind,
+					TextEdit: lang.TextEdit{
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 1, Column: 14, Byte: 13},
+							End:      hcl.Pos{Line: 1, Column: 23, Byte: 22},
+						},
+						NewText: `var.map["foo"]`,
+						Snippet: `var.map["foo"]`,
+					},
+				},
+			}),
+		},
+		{
+			"reference as argument with trailing bracket",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.AnyExpression{
+						OfType: cty.String,
+					},
+				},
+			},
+			reference.Targets{
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "obj"},
+					},
+					RangePtr: &hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 2, Column: 5, Byte: 27},
+						End:      hcl.Pos{Line: 2, Column: 15, Byte: 37},
+					},
+					Type: cty.List(cty.String),
+					NestedTargets: reference.Targets{
+						{
+							Addr: lang.Address{
+								lang.RootStep{Name: "var"},
+								lang.AttrStep{Name: "obj"},
+								lang.IndexStep{Key: cty.StringVal("foo")},
+							},
+							RangePtr: &hcl.Range{
+								Filename: "test.tf",
+								Start:    hcl.Pos{Line: 2, Column: 8, Byte: 30},
+								End:      hcl.Pos{Line: 2, Column: 13, Byte: 35},
+							},
+							Type: cty.String,
+						},
+					},
+				},
+			},
+			`attr = split(var.map[)
+`,
+			hcl.Pos{Line: 1, Column: 22, Byte: 21},
+			lang.CompleteCandidates([]lang.Candidate{
+				// TODO: See https://github.com/hashicorp/hcl/issues/604
+			}),
+		},
+		{
 			"second argument of a function ",
 			map[string]*schema.AttributeSchema{
 				"attr": {

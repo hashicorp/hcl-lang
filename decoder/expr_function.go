@@ -65,6 +65,7 @@ func (fe functionExpr) CompletionAtPos(ctx context.Context, pos hcl.Pos) []lang.
 			return []lang.Candidate{} // Function accepts no parameters
 		}
 
+		var lastArgExpr hcl.Expression
 		lastArgEndPos := eType.OpenParenRange.Start
 		lastArgIdx := 0
 		for i, arg := range eType.Args {
@@ -86,6 +87,7 @@ func (fe functionExpr) CompletionAtPos(ctx context.Context, pos hcl.Pos) []lang.
 				cons := newExpression(fe.pathCtx, arg, schema.AnyExpression{OfType: param.Type})
 				return cons.CompletionAtPos(ctx, pos)
 			}
+			lastArgExpr = arg
 			lastArgEndPos = arg.Range().End
 			lastArgIdx = i
 		}
@@ -96,9 +98,15 @@ func (fe functionExpr) CompletionAtPos(ctx context.Context, pos hcl.Pos) []lang.
 		})
 		trimmedBytes := bytes.TrimRight(recoveredBytes, " \t\n")
 
-		activePar := 0 // default to first parameter
+		activePar := lastArgIdx // default to last seen parameter
+		elemExpr := newEmptyExpressionAtPos(fe.expr.Range().Filename, pos)
 		if string(trimmedBytes) == "," {
 			activePar = lastArgIdx + 1
+		} else if len(recoveredBytes) == 0 && lastArgExpr != nil {
+			// We were unable to recover any bytes, which suggests
+			// we're still (partially) completing the last argument.
+			// A common case is trailing dot in func_call(var.foo.)
+			elemExpr = lastArgExpr
 		}
 
 		var param function.Parameter
@@ -111,9 +119,7 @@ func (fe functionExpr) CompletionAtPos(ctx context.Context, pos hcl.Pos) []lang.
 			return []lang.Candidate{}
 		}
 
-		// TODO: Check whether we may be near incomplete expression (e.g. dot)
-
-		cons := newExpression(fe.pathCtx, newEmptyExpressionAtPos(eType.Range().Filename, pos), schema.AnyExpression{OfType: param.Type})
+		cons := newExpression(fe.pathCtx, elemExpr, schema.AnyExpression{OfType: param.Type})
 		return cons.CompletionAtPos(ctx, pos)
 	}
 	return []lang.Candidate{}
