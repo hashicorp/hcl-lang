@@ -37,6 +37,7 @@ func (fe functionExpr) CompletionAtPos(ctx context.Context, pos hcl.Pos) []lang.
 	switch eType := fe.expr.(type) {
 	case *hclsyntax.ScopeTraversalExpr:
 		if len(eType.Traversal) > 1 {
+			// We assume that function names cannot contain dots
 			return []lang.Candidate{}
 		}
 		prefixLen := pos.Byte - eType.Traversal.SourceRange().Start.Byte
