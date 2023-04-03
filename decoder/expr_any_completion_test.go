@@ -25,7 +25,7 @@ func TestCompletionAtPos_exprAny_functions(t *testing.T) {
 		expectedCandidates lang.Candidates
 	}{
 		{
-			"list of functions",
+			"list of string functions",
 			map[string]*schema.AttributeSchema{
 				"attr": {
 					Constraint: schema.AnyExpression{
@@ -84,6 +84,21 @@ func TestCompletionAtPos_exprAny_functions(t *testing.T) {
 					},
 				},
 				{
+					Label:       "log",
+					Detail:      "log(num number, base number) number",
+					Description: lang.Markdown("`log` returns the logarithm of a given number in a given base."),
+					Kind:        lang.FunctionCandidateKind,
+					TextEdit: lang.TextEdit{
+						NewText: "log()",
+						Snippet: "log(${0})",
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 1, Column: 8, Byte: 7},
+							End:      hcl.Pos{Line: 1, Column: 8, Byte: 7},
+						},
+					},
+				},
+				{
 					Label:       "lower",
 					Detail:      "lower(str string) string",
 					Description: lang.Markdown("`lower` converts all cased letters in the given string to lowercase."),
@@ -91,6 +106,112 @@ func TestCompletionAtPos_exprAny_functions(t *testing.T) {
 					TextEdit: lang.TextEdit{
 						NewText: "lower()",
 						Snippet: "lower(${0})",
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 1, Column: 8, Byte: 7},
+							End:      hcl.Pos{Line: 1, Column: 8, Byte: 7},
+						},
+					},
+				},
+			}),
+		},
+		{
+			"list of any functions",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.AnyExpression{
+						OfType: cty.DynamicPseudoType,
+					},
+				},
+			},
+			reference.Targets{},
+			`attr = 
+`,
+			hcl.Pos{Line: 1, Column: 8, Byte: 7},
+			lang.CompleteCandidates([]lang.Candidate{
+				{
+					Label:       "element",
+					Detail:      "element(list dynamic, index number) dynamic",
+					Description: lang.Markdown("`element` retrieves a single element from a list."),
+					Kind:        lang.FunctionCandidateKind,
+					TextEdit: lang.TextEdit{
+						NewText: "element()",
+						Snippet: "element(${0})",
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 1, Column: 8, Byte: 7},
+							End:      hcl.Pos{Line: 1, Column: 8, Byte: 7},
+						},
+					},
+				},
+				{
+					Label:       "join",
+					Detail:      "join(separator string, …lists list of string) string",
+					Description: lang.Markdown("`join` produces a string by concatenating together all elements of a given list of strings with the given delimiter."),
+					Kind:        lang.FunctionCandidateKind,
+					TextEdit: lang.TextEdit{
+						NewText: "join()",
+						Snippet: "join(${0})",
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 1, Column: 8, Byte: 7},
+							End:      hcl.Pos{Line: 1, Column: 8, Byte: 7},
+						},
+					},
+				},
+				{
+					Label:       "keys",
+					Detail:      "keys(inputMap dynamic) dynamic",
+					Description: lang.Markdown("`keys` takes a map and returns a list containing the keys from that map."),
+					Kind:        lang.FunctionCandidateKind,
+					TextEdit: lang.TextEdit{
+						NewText: "keys()",
+						Snippet: "keys(${0})",
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 1, Column: 8, Byte: 7},
+							End:      hcl.Pos{Line: 1, Column: 8, Byte: 7},
+						},
+					},
+				},
+				{
+					Label:       "log",
+					Detail:      "log(num number, base number) number",
+					Description: lang.Markdown("`log` returns the logarithm of a given number in a given base."),
+					Kind:        lang.FunctionCandidateKind,
+					TextEdit: lang.TextEdit{
+						NewText: "log()",
+						Snippet: "log(${0})",
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 1, Column: 8, Byte: 7},
+							End:      hcl.Pos{Line: 1, Column: 8, Byte: 7},
+						},
+					},
+				},
+				{
+					Label:       "lower",
+					Detail:      "lower(str string) string",
+					Description: lang.Markdown("`lower` converts all cased letters in the given string to lowercase."),
+					Kind:        lang.FunctionCandidateKind,
+					TextEdit: lang.TextEdit{
+						NewText: "lower()",
+						Snippet: "lower(${0})",
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 1, Column: 8, Byte: 7},
+							End:      hcl.Pos{Line: 1, Column: 8, Byte: 7},
+						},
+					},
+				},
+				{
+					Label:       "split",
+					Detail:      "split(separator string, str string) list of string",
+					Description: lang.Markdown("`split` produces a list by dividing a given string at all occurrences of a given separator."),
+					Kind:        lang.FunctionCandidateKind,
+					TextEdit: lang.TextEdit{
+						NewText: "split()",
+						Snippet: "split(${0})",
 						Range: hcl.Range{
 							Filename: "test.tf",
 							Start:    hcl.Pos{Line: 1, Column: 8, Byte: 7},
@@ -188,6 +309,21 @@ func TestCompletionAtPos_exprAny_functions(t *testing.T) {
 					},
 				},
 				{
+					Label:       "join",
+					Detail:      "join(separator string, …lists list of string) string",
+					Description: lang.Markdown("`join` produces a string by concatenating together all elements of a given list of strings with the given delimiter."),
+					Kind:        lang.FunctionCandidateKind,
+					TextEdit: lang.TextEdit{
+						NewText: "join()",
+						Snippet: "join(${0})",
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 1, Column: 14, Byte: 15},
+							End:      hcl.Pos{Line: 1, Column: 14, Byte: 15},
+						},
+					},
+				},
+				{
 					Label:       "keys",
 					Detail:      "keys(inputMap dynamic) dynamic",
 					Description: lang.Markdown("`keys` takes a map and returns a list containing the keys from that map."),
@@ -195,6 +331,51 @@ func TestCompletionAtPos_exprAny_functions(t *testing.T) {
 					TextEdit: lang.TextEdit{
 						NewText: "keys()",
 						Snippet: "keys(${0})",
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 1, Column: 14, Byte: 15},
+							End:      hcl.Pos{Line: 1, Column: 14, Byte: 15},
+						},
+					},
+				},
+				{
+					Label:       "log",
+					Detail:      "log(num number, base number) number",
+					Description: lang.Markdown("`log` returns the logarithm of a given number in a given base."),
+					Kind:        lang.FunctionCandidateKind,
+					TextEdit: lang.TextEdit{
+						NewText: "log()",
+						Snippet: "log(${0})",
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 1, Column: 14, Byte: 15},
+							End:      hcl.Pos{Line: 1, Column: 14, Byte: 15},
+						},
+					},
+				},
+				{
+					Label:       "lower",
+					Detail:      "lower(str string) string",
+					Description: lang.Markdown("`lower` converts all cased letters in the given string to lowercase."),
+					Kind:        lang.FunctionCandidateKind,
+					TextEdit: lang.TextEdit{
+						NewText: "lower()",
+						Snippet: "lower(${0})",
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 1, Column: 14, Byte: 15},
+							End:      hcl.Pos{Line: 1, Column: 14, Byte: 15},
+						},
+					},
+				},
+				{
+					Label:       "split",
+					Detail:      "split(separator string, str string) list of string",
+					Description: lang.Markdown("`split` produces a list by dividing a given string at all occurrences of a given separator."),
+					Kind:        lang.FunctionCandidateKind,
+					TextEdit: lang.TextEdit{
+						NewText: "split()",
+						Snippet: "split(${0})",
 						Range: hcl.Range{
 							Filename: "test.tf",
 							Start:    hcl.Pos{Line: 1, Column: 14, Byte: 15},
@@ -366,7 +547,7 @@ func TestCompletionAtPos_exprAny_functions(t *testing.T) {
 			}),
 		},
 		{
-			"second argument of a function ",
+			"second number argument of a function",
 			map[string]*schema.AttributeSchema{
 				"attr": {
 					Constraint: schema.AnyExpression{
@@ -387,6 +568,21 @@ func TestCompletionAtPos_exprAny_functions(t *testing.T) {
 					TextEdit: lang.TextEdit{
 						NewText: "element()",
 						Snippet: "element(${0})",
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 1, Column: 28, Byte: 29},
+							End:      hcl.Pos{Line: 1, Column: 28, Byte: 29},
+						},
+					},
+				},
+				{
+					Label:       "join",
+					Detail:      "join(separator string, …lists list of string) string",
+					Description: lang.Markdown("`join` produces a string by concatenating together all elements of a given list of strings with the given delimiter."),
+					Kind:        lang.FunctionCandidateKind,
+					TextEdit: lang.TextEdit{
+						NewText: "join()",
+						Snippet: "join(${0})",
 						Range: hcl.Range{
 							Filename: "test.tf",
 							Start:    hcl.Pos{Line: 1, Column: 28, Byte: 29},
@@ -424,10 +620,25 @@ func TestCompletionAtPos_exprAny_functions(t *testing.T) {
 						},
 					},
 				},
+				{
+					Label:       "lower",
+					Detail:      "lower(str string) string",
+					Description: lang.Markdown("`lower` converts all cased letters in the given string to lowercase."),
+					Kind:        lang.FunctionCandidateKind,
+					TextEdit: lang.TextEdit{
+						NewText: "lower()",
+						Snippet: "lower(${0})",
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 1, Column: 28, Byte: 29},
+							End:      hcl.Pos{Line: 1, Column: 28, Byte: 29},
+						},
+					},
+				},
 			}),
 		},
 		{
-			"nested functions",
+			"nested functions with string constraint",
 			map[string]*schema.AttributeSchema{
 				"attr": {
 					Constraint: schema.AnyExpression{
@@ -478,6 +689,21 @@ func TestCompletionAtPos_exprAny_functions(t *testing.T) {
 					TextEdit: lang.TextEdit{
 						NewText: "keys()",
 						Snippet: "keys(${0})",
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 1, Column: 22, Byte: 23},
+							End:      hcl.Pos{Line: 1, Column: 22, Byte: 23},
+						},
+					},
+				},
+				{
+					Label:       "log",
+					Detail:      "log(num number, base number) number",
+					Description: lang.Markdown("`log` returns the logarithm of a given number in a given base."),
+					Kind:        lang.FunctionCandidateKind,
+					TextEdit: lang.TextEdit{
+						NewText: "log()",
+						Snippet: "log(${0})",
 						Range: hcl.Range{
 							Filename: "test.tf",
 							Start:    hcl.Pos{Line: 1, Column: 22, Byte: 23},

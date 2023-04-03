@@ -13,6 +13,7 @@ import (
 	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hclsyntax"
 	"github.com/zclconf/go-cty/cty"
+	"github.com/zclconf/go-cty/cty/convert"
 	"github.com/zclconf/go-cty/cty/function"
 )
 
@@ -264,8 +265,8 @@ func (fe functionExpr) matchingFunctions(prefix string, editRange hcl.Range) []l
 		if !strings.HasPrefix(name, prefix) {
 			continue
 		}
-		// Only suggest functions that have a matching return type
-		if fe.returnType.TestConformance(f.ReturnType) != nil {
+		// Reject functions that have a non-convertible return type
+		if _, err := convert.Convert(cty.UnknownVal(f.ReturnType), fe.returnType); err != nil {
 			continue
 		}
 
