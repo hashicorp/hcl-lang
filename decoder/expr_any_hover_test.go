@@ -59,10 +59,72 @@ func TestHoverAtPos_exprAny_functions(t *testing.T) {
 				},
 			},
 		},
+		{
+			"over parameter",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.AnyExpression{
+						OfType: cty.String,
+					},
+				},
+			},
+			`attr = join(",", ["a", "b"])
+`,
+			hcl.Pos{Line: 1, Column: 15, Byte: 14},
+			&lang.HoverData{
+				Content: lang.MarkupContent{
+					Value: "_string_",
+					Kind:  lang.MarkdownKind,
+				},
+				Range: hcl.Range{
+					Filename: "test.tf",
+					Start:    hcl.Pos{Line: 1, Column: 13, Byte: 12},
+					End:      hcl.Pos{Line: 1, Column: 16, Byte: 15},
+				},
+			},
+		},
+		{
+			"over complex variadic parameter",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.AnyExpression{
+						OfType: cty.String,
+					},
+				},
+			},
+			`attr = join(",", ["a", "b"])
+`,
+			hcl.Pos{Line: 1, Column: 21, Byte: 20},
+			&lang.HoverData{
+				Content: lang.MarkupContent{
+					Value: "_string_",
+					Kind:  lang.MarkdownKind,
+				},
+				Range: hcl.Range{
+					Filename: "test.tf",
+					Start:    hcl.Pos{Line: 1, Column: 19, Byte: 18},
+					End:      hcl.Pos{Line: 1, Column: 22, Byte: 21},
+				},
+			},
+		},
+		{
+			"over too many arguments",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.AnyExpression{
+						OfType: cty.String,
+					},
+				},
+			},
+			`attr = lower("FOO", "BAR")
+`,
+			hcl.Pos{Line: 1, Column: 24, Byte: 23},
+			nil,
+		},
 	}
 
 	for i, tc := range testCases {
-		t.Run(fmt.Sprintf("%d-%s", i, tc.testName), func(t *testing.T) {
+		t.Run(fmt.Sprintf("%2d-%s", i, tc.testName), func(t *testing.T) {
 			bodySchema := &schema.BodySchema{
 				Attributes: tc.attrSchema,
 			}
