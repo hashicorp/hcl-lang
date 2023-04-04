@@ -1410,7 +1410,7 @@ func TestLegacyDecoder_HoverAtPos_traversalExpressions(t *testing.T) {
 						lang.RootStep{Name: "var"},
 						lang.AttrStep{Name: "blah"},
 					},
-					Type: cty.Bool,
+					Type: cty.List(cty.Bool),
 				},
 			},
 			reference.Origins{

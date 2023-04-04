@@ -738,6 +738,13 @@ func TestTargets_LegacyMatchWalk(t *testing.T) {
 					},
 					Type: cty.String,
 				},
+				Target{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "another"},
+					},
+					Type: cty.List(cty.String),
+				},
 			},
 			schema.TraversalExpr{
 				OfType: cty.String,
@@ -754,6 +761,13 @@ func TestTargets_LegacyMatchWalk(t *testing.T) {
 				End:      hcl.InitialPos,
 			},
 			Targets{
+				Target{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "first"},
+					},
+					Type: cty.Bool,
+				},
 				Target{
 					Addr: lang.Address{
 						lang.RootStep{Name: "var"},
