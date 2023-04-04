@@ -186,9 +186,7 @@ func (fe functionExpr) SemanticTokens(ctx context.Context) []lang.SemanticToken 
 	tokens := make([]lang.SemanticToken, 0)
 
 	tokens = append(tokens, lang.SemanticToken{
-		// TODO? if we introduce a new token type, we need to add it in the extension's package.json and docs
-		// Type:      lang.TokenFuncCall,
-		Type:      lang.TokenAttrName,
+		Type:      lang.TokenFunctionName,
 		Modifiers: []lang.SemanticTokenModifier{},
 		Range:     funcExpr.NameRange,
 	})

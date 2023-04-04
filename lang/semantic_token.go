@@ -33,6 +33,7 @@ const (
 	TokenTraversalStep SemanticTokenType = "hcl-traversalStep"
 	TokenTypeCapsule   SemanticTokenType = "hcl-typeCapsule"
 	TokenTypePrimitive SemanticTokenType = "hcl-typePrimitive"
+	TokenFunctionName  SemanticTokenType = "hcl-functionName"
 )
 
 var SupportedSemanticTokenTypes = SemanticTokenTypes{
@@ -48,6 +49,7 @@ var SupportedSemanticTokenTypes = SemanticTokenTypes{
 	TokenTraversalStep,
 	TokenTypeCapsule,
 	TokenTypePrimitive,
+	TokenFunctionName,
 }
 
 type SemanticTokenModifier string
