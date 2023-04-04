@@ -789,7 +789,7 @@ func TestCompletionAtPos_exprAny_functions(t *testing.T) {
 	}
 
 	for i, tc := range testCases {
-		t.Run(fmt.Sprintf("%d-%s", i, tc.testName), func(t *testing.T) {
+		t.Run(fmt.Sprintf("%2d-%s", i, tc.testName), func(t *testing.T) {
 			bodySchema := &schema.BodySchema{
 				Attributes: tc.attrSchema,
 			}
