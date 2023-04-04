@@ -14,7 +14,7 @@ func (a Any) SemanticTokens(ctx context.Context) []lang.SemanticToken {
 	if typ.IsListType() {
 		expr, ok := a.expr.(*hclsyntax.TupleConsExpr)
 		if !ok {
-			return []lang.SemanticToken{}
+			return a.semanticTokensForNonComplexExpr(ctx)
 		}
 
 		cons := schema.List{
@@ -29,7 +29,7 @@ func (a Any) SemanticTokens(ctx context.Context) []lang.SemanticToken {
 	if typ.IsSetType() {
 		expr, ok := a.expr.(*hclsyntax.TupleConsExpr)
 		if !ok {
-			return []lang.SemanticToken{}
+			return a.semanticTokensForNonComplexExpr(ctx)
 		}
 
 		cons := schema.Set{
@@ -44,7 +44,7 @@ func (a Any) SemanticTokens(ctx context.Context) []lang.SemanticToken {
 	if typ.IsTupleType() {
 		expr, ok := a.expr.(*hclsyntax.TupleConsExpr)
 		if !ok {
-			return []lang.SemanticToken{}
+			return a.semanticTokensForNonComplexExpr(ctx)
 		}
 
 		elemTypes := typ.TupleElementTypes()
@@ -63,7 +63,7 @@ func (a Any) SemanticTokens(ctx context.Context) []lang.SemanticToken {
 	if typ.IsMapType() {
 		expr, ok := a.expr.(*hclsyntax.ObjectConsExpr)
 		if !ok {
-			return []lang.SemanticToken{}
+			return a.semanticTokensForNonComplexExpr(ctx)
 		}
 
 		cons := schema.Map{
@@ -77,7 +77,7 @@ func (a Any) SemanticTokens(ctx context.Context) []lang.SemanticToken {
 	if typ.IsObjectType() {
 		expr, ok := a.expr.(*hclsyntax.ObjectConsExpr)
 		if !ok {
-			return []lang.SemanticToken{}
+			return a.semanticTokensForNonComplexExpr(ctx)
 		}
 
 		cons := schema.Object{
@@ -104,7 +104,7 @@ func (a Any) semanticTokensForNonComplexExpr(ctx context.Context) []lang.Semanti
 		pathCtx: a.pathCtx,
 	}
 	tokens := ref.SemanticTokens(ctx)
-	if tokens != nil {
+	if len(tokens) > 0 {
 		return tokens
 	}
 
@@ -114,7 +114,7 @@ func (a Any) semanticTokensForNonComplexExpr(ctx context.Context) []lang.Semanti
 		pathCtx:    a.pathCtx,
 	}
 	tokens = fe.SemanticTokens(ctx)
-	if tokens != nil {
+	if len(tokens) > 0 {
 		return tokens
 	}
 
