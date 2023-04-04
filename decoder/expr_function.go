@@ -40,9 +40,17 @@ func (fe functionExpr) CompletionAtPos(ctx context.Context, pos hcl.Pos) []lang.
 			// We assume that function names cannot contain dots
 			return []lang.Candidate{}
 		}
-		prefixLen := pos.Byte - eType.Traversal.SourceRange().Start.Byte
-		prefix := eType.Traversal.RootName()[0:prefixLen]
 
+		prefixLen := pos.Byte - eType.Traversal.SourceRange().Start.Byte
+		rootName := eType.Traversal.RootName()
+
+		// There can be a single segment with trailing dot which cannot
+		// be a function anymore as functions cannot contain dots.
+		if prefixLen > len(rootName) {
+			return []lang.Candidate{}
+		}
+
+		prefix := rootName[0:prefixLen]
 		return fe.matchingFunctions(prefix, eType.Range())
 	case *hclsyntax.FunctionCallExpr:
 		if eType.NameRange.ContainsPos(pos) {

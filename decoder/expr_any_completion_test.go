@@ -481,22 +481,22 @@ func TestCompletionAtPos_exprAny_functions(t *testing.T) {
 					},
 				},
 			},
-			`attr = split(var.obj.)
+			`attr = split(var.)
 `,
-			hcl.Pos{Line: 1, Column: 22, Byte: 21},
+			hcl.Pos{Line: 1, Column: 18, Byte: 17},
 			lang.CompleteCandidates([]lang.Candidate{
 				{
-					Label:  "var.obj.foo",
-					Detail: "string",
+					Label:  "var.obj",
+					Detail: "list of string",
 					Kind:   lang.TraversalCandidateKind,
 					TextEdit: lang.TextEdit{
 						Range: hcl.Range{
 							Filename: "test.tf",
 							Start:    hcl.Pos{Line: 1, Column: 14, Byte: 13},
-							End:      hcl.Pos{Line: 1, Column: 22, Byte: 21},
+							End:      hcl.Pos{Line: 1, Column: 18, Byte: 17},
 						},
-						NewText: "var.obj.foo",
-						Snippet: "var.obj.foo",
+						NewText: "var.obj",
+						Snippet: "var.obj",
 					},
 				},
 			}),
