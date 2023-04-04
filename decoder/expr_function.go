@@ -148,7 +148,6 @@ func (fe functionExpr) HoverAtPos(ctx context.Context, pos hcl.Pos) *lang.HoverD
 
 	if funcExpr.NameRange.ContainsPos(pos) {
 		return &lang.HoverData{
-			// TODO? add link to docs
 			Content: lang.Markdown(fmt.Sprintf("```terraform\n%s(%s) %s\n```\n\n%s",
 				funcExpr.Name, parameterNamesAsString(funcSig), funcSig.ReturnType.FriendlyName(), funcSig.Description)),
 			Range: fe.expr.Range(),
@@ -248,7 +247,6 @@ func (fe functionExpr) ReferenceOrigins(ctx context.Context, allowSelfRefs bool)
 			param = *funcSig.VarParam
 		} else {
 			// Too many arguments passed to the function
-			// TODO: report as 'any' constraint?
 			break
 		}
 
@@ -277,7 +275,6 @@ func (fe functionExpr) matchingFunctions(prefix string, editRange hcl.Range) []l
 			continue
 		}
 
-		// TODO? see why accepting a completion isn't triggering signatureHelp (it does for gopls)
 		candidates = append(candidates, lang.Candidate{
 			Label:       name,
 			Detail:      fmt.Sprintf("%s(%s) %s", name, parameterNamesAsString(f), f.ReturnType.FriendlyName()),
