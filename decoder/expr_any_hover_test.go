@@ -36,7 +36,7 @@ func TestHoverAtPos_exprAny_functions(t *testing.T) {
 			nil,
 		},
 		{
-			"over name",
+			"over function name",
 			map[string]*schema.AttributeSchema{
 				"attr": {
 					Constraint: schema.AnyExpression{
@@ -60,7 +60,7 @@ func TestHoverAtPos_exprAny_functions(t *testing.T) {
 			},
 		},
 		{
-			"over parameter",
+			"over function parameter",
 			map[string]*schema.AttributeSchema{
 				"attr": {
 					Constraint: schema.AnyExpression{
@@ -119,6 +119,20 @@ func TestHoverAtPos_exprAny_functions(t *testing.T) {
 			`attr = lower("FOO", "BAR")
 `,
 			hcl.Pos{Line: 1, Column: 24, Byte: 23},
+			nil,
+		},
+		{
+			"over mismatching argument",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.AnyExpression{
+						OfType: cty.String,
+					},
+				},
+			},
+			`attr = lower(["FOO"])
+`,
+			hcl.Pos{Line: 1, Column: 17, Byte: 16},
 			nil,
 		},
 	}
