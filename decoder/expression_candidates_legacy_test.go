@@ -1478,7 +1478,7 @@ func TestLegacyDecoder_CandidateAtPos_traversalExpressions(t *testing.T) {
 				Attributes: map[string]*schema.AttributeSchema{
 					"attr": {
 						Expr: schema.ExprConstraints{
-							schema.TraversalExpr{OfType: cty.String},
+							schema.TraversalExpr{OfType: cty.List(cty.String)},
 						},
 					},
 				},
@@ -1521,7 +1521,7 @@ func TestLegacyDecoder_CandidateAtPos_traversalExpressions(t *testing.T) {
 						lang.RootStep{Name: "var"},
 						lang.AttrStep{Name: "first"},
 					},
-					Type: cty.Bool,
+					Type: cty.List(cty.Number),
 				},
 				reference.Target{
 					Addr: lang.Address{

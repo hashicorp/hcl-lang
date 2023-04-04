@@ -10,6 +10,7 @@ import (
 	"github.com/hashicorp/hcl-lang/schema"
 	"github.com/hashicorp/hcl/v2"
 	"github.com/zclconf/go-cty/cty"
+	"github.com/zclconf/go-cty/cty/convert"
 )
 
 type Target struct {
@@ -141,30 +142,30 @@ func (r Target) TargetRange() (hcl.Range, bool) {
 }
 
 func (target Target) MatchesConstraint(ref schema.Reference) bool {
-	return target.MatchesScopeId(ref.OfScopeId) && target.ConformsToType(ref.OfType)
+	return target.MatchesScopeId(ref.OfScopeId) && target.IsConvertibleToType(ref.OfType)
 }
 
 func (ref Target) LegacyMatchesConstraint(te schema.TraversalExpr) bool {
-	return ref.MatchesScopeId(te.OfScopeId) && ref.ConformsToType(te.OfType)
+	return ref.MatchesScopeId(te.OfScopeId) && ref.IsConvertibleToType(te.OfType)
 }
 
 func (ref Target) MatchesScopeId(scopeId lang.ScopeId) bool {
 	return scopeId == "" || ref.ScopeId == scopeId
 }
 
-func (ref Target) ConformsToType(typ cty.Type) bool {
-	conformsToType := false
+func (ref Target) IsConvertibleToType(typ cty.Type) bool {
+	isConvertible := false
 	if typ != cty.NilType && ref.Type != cty.NilType {
 		if ref.Type == cty.DynamicPseudoType {
-			// anything conforms with dynamic
-			conformsToType = true
+			// anything is convertible to dynamic
+			isConvertible = true
 		}
-		if errs := ref.Type.TestConformance(typ); len(errs) == 0 {
-			conformsToType = true
+		if _, err := convert.Convert(cty.UnknownVal(ref.Type), typ); err == nil {
+			isConvertible = true
 		}
 	}
 
-	return conformsToType || (typ == cty.NilType && ref.Type == cty.NilType)
+	return isConvertible || (typ == cty.NilType && ref.Type == cty.NilType)
 }
 
 func (target Target) Matches(origin MatchableOrigin) bool {
@@ -202,7 +203,7 @@ func (target Target) Matches(origin MatchableOrigin) bool {
 			matchesCons = true
 			continue
 		}
-		if cons.OfType != cty.NilType && target.ConformsToType(cons.OfType) {
+		if cons.OfType != cty.NilType && target.IsConvertibleToType(cons.OfType) {
 			matchesCons = true
 		}
 		if cons.OfType == cty.NilType && target.Type == cty.NilType {

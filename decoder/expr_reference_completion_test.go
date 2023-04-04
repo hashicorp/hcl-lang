@@ -48,6 +48,13 @@ func TestCompletionAtPos_exprReference(t *testing.T) {
 						lang.RootStep{Name: "local"},
 						lang.AttrStep{Name: "bar"},
 					},
+					Type: cty.List(cty.Number),
+				},
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "local"},
+						lang.AttrStep{Name: "baz"},
+					},
 					Type: cty.Number,
 				},
 			},
@@ -61,6 +68,20 @@ func TestCompletionAtPos_exprReference(t *testing.T) {
 					TextEdit: lang.TextEdit{
 						NewText: "local.foo",
 						Snippet: "local.foo",
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 1, Column: 8, Byte: 7},
+							End:      hcl.Pos{Line: 1, Column: 8, Byte: 7},
+						},
+					},
+				},
+				{
+					Label:  "local.baz",
+					Detail: "number",
+					Kind:   lang.TraversalCandidateKind,
+					TextEdit: lang.TextEdit{
+						NewText: "local.baz",
+						Snippet: "local.baz",
 						Range: hcl.Range{
 							Filename: "test.tf",
 							Start:    hcl.Pos{Line: 1, Column: 8, Byte: 7},
@@ -85,7 +106,7 @@ func TestCompletionAtPos_exprReference(t *testing.T) {
 						lang.RootStep{Name: "local"},
 						lang.AttrStep{Name: "foo"},
 					},
-					Type: cty.String,
+					Type: cty.List(cty.String),
 				},
 				{
 					Addr: lang.Address{
@@ -143,7 +164,7 @@ func TestCompletionAtPos_exprReference(t *testing.T) {
 						lang.RootStep{Name: "local"},
 						lang.AttrStep{Name: "bar"},
 					},
-					Type: cty.Number,
+					Type: cty.List(cty.Number),
 				},
 				{
 					Addr: lang.Address{
@@ -194,7 +215,7 @@ func TestCompletionAtPos_exprReference(t *testing.T) {
 						lang.RootStep{Name: "local"},
 						lang.AttrStep{Name: "bar"},
 					},
-					Type: cty.Number,
+					Type: cty.List(cty.Number),
 				},
 				{
 					Addr: lang.Address{
