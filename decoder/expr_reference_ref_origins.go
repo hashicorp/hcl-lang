@@ -93,7 +93,7 @@ func originConstraintsFromCons(cons schema.Reference) reference.OriginConstraint
 		return reference.OriginConstraints{}
 	}
 
-	return []reference.OriginConstraint{
+	return reference.OriginConstraints{
 		{
 			OfType:    cons.OfType,
 			OfScopeId: cons.OfScopeId,

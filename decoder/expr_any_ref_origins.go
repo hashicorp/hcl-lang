@@ -5,6 +5,7 @@ import (
 
 	"github.com/hashicorp/hcl-lang/reference"
 	"github.com/hashicorp/hcl-lang/schema"
+	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hclsyntax"
 	"github.com/zclconf/go-cty/cty"
 )
@@ -127,6 +128,14 @@ func (a Any) refOriginsForNonComplexExpr(ctx context.Context, allowSelfRefs bool
 	}
 	origins := funcExpr.ReferenceOrigins(ctx, allowSelfRefs)
 	if len(origins) > 0 {
+		return origins
+	}
+
+	// If we're dealing with a valid function call expression that doesn't contain
+	// any origins, there is no more work todo here and nothing below would match,
+	// so we can return early.
+	_, diags := hcl.ExprCall(a.expr)
+	if !diags.HasErrors() {
 		return origins
 	}
 
