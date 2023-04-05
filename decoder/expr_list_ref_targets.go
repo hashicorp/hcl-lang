@@ -14,6 +14,10 @@ import (
 )
 
 func (list List) ReferenceTargets(ctx context.Context, targetCtx *TargetContext) reference.Targets {
+	if isEmptyExpression(list.expr) && targetCtx != nil {
+		return list.wholeListReferenceTargets(targetCtx, nil)
+	}
+
 	elems, diags := hcl.ExprList(list.expr)
 	if diags.HasErrors() {
 		return reference.Targets{}
@@ -49,54 +53,57 @@ func (list List) ReferenceTargets(ctx context.Context, targetCtx *TargetContext)
 		}
 	}
 
+	if targetCtx == nil {
+		// treat element targets as 1st class ones
+		// if the list itself isn't targetable
+		return elemTargets
+	}
+
+	return list.wholeListReferenceTargets(targetCtx, elemTargets)
+}
+
+func (list List) wholeListReferenceTargets(targetCtx *TargetContext, nestedTargets reference.Targets) reference.Targets {
 	targets := make(reference.Targets, 0)
 
-	if targetCtx != nil {
-		// collect target for the whole list
+	// collect target for the whole list
+	var rangePtr *hcl.Range
+	if targetCtx.ParentRangePtr != nil {
+		rangePtr = targetCtx.ParentRangePtr
+	} else {
+		rangePtr = list.expr.Range().Ptr()
+	}
 
-		var rangePtr *hcl.Range
-		if targetCtx.ParentRangePtr != nil {
-			rangePtr = targetCtx.ParentRangePtr
-		} else {
-			rangePtr = list.expr.Range().Ptr()
-		}
-
-		// type-aware
-		elemCons, ok := list.cons.Elem.(schema.TypeAwareConstraint)
-		if targetCtx.AsExprType && ok {
-			elemType, ok := elemCons.ConstraintType()
-			if ok {
-				targets = append(targets, reference.Target{
-					Addr:                   targetCtx.ParentAddress,
-					Name:                   targetCtx.FriendlyName,
-					Type:                   cty.List(elemType),
-					ScopeId:                targetCtx.ScopeId,
-					RangePtr:               rangePtr,
-					DefRangePtr:            targetCtx.ParentDefRangePtr,
-					NestedTargets:          elemTargets,
-					LocalAddr:              targetCtx.ParentLocalAddress,
-					TargetableFromRangePtr: targetCtx.TargetableFromRangePtr,
-				})
-			}
-		}
-
-		// type-unaware
-		if targetCtx.AsReference {
+	// type-aware
+	elemCons, ok := list.cons.Elem.(schema.TypeAwareConstraint)
+	if targetCtx.AsExprType && ok {
+		elemType, ok := elemCons.ConstraintType()
+		if ok {
 			targets = append(targets, reference.Target{
 				Addr:                   targetCtx.ParentAddress,
 				Name:                   targetCtx.FriendlyName,
+				Type:                   cty.List(elemType),
 				ScopeId:                targetCtx.ScopeId,
 				RangePtr:               rangePtr,
 				DefRangePtr:            targetCtx.ParentDefRangePtr,
-				NestedTargets:          elemTargets,
+				NestedTargets:          nestedTargets,
 				LocalAddr:              targetCtx.ParentLocalAddress,
 				TargetableFromRangePtr: targetCtx.TargetableFromRangePtr,
 			})
 		}
-	} else {
-		// treat element targets as 1st class ones
-		// if the list itself isn't targetable
-		targets = elemTargets
+	}
+
+	// type-unaware
+	if targetCtx.AsReference {
+		targets = append(targets, reference.Target{
+			Addr:                   targetCtx.ParentAddress,
+			Name:                   targetCtx.FriendlyName,
+			ScopeId:                targetCtx.ScopeId,
+			RangePtr:               rangePtr,
+			DefRangePtr:            targetCtx.ParentDefRangePtr,
+			NestedTargets:          nestedTargets,
+			LocalAddr:              targetCtx.ParentLocalAddress,
+			TargetableFromRangePtr: targetCtx.TargetableFromRangePtr,
+		})
 	}
 
 	return targets
