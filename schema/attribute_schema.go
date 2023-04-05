@@ -145,7 +145,6 @@ func (as *AttributeSchema) Copy() *AttributeSchema {
 		IsSensitive:            as.IsSensitive,
 		IsDepKey:               as.IsDepKey,
 		Description:            as.Description,
-		Expr:                   as.Expr.Copy(),
 		Address:                as.Address.Copy(),
 		OriginForTarget:        as.OriginForTarget.Copy(),
 		SemanticTokenModifiers: as.SemanticTokenModifiers.Copy(),
@@ -154,6 +153,8 @@ func (as *AttributeSchema) Copy() *AttributeSchema {
 
 	if as.Constraint != nil {
 		newAs.Constraint = as.Constraint.Copy()
+	} else {
+		newAs.Expr = as.Expr.Copy()
 	}
 
 	return newAs
