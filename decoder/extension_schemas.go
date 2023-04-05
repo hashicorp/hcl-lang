@@ -14,10 +14,7 @@ import (
 func countAttributeSchema() *schema.AttributeSchema {
 	return &schema.AttributeSchema{
 		IsOptional: true,
-		Expr: schema.ExprConstraints{
-			schema.TraversalExpr{OfType: cty.Number},
-			schema.LiteralTypeExpr{Type: cty.Number},
-		},
+		Constraint: schema.AnyExpression{OfType: cty.Number},
 		Description: lang.Markdown("Total number of instances of this block.\n\n" +
 			"**Note**: A given block cannot use both `count` and `for_each`."),
 	}
@@ -26,11 +23,9 @@ func countAttributeSchema() *schema.AttributeSchema {
 func forEachAttributeSchema() *schema.AttributeSchema {
 	return &schema.AttributeSchema{
 		IsOptional: true,
-		Expr: schema.ExprConstraints{
-			schema.TraversalExpr{OfType: cty.Map(cty.DynamicPseudoType)},
-			schema.TraversalExpr{OfType: cty.Set(cty.String)},
-			schema.LiteralTypeExpr{Type: cty.Map(cty.DynamicPseudoType)},
-			schema.LiteralTypeExpr{Type: cty.Set(cty.String)},
+		Constraint: schema.OneOf{
+			schema.AnyExpression{OfType: cty.Map(cty.DynamicPseudoType)},
+			schema.AnyExpression{OfType: cty.Set(cty.String)},
 		},
 		Description: lang.Markdown("A meta-argument that accepts a map or a set of strings, and creates an instance for each item in that map or set.\n\n" +
 			"**Note**: A given block cannot use both `count` and `for_each`."),
@@ -67,29 +62,22 @@ func buildDynamicBlockSchema(inputSchema *schema.BodySchema) *schema.BlockSchema
 		Body: &schema.BodySchema{
 			Attributes: map[string]*schema.AttributeSchema{
 				"for_each": {
-					Expr: schema.ExprConstraints{
-						schema.TraversalExpr{OfType: cty.Map(cty.DynamicPseudoType)},
-						schema.TraversalExpr{OfType: cty.Set(cty.String)},
-						schema.LiteralTypeExpr{Type: cty.Map(cty.DynamicPseudoType)},
-						schema.LiteralTypeExpr{Type: cty.Set(cty.String)},
+					Constraint: schema.OneOf{
+						schema.AnyExpression{OfType: cty.Map(cty.DynamicPseudoType)},
+						schema.AnyExpression{OfType: cty.Set(cty.String)},
 					},
 					IsRequired:  true,
 					Description: lang.Markdown("A meta-argument that accepts a map or a set of strings, and creates an instance for each item in that map or set."),
 				},
 				"iterator": {
-					Expr:       schema.LiteralTypeOnly(cty.String),
+					Constraint: schema.LiteralType{Type: cty.String},
 					IsOptional: true,
 					Description: lang.Markdown("The name of a temporary variable that represents the current " +
 						"element of the complex value. Defaults to the label of the dynamic block."),
 				},
 				"labels": {
-					Expr: schema.ExprConstraints{
-						schema.ListExpr{
-							Elem: schema.ExprConstraints{
-								schema.LiteralTypeExpr{Type: cty.String},
-								schema.TraversalExpr{OfType: cty.String},
-							},
-						},
+					Constraint: schema.AnyExpression{
+						OfType: cty.List(cty.String),
 					},
 					IsOptional: true,
 					Description: lang.Markdown("A list of strings that specifies the block labels, " +
