@@ -34,8 +34,20 @@ func (ae AnyExpression) Copy() Constraint {
 }
 
 func (ae AnyExpression) EmptyCompletionData(ctx context.Context, nextPlaceholder int, nestingLevel int) CompletionData {
-	// TODO
-	return CompletionData{}
+	// if prefilling is enabled, then it is desirable to treat this as literal
+	if prefillRequiredFields(ctx) {
+		lt := LiteralType{
+			Type: ae.OfType,
+		}
+		return lt.EmptyCompletionData(ctx, nextPlaceholder, nestingLevel)
+	}
+
+	// otherwise (which can just be when completing attribute)
+	// we assume the user will more likely want reference-like behaviour
+	ref := Reference{
+		OfType: ae.OfType,
+	}
+	return ref.EmptyCompletionData(ctx, nextPlaceholder, nestingLevel)
 }
 
 func (ae AnyExpression) ConstraintType() (cty.Type, bool) {
