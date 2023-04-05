@@ -15,6 +15,10 @@ import (
 )
 
 func (m Map) ReferenceTargets(ctx context.Context, targetCtx *TargetContext) reference.Targets {
+	if isEmptyExpression(m.expr) && targetCtx != nil {
+		return m.wholeMapReferenceTargets(targetCtx, nil)
+	}
+
 	items, diags := hcl.ExprMap(m.expr)
 	if diags.HasErrors() {
 		return reference.Targets{}
@@ -62,55 +66,57 @@ func (m Map) ReferenceTargets(ctx context.Context, targetCtx *TargetContext) ref
 
 	sort.Sort(elemTargets)
 
+	if targetCtx == nil {
+		// treat element targets as 1st class ones
+		// if the map itself isn't targetable
+		return elemTargets
+	}
+
+	return m.wholeMapReferenceTargets(targetCtx, elemTargets)
+}
+
+func (m Map) wholeMapReferenceTargets(targetCtx *TargetContext, nestedTargets reference.Targets) reference.Targets {
+	// collect targets for the whole map
 	targets := make(reference.Targets, 0)
 
-	if targetCtx != nil {
-		// collect target for the whole map
+	var rangePtr *hcl.Range
+	if targetCtx.ParentRangePtr != nil {
+		rangePtr = targetCtx.ParentRangePtr
+	} else {
+		rangePtr = m.expr.Range().Ptr()
+	}
 
-		var rangePtr *hcl.Range
-		if targetCtx.ParentRangePtr != nil {
-			rangePtr = targetCtx.ParentRangePtr
-		} else {
-			rangePtr = m.expr.Range().Ptr()
-		}
-
-		// type-aware
-		elemCons, ok := m.cons.Elem.(schema.TypeAwareConstraint)
-		if targetCtx.AsExprType && ok {
-			elemType, ok := elemCons.ConstraintType()
-			if ok {
-				targets = append(targets, reference.Target{
-					Addr:                   targetCtx.ParentAddress,
-					Name:                   targetCtx.FriendlyName,
-					Type:                   cty.Map(elemType),
-					ScopeId:                targetCtx.ScopeId,
-					RangePtr:               rangePtr,
-					DefRangePtr:            targetCtx.ParentDefRangePtr,
-					NestedTargets:          elemTargets,
-					LocalAddr:              targetCtx.ParentLocalAddress,
-					TargetableFromRangePtr: targetCtx.TargetableFromRangePtr,
-				})
-			}
-		}
-
-		// type-unaware
-		if targetCtx.AsReference {
+	// type-aware
+	elemCons, ok := m.cons.Elem.(schema.TypeAwareConstraint)
+	if targetCtx.AsExprType && ok {
+		elemType, ok := elemCons.ConstraintType()
+		if ok {
 			targets = append(targets, reference.Target{
 				Addr:                   targetCtx.ParentAddress,
 				Name:                   targetCtx.FriendlyName,
+				Type:                   cty.Map(elemType),
 				ScopeId:                targetCtx.ScopeId,
 				RangePtr:               rangePtr,
 				DefRangePtr:            targetCtx.ParentDefRangePtr,
-				NestedTargets:          elemTargets,
+				NestedTargets:          nestedTargets,
 				LocalAddr:              targetCtx.ParentLocalAddress,
 				TargetableFromRangePtr: targetCtx.TargetableFromRangePtr,
 			})
 		}
-	} else {
-		// treat element targets as 1st class ones
-		// if the map itself isn't targetable
-		targets = elemTargets
 	}
 
+	// type-unaware
+	if targetCtx.AsReference {
+		targets = append(targets, reference.Target{
+			Addr:                   targetCtx.ParentAddress,
+			Name:                   targetCtx.FriendlyName,
+			ScopeId:                targetCtx.ScopeId,
+			RangePtr:               rangePtr,
+			DefRangePtr:            targetCtx.ParentDefRangePtr,
+			NestedTargets:          nestedTargets,
+			LocalAddr:              targetCtx.ParentLocalAddress,
+			TargetableFromRangePtr: targetCtx.TargetableFromRangePtr,
+		})
+	}
 	return targets
 }
