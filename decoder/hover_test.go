@@ -1070,7 +1070,7 @@ func TestDecoder_HoverAtPos_extensions_count(t *testing.T) {
 `,
 			hcl.Pos{Line: 2, Column: 11, Byte: 32},
 			&lang.HoverData{
-				Content: lang.Markdown("`3` _number_"),
+				Content: lang.Markdown("_number_"),
 				Range: hcl.Range{
 					Filename: "test.tf",
 					Start:    hcl.Pos{Line: 2, Column: 11, Byte: 32},

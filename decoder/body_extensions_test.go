@@ -1116,7 +1116,7 @@ for_each =
 			lang.CompleteCandidates([]lang.Candidate{
 				{
 					Label:  `{ "key" = any type }`,
-					Detail: "map of any single type",
+					Detail: "map of dynamic",
 					TextEdit: lang.TextEdit{
 						Range: hcl.Range{
 							Filename: "test.tf",
@@ -2004,8 +2004,9 @@ resource "aws_elastic_beanstalk_environment" "example" {
 							End:      hcl.Pos{Line: 4, Column: 5, Byte: 73},
 						},
 						NewText: "labels",
-						Snippet: "labels = [\n  ${0}\n]",
+						Snippet: "labels = ",
 					},
+					TriggerSuggest: true,
 				},
 			}),
 			"",

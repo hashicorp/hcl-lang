@@ -1867,6 +1867,7 @@ resource "foobar" "name" {
 				End:      hcl.Pos{Line: 3, Column: 10, Byte: 37},
 			},
 		},
+		// a_group
 		{
 			Type:      lang.TokenMapKey,
 			Modifiers: lang.SemanticTokenModifiers{},
@@ -1874,6 +1875,16 @@ resource "foobar" "name" {
 				Filename: "test.tf",
 				Start:    hcl.Pos{Line: 4, Column: 3, Byte: 44},
 				End:      hcl.Pos{Line: 4, Column: 10, Byte: 51},
+			},
+		},
+		// "eastus"
+		{
+			Type:      lang.TokenString,
+			Modifiers: lang.SemanticTokenModifiers{},
+			Range: hcl.Range{
+				Filename: "test.tf",
+				Start:    hcl.Pos{Line: 4, Column: 13, Byte: 54},
+				End:      hcl.Pos{Line: 4, Column: 21, Byte: 62},
 			},
 		},
 		{ // thing
