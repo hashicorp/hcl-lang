@@ -134,8 +134,21 @@ func TestCollectRefTargets_exprTuple_hcl(t *testing.T) {
 						Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
 						End:      hcl.Pos{Line: 1, Column: 5, Byte: 4},
 					},
-					Type:          cty.Tuple([]cty.Type{cty.String}),
-					NestedTargets: reference.Targets{},
+					Type: cty.Tuple([]cty.Type{cty.String}),
+					NestedTargets: reference.Targets{
+						{
+							Addr: lang.Address{
+								lang.RootStep{Name: "attr"},
+								lang.IndexStep{Key: cty.NumberIntVal(0)},
+							},
+							RangePtr: &hcl.Range{
+								Filename: "test.hcl",
+								Start:    hcl.Pos{Line: 1, Column: 8, Byte: 7},
+								End:      hcl.Pos{Line: 1, Column: 8, Byte: 7},
+							},
+							Type: cty.String,
+						},
+					},
 				},
 			},
 		},
@@ -494,6 +507,166 @@ func TestCollectRefTargets_exprTuple_hcl(t *testing.T) {
 	}
 }
 
+func TestCollectRefTargets_exprTuple_implied_hcl(t *testing.T) {
+	testCases := []struct {
+		testName           string
+		bodySchema         *schema.BodySchema
+		cfg                string
+		expectedRefTargets reference.Targets
+	}{
+		{
+			"undeclared implied as type",
+			&schema.BodySchema{
+				Blocks: map[string]*schema.BlockSchema{
+					"blk": {
+						Address: &schema.BlockAddrSchema{
+							Steps: schema.Address{
+								schema.StaticStep{Name: "blk"},
+							},
+							BodyAsData: true,
+							InferBody:  true,
+						},
+						Body: &schema.BodySchema{
+							Attributes: map[string]*schema.AttributeSchema{
+								"attr": {
+									Constraint: schema.Tuple{
+										Elems: []schema.Constraint{
+											schema.LiteralType{Type: cty.Bool},
+										},
+									},
+									IsOptional: true,
+								},
+							},
+						},
+					},
+				},
+			},
+			`blk {}`,
+			reference.Targets{
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "blk"},
+					},
+					RangePtr: &hcl.Range{
+						Filename: "test.hcl",
+						Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
+						End:      hcl.Pos{Line: 1, Column: 7, Byte: 6},
+					},
+					DefRangePtr: &hcl.Range{
+						Filename: "test.hcl",
+						Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
+						End:      hcl.Pos{Line: 1, Column: 4, Byte: 3},
+					},
+					Type: cty.Object(map[string]cty.Type{
+						"attr": cty.Tuple([]cty.Type{cty.Bool}),
+					}),
+					NestedTargets: reference.Targets{
+						{
+							Addr: lang.Address{
+								lang.RootStep{Name: "blk"},
+								lang.AttrStep{Name: "attr"},
+							},
+							RangePtr: &hcl.Range{
+								Filename: "test.hcl",
+								Start:    hcl.Pos{Line: 1, Column: 5, Byte: 4},
+								End:      hcl.Pos{Line: 1, Column: 5, Byte: 4},
+							},
+							Type: cty.Tuple([]cty.Type{cty.Bool}),
+							NestedTargets: reference.Targets{
+								{
+									Addr: lang.Address{
+										lang.RootStep{Name: "blk"},
+										lang.AttrStep{Name: "attr"},
+										lang.IndexStep{Key: cty.NumberIntVal(0)},
+									},
+									RangePtr: &hcl.Range{
+										Filename: "test.hcl",
+										Start:    hcl.Pos{Line: 1, Column: 5, Byte: 4},
+										End:      hcl.Pos{Line: 1, Column: 5, Byte: 4},
+									},
+									Type: cty.Bool,
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			"undeclared as reference",
+			&schema.BodySchema{
+				Blocks: map[string]*schema.BlockSchema{
+					"blk": {
+						Address: &schema.BlockAddrSchema{
+							Steps: schema.Address{
+								schema.StaticStep{Name: "blk"},
+							},
+							AsReference: true,
+							ScopeId:     lang.ScopeId("foo"),
+						},
+						Body: &schema.BodySchema{
+							Attributes: map[string]*schema.AttributeSchema{
+								"attr": {
+									Constraint: schema.Tuple{
+										Elems: []schema.Constraint{
+											schema.LiteralType{Type: cty.Bool},
+										},
+									},
+									IsOptional: true,
+								},
+							},
+						},
+					},
+				},
+			},
+			`blk {}`,
+			reference.Targets{
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "blk"},
+					},
+					ScopeId: lang.ScopeId("foo"),
+					RangePtr: &hcl.Range{
+						Filename: "test.hcl",
+						Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
+						End:      hcl.Pos{Line: 1, Column: 7, Byte: 6},
+					},
+					DefRangePtr: &hcl.Range{
+						Filename: "test.hcl",
+						Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
+						End:      hcl.Pos{Line: 1, Column: 4, Byte: 3},
+					},
+				},
+			},
+		},
+	}
+	for i, tc := range testCases {
+		t.Run(fmt.Sprintf("%d-%s", i, tc.testName), func(t *testing.T) {
+			bodySchema := tc.bodySchema
+
+			f, diags := hclsyntax.ParseConfig([]byte(tc.cfg), "test.hcl", hcl.InitialPos)
+			if len(diags) > 0 {
+				t.Log(diags)
+			}
+			d := testPathDecoder(t, &PathContext{
+				Schema: bodySchema,
+				Files: map[string]*hcl.File{
+					"test.hcl": f,
+				},
+			})
+
+			targets, err := d.CollectReferenceTargets()
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			if diff := cmp.Diff(tc.expectedRefTargets, targets, ctydebug.CmpOptions); diff != "" {
+				t.Fatalf("unexpected targets: %s", diff)
+			}
+		})
+	}
+}
+
 func TestCollectRefTargets_exprTuple_json(t *testing.T) {
 	testCases := []struct {
 		testName           string
@@ -615,8 +788,21 @@ func TestCollectRefTargets_exprTuple_json(t *testing.T) {
 						Start:    hcl.Pos{Line: 1, Column: 2, Byte: 1},
 						End:      hcl.Pos{Line: 1, Column: 8, Byte: 7},
 					},
-					Type:          cty.Tuple([]cty.Type{cty.String}),
-					NestedTargets: reference.Targets{},
+					Type: cty.Tuple([]cty.Type{cty.String}),
+					NestedTargets: reference.Targets{
+						{
+							Addr: lang.Address{
+								lang.RootStep{Name: "attr"},
+								lang.IndexStep{Key: cty.NumberIntVal(0)},
+							},
+							RangePtr: &hcl.Range{
+								Filename: "test.hcl.json",
+								Start:    hcl.Pos{Line: 1, Column: 10, Byte: 9},
+								End:      hcl.Pos{Line: 1, Column: 10, Byte: 9},
+							},
+							Type: cty.String,
+						},
+					},
 				},
 			},
 		},
@@ -881,6 +1067,166 @@ func TestCollectRefTargets_exprTuple_json(t *testing.T) {
 			bodySchema := &schema.BodySchema{
 				Attributes: tc.attrSchema,
 			}
+
+			f, diags := json.ParseWithStartPos([]byte(tc.cfg), "test.hcl.json", hcl.InitialPos)
+			if len(diags) > 0 {
+				t.Error(diags)
+			}
+			d := testPathDecoder(t, &PathContext{
+				Schema: bodySchema,
+				Files: map[string]*hcl.File{
+					"test.hcl.json": f,
+				},
+			})
+
+			targets, err := d.CollectReferenceTargets()
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			if diff := cmp.Diff(tc.expectedRefTargets, targets, ctydebug.CmpOptions); diff != "" {
+				t.Fatalf("unexpected targets: %s", diff)
+			}
+		})
+	}
+}
+
+func TestCollectRefTargets_exprTuple_implied_json(t *testing.T) {
+	testCases := []struct {
+		testName           string
+		bodySchema         *schema.BodySchema
+		cfg                string
+		expectedRefTargets reference.Targets
+	}{
+		{
+			"undeclared implied as type",
+			&schema.BodySchema{
+				Blocks: map[string]*schema.BlockSchema{
+					"blk": {
+						Address: &schema.BlockAddrSchema{
+							Steps: schema.Address{
+								schema.StaticStep{Name: "blk"},
+							},
+							BodyAsData: true,
+							InferBody:  true,
+						},
+						Body: &schema.BodySchema{
+							Attributes: map[string]*schema.AttributeSchema{
+								"attr": {
+									Constraint: schema.Tuple{
+										Elems: []schema.Constraint{
+											schema.LiteralType{Type: cty.Bool},
+										},
+									},
+									IsOptional: true,
+								},
+							},
+						},
+					},
+				},
+			},
+			`{"blk": {}}`,
+			reference.Targets{
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "blk"},
+					},
+					RangePtr: &hcl.Range{
+						Filename: "test.hcl.json",
+						Start:    hcl.Pos{Line: 1, Column: 9, Byte: 8},
+						End:      hcl.Pos{Line: 1, Column: 11, Byte: 10},
+					},
+					DefRangePtr: &hcl.Range{
+						Filename: "test.hcl.json",
+						Start:    hcl.Pos{Line: 1, Column: 9, Byte: 8},
+						End:      hcl.Pos{Line: 1, Column: 10, Byte: 9},
+					},
+					Type: cty.Object(map[string]cty.Type{
+						"attr": cty.Tuple([]cty.Type{cty.Bool}),
+					}),
+					NestedTargets: reference.Targets{
+						{
+							Addr: lang.Address{
+								lang.RootStep{Name: "blk"},
+								lang.AttrStep{Name: "attr"},
+							},
+							RangePtr: &hcl.Range{
+								Filename: "test.hcl.json",
+								Start:    hcl.Pos{Line: 1, Column: 10, Byte: 9},
+								End:      hcl.Pos{Line: 1, Column: 10, Byte: 9},
+							},
+							Type: cty.Tuple([]cty.Type{cty.Bool}),
+							NestedTargets: reference.Targets{
+								{
+									Addr: lang.Address{
+										lang.RootStep{Name: "blk"},
+										lang.AttrStep{Name: "attr"},
+										lang.IndexStep{Key: cty.NumberIntVal(0)},
+									},
+									RangePtr: &hcl.Range{
+										Filename: "test.hcl.json",
+										Start:    hcl.Pos{Line: 1, Column: 10, Byte: 9},
+										End:      hcl.Pos{Line: 1, Column: 10, Byte: 9},
+									},
+									Type: cty.Bool,
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			"undeclared as reference",
+			&schema.BodySchema{
+				Blocks: map[string]*schema.BlockSchema{
+					"blk": {
+						Address: &schema.BlockAddrSchema{
+							Steps: schema.Address{
+								schema.StaticStep{Name: "blk"},
+							},
+							AsReference: true,
+							ScopeId:     lang.ScopeId("foo"),
+						},
+						Body: &schema.BodySchema{
+							Attributes: map[string]*schema.AttributeSchema{
+								"attr": {
+									Constraint: schema.Tuple{
+										Elems: []schema.Constraint{
+											schema.LiteralType{Type: cty.Bool},
+										},
+									},
+									IsOptional: true,
+								},
+							},
+						},
+					},
+				},
+			},
+			`{"blk": {}}`,
+			reference.Targets{
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "blk"},
+					},
+					ScopeId: lang.ScopeId("foo"),
+					RangePtr: &hcl.Range{
+						Filename: "test.hcl.json",
+						Start:    hcl.Pos{Line: 1, Column: 9, Byte: 8},
+						End:      hcl.Pos{Line: 1, Column: 11, Byte: 10},
+					},
+					DefRangePtr: &hcl.Range{
+						Filename: "test.hcl.json",
+						Start:    hcl.Pos{Line: 1, Column: 9, Byte: 8},
+						End:      hcl.Pos{Line: 1, Column: 10, Byte: 9},
+					},
+				},
+			},
+		},
+	}
+	for i, tc := range testCases {
+		t.Run(fmt.Sprintf("%d-%s", i, tc.testName), func(t *testing.T) {
+			bodySchema := tc.bodySchema
 
 			f, diags := json.ParseWithStartPos([]byte(tc.cfg), "test.hcl.json", hcl.InitialPos)
 			if len(diags) > 0 {

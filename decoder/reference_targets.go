@@ -791,7 +791,7 @@ func (d *PathDecoder) collectInferredReferenceTargetsForBody(addr lang.Address, 
 
 		if aSchema.Constraint != nil {
 			if attrExpr == nil {
-				attrExpr = newEmptyExpressionAtPos(content.RangePtr.Filename, body.MissingItemRange().Start)
+				attrExpr = newEmptyExpressionAtPos(body.MissingItemRange().Filename, body.MissingItemRange().Start)
 			}
 			expr, ok := newExpression(d.pathCtx, attrExpr, aSchema.Constraint).(ReferenceTargetsExpression)
 			if ok {
