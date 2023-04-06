@@ -2666,3 +2666,160 @@ func TestCompletionAtPos_exprAny_references(t *testing.T) {
 		})
 	}
 }
+
+func TestCompletionAtPos_exprAny_skipComplex(t *testing.T) {
+	testCases := []struct {
+		testName           string
+		attrSchema         map[string]*schema.AttributeSchema
+		funcSignatures     map[string]schema.FunctionSignature
+		cfg                string
+		pos                hcl.Pos
+		expectedCandidates lang.Candidates
+	}{
+		{
+			"complex map expression",
+			map[string]*schema.AttributeSchema{
+				"tags": {
+					Constraint: schema.OneOf{
+						schema.AnyExpression{
+							OfType:                  cty.Map(cty.String),
+							SkipLiteralComplexTypes: true,
+						},
+						schema.Map{
+							Elem: schema.AnyExpression{OfType: cty.String},
+						},
+					},
+				},
+			},
+			map[string]schema.FunctionSignature{},
+			`tags = 
+`,
+			hcl.Pos{Line: 1, Column: 8, Byte: 7},
+			lang.CompleteCandidates([]lang.Candidate{
+				{
+					Label:  `{ "key" = string }`,
+					Detail: "map of string",
+					Kind:   lang.MapCandidateKind,
+					TextEdit: lang.TextEdit{
+						NewText: "{\n  \n}",
+						Snippet: "{\n  ${1}\n}",
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 1, Column: 8, Byte: 7},
+							End:      hcl.Pos{Line: 1, Column: 8, Byte: 7},
+						},
+					},
+					TriggerSuggest: true,
+				},
+			}),
+		},
+		{
+			"complex map expression inside brackets",
+			map[string]*schema.AttributeSchema{
+				"tags": {
+					Constraint: schema.OneOf{
+						schema.AnyExpression{
+							OfType:                  cty.Map(cty.String),
+							SkipLiteralComplexTypes: true,
+						},
+						schema.Map{
+							Elem: schema.AnyExpression{OfType: cty.String},
+						},
+					},
+				},
+			},
+			testFunctionSignatures(),
+			`tags = {
+  
+}
+`,
+			hcl.Pos{Line: 2, Column: 1, Byte: 11},
+			lang.CompleteCandidates([]lang.Candidate{
+				{
+					Label:  `"key" = string`,
+					Detail: "string",
+					Kind:   lang.AttributeCandidateKind,
+					TextEdit: lang.TextEdit{
+						NewText: `"key" = `,
+						Snippet: `"${1:key}" = `,
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 2, Column: 1, Byte: 11},
+							End:      hcl.Pos{Line: 2, Column: 1, Byte: 11},
+						},
+					},
+				},
+			}),
+		},
+		{
+			"complex map expression with prefix",
+			map[string]*schema.AttributeSchema{
+				"tags": {
+					Constraint: schema.OneOf{
+						schema.AnyExpression{
+							OfType:                  cty.Map(cty.String),
+							SkipLiteralComplexTypes: true,
+						},
+						schema.Map{
+							Elem: schema.AnyExpression{OfType: cty.String},
+						},
+					},
+				},
+			},
+			testFunctionSignatures(),
+			`tags = {
+  "attr" = j
+}
+`,
+			hcl.Pos{Line: 2, Column: 13, Byte: 21},
+			lang.CompleteCandidates([]lang.Candidate{
+				{
+					Label:       "join",
+					Detail:      "join(separator string, …lists list of string) string",
+					Description: lang.Markdown("`join` produces a string by concatenating together all elements of a given list of strings with the given delimiter."),
+					Kind:        lang.FunctionCandidateKind,
+					TextEdit: lang.TextEdit{
+						NewText: "join()",
+						Snippet: "join(${0})",
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 2, Column: 12, Byte: 20},
+							End:      hcl.Pos{Line: 2, Column: 13, Byte: 21},
+						},
+					},
+				},
+			}),
+		},
+		// TODO test for object
+		// TODO test for list
+		// TODO test for set
+		// TODO test for tuple
+	}
+
+	for i, tc := range testCases {
+		t.Run(fmt.Sprintf("%2d-%s", i, tc.testName), func(t *testing.T) {
+			bodySchema := &schema.BodySchema{
+				Attributes: tc.attrSchema,
+			}
+
+			f, _ := hclsyntax.ParseConfig([]byte(tc.cfg), "test.tf", hcl.InitialPos)
+			d := testPathDecoder(t, &PathContext{
+				Schema: bodySchema,
+				Files: map[string]*hcl.File{
+					"test.tf": f,
+				},
+				Functions: tc.funcSignatures,
+			})
+
+			ctx := context.Background()
+			candidates, err := d.CandidatesAtPos(ctx, "test.tf", tc.pos)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			if diff := cmp.Diff(tc.expectedCandidates, candidates); diff != "" {
+				t.Fatalf("unexpected candidates: %s", diff)
+			}
+		})
+	}
+}

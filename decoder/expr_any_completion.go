@@ -12,7 +12,7 @@ import (
 func (a Any) CompletionAtPos(ctx context.Context, pos hcl.Pos) []lang.Candidate {
 	typ := a.cons.OfType
 
-	if typ.IsListType() {
+	if !a.cons.SkipLiteralComplexTypes && typ.IsListType() {
 		expr, ok := a.expr.(*hclsyntax.TupleConsExpr)
 		if !ok {
 			return a.completeNonComplexExprAtPos(ctx, pos)
@@ -27,7 +27,7 @@ func (a Any) CompletionAtPos(ctx context.Context, pos hcl.Pos) []lang.Candidate 
 		return newExpression(a.pathCtx, expr, cons).CompletionAtPos(ctx, pos)
 	}
 
-	if typ.IsSetType() {
+	if !a.cons.SkipLiteralComplexTypes && typ.IsSetType() {
 		expr, ok := a.expr.(*hclsyntax.TupleConsExpr)
 		if !ok {
 			return a.completeNonComplexExprAtPos(ctx, pos)
@@ -42,7 +42,7 @@ func (a Any) CompletionAtPos(ctx context.Context, pos hcl.Pos) []lang.Candidate 
 		return newExpression(a.pathCtx, expr, cons).CompletionAtPos(ctx, pos)
 	}
 
-	if typ.IsTupleType() {
+	if !a.cons.SkipLiteralComplexTypes && typ.IsTupleType() {
 		expr, ok := a.expr.(*hclsyntax.TupleConsExpr)
 		if !ok {
 			return a.completeNonComplexExprAtPos(ctx, pos)
@@ -61,7 +61,7 @@ func (a Any) CompletionAtPos(ctx context.Context, pos hcl.Pos) []lang.Candidate 
 		return newExpression(a.pathCtx, expr, cons).CompletionAtPos(ctx, pos)
 	}
 
-	if typ.IsMapType() {
+	if !a.cons.SkipLiteralComplexTypes && typ.IsMapType() {
 		expr, ok := a.expr.(*hclsyntax.ObjectConsExpr)
 		if !ok {
 			return a.completeNonComplexExprAtPos(ctx, pos)
@@ -75,7 +75,7 @@ func (a Any) CompletionAtPos(ctx context.Context, pos hcl.Pos) []lang.Candidate 
 		return newExpression(a.pathCtx, expr, cons).CompletionAtPos(ctx, pos)
 	}
 
-	if typ.IsObjectType() {
+	if !a.cons.SkipLiteralComplexTypes && typ.IsObjectType() {
 		expr, ok := a.expr.(*hclsyntax.ObjectConsExpr)
 		if !ok {
 			return a.completeNonComplexExprAtPos(ctx, pos)
@@ -116,8 +116,11 @@ func (a Any) completeNonComplexExprAtPos(ctx context.Context, pos hcl.Pos) []lan
 	candidates = append(candidates, fe.CompletionAtPos(ctx, pos)...)
 
 	lt := LiteralType{
-		expr:    a.expr,
-		cons:    schema.LiteralType{Type: a.cons.OfType},
+		expr: a.expr,
+		cons: schema.LiteralType{
+			Type:             a.cons.OfType,
+			SkipComplexTypes: a.cons.SkipLiteralComplexTypes,
+		},
 		pathCtx: a.pathCtx,
 	}
 	candidates = append(candidates, lt.CompletionAtPos(ctx, pos)...)
