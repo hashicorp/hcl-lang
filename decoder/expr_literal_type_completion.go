@@ -35,6 +35,10 @@ func (lt LiteralType) CompletionAtPos(ctx context.Context, pos hcl.Pos) []lang.C
 			return []lang.Candidate{}
 		}
 
+		if lt.cons.SkipComplexTypes {
+			return []lang.Candidate{}
+		}
+
 		return []lang.Candidate{
 			{
 				Label:  labelForLiteralType(typ),
@@ -53,7 +57,7 @@ func (lt LiteralType) CompletionAtPos(ctx context.Context, pos hcl.Pos) []lang.C
 		return lt.completeBoolAtPos(ctx, pos)
 	}
 
-	if typ.IsListType() {
+	if !lt.cons.SkipComplexTypes && typ.IsListType() {
 		expr, ok := lt.expr.(*hclsyntax.TupleConsExpr)
 		if !ok {
 			return []lang.Candidate{}
@@ -68,7 +72,7 @@ func (lt LiteralType) CompletionAtPos(ctx context.Context, pos hcl.Pos) []lang.C
 		return newExpression(lt.pathCtx, expr, cons).CompletionAtPos(ctx, pos)
 	}
 
-	if typ.IsSetType() {
+	if !lt.cons.SkipComplexTypes && typ.IsSetType() {
 		expr, ok := lt.expr.(*hclsyntax.TupleConsExpr)
 		if !ok {
 			return []lang.Candidate{}
@@ -83,7 +87,7 @@ func (lt LiteralType) CompletionAtPos(ctx context.Context, pos hcl.Pos) []lang.C
 		return newExpression(lt.pathCtx, expr, cons).CompletionAtPos(ctx, pos)
 	}
 
-	if typ.IsTupleType() {
+	if !lt.cons.SkipComplexTypes && typ.IsTupleType() {
 		expr, ok := lt.expr.(*hclsyntax.TupleConsExpr)
 		if !ok {
 			return []lang.Candidate{}
@@ -102,7 +106,7 @@ func (lt LiteralType) CompletionAtPos(ctx context.Context, pos hcl.Pos) []lang.C
 		return newExpression(lt.pathCtx, expr, cons).CompletionAtPos(ctx, pos)
 	}
 
-	if typ.IsMapType() {
+	if !lt.cons.SkipComplexTypes && typ.IsMapType() {
 		expr, ok := lt.expr.(*hclsyntax.ObjectConsExpr)
 		if !ok {
 			return []lang.Candidate{}
@@ -116,7 +120,7 @@ func (lt LiteralType) CompletionAtPos(ctx context.Context, pos hcl.Pos) []lang.C
 		return newExpression(lt.pathCtx, expr, cons).CompletionAtPos(ctx, pos)
 	}
 
-	if typ.IsObjectType() {
+	if !lt.cons.SkipComplexTypes && typ.IsObjectType() {
 		expr, ok := lt.expr.(*hclsyntax.ObjectConsExpr)
 		if !ok {
 			return []lang.Candidate{}

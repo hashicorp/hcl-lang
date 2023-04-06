@@ -4,12 +4,9 @@
 package decoder
 
 import (
-	"context"
-
-	"github.com/hashicorp/hcl-lang/lang"
-	"github.com/hashicorp/hcl-lang/reference"
 	"github.com/hashicorp/hcl-lang/schema"
 	"github.com/hashicorp/hcl/v2"
+	"github.com/zclconf/go-cty/cty"
 )
 
 type Any struct {
@@ -18,27 +15,18 @@ type Any struct {
 	pathCtx *PathContext
 }
 
-func (a Any) CompletionAtPos(ctx context.Context, pos hcl.Pos) []lang.Candidate {
-	// TODO
-	return nil
-}
+func (a Any) InferType() (cty.Type, bool) {
+	consType, ok := a.cons.ConstraintType()
+	if !ok {
+		return consType, false
+	}
 
-func (a Any) HoverAtPos(ctx context.Context, pos hcl.Pos) *lang.HoverData {
-	// TODO
-	return nil
-}
+	if consType == cty.DynamicPseudoType && !isEmptyExpression(a.expr) {
+		val, diags := a.expr.Value(nil)
+		if !diags.HasErrors() {
+			consType = val.Type()
+		}
+	}
 
-func (a Any) SemanticTokens(ctx context.Context) []lang.SemanticToken {
-	// TODO
-	return nil
-}
-
-func (a Any) ReferenceOrigins(ctx context.Context, allowSelfRefs bool) reference.Origins {
-	// TODO
-	return nil
-}
-
-func (a Any) ReferenceTargets(ctx context.Context, targetCtx *TargetContext) reference.Targets {
-	// TODO
-	return nil
+	return consType, true
 }

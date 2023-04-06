@@ -25,6 +25,10 @@ import (
 type LiteralType struct {
 	Type cty.Type
 	// TODO: object defaults
+
+	// SkipComplexTypes avoids descending into complex literal types, such as {} and [].
+	// It might be required when LiteralType is used in OneOf to avoid duplicates.
+	SkipComplexTypes bool
 }
 
 func (LiteralType) isConstraintImpl() constraintSigil {
@@ -37,7 +41,8 @@ func (lt LiteralType) FriendlyName() string {
 
 func (lt LiteralType) Copy() Constraint {
 	return LiteralType{
-		Type: lt.Type,
+		Type:             lt.Type,
+		SkipComplexTypes: lt.SkipComplexTypes,
 	}
 }
 

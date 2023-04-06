@@ -17,6 +17,10 @@ import (
 type AnyExpression struct {
 	// OfType defines the type which the outermost expression is constrained to
 	OfType cty.Type
+
+	// SkipLiteralComplexTypes avoids descending into complex literal types, such as {} and [].
+	// It might be required when AnyExpression is used in OneOf to avoid duplicates.
+	SkipLiteralComplexTypes bool
 }
 
 func (AnyExpression) isConstraintImpl() constraintSigil {
@@ -29,7 +33,8 @@ func (ae AnyExpression) FriendlyName() string {
 
 func (ae AnyExpression) Copy() Constraint {
 	return AnyExpression{
-		OfType: ae.OfType,
+		OfType:                  ae.OfType,
+		SkipLiteralComplexTypes: ae.SkipLiteralComplexTypes,
 	}
 }
 
@@ -37,7 +42,8 @@ func (ae AnyExpression) EmptyCompletionData(ctx context.Context, nextPlaceholder
 	// if prefilling is enabled, then it is desirable to treat this as literal
 	if prefillRequiredFields(ctx) {
 		lt := LiteralType{
-			Type: ae.OfType,
+			Type:             ae.OfType,
+			SkipComplexTypes: ae.SkipLiteralComplexTypes,
 		}
 		return lt.EmptyCompletionData(ctx, nextPlaceholder, nestingLevel)
 	}

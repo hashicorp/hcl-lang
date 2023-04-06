@@ -26,6 +26,7 @@ const (
 	StringCandidateKind
 	TupleCandidateKind
 	TraversalCandidateKind
+	FunctionCandidateKind
 )
 
 //go:generate go run golang.org/x/tools/cmd/stringer -type=CandidateKind -output=candidate_kind_string.go
