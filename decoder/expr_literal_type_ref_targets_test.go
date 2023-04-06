@@ -644,8 +644,21 @@ func TestCollectRefTargets_exprLiteralType_hcl(t *testing.T) {
 						Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
 						End:      hcl.Pos{Line: 1, Column: 5, Byte: 4},
 					},
-					Type:          cty.Tuple([]cty.Type{cty.String}),
-					NestedTargets: reference.Targets{},
+					Type: cty.Tuple([]cty.Type{cty.String}),
+					NestedTargets: reference.Targets{
+						{
+							Addr: lang.Address{
+								lang.RootStep{Name: "attr"},
+								lang.IndexStep{Key: cty.NumberIntVal(0)},
+							},
+							RangePtr: &hcl.Range{
+								Filename: "test.hcl",
+								Start:    hcl.Pos{Line: 1, Column: 8, Byte: 7},
+								End:      hcl.Pos{Line: 1, Column: 8, Byte: 7},
+							},
+							Type: cty.String,
+						},
+					},
 				},
 			},
 		},
@@ -2535,8 +2548,21 @@ func TestCollectRefTargets_exprLiteralType_json(t *testing.T) {
 						Start:    hcl.Pos{Line: 1, Column: 2, Byte: 1},
 						End:      hcl.Pos{Line: 1, Column: 8, Byte: 7},
 					},
-					Type:          cty.Tuple([]cty.Type{cty.String}),
-					NestedTargets: reference.Targets{},
+					Type: cty.Tuple([]cty.Type{cty.String}),
+					NestedTargets: reference.Targets{
+						{
+							Addr: lang.Address{
+								lang.RootStep{Name: "attr"},
+								lang.IndexStep{Key: cty.NumberIntVal(0)},
+							},
+							RangePtr: &hcl.Range{
+								Filename: "test.hcl.json",
+								Start:    hcl.Pos{Line: 1, Column: 10, Byte: 9},
+								End:      hcl.Pos{Line: 1, Column: 10, Byte: 9},
+							},
+							Type: cty.String,
+						},
+					},
 				},
 			},
 		},
