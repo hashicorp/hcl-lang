@@ -1657,8 +1657,8 @@ func TestCompletionAtPos_exprAny_literalTypes(t *testing.T) {
 					Detail: "bool",
 					Kind:   lang.AttributeCandidateKind,
 					TextEdit: lang.TextEdit{
-						NewText: "\"key\" = false",
-						Snippet: "\"${1:key}\" = ${2:false}",
+						NewText: "\"key\" = ",
+						Snippet: "\"${1:key}\" = ",
 						Range: hcl.Range{
 							Filename: "test.tf",
 							Start:    hcl.Pos{Line: 2, Column: 3, Byte: 11},
@@ -1689,8 +1689,8 @@ func TestCompletionAtPos_exprAny_literalTypes(t *testing.T) {
 					Detail: "bool",
 					Kind:   lang.AttributeCandidateKind,
 					TextEdit: lang.TextEdit{
-						NewText: "\"key\" = false",
-						Snippet: "\"${1:key}\" = ${2:false}",
+						NewText: "\"key\" = ",
+						Snippet: "\"${1:key}\" = ",
 						Range: hcl.Range{
 							Filename: "test.tf",
 							Start:    hcl.Pos{Line: 3, Column: 3, Byte: 26},
@@ -1722,8 +1722,8 @@ func TestCompletionAtPos_exprAny_literalTypes(t *testing.T) {
 					Detail: "bool",
 					Kind:   lang.AttributeCandidateKind,
 					TextEdit: lang.TextEdit{
-						NewText: "\"key\" = false",
-						Snippet: "\"${1:key}\" = ${2:false}",
+						NewText: "\"key\" = ",
+						Snippet: "\"${1:key}\" = ",
 						Range: hcl.Range{
 							Filename: "test.tf",
 							Start:    hcl.Pos{Line: 3, Column: 3, Byte: 26},
@@ -1757,8 +1757,8 @@ func TestCompletionAtPos_exprAny_literalTypes(t *testing.T) {
 							Start:    hcl.Pos{Line: 2, Column: 2, Byte: 10},
 							End:      hcl.Pos{Line: 2, Column: 2, Byte: 10},
 						},
-						NewText: `"key" = false`,
-						Snippet: `"${1:key}" = ${2:false}`,
+						NewText: `"key" = `,
+						Snippet: `"${1:key}" = `,
 					},
 					Kind: lang.AttributeCandidateKind,
 				},
