@@ -14,6 +14,13 @@ import (
 )
 
 func (obj Object) ReferenceTargets(ctx context.Context, targetCtx *TargetContext) reference.Targets {
+	declaredAttributes := make(map[string]hcl.KeyValuePair, 0)
+
+	if isEmptyExpression(obj.expr) && targetCtx != nil {
+		attrTargets := obj.collectAttributeTargets(ctx, targetCtx, declaredAttributes)
+		return obj.wholeObjectReferenceTargets(targetCtx, attrTargets)
+	}
+
 	items, diags := hcl.ExprMap(obj.expr)
 	if diags.HasErrors() {
 		return reference.Targets{}
@@ -23,9 +30,6 @@ func (obj Object) ReferenceTargets(ctx context.Context, targetCtx *TargetContext
 		return reference.Targets{}
 	}
 
-	attrTargets := make(reference.Targets, 0)
-
-	declaredAttributes := make(map[string]hcl.KeyValuePair, 0)
 	for _, item := range items {
 		keyName, _, ok := rawObjectKey(item.Key)
 		if !ok {
@@ -42,10 +46,26 @@ func (obj Object) ReferenceTargets(ctx context.Context, targetCtx *TargetContext
 		declaredAttributes[keyName] = item
 	}
 
+	attrTargets := obj.collectAttributeTargets(ctx, targetCtx, declaredAttributes)
+
+	if targetCtx == nil {
+		// treat element targets as 1st class ones
+		// if the object itself isn't targetable
+		return attrTargets
+	}
+
+	return obj.wholeObjectReferenceTargets(targetCtx, attrTargets)
+}
+
+func (obj Object) collectAttributeTargets(ctx context.Context, targetCtx *TargetContext,
+	declaredAttrs map[string]hcl.KeyValuePair) reference.Targets {
+
+	attrTargets := make(reference.Targets, 0)
+
 	attrNames := sortedAttributeNames(obj.cons.Attributes)
 	for _, name := range attrNames {
 		var valueExpr hcl.Expression
-		item, attrDeclared := declaredAttributes[name]
+		item, attrDeclared := declaredAttrs[name]
 		if attrDeclared {
 			valueExpr = item.Value
 		} else {
@@ -94,55 +114,50 @@ func (obj Object) ReferenceTargets(ctx context.Context, targetCtx *TargetContext
 			attrTargets = append(attrTargets, e.ReferenceTargets(ctx, elemCtx)...)
 		}
 	}
+	return attrTargets
+}
 
+func (obj Object) wholeObjectReferenceTargets(targetCtx *TargetContext, nestedTargets reference.Targets) reference.Targets {
 	targets := make(reference.Targets, 0)
 
-	if targetCtx != nil {
-		// collect target for the whole object
+	// collect target for the whole object
+	var rangePtr *hcl.Range
+	if targetCtx.ParentRangePtr != nil {
+		rangePtr = targetCtx.ParentRangePtr
+	} else {
+		rangePtr = obj.expr.Range().Ptr()
+	}
 
-		var rangePtr *hcl.Range
-		if targetCtx.ParentRangePtr != nil {
-			rangePtr = targetCtx.ParentRangePtr
-		} else {
-			rangePtr = obj.expr.Range().Ptr()
-		}
-
-		// type-aware
-		if targetCtx.AsExprType {
-			objType, ok := obj.cons.ConstraintType()
-			if ok {
-				targets = append(targets, reference.Target{
-					Addr:                   targetCtx.ParentAddress,
-					Name:                   targetCtx.FriendlyName,
-					Type:                   objType,
-					ScopeId:                targetCtx.ScopeId,
-					DefRangePtr:            targetCtx.ParentDefRangePtr,
-					RangePtr:               rangePtr,
-					NestedTargets:          attrTargets,
-					LocalAddr:              targetCtx.ParentLocalAddress,
-					TargetableFromRangePtr: targetCtx.TargetableFromRangePtr,
-				})
-			}
-		}
-
-		// type-unaware
-		if targetCtx.AsReference {
+	// type-aware
+	if targetCtx.AsExprType {
+		objType, ok := obj.cons.ConstraintType()
+		if ok {
 			targets = append(targets, reference.Target{
 				Addr:                   targetCtx.ParentAddress,
 				Name:                   targetCtx.FriendlyName,
+				Type:                   objType,
 				ScopeId:                targetCtx.ScopeId,
 				DefRangePtr:            targetCtx.ParentDefRangePtr,
 				RangePtr:               rangePtr,
-				NestedTargets:          attrTargets,
+				NestedTargets:          nestedTargets,
 				LocalAddr:              targetCtx.ParentLocalAddress,
 				TargetableFromRangePtr: targetCtx.TargetableFromRangePtr,
 			})
 		}
-	} else {
-		// treat element targets as 1st class ones
-		// if the object itself isn't targetable
-		targets = attrTargets
 	}
 
+	// type-unaware
+	if targetCtx.AsReference {
+		targets = append(targets, reference.Target{
+			Addr:                   targetCtx.ParentAddress,
+			Name:                   targetCtx.FriendlyName,
+			ScopeId:                targetCtx.ScopeId,
+			DefRangePtr:            targetCtx.ParentDefRangePtr,
+			RangePtr:               rangePtr,
+			NestedTargets:          nestedTargets,
+			LocalAddr:              targetCtx.ParentLocalAddress,
+			TargetableFromRangePtr: targetCtx.TargetableFromRangePtr,
+		})
+	}
 	return targets
 }
