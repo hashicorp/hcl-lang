@@ -19,15 +19,15 @@ func TestLegacyAttributeSchema_Validate(t *testing.T) {
 	}{
 		{
 			&AttributeSchema{
-				Expr: LiteralTypeOnly(cty.String),
+				Constraint: LiteralType{Type: cty.String},
 			},
 			errors.New("one of IsRequired, IsOptional, or IsComputed must be set"),
 		},
 		{
 			&AttributeSchema{
-				Expr: ExprConstraints{
-					LiteralTypeExpr{Type: cty.String},
-					LiteralTypeExpr{Type: cty.Number},
+				Constraint: OneOf{
+					LiteralType{Type: cty.String},
+					LiteralType{Type: cty.Number},
 				},
 				IsComputed: true,
 			},
@@ -35,7 +35,7 @@ func TestLegacyAttributeSchema_Validate(t *testing.T) {
 		},
 		{
 			&AttributeSchema{
-				Expr:       LiteralTypeOnly(cty.String),
+				Constraint: LiteralType{Type: cty.String},
 				IsRequired: true,
 				IsOptional: true,
 			},
@@ -43,7 +43,7 @@ func TestLegacyAttributeSchema_Validate(t *testing.T) {
 		},
 		{
 			&AttributeSchema{
-				Expr:       LiteralTypeOnly(cty.String),
+				Constraint: LiteralType{Type: cty.String},
 				IsRequired: true,
 				IsComputed: true,
 			},
@@ -51,7 +51,7 @@ func TestLegacyAttributeSchema_Validate(t *testing.T) {
 		},
 		{
 			&AttributeSchema{
-				Expr:       LiteralTypeOnly(cty.String),
+				Constraint: LiteralType{Type: cty.String},
 				IsOptional: true,
 				IsComputed: true,
 			},
@@ -59,8 +59,8 @@ func TestLegacyAttributeSchema_Validate(t *testing.T) {
 		},
 		{
 			&AttributeSchema{
-				Expr: ExprConstraints{
-					TraversalExpr{OfType: cty.String},
+				Constraint: OneOf{
+					Reference{OfType: cty.String},
 				},
 				IsOptional: true,
 			},
@@ -68,8 +68,8 @@ func TestLegacyAttributeSchema_Validate(t *testing.T) {
 		},
 		{
 			&AttributeSchema{
-				Expr: ExprConstraints{
-					TraversalExpr{OfScopeId: lang.ScopeId("blah")},
+				Constraint: OneOf{
+					Reference{OfScopeId: lang.ScopeId("blah")},
 				},
 				IsOptional: true,
 			},
@@ -77,8 +77,8 @@ func TestLegacyAttributeSchema_Validate(t *testing.T) {
 		},
 		{
 			&AttributeSchema{
-				Expr: ExprConstraints{
-					TraversalExpr{OfType: cty.Number, OfScopeId: lang.ScopeId("blah")},
+				Constraint: OneOf{
+					Reference{OfType: cty.Number, OfScopeId: lang.ScopeId("blah")},
 				},
 				IsOptional: true,
 			},
@@ -86,30 +86,29 @@ func TestLegacyAttributeSchema_Validate(t *testing.T) {
 		},
 		{
 			&AttributeSchema{
-				Expr: ExprConstraints{
-					TraversalExpr{OfType: cty.Number, Address: &TraversalAddrSchema{
+				Constraint: Reference{
+					OfType: cty.Number,
+					Address: &ReferenceAddrSchema{
 						ScopeId: lang.ScopeId("test"),
-					}},
+					},
 				},
 				IsOptional: true,
 			},
-			errors.New("(0: schema.TraversalExpr) cannot be have both Address and OfType/OfScopeId set"),
+			errors.New("Constraint: schema.Reference: cannot have both Address and OfType/OfScopeId set"),
 		},
 		{
 			&AttributeSchema{
-				Expr: ExprConstraints{
-					TraversalExpr{Address: &TraversalAddrSchema{}},
-				},
+				Constraint: Reference{Address: &ReferenceAddrSchema{}},
 				IsOptional: true,
 			},
-			errors.New("(0: schema.TraversalExpr) Address requires non-emmpty ScopeId"),
+			errors.New("Constraint: schema.Reference: Address requires non-empty ScopeId"),
 		},
 		{
 			&AttributeSchema{
-				Expr: ExprConstraints{
-					TraversalExpr{Address: &TraversalAddrSchema{
+				Constraint: Reference{
+					Address: &ReferenceAddrSchema{
 						ScopeId: lang.ScopeId("blah"),
-					}},
+					},
 				},
 				IsOptional: true,
 			},
@@ -117,9 +116,7 @@ func TestLegacyAttributeSchema_Validate(t *testing.T) {
 		},
 		{
 			&AttributeSchema{
-				Expr: ExprConstraints{
-					LiteralTypeExpr{Type: cty.String},
-				},
+				Constraint: LiteralType{Type: cty.String},
 				Address: &AttributeAddrSchema{
 					Steps: []AddrStep{
 						LabelStep{Index: 0},
@@ -132,9 +129,7 @@ func TestLegacyAttributeSchema_Validate(t *testing.T) {
 		},
 		{
 			&AttributeSchema{
-				Expr: ExprConstraints{
-					LiteralTypeExpr{Type: cty.String},
-				},
+				Constraint: LiteralType{Type: cty.String},
 				Address: &AttributeAddrSchema{
 					Steps: []AddrStep{
 						AttrValueStep{Name: "unknown"},
@@ -147,9 +142,7 @@ func TestLegacyAttributeSchema_Validate(t *testing.T) {
 		},
 		{
 			&AttributeSchema{
-				Expr: ExprConstraints{
-					LiteralTypeExpr{Type: cty.String},
-				},
+				Constraint: LiteralType{Type: cty.String},
 				Address: &AttributeAddrSchema{
 					Steps: []AddrStep{
 						AttrNameStep{},
@@ -161,9 +154,7 @@ func TestLegacyAttributeSchema_Validate(t *testing.T) {
 		},
 		{
 			&AttributeSchema{
-				Expr: ExprConstraints{
-					LiteralTypeExpr{Type: cty.String},
-				},
+				Constraint: LiteralType{Type: cty.String},
 				Address: &AttributeAddrSchema{
 					Steps: []AddrStep{
 						AttrNameStep{},
@@ -177,8 +168,9 @@ func TestLegacyAttributeSchema_Validate(t *testing.T) {
 		},
 		{
 			&AttributeSchema{
-				Expr: ExprConstraints{
-					TraversalExpr{OfType: cty.Number, OfScopeId: lang.ScopeId("blah")},
+				Constraint: Reference{
+					OfType:    cty.Number,
+					OfScopeId: lang.ScopeId("blah"),
 				},
 				IsRequired:  true,
 				IsSensitive: true,

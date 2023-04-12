@@ -117,7 +117,7 @@ func TestCompletionAtPos_BodySchema_Extensions_Count(t *testing.T) {
 								Attributes: map[string]*schema.AttributeSchema{
 									"instance_size": {
 										IsOptional: true,
-										Expr:       schema.LiteralTypeOnly(cty.String),
+										Constraint: schema.LiteralType{Type: cty.String},
 									},
 								},
 							},
@@ -236,10 +236,8 @@ func TestCompletionAtPos_BodySchema_Extensions_Count(t *testing.T) {
 							Attributes: map[string]*schema.AttributeSchema{
 								"cpu_count": {
 									IsOptional: true,
-									Expr: schema.ExprConstraints{
-										schema.TraversalExpr{
-											OfType: cty.Number,
-										},
+									Constraint: schema.Reference{
+										OfType: cty.Number,
 									},
 								},
 							},
@@ -278,10 +276,8 @@ func TestCompletionAtPos_BodySchema_Extensions_Count(t *testing.T) {
 							Attributes: map[string]*schema.AttributeSchema{
 								"cpu_count": {
 									IsOptional: true,
-									Expr: schema.ExprConstraints{
-										schema.TraversalExpr{
-											OfType: cty.Number,
-										},
+									Constraint: schema.Reference{
+										OfType: cty.Number,
 									},
 								},
 							},
@@ -332,11 +328,7 @@ func TestCompletionAtPos_BodySchema_Extensions_Count(t *testing.T) {
   count = 4
   cpu_count = 
 }`,
-			hcl.Pos{
-				Line:   3,
-				Column: 15,
-				Byte:   57,
-			},
+			hcl.Pos{Line: 3, Column: 15, Byte: 57},
 			lang.CompleteCandidates([]lang.Candidate{
 				{
 					Label: "count.index",
@@ -348,16 +340,8 @@ func TestCompletionAtPos_BodySchema_Extensions_Count(t *testing.T) {
 					TextEdit: lang.TextEdit{
 						Range: hcl.Range{
 							Filename: "test.tf",
-							Start: hcl.Pos{
-								Line:   3,
-								Column: 15,
-								Byte:   58,
-							},
-							End: hcl.Pos{
-								Line:   3,
-								Column: 15,
-								Byte:   58,
-							},
+							Start:    hcl.Pos{Line: 3, Column: 15, Byte: 57},
+							End:      hcl.Pos{Line: 3, Column: 15, Byte: 57},
 						},
 						NewText: "count.index",
 						Snippet: "count.index",
@@ -416,10 +400,8 @@ func TestCompletionAtPos_BodySchema_Extensions_Count(t *testing.T) {
 							Attributes: map[string]*schema.AttributeSchema{
 								"cpu_count": {
 									IsOptional: true,
-									Expr: schema.ExprConstraints{
-										schema.TraversalExpr{
-											OfType: cty.Number,
-										},
+									Constraint: schema.Reference{
+										OfType: cty.Number,
 									},
 								},
 							},
@@ -461,10 +443,8 @@ func TestCompletionAtPos_BodySchema_Extensions_Count(t *testing.T) {
 										Attributes: map[string]*schema.AttributeSchema{
 											"cpu_count": {
 												IsOptional: true,
-												Expr: schema.ExprConstraints{
-													schema.TraversalExpr{
-														OfType: cty.Number,
-													},
+												Constraint: schema.Reference{
+													OfType: cty.Number,
 												},
 											},
 										},
@@ -520,11 +500,7 @@ func TestCompletionAtPos_BodySchema_Extensions_Count(t *testing.T) {
     cpu_count =
   }
 }`,
-			hcl.Pos{
-				Line:   4,
-				Column: 17,
-				Byte:   67,
-			},
+			hcl.Pos{Line: 4, Column: 17, Byte: 67},
 			lang.CompleteCandidates([]lang.Candidate{
 				{
 					Label: "count.index",
@@ -533,19 +509,15 @@ func TestCompletionAtPos_BodySchema_Extensions_Count(t *testing.T) {
 						Kind:  lang.PlainTextKind,
 					},
 					Detail: "number",
-					TextEdit: lang.TextEdit{Range: hcl.Range{
-						Filename: "test.tf",
-						Start: hcl.Pos{
-							Line:   4,
-							Column: 16,
-							Byte:   67,
+					TextEdit: lang.TextEdit{
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 4, Column: 17, Byte: 67},
+							End:      hcl.Pos{Line: 4, Column: 17, Byte: 67},
 						},
-						End: hcl.Pos{
-							Line:   4,
-							Column: 16,
-							Byte:   67,
-						},
-					}, NewText: "count.index", Snippet: "count.index"},
+						NewText: "count.index",
+						Snippet: "count.index",
+					},
 					Kind: lang.TraversalCandidateKind,
 				},
 			}),
@@ -748,10 +720,8 @@ func TestCompletionAtPos_BodySchema_Extensions_ForEach(t *testing.T) {
 							Attributes: map[string]*schema.AttributeSchema{
 								"thing": {
 									IsOptional: true,
-									Expr: schema.ExprConstraints{
-										schema.TraversalExpr{
-											OfType: cty.String,
-										},
+									Constraint: schema.Reference{
+										OfType: cty.String,
 									},
 								},
 							},
@@ -859,10 +829,8 @@ thing =
 							Attributes: map[string]*schema.AttributeSchema{
 								"thing": {
 									IsOptional: true,
-									Expr: schema.ExprConstraints{
-										schema.TraversalExpr{
-											OfType: cty.String,
-										},
+									Constraint: schema.Reference{
+										OfType: cty.String,
 									},
 								},
 							},
@@ -889,10 +857,8 @@ thing =
 							Attributes: map[string]*schema.AttributeSchema{
 								"thing": {
 									IsOptional: true,
-									Expr: schema.ExprConstraints{
-										schema.TraversalExpr{
-											OfType: cty.Number,
-										},
+									Constraint: schema.Reference{
+										OfType: cty.Number,
 									},
 								},
 							},
@@ -922,10 +888,8 @@ thing =
 							Attributes: map[string]*schema.AttributeSchema{
 								"thing": {
 									IsOptional: true,
-									Expr: schema.ExprConstraints{
-										schema.TraversalExpr{
-											OfType: cty.Number,
-										},
+									Constraint: schema.Reference{
+										OfType: cty.Number,
 									},
 								},
 							},
@@ -981,10 +945,8 @@ for_each = {
 										Attributes: map[string]*schema.AttributeSchema{
 											"thing": {
 												IsOptional: true,
-												Expr: schema.ExprConstraints{
-													schema.TraversalExpr{
-														OfType: cty.DynamicPseudoType,
-													},
+												Constraint: schema.Reference{
+													OfType: cty.DynamicPseudoType,
 												},
 											},
 										},
@@ -1042,7 +1004,7 @@ foo {
 	thing = 
 }
 }`,
-			hcl.Pos{Line: 7, Column: 11, Byte: 109},
+			hcl.Pos{Line: 7, Column: 13, Byte: 109},
 			lang.CompleteCandidates([]lang.Candidate{
 				{
 					Label:  "each.key",
@@ -1055,8 +1017,8 @@ foo {
 					TextEdit: lang.TextEdit{
 						Range: hcl.Range{
 							Filename: "test.tf",
-							Start:    hcl.Pos{Line: 7, Column: 10, Byte: 109},
-							End:      hcl.Pos{Line: 7, Column: 10, Byte: 109},
+							Start:    hcl.Pos{Line: 7, Column: 13, Byte: 109},
+							End:      hcl.Pos{Line: 7, Column: 13, Byte: 109},
 						},
 						NewText: "each.key",
 						Snippet: "each.key",
@@ -1073,8 +1035,8 @@ foo {
 					TextEdit: lang.TextEdit{
 						Range: hcl.Range{
 							Filename: "test.tf",
-							Start:    hcl.Pos{Line: 7, Column: 10, Byte: 109},
-							End:      hcl.Pos{Line: 7, Column: 10, Byte: 109},
+							Start:    hcl.Pos{Line: 7, Column: 13, Byte: 109},
+							End:      hcl.Pos{Line: 7, Column: 13, Byte: 109},
 						},
 						NewText: "each.value",
 						Snippet: "each.value",
@@ -1097,10 +1059,8 @@ foo {
 							Attributes: map[string]*schema.AttributeSchema{
 								"thing": {
 									IsOptional: true,
-									Expr: schema.ExprConstraints{
-										schema.TraversalExpr{
-											OfType: cty.String,
-										},
+									Constraint: schema.Reference{
+										OfType: cty.String,
 									},
 								},
 							},
@@ -1207,22 +1167,22 @@ func TestCompletionAtPos_BodySchema_Extensions_SelfRef(t *testing.T) {
 								Attributes: map[string]*schema.AttributeSchema{
 									"cpu_count": {
 										IsOptional: true,
-										Expr: schema.ExprConstraints{
-											schema.TraversalExpr{
+										Constraint: schema.OneOf{
+											schema.Reference{
 												OfType: cty.Number,
 											},
-											schema.LiteralTypeExpr{
+											schema.LiteralType{
 												Type: cty.Number,
 											},
 										},
 									},
 									"fox": {
 										IsOptional: true,
-										Expr: schema.ExprConstraints{
-											schema.TraversalExpr{
+										Constraint: schema.OneOf{
+											schema.Reference{
 												OfType: cty.Number,
 											},
-											schema.LiteralTypeExpr{
+											schema.LiteralType{
 												Type: cty.Number,
 											},
 										},
@@ -1279,22 +1239,22 @@ func TestCompletionAtPos_BodySchema_Extensions_SelfRef(t *testing.T) {
 								Attributes: map[string]*schema.AttributeSchema{
 									"cpu_count": {
 										IsOptional: true,
-										Expr: schema.ExprConstraints{
-											schema.TraversalExpr{
+										Constraint: schema.OneOf{
+											schema.Reference{
 												OfType: cty.Number,
 											},
-											schema.LiteralTypeExpr{
+											schema.LiteralType{
 												Type: cty.Number,
 											},
 										},
 									},
 									"fox": {
 										IsOptional: true,
-										Expr: schema.ExprConstraints{
-											schema.TraversalExpr{
+										Constraint: schema.OneOf{
+											schema.Reference{
 												OfType: cty.Number,
 											},
-											schema.LiteralTypeExpr{
+											schema.LiteralType{
 												Type: cty.Number,
 											},
 										},
@@ -1367,22 +1327,22 @@ func TestCompletionAtPos_BodySchema_Extensions_SelfRef(t *testing.T) {
 								Attributes: map[string]*schema.AttributeSchema{
 									"cpu_count": {
 										IsOptional: true,
-										Expr: schema.ExprConstraints{
-											schema.TraversalExpr{
+										Constraint: schema.OneOf{
+											schema.Reference{
 												OfType: cty.Number,
 											},
-											schema.LiteralTypeExpr{
+											schema.LiteralType{
 												Type: cty.Number,
 											},
 										},
 									},
 									"fox": {
 										IsOptional: true,
-										Expr: schema.ExprConstraints{
-											schema.TraversalExpr{
+										Constraint: schema.OneOf{
+											schema.Reference{
 												OfType: cty.Number,
 											},
-											schema.LiteralTypeExpr{
+											schema.LiteralType{
 												Type: cty.Number,
 											},
 										},
@@ -1438,11 +1398,11 @@ func TestCompletionAtPos_BodySchema_Extensions_SelfRef(t *testing.T) {
 								Attributes: map[string]*schema.AttributeSchema{
 									"cpu_count": {
 										IsOptional: true,
-										Expr: schema.ExprConstraints{
-											schema.TraversalExpr{
+										Constraint: schema.OneOf{
+											schema.Reference{
 												OfType: cty.Number,
 											},
-											schema.LiteralTypeExpr{
+											schema.LiteralType{
 												Type: cty.Number,
 											},
 										},
@@ -1498,22 +1458,22 @@ func TestCompletionAtPos_BodySchema_Extensions_SelfRef(t *testing.T) {
 								Attributes: map[string]*schema.AttributeSchema{
 									"cpu_count": {
 										IsOptional: true,
-										Expr: schema.ExprConstraints{
-											schema.TraversalExpr{
+										Constraint: schema.OneOf{
+											schema.Reference{
 												OfType: cty.Number,
 											},
-											schema.LiteralTypeExpr{
+											schema.LiteralType{
 												Type: cty.Number,
 											},
 										},
 									},
 									"fox": {
 										IsOptional: true,
-										Expr: schema.ExprConstraints{
-											schema.TraversalExpr{
+										Constraint: schema.OneOf{
+											schema.Reference{
 												OfType: cty.Number,
 											},
-											schema.LiteralTypeExpr{
+											schema.LiteralType{
 												Type: cty.Number,
 											},
 										},
@@ -1578,11 +1538,11 @@ func TestCompletionAtPos_BodySchema_Extensions_SelfRef(t *testing.T) {
 										Attributes: map[string]*schema.AttributeSchema{
 											"fox": {
 												IsOptional: true,
-												Expr: schema.ExprConstraints{
-													schema.TraversalExpr{
+												Constraint: schema.OneOf{
+													schema.Reference{
 														OfType: cty.Number,
 													},
-													schema.LiteralTypeExpr{
+													schema.LiteralType{
 														Type: cty.Number,
 													},
 												},
@@ -1604,11 +1564,11 @@ func TestCompletionAtPos_BodySchema_Extensions_SelfRef(t *testing.T) {
 								Attributes: map[string]*schema.AttributeSchema{
 									"cpu_count": {
 										IsOptional: true,
-										Expr: schema.ExprConstraints{
-											schema.TraversalExpr{
+										Constraint: schema.OneOf{
+											schema.Reference{
 												OfType: cty.Number,
 											},
-											schema.LiteralTypeExpr{
+											schema.LiteralType{
 												Type: cty.Number,
 											},
 										},
@@ -1759,7 +1719,7 @@ resource "aws_elastic_beanstalk_environment" "example" {
 								Attributes: map[string]*schema.AttributeSchema{
 									"instance_size": {
 										IsOptional: true,
-										Expr:       schema.LiteralTypeOnly(cty.String),
+										Constraint: schema.LiteralType{Type: cty.String},
 									},
 								},
 							},
@@ -1822,7 +1782,7 @@ resource "aws_elastic_beanstalk_environment" "example" {
 								Attributes: map[string]*schema.AttributeSchema{
 									"instance_size": {
 										IsOptional: true,
-										Expr:       schema.LiteralTypeOnly(cty.String),
+										Constraint: schema.LiteralType{Type: cty.String},
 									},
 								},
 							},
@@ -1918,7 +1878,7 @@ resource "aws_elastic_beanstalk_environment" "example" {
 								Attributes: map[string]*schema.AttributeSchema{
 									"instance_size": {
 										IsOptional: true,
-										Expr:       schema.LiteralTypeOnly(cty.String),
+										Constraint: schema.LiteralType{Type: cty.String},
 									},
 								},
 							},
@@ -2041,7 +2001,7 @@ resource "aws_elastic_beanstalk_environment" "example" {
 											Attributes: map[string]*schema.AttributeSchema{
 												"thing": {
 													IsOptional: true,
-													Expr:       schema.LiteralTypeOnly(cty.String),
+													Constraint: schema.LiteralType{Type: cty.String},
 												},
 											},
 										},
@@ -2050,7 +2010,7 @@ resource "aws_elastic_beanstalk_environment" "example" {
 								Attributes: map[string]*schema.AttributeSchema{
 									"instance_size": {
 										IsOptional: true,
-										Expr:       schema.LiteralTypeOnly(cty.String),
+										Constraint: schema.LiteralType{Type: cty.String},
 									},
 								},
 							},
@@ -2226,7 +2186,7 @@ resource "aws_elastic_beanstalk_environment" "example" {
 											Attributes: map[string]*schema.AttributeSchema{
 												"thing": {
 													IsOptional: true,
-													Expr:       schema.LiteralTypeOnly(cty.String),
+													Constraint: schema.LiteralType{Type: cty.String},
 												},
 											},
 										},
@@ -2235,7 +2195,7 @@ resource "aws_elastic_beanstalk_environment" "example" {
 								Attributes: map[string]*schema.AttributeSchema{
 									"instance_size": {
 										IsOptional: true,
-										Expr:       schema.LiteralTypeOnly(cty.String),
+										Constraint: schema.LiteralType{Type: cty.String},
 									},
 								},
 							},
@@ -2303,9 +2263,8 @@ resource "aws_elastic_beanstalk_environment" "example" {
 			}),
 			"",
 		},
-		// completion after the thing =
 		{
-			"dynamic block completion after the thing =",
+			"dynamic block completion after attribute equal sign",
 			&schema.BodySchema{
 				Blocks: map[string]*schema.BlockSchema{
 					"resource": {
@@ -2334,7 +2293,7 @@ resource "aws_elastic_beanstalk_environment" "example" {
 											Attributes: map[string]*schema.AttributeSchema{
 												"thing": {
 													IsOptional: true,
-													Expr:       schema.LiteralTypeOnly(cty.Bool),
+													Constraint: schema.LiteralType{Type: cty.Bool},
 												},
 											},
 										},
@@ -2343,7 +2302,7 @@ resource "aws_elastic_beanstalk_environment" "example" {
 								Attributes: map[string]*schema.AttributeSchema{
 									"instance_size": {
 										IsOptional: true,
-										Expr:       schema.LiteralTypeOnly(cty.String),
+										Constraint: schema.LiteralType{Type: cty.String},
 									},
 								},
 							},
@@ -2362,31 +2321,31 @@ resource "aws_elastic_beanstalk_environment" "example" {
 			hcl.Pos{Line: 5, Column: 15, Byte: 94},
 			lang.CompleteCandidates([]lang.Candidate{
 				{
-					Label:  "true",
-					Detail: "bool",
-					Kind:   lang.BoolCandidateKind,
-					TextEdit: lang.TextEdit{
-						Range: hcl.Range{
-							Filename: "test.tf",
-							Start:    hcl.Pos{Line: 5, Column: 12, Byte: 94},
-							End:      hcl.Pos{Line: 5, Column: 12, Byte: 94},
-						},
-						NewText: "true",
-						Snippet: `${1:true}`,
-					},
-				},
-				{
 					Label:  "false",
 					Detail: "bool",
 					Kind:   lang.BoolCandidateKind,
 					TextEdit: lang.TextEdit{
 						Range: hcl.Range{
 							Filename: "test.tf",
-							Start:    hcl.Pos{Line: 5, Column: 12, Byte: 94},
-							End:      hcl.Pos{Line: 5, Column: 12, Byte: 94},
+							Start:    hcl.Pos{Line: 5, Column: 15, Byte: 94},
+							End:      hcl.Pos{Line: 5, Column: 15, Byte: 94},
 						},
 						NewText: "false",
-						Snippet: `${1:false}`,
+						Snippet: `false`,
+					},
+				},
+				{
+					Label:  "true",
+					Detail: "bool",
+					Kind:   lang.BoolCandidateKind,
+					TextEdit: lang.TextEdit{
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 5, Column: 15, Byte: 94},
+							End:      hcl.Pos{Line: 5, Column: 15, Byte: 94},
+						},
+						NewText: "true",
+						Snippet: `true`,
 					},
 				},
 			}),
@@ -2505,7 +2464,7 @@ resource "aws_elastic_beanstalk_environment" "example" {
 								Attributes: map[string]*schema.AttributeSchema{
 									"instance_size": {
 										IsOptional: true,
-										Expr:       schema.LiteralTypeOnly(cty.String),
+										Constraint: schema.LiteralType{Type: cty.String},
 									},
 								},
 							},

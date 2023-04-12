@@ -62,7 +62,7 @@ func TestCollectReferenceTargets_extension_json(t *testing.T) {
 										Type: schema.BlockTypeList,
 										Body: &schema.BodySchema{
 											Attributes: map[string]*schema.AttributeSchema{
-												"bar": {IsOptional: true, Expr: schema.LiteralTypeOnly(cty.Number)},
+												"bar": {IsOptional: true, Constraint: schema.LiteralType{Type: cty.Number}},
 											},
 										},
 									},

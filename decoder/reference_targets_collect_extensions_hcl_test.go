@@ -49,7 +49,7 @@ func TestCollectReferenceTargets_extension_hcl(t *testing.T) {
 						},
 						Body: &schema.BodySchema{
 							Attributes: map[string]*schema.AttributeSchema{
-								"static": {IsOptional: true, Expr: schema.LiteralTypeOnly(cty.String)},
+								"static": {IsOptional: true, Constraint: schema.LiteralType{Type: cty.String}},
 							},
 						},
 						DependentBody: map[schema.SchemaKey]*schema.BodySchema{
@@ -62,8 +62,8 @@ func TestCollectReferenceTargets_extension_hcl(t *testing.T) {
 								},
 							}): {
 								Attributes: map[string]*schema.AttributeSchema{
-									"bar": {IsOptional: true, Expr: schema.LiteralTypeOnly(cty.Number)},
-									"foo": {IsOptional: true, Expr: schema.LiteralTypeOnly(cty.String)},
+									"bar": {IsOptional: true, Constraint: schema.LiteralType{Type: cty.Number}},
+									"foo": {IsOptional: true, Constraint: schema.LiteralType{Type: cty.String}},
 								},
 							},
 						},
@@ -260,7 +260,7 @@ func TestCollectReferenceTargets_extension_hcl(t *testing.T) {
 						},
 						Body: &schema.BodySchema{
 							Attributes: map[string]*schema.AttributeSchema{
-								"static": {IsOptional: true, Expr: schema.LiteralTypeOnly(cty.String)},
+								"static": {IsOptional: true, Constraint: schema.LiteralType{Type: cty.String}},
 							},
 						},
 						DependentBody: map[schema.SchemaKey]*schema.BodySchema{
@@ -277,7 +277,7 @@ func TestCollectReferenceTargets_extension_hcl(t *testing.T) {
 										Type: schema.BlockTypeObject,
 										Body: &schema.BodySchema{
 											Attributes: map[string]*schema.AttributeSchema{
-												"bar": {IsOptional: true, Expr: schema.LiteralTypeOnly(cty.Number)},
+												"bar": {IsOptional: true, Constraint: schema.LiteralType{Type: cty.Number}},
 											},
 										},
 									},
@@ -485,7 +485,7 @@ func TestCollectReferenceTargets_extension_hcl(t *testing.T) {
 						},
 						Body: &schema.BodySchema{
 							Attributes: map[string]*schema.AttributeSchema{
-								"static": {IsOptional: true, Expr: schema.LiteralTypeOnly(cty.String)},
+								"static": {IsOptional: true, Constraint: schema.LiteralType{Type: cty.String}},
 							},
 						},
 						DependentBody: map[schema.SchemaKey]*schema.BodySchema{
@@ -502,7 +502,7 @@ func TestCollectReferenceTargets_extension_hcl(t *testing.T) {
 										Type: schema.BlockTypeList,
 										Body: &schema.BodySchema{
 											Attributes: map[string]*schema.AttributeSchema{
-												"bar": {IsOptional: true, Expr: schema.LiteralTypeOnly(cty.Number)},
+												"bar": {IsOptional: true, Constraint: schema.LiteralType{Type: cty.Number}},
 											},
 										},
 									},
@@ -756,7 +756,7 @@ func TestCollectReferenceTargets_extension_hcl(t *testing.T) {
 						},
 						Body: &schema.BodySchema{
 							Attributes: map[string]*schema.AttributeSchema{
-								"static": {IsOptional: true, Expr: schema.LiteralTypeOnly(cty.String)},
+								"static": {IsOptional: true, Constraint: schema.LiteralType{Type: cty.String}},
 							},
 						},
 						DependentBody: map[schema.SchemaKey]*schema.BodySchema{
@@ -773,7 +773,7 @@ func TestCollectReferenceTargets_extension_hcl(t *testing.T) {
 										Type: schema.BlockTypeSet,
 										Body: &schema.BodySchema{
 											Attributes: map[string]*schema.AttributeSchema{
-												"bar": {IsOptional: true, Expr: schema.LiteralTypeOnly(cty.Number)},
+												"bar": {IsOptional: true, Constraint: schema.LiteralType{Type: cty.Number}},
 											},
 										},
 									},
@@ -913,7 +913,7 @@ func TestCollectReferenceTargets_extension_hcl(t *testing.T) {
 						},
 						Body: &schema.BodySchema{
 							Attributes: map[string]*schema.AttributeSchema{
-								"static": {IsOptional: true, Expr: schema.LiteralTypeOnly(cty.String)},
+								"static": {IsOptional: true, Constraint: schema.LiteralType{Type: cty.String}},
 							},
 						},
 						DependentBody: map[schema.SchemaKey]*schema.BodySchema{
@@ -930,7 +930,7 @@ func TestCollectReferenceTargets_extension_hcl(t *testing.T) {
 										Type: schema.BlockTypeMap,
 										Body: &schema.BodySchema{
 											Attributes: map[string]*schema.AttributeSchema{
-												"bar": {IsOptional: true, Expr: schema.LiteralTypeOnly(cty.Number)},
+												"bar": {IsOptional: true, Constraint: schema.LiteralType{Type: cty.Number}},
 											},
 										},
 									},

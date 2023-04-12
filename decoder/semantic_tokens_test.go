@@ -116,10 +116,10 @@ func TestDecoder_SemanticTokensInFile_basic(t *testing.T) {
 				Body: &schema.BodySchema{
 					Attributes: map[string]*schema.AttributeSchema{
 						"count": {
-							Expr: schema.LiteralTypeOnly(cty.Number),
+							Constraint: schema.LiteralType{Type: cty.Number},
 						},
 						"source": {
-							Expr:         schema.LiteralTypeOnly(cty.String),
+							Constraint:   schema.LiteralType{Type: cty.String},
 							IsDeprecated: true,
 							SemanticTokenModifiers: lang.SemanticTokenModifiers{
 								lang.TokenModifierDependent,
@@ -345,10 +345,10 @@ func TestDecoder_SemanticTokensInFile_dependentSchema(t *testing.T) {
 					}): {
 						Attributes: map[string]*schema.AttributeSchema{
 							"instance_type": {
-								Expr: schema.LiteralTypeOnly(cty.String),
+								Constraint: schema.LiteralType{Type: cty.String},
 							},
 							"deprecated": {
-								Expr: schema.LiteralTypeOnly(cty.Bool),
+								Constraint: schema.LiteralType{Type: cty.Bool},
 							},
 						},
 					},
@@ -582,10 +582,10 @@ func TestDecoder_SemanticTokensInFile_customModifiers(t *testing.T) {
 				Body: &schema.BodySchema{
 					Attributes: map[string]*schema.AttributeSchema{
 						"count": {
-							Expr: schema.LiteralTypeOnly(cty.Number),
+							Constraint: schema.LiteralType{Type: cty.Number},
 						},
 						"source": {
-							Expr:                   schema.LiteralTypeOnly(cty.String),
+							Constraint:             schema.LiteralType{Type: cty.String},
 							IsDeprecated:           true,
 							SemanticTokenModifiers: lang.SemanticTokenModifiers{lang.TokenModifierDependent},
 						},
@@ -868,9 +868,9 @@ func TestDecoder_SemanticTokensInFile_extensions_basic(t *testing.T) {
 					},
 					Attributes: map[string]*schema.AttributeSchema{
 						"cpu_core_count": {
-							Expr: schema.ExprConstraints{
-								schema.TraversalExpr{OfType: cty.Number},
-								schema.LiteralTypeExpr{Type: cty.Number},
+							Constraint: schema.OneOf{
+								schema.Reference{OfType: cty.Number},
+								schema.LiteralType{Type: cty.Number},
 							},
 							IsOptional: true,
 						},
@@ -1117,9 +1117,9 @@ func TestDecoder_SemanticTokensInFile_expression_extensions_depSchema(t *testing
 					}): {
 						Attributes: map[string]*schema.AttributeSchema{
 							"cpu_core_count": {
-								Expr: schema.ExprConstraints{
-									schema.TraversalExpr{OfType: cty.Number},
-									schema.LiteralTypeExpr{Type: cty.Number},
+								Constraint: schema.OneOf{
+									schema.Reference{OfType: cty.Number},
+									schema.LiteralType{Type: cty.Number},
 								},
 								IsOptional: true,
 							},
@@ -1357,7 +1357,7 @@ func TestDecoder_SemanticTokensInFile_extensions_countUndeclared(t *testing.T) {
 					},
 					Attributes: map[string]*schema.AttributeSchema{
 						"cpu_count": {
-							Expr: schema.LiteralTypeOnly(cty.Number),
+							Constraint: schema.LiteralType{Type: cty.Number},
 						},
 					},
 				},
@@ -1489,7 +1489,7 @@ func TestDecoder_SemanticTokensInFile_extensions_countIndexInSubBlock(t *testing
 					},
 					Attributes: map[string]*schema.AttributeSchema{
 						"count": {
-							Expr: schema.LiteralTypeOnly(cty.Number),
+							Constraint: schema.LiteralType{Type: cty.Number},
 						},
 					},
 					Blocks: map[string]*schema.BlockSchema{
@@ -1497,9 +1497,7 @@ func TestDecoder_SemanticTokensInFile_extensions_countIndexInSubBlock(t *testing
 							Body: &schema.BodySchema{
 								Attributes: map[string]*schema.AttributeSchema{
 									"attr": {
-										Expr: schema.ExprConstraints{
-											schema.TraversalExpr{OfType: cty.Number},
-										},
+										Constraint: schema.Reference{OfType: cty.Number},
 									},
 								},
 							},
@@ -1756,14 +1754,10 @@ func TestDecoder_SemanticTokensInFile_extensions_for_each(t *testing.T) {
 					},
 					Attributes: map[string]*schema.AttributeSchema{
 						"thing": {
-							Expr: schema.ExprConstraints{
-								schema.TraversalExpr{OfType: cty.String},
-							},
+							Constraint: schema.Reference{OfType: cty.String},
 						},
 						"thing_other": {
-							Expr: schema.ExprConstraints{
-								schema.TraversalExpr{OfType: cty.DynamicPseudoType},
-							},
+							Constraint: schema.Reference{OfType: cty.DynamicPseudoType},
 						},
 					},
 				},

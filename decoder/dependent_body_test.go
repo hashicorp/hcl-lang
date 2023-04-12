@@ -35,7 +35,7 @@ func TestBodySchema_DependentBodySchema_label_basic(t *testing.T) {
 		Body: &schema.BodySchema{
 			Attributes: map[string]*schema.AttributeSchema{
 				"alias": {
-					Expr: schema.LiteralTypeOnly(cty.String),
+					Constraint: schema.LiteralType{Type: cty.String},
 				},
 			},
 		},
@@ -46,7 +46,7 @@ func TestBodySchema_DependentBodySchema_label_basic(t *testing.T) {
 				},
 			}): {
 				Attributes: map[string]*schema.AttributeSchema{
-					"bar": {Expr: schema.LiteralTypeOnly(cty.Number)},
+					"bar": {Constraint: schema.LiteralType{Type: cty.Number}},
 				},
 			},
 		},
@@ -58,7 +58,7 @@ func TestBodySchema_DependentBodySchema_label_basic(t *testing.T) {
 	}
 	expectedSchema := &schema.BodySchema{
 		Attributes: map[string]*schema.AttributeSchema{
-			"bar": {Expr: schema.LiteralTypeOnly(cty.Number)},
+			"bar": {Constraint: schema.LiteralType{Type: cty.Number}},
 		},
 	}
 	if diff := cmp.Diff(expectedSchema, bodySchema, ctydebug.CmpOptions); diff != "" {
@@ -86,7 +86,7 @@ func TestBodySchema_DependentBodySchema_mismatchingLabels(t *testing.T) {
 		Body: &schema.BodySchema{
 			Attributes: map[string]*schema.AttributeSchema{
 				"alias": {
-					Expr: schema.LiteralTypeOnly(cty.String),
+					Constraint: schema.LiteralType{Type: cty.String},
 				},
 			},
 		},
@@ -98,7 +98,7 @@ func TestBodySchema_DependentBodySchema_mismatchingLabels(t *testing.T) {
 				},
 			}): {
 				Attributes: map[string]*schema.AttributeSchema{
-					"bar": {Expr: schema.LiteralTypeOnly(cty.Number)},
+					"bar": {Constraint: schema.LiteralType{Type: cty.Number}},
 				},
 			},
 		},
@@ -114,7 +114,7 @@ func TestBodySchema_DependentBodySchema_dependentAttr(t *testing.T) {
 	firstDepBody := &schema.BodySchema{
 		Attributes: map[string]*schema.AttributeSchema{
 			"backend": {
-				Expr:                   schema.LiteralTypeOnly(cty.String),
+				Constraint:             schema.LiteralType{Type: cty.String},
 				IsDepKey:               true,
 				SemanticTokenModifiers: lang.SemanticTokenModifiers{},
 			},
@@ -123,11 +123,11 @@ func TestBodySchema_DependentBodySchema_dependentAttr(t *testing.T) {
 	secondDepBody := &schema.BodySchema{
 		Attributes: map[string]*schema.AttributeSchema{
 			"extra": {
-				Expr:                   schema.LiteralTypeOnly(cty.Number),
+				Constraint:             schema.LiteralType{Type: cty.Number},
 				SemanticTokenModifiers: lang.SemanticTokenModifiers{},
 			},
 			"backend": {
-				Expr:                   schema.LiteralTypeOnly(cty.String),
+				Constraint:             schema.LiteralType{Type: cty.String},
 				IsDepKey:               true,
 				SemanticTokenModifiers: lang.SemanticTokenModifiers{},
 			},
@@ -146,7 +146,7 @@ func TestBodySchema_DependentBodySchema_dependentAttr(t *testing.T) {
 		Body: &schema.BodySchema{
 			Attributes: map[string]*schema.AttributeSchema{
 				"alias": {
-					Expr: schema.LiteralTypeOnly(cty.String),
+					Constraint: schema.LiteralType{Type: cty.String},
 				},
 			},
 		},
@@ -205,17 +205,17 @@ func TestBodySchema_DependentBodySchema_missingDependentAttr(t *testing.T) {
 	firstDepBody := &schema.BodySchema{
 		Attributes: map[string]*schema.AttributeSchema{
 			"backend": {
-				Expr:     schema.LiteralTypeOnly(cty.String),
-				IsDepKey: true,
+				Constraint: schema.LiteralType{Type: cty.String},
+				IsDepKey:   true,
 			},
 		},
 	}
 	secondDepBody := &schema.BodySchema{
 		Attributes: map[string]*schema.AttributeSchema{
-			"extra": {Expr: schema.LiteralTypeOnly(cty.Number)},
+			"extra": {Constraint: schema.LiteralType{Type: cty.Number}},
 			"backend": {
-				Expr:     schema.LiteralTypeOnly(cty.String),
-				IsDepKey: true,
+				Constraint: schema.LiteralType{Type: cty.String},
+				IsDepKey:   true,
 			},
 		},
 	}
@@ -232,7 +232,7 @@ func TestBodySchema_DependentBodySchema_missingDependentAttr(t *testing.T) {
 		Body: &schema.BodySchema{
 			Attributes: map[string]*schema.AttributeSchema{
 				"alias": {
-					Expr: schema.LiteralTypeOnly(cty.String),
+					Constraint: schema.LiteralType{Type: cty.String},
 				},
 			},
 		},
@@ -293,7 +293,7 @@ func TestBodySchema_DependentBodySchema_attributes(t *testing.T) {
 			},
 			&schema.BodySchema{
 				Attributes: map[string]*schema.AttributeSchema{
-					"depval_attr": {Expr: schema.LiteralTypeOnly(cty.String)},
+					"depval_attr": {Constraint: schema.LiteralType{Type: cty.String}},
 				},
 			},
 		},
@@ -309,7 +309,7 @@ func TestBodySchema_DependentBodySchema_attributes(t *testing.T) {
 			},
 			&schema.BodySchema{
 				Attributes: map[string]*schema.AttributeSchema{
-					"number_found": {Expr: schema.LiteralTypeOnly(cty.Number)},
+					"number_found": {Constraint: schema.LiteralType{Type: cty.Number}},
 				},
 			},
 		},
@@ -328,7 +328,7 @@ func TestBodySchema_DependentBodySchema_attributes(t *testing.T) {
 			},
 			&schema.BodySchema{
 				Attributes: map[string]*schema.AttributeSchema{
-					"refbar": {Expr: schema.LiteralTypeOnly(cty.Number)},
+					"refbar": {Constraint: schema.LiteralType{Type: cty.Number}},
 				},
 			},
 		},
@@ -350,7 +350,7 @@ func TestBodySchema_DependentBodySchema_attributes(t *testing.T) {
 			},
 			&schema.BodySchema{
 				Attributes: map[string]*schema.AttributeSchema{
-					"sortedattr": {Expr: schema.LiteralTypeOnly(cty.String)},
+					"sortedattr": {Constraint: schema.LiteralType{Type: cty.String}},
 				},
 			},
 		},
@@ -372,7 +372,7 @@ func TestBodySchema_DependentBodySchema_attributes(t *testing.T) {
 			},
 			&schema.BodySchema{
 				Attributes: map[string]*schema.AttributeSchema{
-					"unsortedattr": {Expr: schema.LiteralTypeOnly(cty.String)},
+					"unsortedattr": {Constraint: schema.LiteralType{Type: cty.String}},
 				},
 			},
 		},
@@ -418,7 +418,7 @@ func TestBodySchema_DependentBodySchema_label_storedUnsorted(t *testing.T) {
 	}
 	expectedSchema := &schema.BodySchema{
 		Attributes: map[string]*schema.AttributeSchema{
-			"event": {Expr: schema.LiteralTypeOnly(cty.String)},
+			"event": {Constraint: schema.LiteralType{Type: cty.String}},
 		},
 	}
 	if diff := cmp.Diff(expectedSchema, bodySchema, ctydebug.CmpOptions); diff != "" {
@@ -451,7 +451,7 @@ var testSchemaWithLabels = NewBlockSchema(&schema.BlockSchema{
 	Body: &schema.BodySchema{
 		Attributes: map[string]*schema.AttributeSchema{
 			"alias": {
-				Expr: schema.LiteralTypeOnly(cty.String),
+				Constraint: schema.LiteralType{Type: cty.String},
 			},
 		},
 	},
@@ -462,7 +462,7 @@ var testSchemaWithLabels = NewBlockSchema(&schema.BlockSchema{
 			},
 		}): {
 			Attributes: map[string]*schema.AttributeSchema{
-				"special_attr": {Expr: schema.LiteralTypeOnly(cty.String)},
+				"special_attr": {Constraint: schema.LiteralType{Type: cty.String}},
 			},
 		},
 		schema.NewSchemaKey(schema.DependencyKeys{
@@ -471,7 +471,7 @@ var testSchemaWithLabels = NewBlockSchema(&schema.BlockSchema{
 			},
 		}): {
 			Attributes: map[string]*schema.AttributeSchema{
-				"foo": {Expr: schema.LiteralTypeOnly(cty.Number)},
+				"foo": {Constraint: schema.LiteralType{Type: cty.Number}},
 			},
 		},
 		schema.NewSchemaKey(schema.DependencyKeys{
@@ -480,7 +480,7 @@ var testSchemaWithLabels = NewBlockSchema(&schema.BlockSchema{
 			},
 		}): {
 			Attributes: map[string]*schema.AttributeSchema{
-				"bar": {Expr: schema.LiteralTypeOnly(cty.Number)},
+				"bar": {Constraint: schema.LiteralType{Type: cty.Number}},
 			},
 		},
 		schema.NewSchemaKey(schema.DependencyKeys{
@@ -490,7 +490,7 @@ var testSchemaWithLabels = NewBlockSchema(&schema.BlockSchema{
 			},
 		}): {
 			Attributes: map[string]*schema.AttributeSchema{
-				"event": {Expr: schema.LiteralTypeOnly(cty.String)},
+				"event": {Constraint: schema.LiteralType{Type: cty.String}},
 			},
 		},
 		schema.NewSchemaKey(schema.DependencyKeys{
@@ -500,7 +500,7 @@ var testSchemaWithLabels = NewBlockSchema(&schema.BlockSchema{
 			},
 		}): {
 			Attributes: map[string]*schema.AttributeSchema{
-				"another": {Expr: schema.LiteralTypeOnly(cty.String)},
+				"another": {Constraint: schema.LiteralType{Type: cty.String}},
 			},
 		},
 	},
@@ -518,16 +518,16 @@ var testSchemaWithAttributes = NewBlockSchema(&schema.BlockSchema{
 	Body: &schema.BodySchema{
 		Attributes: map[string]*schema.AttributeSchema{
 			"depattr": {
-				Expr:     schema.LiteralTypeOnly(cty.String),
-				IsDepKey: true,
+				Constraint: schema.LiteralType{Type: cty.String},
+				IsDepKey:   true,
 			},
 			"depnum": {
-				Expr:     schema.LiteralTypeOnly(cty.Number),
-				IsDepKey: true,
+				Constraint: schema.LiteralType{Type: cty.Number},
+				IsDepKey:   true,
 			},
 			"depref": {
-				Expr:     schema.LiteralTypeOnly(cty.DynamicPseudoType),
-				IsDepKey: true,
+				Constraint: schema.LiteralType{Type: cty.DynamicPseudoType},
+				IsDepKey:   true,
 			},
 		},
 	},
@@ -543,7 +543,7 @@ var testSchemaWithAttributes = NewBlockSchema(&schema.BlockSchema{
 			},
 		}): {
 			Attributes: map[string]*schema.AttributeSchema{
-				"depval_attr": {Expr: schema.LiteralTypeOnly(cty.String)},
+				"depval_attr": {Constraint: schema.LiteralType{Type: cty.String}},
 			},
 		},
 		schema.NewSchemaKey(schema.DependencyKeys{
@@ -557,7 +557,7 @@ var testSchemaWithAttributes = NewBlockSchema(&schema.BlockSchema{
 			},
 		}): {
 			Attributes: map[string]*schema.AttributeSchema{
-				"number_found": {Expr: schema.LiteralTypeOnly(cty.Number)},
+				"number_found": {Constraint: schema.LiteralType{Type: cty.Number}},
 			},
 		},
 		schema.NewSchemaKey(schema.DependencyKeys{
@@ -574,7 +574,7 @@ var testSchemaWithAttributes = NewBlockSchema(&schema.BlockSchema{
 			},
 		}): {
 			Attributes: map[string]*schema.AttributeSchema{
-				"refbar": {Expr: schema.LiteralTypeOnly(cty.Number)},
+				"refbar": {Constraint: schema.LiteralType{Type: cty.Number}},
 			},
 		},
 		schema.NewSchemaKey(schema.DependencyKeys{
@@ -594,7 +594,7 @@ var testSchemaWithAttributes = NewBlockSchema(&schema.BlockSchema{
 			},
 		}): {
 			Attributes: map[string]*schema.AttributeSchema{
-				"sortedattr": {Expr: schema.LiteralTypeOnly(cty.String)},
+				"sortedattr": {Constraint: schema.LiteralType{Type: cty.String}},
 			},
 		},
 		schema.NewSchemaKey(schema.DependencyKeys{
@@ -614,7 +614,7 @@ var testSchemaWithAttributes = NewBlockSchema(&schema.BlockSchema{
 			},
 		}): {
 			Attributes: map[string]*schema.AttributeSchema{
-				"unsortedattr": {Expr: schema.LiteralTypeOnly(cty.String)},
+				"unsortedattr": {Constraint: schema.LiteralType{Type: cty.String}},
 			},
 		},
 	},

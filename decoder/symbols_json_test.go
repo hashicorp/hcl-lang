@@ -103,7 +103,7 @@ func TestDecoder_Symbols_json_basic(t *testing.T) {
 				},
 				Body: &schema.BodySchema{
 					Attributes: map[string]*schema.AttributeSchema{
-						"cidr_block": {Expr: schema.LiteralTypeOnly(cty.String)},
+						"cidr_block": {Constraint: schema.LiteralType{Type: cty.String}},
 					},
 				},
 			},
@@ -113,8 +113,8 @@ func TestDecoder_Symbols_json_basic(t *testing.T) {
 				},
 				Body: &schema.BodySchema{
 					Attributes: map[string]*schema.AttributeSchema{
-						"project": {Expr: schema.LiteralTypeOnly(cty.String)},
-						"region":  {Expr: schema.LiteralTypeOnly(cty.String), IsRequired: true},
+						"project": {Constraint: schema.LiteralType{Type: cty.String}},
+						"region":  {Constraint: schema.LiteralType{Type: cty.String}, IsRequired: true},
 					},
 				},
 			},
@@ -255,16 +255,12 @@ func TestDecoder_Symbols_json_dependentBody(t *testing.T) {
 						Attributes: map[string]*schema.AttributeSchema{
 							"subnet_ids": {
 								IsOptional: true,
-								Expr: schema.ExprConstraints{
-									schema.ListExpr{Elem: schema.LiteralTypeOnly(cty.String)},
-								},
+								Constraint: schema.List{Elem: schema.LiteralType{Type: cty.String}},
 							},
 							"random_kw": {
 								IsOptional: true,
-								Expr: schema.ExprConstraints{
-									schema.KeywordExpr{
-										Keyword: "foo",
-									},
+								Constraint: schema.Keyword{
+									Keyword: "foo",
 								},
 							},
 						},
@@ -273,9 +269,9 @@ func TestDecoder_Symbols_json_dependentBody(t *testing.T) {
 								Type: schema.BlockTypeObject,
 								Body: &schema.BodySchema{
 									Attributes: map[string]*schema.AttributeSchema{
-										"name":     {IsOptional: true, Expr: schema.LiteralTypeOnly(cty.String)},
-										"num":      {IsOptional: true, Expr: schema.LiteralTypeOnly(cty.Number)},
-										"boolattr": {IsOptional: true, Expr: schema.LiteralTypeOnly(cty.Bool)},
+										"name":     {IsOptional: true, Constraint: schema.LiteralType{Type: cty.String}},
+										"num":      {IsOptional: true, Constraint: schema.LiteralType{Type: cty.Number}},
+										"boolattr": {IsOptional: true, Constraint: schema.LiteralType{Type: cty.Bool}},
 									},
 								},
 							},
@@ -418,16 +414,12 @@ func TestDecoder_Symbols_json_unknownExpression(t *testing.T) {
 					Attributes: map[string]*schema.AttributeSchema{
 						"subnet_ids": {
 							IsOptional: true,
-							Expr: schema.ExprConstraints{
-								schema.ListExpr{Elem: schema.LiteralTypeOnly(cty.String)},
-							},
+							Constraint: schema.List{Elem: schema.LiteralType{Type: cty.String}},
 						},
 						"random_kw": {
 							IsOptional: true,
-							Expr: schema.ExprConstraints{
-								schema.KeywordExpr{
-									Keyword: "foo",
-								},
+							Constraint: schema.Keyword{
+								Keyword: "foo",
 							},
 						},
 					},
@@ -436,9 +428,9 @@ func TestDecoder_Symbols_json_unknownExpression(t *testing.T) {
 							Type: schema.BlockTypeObject,
 							Body: &schema.BodySchema{
 								Attributes: map[string]*schema.AttributeSchema{
-									"name":     {IsOptional: true, Expr: schema.LiteralTypeOnly(cty.String)},
-									"num":      {IsOptional: true, Expr: schema.LiteralTypeOnly(cty.Number)},
-									"boolattr": {IsOptional: true, Expr: schema.LiteralTypeOnly(cty.Bool)},
+									"name":     {IsOptional: true, Constraint: schema.LiteralType{Type: cty.String}},
+									"num":      {IsOptional: true, Constraint: schema.LiteralType{Type: cty.Number}},
+									"boolattr": {IsOptional: true, Constraint: schema.LiteralType{Type: cty.Bool}},
 								},
 							},
 						},

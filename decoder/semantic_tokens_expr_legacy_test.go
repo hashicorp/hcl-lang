@@ -28,10 +28,8 @@ func TestLegacyDecoder_SemanticTokensInFile_expressions(t *testing.T) {
 			"string as known value",
 			map[string]*schema.AttributeSchema{
 				"str": {
-					Expr: schema.ExprConstraints{
-						schema.LegacyLiteralValue{
-							Val: cty.StringVal("blablah"),
-						},
+					Constraint: schema.LiteralValue{
+						Value: cty.StringVal("blablah"),
 					},
 				},
 			},
@@ -77,7 +75,7 @@ func TestLegacyDecoder_SemanticTokensInFile_expressions(t *testing.T) {
 			"heredoc string as known type",
 			map[string]*schema.AttributeSchema{
 				"str": {
-					Expr: schema.LiteralTypeOnly(cty.String),
+					Constraint: schema.LiteralType{Type: cty.String},
 				},
 			},
 			`str = <<EOT
@@ -125,10 +123,8 @@ EOT
 			"string as unknown value",
 			map[string]*schema.AttributeSchema{
 				"str": {
-					Expr: schema.ExprConstraints{
-						schema.LegacyLiteralValue{
-							Val: cty.StringVal("blablah"),
-						},
+					Constraint: schema.LiteralValue{
+						Value: cty.StringVal("blablah"),
 					},
 				},
 			},
@@ -157,13 +153,11 @@ EOT
 			"object as value",
 			map[string]*schema.AttributeSchema{
 				"obj": {
-					Expr: schema.ExprConstraints{
-						schema.LegacyLiteralValue{
-							Val: cty.ObjectVal(map[string]cty.Value{
-								"first":  cty.NumberIntVal(42),
-								"second": cty.StringVal("boo"),
-							}),
-						},
+					Constraint: schema.LiteralValue{
+						Value: cty.ObjectVal(map[string]cty.Value{
+							"first":  cty.NumberIntVal(42),
+							"second": cty.StringVal("boo"),
+						}),
 					},
 				},
 			},
@@ -263,12 +257,10 @@ EOT
 			"object as mismatching value",
 			map[string]*schema.AttributeSchema{
 				"obj": {
-					Expr: schema.ExprConstraints{
-						schema.LegacyLiteralValue{
-							Val: cty.ObjectVal(map[string]cty.Value{
-								"knownkey": cty.NumberIntVal(43),
-							}),
-						},
+					Constraint: schema.LiteralValue{
+						Value: cty.ObjectVal(map[string]cty.Value{
+							"knownkey": cty.NumberIntVal(43),
+						}),
 					},
 				},
 			},
@@ -282,16 +274,26 @@ EOT
 					Modifiers: []lang.SemanticTokenModifier{},
 					Range: hcl.Range{
 						Filename: "test.tf",
-						Start: hcl.Pos{
-							Line:   1,
-							Column: 1,
-							Byte:   0,
-						},
-						End: hcl.Pos{
-							Line:   1,
-							Column: 4,
-							Byte:   3,
-						},
+						Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
+						End:      hcl.Pos{Line: 1, Column: 4, Byte: 3},
+					},
+				},
+				{ // knownkey
+					Type:      lang.TokenObjectKey,
+					Modifiers: lang.SemanticTokenModifiers{},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 2, Column: 3, Byte: 10},
+						End:      hcl.Pos{Line: 2, Column: 11, Byte: 18},
+					},
+				},
+				{ // 43
+					Type:      lang.TokenNumber,
+					Modifiers: lang.SemanticTokenModifiers{},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 2, Column: 14, Byte: 21},
+						End:      hcl.Pos{Line: 2, Column: 16, Byte: 23},
 					},
 				},
 			},
@@ -301,9 +303,11 @@ EOT
 			"object as type",
 			map[string]*schema.AttributeSchema{
 				"obj": {
-					Expr: schema.LiteralTypeOnly(cty.Object(map[string]cty.Type{
-						"knownkey": cty.Number,
-					})),
+					Constraint: schema.LiteralType{
+						Type: cty.Object(map[string]cty.Type{
+							"knownkey": cty.Number,
+						}),
+					},
 				},
 			},
 			`obj = {
@@ -368,9 +372,11 @@ EOT
 			"object as type with unknown key",
 			map[string]*schema.AttributeSchema{
 				"obj": {
-					Expr: schema.LiteralTypeOnly(cty.Object(map[string]cty.Type{
-						"knownkey": cty.Number,
-					})),
+					Constraint: schema.LiteralType{
+						Type: cty.Object(map[string]cty.Type{
+							"knownkey": cty.Number,
+						}),
+					},
 				},
 			},
 			`obj = {
@@ -436,12 +442,10 @@ EOT
 			"object as expression",
 			map[string]*schema.AttributeSchema{
 				"obj": {
-					Expr: schema.ExprConstraints{
-						schema.ObjectExpr{
-							Attributes: schema.ObjectExprAttributes{
-								"knownkey": {
-									Expr: schema.LiteralTypeOnly(cty.Number),
-								},
+					Constraint: schema.Object{
+						Attributes: schema.ObjectAttributes{
+							"knownkey": {
+								Constraint: schema.LiteralType{Type: cty.Number},
 							},
 						},
 					},
@@ -509,12 +513,10 @@ EOT
 			"object as expression with unknown key",
 			map[string]*schema.AttributeSchema{
 				"obj": {
-					Expr: schema.ExprConstraints{
-						schema.ObjectExpr{
-							Attributes: schema.ObjectExprAttributes{
-								"knownkey": {
-									Expr: schema.LiteralTypeOnly(cty.Number),
-								},
+					Constraint: schema.Object{
+						Attributes: schema.ObjectAttributes{
+							"knownkey": {
+								Constraint: schema.LiteralType{Type: cty.Number},
 							},
 						},
 					},
@@ -583,7 +585,7 @@ EOT
 			"map literal keys",
 			map[string]*schema.AttributeSchema{
 				"mapkey": {
-					Expr: schema.LiteralTypeOnly(cty.Map(cty.String)),
+					Constraint: schema.LiteralType{Type: cty.Map(cty.String)},
 				},
 			},
 			`mapkey = {
@@ -701,11 +703,9 @@ EOT
 			"map expression",
 			map[string]*schema.AttributeSchema{
 				"mapkey": {
-					Expr: schema.ExprConstraints{
-						schema.MapExpr{
-							Name: "special map",
-							Elem: schema.LiteralTypeOnly(cty.String),
-						},
+					Constraint: schema.Map{
+						Name: "special map",
+						Elem: schema.LiteralType{Type: cty.String},
 					},
 				},
 			},
@@ -824,11 +824,9 @@ EOT
 			"known keyword",
 			map[string]*schema.AttributeSchema{
 				"keyword": {
-					Expr: schema.ExprConstraints{
-						schema.KeywordExpr{
-							Keyword: "foobar",
-							Name:    "special type",
-						},
+					Constraint: schema.Keyword{
+						Keyword: "foobar",
+						Name:    "special type",
 					},
 				},
 			},
@@ -875,11 +873,9 @@ EOT
 			"unknown keyword",
 			map[string]*schema.AttributeSchema{
 				"keyword": {
-					Expr: schema.ExprConstraints{
-						schema.KeywordExpr{
-							Keyword: "foobar",
-							Name:    "special type",
-						},
+					Constraint: schema.Keyword{
+						Keyword: "foobar",
+						Name:    "special type",
 					},
 				},
 			},
@@ -909,10 +905,8 @@ EOT
 			"list expression",
 			map[string]*schema.AttributeSchema{
 				"attr": {
-					Expr: schema.ExprConstraints{
-						schema.ListExpr{
-							Elem: schema.LiteralTypeOnly(cty.String),
-						},
+					Constraint: schema.List{
+						Elem: schema.LiteralType{Type: cty.String},
 					},
 				},
 			},
@@ -976,10 +970,8 @@ EOT
 			"set expression",
 			map[string]*schema.AttributeSchema{
 				"attr": {
-					Expr: schema.ExprConstraints{
-						schema.SetExpr{
-							Elem: schema.LiteralTypeOnly(cty.String),
-						},
+					Constraint: schema.Set{
+						Elem: schema.LiteralType{Type: cty.String},
 					},
 				},
 			},
@@ -1043,13 +1035,11 @@ EOT
 			"tuple expression",
 			map[string]*schema.AttributeSchema{
 				"attr": {
-					Expr: schema.ExprConstraints{
-						schema.TupleExpr{
-							Elems: []schema.ExprConstraints{
-								schema.LiteralTypeOnly(cty.String),
-								schema.LiteralTypeOnly(cty.Number),
-								schema.LiteralTypeOnly(cty.Bool),
-							},
+					Constraint: schema.Tuple{
+						Elems: []schema.Constraint{
+							schema.LiteralType{Type: cty.String},
+							schema.LiteralType{Type: cty.Number},
+							schema.LiteralType{Type: cty.Bool},
 						},
 					},
 				},
@@ -1114,10 +1104,8 @@ EOT
 			"undefined tuple expression",
 			map[string]*schema.AttributeSchema{
 				"attr": {
-					Expr: schema.ExprConstraints{
-						schema.TupleExpr{
-							Elems: []schema.ExprConstraints{},
-						},
+					Constraint: schema.Tuple{
+						Elems: []schema.Constraint{},
 					},
 				},
 			},
@@ -1147,7 +1135,7 @@ EOT
 			"undefined tuple type",
 			map[string]*schema.AttributeSchema{
 				"attr": {
-					Expr: schema.LiteralTypeOnly(cty.Tuple([]cty.Type{})),
+					Constraint: schema.LiteralType{Type: cty.Tuple([]cty.Type{})},
 				},
 			},
 			`attr = [ "one" ]
@@ -1176,7 +1164,7 @@ EOT
 			"tuple as list",
 			map[string]*schema.AttributeSchema{
 				"attr": {
-					Expr: schema.LiteralTypeOnly(cty.List(cty.String)),
+					Constraint: schema.LiteralType{Type: cty.List(cty.String)},
 				},
 			},
 			`attr = [ "one", 42, "two" ]
@@ -1239,13 +1227,11 @@ EOT
 			"list as value",
 			map[string]*schema.AttributeSchema{
 				"attr": {
-					Expr: schema.ExprConstraints{
-						schema.LegacyLiteralValue{
-							Val: cty.ListVal([]cty.Value{
-								cty.StringVal("one"),
-								cty.StringVal("two"),
-							}),
-						},
+					Constraint: schema.LiteralValue{
+						Value: cty.ListVal([]cty.Value{
+							cty.StringVal("one"),
+							cty.StringVal("two"),
+						}),
 					},
 				},
 			},
@@ -1309,7 +1295,7 @@ EOT
 			"tuple as set",
 			map[string]*schema.AttributeSchema{
 				"attr": {
-					Expr: schema.LiteralTypeOnly(cty.Set(cty.String)),
+					Constraint: schema.LiteralType{Type: cty.Set(cty.String)},
 				},
 			},
 			`attr = [ "one", 42, "two" ]
@@ -1417,9 +1403,7 @@ func TestLegacyDecoder_SemanticTokensInFile_traversalExpression(t *testing.T) {
 			"unknown traversal",
 			map[string]*schema.AttributeSchema{
 				"attr": {
-					Expr: schema.ExprConstraints{
-						schema.TraversalExpr{OfType: cty.String},
-					},
+					Constraint: schema.Reference{OfType: cty.String},
 				},
 			},
 			reference.Targets{},
@@ -1470,9 +1454,7 @@ func TestLegacyDecoder_SemanticTokensInFile_traversalExpression(t *testing.T) {
 			"known mismatching traversal",
 			map[string]*schema.AttributeSchema{
 				"attr": {
-					Expr: schema.ExprConstraints{
-						schema.TraversalExpr{OfType: cty.String},
-					},
+					Constraint: schema.Reference{OfType: cty.String},
 				},
 			},
 			reference.Targets{
@@ -1536,9 +1518,7 @@ func TestLegacyDecoder_SemanticTokensInFile_traversalExpression(t *testing.T) {
 			"known matching traversal",
 			map[string]*schema.AttributeSchema{
 				"attr": {
-					Expr: schema.ExprConstraints{
-						schema.TraversalExpr{OfType: cty.String},
-					},
+					Constraint: schema.Reference{OfType: cty.String},
 				},
 			},
 			reference.Targets{
@@ -1636,9 +1616,7 @@ func TestLegacyDecoder_SemanticTokensInFile_traversalExpression(t *testing.T) {
 			"known scope matching traversal",
 			map[string]*schema.AttributeSchema{
 				"attr": {
-					Expr: schema.ExprConstraints{
-						schema.TraversalExpr{OfScopeId: lang.ScopeId("foo")},
-					},
+					Constraint: schema.Reference{OfScopeId: lang.ScopeId("foo")},
 				},
 			},
 			reference.Targets{
@@ -1736,9 +1714,7 @@ func TestLegacyDecoder_SemanticTokensInFile_traversalExpression(t *testing.T) {
 			"matching traversal with indexes",
 			map[string]*schema.AttributeSchema{
 				"attr": {
-					Expr: schema.ExprConstraints{
-						schema.TraversalExpr{},
-					},
+					Constraint: schema.Reference{},
 				},
 			},
 			reference.Targets{
@@ -1890,9 +1866,7 @@ func TestLegacyDecoder_SemanticTokensInFile_traversalExpression(t *testing.T) {
 			"loosely matching traversal of unknown type",
 			map[string]*schema.AttributeSchema{
 				"attr": {
-					Expr: schema.ExprConstraints{
-						schema.TraversalExpr{OfType: cty.String},
-					},
+					Constraint: schema.Reference{OfType: cty.String},
 				},
 			},
 			reference.Targets{
@@ -2008,9 +1982,7 @@ func TestLegacyDecoder_SemanticTokensInFile_traversalExpression(t *testing.T) {
 			"matching target but missing collected origin",
 			map[string]*schema.AttributeSchema{
 				"attr": {
-					Expr: schema.ExprConstraints{
-						schema.TraversalExpr{OfType: cty.String},
-					},
+					Constraint: schema.Reference{OfType: cty.String},
 				},
 			},
 			reference.Targets{
@@ -2093,7 +2065,7 @@ func TestLegacyDecoder_SemanticTokensInFile_typeDeclaration(t *testing.T) {
 			"known primitive type",
 			map[string]*schema.AttributeSchema{
 				"type": {
-					Expr: schema.ExprConstraints{schema.TypeDeclarationExpr{}},
+					Constraint: schema.TypeDeclaration{},
 				},
 			},
 			`type = string`,
@@ -2138,7 +2110,7 @@ func TestLegacyDecoder_SemanticTokensInFile_typeDeclaration(t *testing.T) {
 			"unknown primitive type",
 			map[string]*schema.AttributeSchema{
 				"type": {
-					Expr: schema.ExprConstraints{schema.TypeDeclarationExpr{}},
+					Constraint: schema.TypeDeclaration{},
 				},
 			},
 			`type = foobar`,
@@ -2166,7 +2138,7 @@ func TestLegacyDecoder_SemanticTokensInFile_typeDeclaration(t *testing.T) {
 			"known collection type",
 			map[string]*schema.AttributeSchema{
 				"type": {
-					Expr: schema.ExprConstraints{schema.TypeDeclarationExpr{}},
+					Constraint: schema.TypeDeclaration{},
 				},
 			},
 			`type = list(any)`,
@@ -2228,7 +2200,7 @@ func TestLegacyDecoder_SemanticTokensInFile_typeDeclaration(t *testing.T) {
 			"unknown collection type",
 			map[string]*schema.AttributeSchema{
 				"type": {
-					Expr: schema.ExprConstraints{schema.TypeDeclarationExpr{}},
+					Constraint: schema.TypeDeclaration{},
 				},
 			},
 			`type = foobar(any)`,
@@ -2256,7 +2228,7 @@ func TestLegacyDecoder_SemanticTokensInFile_typeDeclaration(t *testing.T) {
 			"known object type",
 			map[string]*schema.AttributeSchema{
 				"type": {
-					Expr: schema.ExprConstraints{schema.TypeDeclarationExpr{}},
+					Constraint: schema.TypeDeclaration{},
 				},
 			},
 			`type = object({
@@ -2337,7 +2309,7 @@ func TestLegacyDecoder_SemanticTokensInFile_typeDeclaration(t *testing.T) {
 			"unknown object type",
 			map[string]*schema.AttributeSchema{
 				"type": {
-					Expr: schema.ExprConstraints{schema.TypeDeclarationExpr{}},
+					Constraint: schema.TypeDeclaration{},
 				},
 			},
 			`type = foobar({

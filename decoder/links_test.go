@@ -26,8 +26,8 @@ func TestLinksInFileBlock(t *testing.T) {
 		Description: lang.Markdown("My special block"),
 		Body: &schema.BodySchema{
 			Attributes: map[string]*schema.AttributeSchema{
-				"num_attr": {Expr: schema.LiteralTypeOnly(cty.Number)},
-				"str_attr": {Expr: schema.LiteralTypeOnly(cty.String), Description: lang.PlainText("Special attribute")},
+				"num_attr": {Constraint: schema.LiteralType{Type: cty.Number}},
+				"str_attr": {Constraint: schema.LiteralType{Type: cty.String}, Description: lang.PlainText("Special attribute")},
 			},
 		},
 		DependentBody: map[schema.SchemaKey]*schema.BodySchema{
@@ -113,9 +113,9 @@ func TestLinksInFileAttribute(t *testing.T) {
 		Description: lang.Markdown("My special block"),
 		Body: &schema.BodySchema{
 			Attributes: map[string]*schema.AttributeSchema{
-				"num_attr": {Expr: schema.LiteralTypeOnly(cty.Number)},
+				"num_attr": {Constraint: schema.LiteralType{Type: cty.Number}},
 				"source": {
-					Expr:        schema.LiteralTypeOnly(cty.String),
+					Constraint:  schema.LiteralType{Type: cty.String},
 					Description: lang.PlainText("Special attribute"),
 					IsDepKey:    true,
 				},

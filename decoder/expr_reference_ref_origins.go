@@ -93,6 +93,13 @@ func originConstraintsFromCons(cons schema.Reference) reference.OriginConstraint
 		return reference.OriginConstraints{}
 	}
 
+	// TODO: Remove condition once legacy tests are gone
+	// This is being flagged up as invalid schema
+	// but we tolerate it for legacy tests
+	if cons.OfType == cty.NilType && cons.OfScopeId == "" {
+		return reference.OriginConstraints{}
+	}
+
 	return reference.OriginConstraints{
 		{
 			OfType:    cons.OfType,
