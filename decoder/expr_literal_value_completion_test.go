@@ -24,6 +24,40 @@ func TestCompletionAtPos_exprLiteralValue(t *testing.T) {
 		pos                hcl.Pos
 		expectedCandidates lang.Candidates
 	}{
+		// extra metadata
+		{
+			"bool",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.LiteralValue{
+						Value:        cty.StringVal("foo"),
+						IsDeprecated: true,
+						Description:  lang.Markdown("foobar"),
+					},
+				},
+			},
+			`attr = 
+`,
+			hcl.Pos{Line: 1, Column: 8, Byte: 7},
+			lang.CompleteCandidates([]lang.Candidate{
+				{
+					Label:        "foo",
+					Detail:       "string",
+					Kind:         lang.StringCandidateKind,
+					IsDeprecated: true,
+					Description:  lang.Markdown("foobar"),
+					TextEdit: lang.TextEdit{
+						NewText: `"foo"`,
+						Snippet: `"foo"`,
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 1, Column: 8, Byte: 7},
+							End:      hcl.Pos{Line: 1, Column: 8, Byte: 7},
+						},
+					},
+				},
+			}),
+		},
 		// primitive types
 		{
 			"bool",

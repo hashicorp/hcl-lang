@@ -26,7 +26,7 @@ func (lt LiteralType) CompletionAtPos(ctx context.Context, pos hcl.Pos) []lang.C
 
 		if typ.IsPrimitiveType() {
 			if typ == cty.Bool {
-				return boolLiteralCandidates("", editRange)
+				return boolLiteralTypeCandidates("", editRange)
 			}
 			return []lang.Candidate{}
 		}
@@ -141,7 +141,7 @@ func (lt LiteralType) completeBoolAtPos(ctx context.Context, pos hcl.Pos) []lang
 	case *hclsyntax.ScopeTraversalExpr:
 		prefixLen := pos.Byte - eType.Range().Start.Byte
 		prefix := eType.Traversal.RootName()[0:prefixLen]
-		return boolLiteralCandidates(prefix, eType.Range())
+		return boolLiteralTypeCandidates(prefix, eType.Range())
 
 	case *hclsyntax.LiteralValueExpr:
 		if eType.Val.Type() == cty.Bool {
@@ -151,14 +151,14 @@ func (lt LiteralType) completeBoolAtPos(ctx context.Context, pos hcl.Pos) []lang
 			}
 			prefixLen := pos.Byte - eType.Range().Start.Byte
 			prefix := value[0:prefixLen]
-			return boolLiteralCandidates(prefix, eType.Range())
+			return boolLiteralTypeCandidates(prefix, eType.Range())
 		}
 	}
 
 	return []lang.Candidate{}
 }
 
-func boolLiteralCandidates(prefix string, editRange hcl.Range) []lang.Candidate {
+func boolLiteralTypeCandidates(prefix string, editRange hcl.Range) []lang.Candidate {
 	candidates := make([]lang.Candidate, 0)
 
 	if strings.HasPrefix("false", prefix) {
