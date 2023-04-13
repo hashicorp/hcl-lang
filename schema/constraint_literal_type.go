@@ -106,7 +106,9 @@ func (lt LiteralType) EmptyCompletionData(ctx context.Context, nextPlaceholder i
 	}
 	if lt.Type.IsTupleType() {
 		types := lt.Type.TupleElementTypes()
-		tupleCons := Tuple{}
+		tupleCons := Tuple{
+			Elems: make([]Constraint, len(types)),
+		}
 		for i, typ := range types {
 			tupleCons.Elems[i] = LiteralType{
 				Type: typ,
