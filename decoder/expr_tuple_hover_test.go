@@ -328,6 +328,30 @@ func TestHoverAtPos_exprTuple(t *testing.T) {
 				},
 			},
 		},
+		{
+			"trailing unknown element",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.Tuple{
+						Elems: []schema.Constraint{
+							schema.Keyword{
+								Keyword: "keyword",
+							},
+						},
+					},
+				},
+			},
+			`attr = [ keyword, foobar ]`,
+			hcl.Pos{Line: 1, Column: 21, Byte: 20},
+			&lang.HoverData{
+				Content: lang.Markdown("_tuple_"),
+				Range: hcl.Range{
+					Filename: "test.tf",
+					Start:    hcl.Pos{Line: 1, Column: 8, Byte: 7},
+					End:      hcl.Pos{Line: 1, Column: 27, Byte: 26},
+				},
+			},
+		},
 	}
 
 	for i, tc := range testCases {
