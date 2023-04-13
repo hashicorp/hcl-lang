@@ -18,6 +18,8 @@ type LiteralValue struct {
 	pathCtx *PathContext
 }
 
+// TODO: InferType()
+
 func formatNumberVal(val cty.Value) string {
 	bf := val.AsBigFloat()
 
