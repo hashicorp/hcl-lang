@@ -24,6 +24,71 @@ func TestHoverAtPos_exprLiteralValue(t *testing.T) {
 		pos               hcl.Pos
 		expectedHoverData *lang.HoverData
 	}{
+		// extra metadata
+		{
+			"primitive with metadata",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.LiteralValue{
+						Value:       cty.BoolVal(false),
+						Description: lang.Markdown("foobar"),
+					},
+				},
+			},
+			`attr = false`,
+			hcl.Pos{Line: 1, Column: 9, Byte: 8},
+			&lang.HoverData{
+				Content: lang.Markdown("_bool_\n\nfoobar"),
+				Range: hcl.Range{
+					Filename: "test.tf",
+					Start:    hcl.Pos{Line: 1, Column: 8, Byte: 7},
+					End:      hcl.Pos{Line: 1, Column: 13, Byte: 12},
+				},
+			},
+		},
+		{
+			"list with metadata",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.LiteralValue{
+						Value:       cty.ListValEmpty(cty.String),
+						Description: lang.Markdown("foobar"),
+					},
+				},
+			},
+			`attr = []`,
+			hcl.Pos{Line: 1, Column: 9, Byte: 8},
+			&lang.HoverData{
+				Content: lang.Markdown("_list of string_\n\nfoobar"),
+				Range: hcl.Range{
+					Filename: "test.tf",
+					Start:    hcl.Pos{Line: 1, Column: 8, Byte: 7},
+					End:      hcl.Pos{Line: 1, Column: 10, Byte: 9},
+				},
+			},
+		},
+		{
+			"map with metadata",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.LiteralValue{
+						Value:       cty.EmptyObjectVal,
+						Description: lang.Markdown("foobar"),
+					},
+				},
+			},
+			`attr = {}`,
+			hcl.Pos{Line: 1, Column: 9, Byte: 8},
+			&lang.HoverData{
+				Content: lang.Markdown("_object_\n\nfoobar"),
+				Range: hcl.Range{
+					Filename: "test.tf",
+					Start:    hcl.Pos{Line: 1, Column: 8, Byte: 7},
+					End:      hcl.Pos{Line: 1, Column: 10, Byte: 9},
+				},
+			},
+		},
+
 		// primitive types
 		{
 			"boolean",

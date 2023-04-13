@@ -34,8 +34,13 @@ func (lv LiteralValue) HoverAtPos(ctx context.Context, pos hcl.Pos) *lang.HoverD
 		}
 
 		if expr.IsStringLiteral() || isMultilineStringLiteral(expr) {
+			content := fmt.Sprintf(`_%s_`, typ.FriendlyName())
+			if lv.cons.Description.Value != "" {
+				content += "\n\n" + lv.cons.Description.Value
+			}
+
 			return &lang.HoverData{
-				Content: lang.Markdown(fmt.Sprintf(`_%s_`, typ.FriendlyName())),
+				Content: lang.Markdown(content),
 				Range:   expr.Range(),
 			}
 		}
@@ -57,8 +62,13 @@ func (lv LiteralValue) HoverAtPos(ctx context.Context, pos hcl.Pos) *lang.HoverD
 			return nil
 		}
 
+		content := fmt.Sprintf(`_%s_`, typ.FriendlyName())
+		if lv.cons.Description.Value != "" {
+			content += "\n\n" + lv.cons.Description.Value
+		}
+
 		return &lang.HoverData{
-			Content: lang.Markdown(fmt.Sprintf(`_%s_`, typ.FriendlyName())),
+			Content: lang.Markdown(content),
 			Range:   expr.Range(),
 		}
 	}
@@ -97,6 +107,7 @@ func (lv LiteralValue) HoverAtPos(ctx context.Context, pos hcl.Pos) *lang.HoverD
 			Elem: schema.LiteralType{
 				Type: typ.ElementType(),
 			},
+			Description: lv.cons.Description,
 		}
 
 		return newExpression(lv.pathCtx, expr, cons).HoverAtPos(ctx, pos)
@@ -141,6 +152,7 @@ func (lv LiteralValue) HoverAtPos(ctx context.Context, pos hcl.Pos) *lang.HoverD
 			Elem: schema.LiteralType{
 				Type: typ.ElementType(),
 			},
+			Description: lv.cons.Description,
 		}
 
 		return newExpression(lv.pathCtx, expr, cons).HoverAtPos(ctx, pos)
@@ -154,7 +166,8 @@ func (lv LiteralValue) HoverAtPos(ctx context.Context, pos hcl.Pos) *lang.HoverD
 
 		elemTypes := typ.TupleElementTypes()
 		cons := schema.Tuple{
-			Elems: make([]schema.Constraint, len(elemTypes)),
+			Elems:       make([]schema.Constraint, len(elemTypes)),
+			Description: lv.cons.Description,
 		}
 		for i, elemType := range elemTypes {
 			cons.Elems[i] = schema.LiteralType{
@@ -206,6 +219,7 @@ func (lv LiteralValue) HoverAtPos(ctx context.Context, pos hcl.Pos) *lang.HoverD
 			Elem: schema.LiteralType{
 				Type: typ.ElementType(),
 			},
+			Description: lv.cons.Description,
 		}
 		return newExpression(lv.pathCtx, expr, cons).HoverAtPos(ctx, pos)
 	}
@@ -217,7 +231,8 @@ func (lv LiteralValue) HoverAtPos(ctx context.Context, pos hcl.Pos) *lang.HoverD
 		}
 
 		cons := schema.Object{
-			Attributes: ctyObjectToObjectAttributes(typ),
+			Attributes:  ctyObjectToObjectAttributes(typ),
+			Description: lv.cons.Description,
 		}
 		return newExpression(lv.pathCtx, expr, cons).HoverAtPos(ctx, pos)
 	}
