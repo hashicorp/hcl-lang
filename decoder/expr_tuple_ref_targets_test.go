@@ -593,6 +593,89 @@ func TestCollectRefTargets_exprTuple_implied_hcl(t *testing.T) {
 			},
 		},
 		{
+			"declared as type",
+			&schema.BodySchema{
+				Blocks: map[string]*schema.BlockSchema{
+					"blk": {
+						Address: &schema.BlockAddrSchema{
+							Steps: schema.Address{
+								schema.StaticStep{Name: "blk"},
+							},
+							BodyAsData: true,
+							InferBody:  true,
+						},
+						Body: &schema.BodySchema{
+							Attributes: map[string]*schema.AttributeSchema{
+								"attr": {
+									Constraint: schema.Tuple{
+										Elems: []schema.Constraint{
+											schema.LiteralType{Type: cty.Bool},
+										},
+									},
+									IsOptional: true,
+								},
+							},
+						},
+					},
+				},
+			},
+			`blk { attr = [] }`,
+			reference.Targets{
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "blk"},
+					},
+					RangePtr: &hcl.Range{
+						Filename: "test.hcl",
+						Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
+						End:      hcl.Pos{Line: 1, Column: 18, Byte: 17},
+					},
+					DefRangePtr: &hcl.Range{
+						Filename: "test.hcl",
+						Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
+						End:      hcl.Pos{Line: 1, Column: 4, Byte: 3},
+					},
+					Type: cty.Object(map[string]cty.Type{
+						"attr": cty.Tuple([]cty.Type{cty.Bool}),
+					}),
+					NestedTargets: reference.Targets{
+						{
+							Addr: lang.Address{
+								lang.RootStep{Name: "blk"},
+								lang.AttrStep{Name: "attr"},
+							},
+							RangePtr: &hcl.Range{
+								Filename: "test.hcl",
+								Start:    hcl.Pos{Line: 1, Column: 7, Byte: 6},
+								End:      hcl.Pos{Line: 1, Column: 16, Byte: 15},
+							},
+							DefRangePtr: &hcl.Range{
+								Filename: "test.hcl",
+								Start:    hcl.Pos{Line: 1, Column: 7, Byte: 6},
+								End:      hcl.Pos{Line: 1, Column: 11, Byte: 10},
+							},
+							Type: cty.Tuple([]cty.Type{cty.Bool}),
+							NestedTargets: reference.Targets{
+								{
+									Addr: lang.Address{
+										lang.RootStep{Name: "blk"},
+										lang.AttrStep{Name: "attr"},
+										lang.IndexStep{Key: cty.NumberIntVal(0)},
+									},
+									RangePtr: &hcl.Range{
+										Filename: "test.hcl",
+										Start:    hcl.Pos{Line: 1, Column: 14, Byte: 13},
+										End:      hcl.Pos{Line: 1, Column: 14, Byte: 13},
+									},
+									Type: cty.Bool,
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
 			"undeclared as reference",
 			&schema.BodySchema{
 				Blocks: map[string]*schema.BlockSchema{
@@ -1167,6 +1250,89 @@ func TestCollectRefTargets_exprTuple_implied_json(t *testing.T) {
 										Filename: "test.hcl.json",
 										Start:    hcl.Pos{Line: 1, Column: 10, Byte: 9},
 										End:      hcl.Pos{Line: 1, Column: 10, Byte: 9},
+									},
+									Type: cty.Bool,
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			"declared as type",
+			&schema.BodySchema{
+				Blocks: map[string]*schema.BlockSchema{
+					"blk": {
+						Address: &schema.BlockAddrSchema{
+							Steps: schema.Address{
+								schema.StaticStep{Name: "blk"},
+							},
+							BodyAsData: true,
+							InferBody:  true,
+						},
+						Body: &schema.BodySchema{
+							Attributes: map[string]*schema.AttributeSchema{
+								"attr": {
+									Constraint: schema.Tuple{
+										Elems: []schema.Constraint{
+											schema.LiteralType{Type: cty.Bool},
+										},
+									},
+									IsOptional: true,
+								},
+							},
+						},
+					},
+				},
+			},
+			`{"blk": {"attr": []}}`,
+			reference.Targets{
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "blk"},
+					},
+					RangePtr: &hcl.Range{
+						Filename: "test.hcl.json",
+						Start:    hcl.Pos{Line: 1, Column: 9, Byte: 8},
+						End:      hcl.Pos{Line: 1, Column: 21, Byte: 20},
+					},
+					DefRangePtr: &hcl.Range{
+						Filename: "test.hcl.json",
+						Start:    hcl.Pos{Line: 1, Column: 9, Byte: 8},
+						End:      hcl.Pos{Line: 1, Column: 10, Byte: 9},
+					},
+					Type: cty.Object(map[string]cty.Type{
+						"attr": cty.Tuple([]cty.Type{cty.Bool}),
+					}),
+					NestedTargets: reference.Targets{
+						{
+							Addr: lang.Address{
+								lang.RootStep{Name: "blk"},
+								lang.AttrStep{Name: "attr"},
+							},
+							RangePtr: &hcl.Range{
+								Filename: "test.hcl.json",
+								Start:    hcl.Pos{Line: 1, Column: 10, Byte: 9},
+								End:      hcl.Pos{Line: 1, Column: 20, Byte: 19},
+							},
+							DefRangePtr: &hcl.Range{
+								Filename: "test.hcl.json",
+								Start:    hcl.Pos{Line: 1, Column: 10, Byte: 9},
+								End:      hcl.Pos{Line: 1, Column: 16, Byte: 15},
+							},
+							Type: cty.Tuple([]cty.Type{cty.Bool}),
+							NestedTargets: reference.Targets{
+								{
+									Addr: lang.Address{
+										lang.RootStep{Name: "blk"},
+										lang.AttrStep{Name: "attr"},
+										lang.IndexStep{Key: cty.NumberIntVal(0)},
+									},
+									RangePtr: &hcl.Range{
+										Filename: "test.hcl.json",
+										Start:    hcl.Pos{Line: 1, Column: 18, Byte: 17},
+										End:      hcl.Pos{Line: 1, Column: 18, Byte: 17},
 									},
 									Type: cty.Bool,
 								},
