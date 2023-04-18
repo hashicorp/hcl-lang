@@ -5,6 +5,7 @@ package decoder
 
 import (
 	"context"
+	"strings"
 
 	"github.com/hashicorp/hcl-lang/lang"
 	"github.com/hashicorp/hcl-lang/schema"
@@ -30,9 +31,11 @@ func (lv LiteralValue) CompletionAtPos(ctx context.Context, pos hcl.Pos) []lang.
 
 		return []lang.Candidate{
 			{
-				Label:  labelForLiteralValue(lv.cons.Value, false),
-				Detail: typ.FriendlyName(),
-				Kind:   candidateKindForType(typ),
+				Label:        labelForLiteralValue(lv.cons.Value, false),
+				Detail:       typ.FriendlyName(),
+				Kind:         candidateKindForType(typ),
+				IsDeprecated: lv.cons.IsDeprecated,
+				Description:  lv.cons.Description,
 				TextEdit: lang.TextEdit{
 					Range:   editRange,
 					NewText: cd.NewText,
@@ -62,9 +65,11 @@ func (lv LiteralValue) CompletionAtPos(ctx context.Context, pos hcl.Pos) []lang.
 	cd := lv.cons.EmptyCompletionData(ctx, 1, 0)
 	return []lang.Candidate{
 		{
-			Label:  labelForLiteralValue(lv.cons.Value, false),
-			Detail: typ.FriendlyName(),
-			Kind:   candidateKindForType(typ),
+			Label:        labelForLiteralValue(lv.cons.Value, false),
+			Detail:       typ.FriendlyName(),
+			Kind:         candidateKindForType(typ),
+			IsDeprecated: lv.cons.IsDeprecated,
+			Description:  lv.cons.Description,
 			TextEdit: lang.TextEdit{
 				Range:   editRange,
 				NewText: cd.NewText,
@@ -77,13 +82,13 @@ func (lv LiteralValue) CompletionAtPos(ctx context.Context, pos hcl.Pos) []lang.
 	// Avoid partial completion inside complex types for now
 }
 
-func (lt LiteralValue) completeBoolAtPos(ctx context.Context, pos hcl.Pos) []lang.Candidate {
-	switch eType := lt.expr.(type) {
+func (lv LiteralValue) completeBoolAtPos(ctx context.Context, pos hcl.Pos) []lang.Candidate {
+	switch eType := lv.expr.(type) {
 
 	case *hclsyntax.ScopeTraversalExpr:
 		prefixLen := pos.Byte - eType.Range().Start.Byte
 		prefix := eType.Traversal.RootName()[0:prefixLen]
-		return boolLiteralCandidates(prefix, eType.Range())
+		return lv.boolLiteralValueCandidates(prefix, eType.Range())
 
 	case *hclsyntax.LiteralValueExpr:
 		if eType.Val.Type() == cty.Bool {
@@ -93,9 +98,44 @@ func (lt LiteralValue) completeBoolAtPos(ctx context.Context, pos hcl.Pos) []lan
 			}
 			prefixLen := pos.Byte - eType.Range().Start.Byte
 			prefix := value[0:prefixLen]
-			return boolLiteralCandidates(prefix, eType.Range())
+			return lv.boolLiteralValueCandidates(prefix, eType.Range())
 		}
 	}
 
 	return []lang.Candidate{}
+}
+
+func (lv LiteralValue) boolLiteralValueCandidates(prefix string, editRange hcl.Range) []lang.Candidate {
+	candidates := make([]lang.Candidate, 0)
+
+	if lv.cons.Value.False() && strings.HasPrefix("false", prefix) {
+		candidates = append(candidates, lang.Candidate{
+			Label:        "false",
+			Detail:       cty.Bool.FriendlyNameForConstraint(),
+			Kind:         lang.BoolCandidateKind,
+			IsDeprecated: lv.cons.IsDeprecated,
+			Description:  lv.cons.Description,
+			TextEdit: lang.TextEdit{
+				NewText: "false",
+				Snippet: "false",
+				Range:   editRange,
+			},
+		})
+	}
+	if lv.cons.Value.True() && strings.HasPrefix("true", prefix) {
+		candidates = append(candidates, lang.Candidate{
+			Label:        "true",
+			Detail:       cty.Bool.FriendlyNameForConstraint(),
+			Kind:         lang.BoolCandidateKind,
+			IsDeprecated: lv.cons.IsDeprecated,
+			Description:  lv.cons.Description,
+			TextEdit: lang.TextEdit{
+				NewText: "true",
+				Snippet: "true",
+				Range:   editRange,
+			},
+		})
+	}
+
+	return candidates
 }

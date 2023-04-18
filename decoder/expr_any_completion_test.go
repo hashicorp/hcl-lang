@@ -1324,7 +1324,7 @@ func TestCompletionAtPos_exprAny_literalTypes(t *testing.T) {
 			`attr = [  ]
 `,
 			hcl.Pos{Line: 1, Column: 10, Byte: 9},
-			lang.CompleteCandidates(boolLiteralCandidates("", hcl.Range{
+			lang.CompleteCandidates(boolLiteralTypeCandidates("", hcl.Range{
 				Filename: "test.tf",
 				Start:    hcl.Pos{Line: 1, Column: 10, Byte: 9},
 				End:      hcl.Pos{Line: 1, Column: 10, Byte: 9},
@@ -1344,7 +1344,7 @@ func TestCompletionAtPos_exprAny_literalTypes(t *testing.T) {
 ]
 `,
 			hcl.Pos{Line: 2, Column: 3, Byte: 11},
-			lang.CompleteCandidates(boolLiteralCandidates("", hcl.Range{
+			lang.CompleteCandidates(boolLiteralTypeCandidates("", hcl.Range{
 				Filename: "test.tf",
 				Start:    hcl.Pos{Line: 2, Column: 3, Byte: 11},
 				End:      hcl.Pos{Line: 2, Column: 3, Byte: 11},
@@ -1362,7 +1362,7 @@ func TestCompletionAtPos_exprAny_literalTypes(t *testing.T) {
 			`attr = [ false,  ]
 `,
 			hcl.Pos{Line: 1, Column: 17, Byte: 16},
-			lang.CompleteCandidates(boolLiteralCandidates("", hcl.Range{
+			lang.CompleteCandidates(boolLiteralTypeCandidates("", hcl.Range{
 				Filename: "test.tf",
 				Start:    hcl.Pos{Line: 1, Column: 17, Byte: 16},
 				End:      hcl.Pos{Line: 1, Column: 17, Byte: 16},
@@ -1383,7 +1383,7 @@ func TestCompletionAtPos_exprAny_literalTypes(t *testing.T) {
 ]
 `,
 			hcl.Pos{Line: 3, Column: 3, Byte: 20},
-			lang.CompleteCandidates(boolLiteralCandidates("", hcl.Range{
+			lang.CompleteCandidates(boolLiteralTypeCandidates("", hcl.Range{
 				Filename: "test.tf",
 				Start:    hcl.Pos{Line: 3, Column: 3, Byte: 20},
 				End:      hcl.Pos{Line: 3, Column: 3, Byte: 20},
@@ -1401,7 +1401,7 @@ func TestCompletionAtPos_exprAny_literalTypes(t *testing.T) {
 			`attr = [ false, ]
 `,
 			hcl.Pos{Line: 1, Column: 16, Byte: 15},
-			lang.CompleteCandidates(boolLiteralCandidates("", hcl.Range{
+			lang.CompleteCandidates(boolLiteralTypeCandidates("", hcl.Range{
 				Filename: "test.tf",
 				Start:    hcl.Pos{Line: 1, Column: 16, Byte: 15},
 				End:      hcl.Pos{Line: 1, Column: 16, Byte: 15},
@@ -1419,7 +1419,7 @@ func TestCompletionAtPos_exprAny_literalTypes(t *testing.T) {
 			`attr = [ false, ]
 `,
 			hcl.Pos{Line: 1, Column: 17, Byte: 16},
-			lang.CompleteCandidates(boolLiteralCandidates("", hcl.Range{
+			lang.CompleteCandidates(boolLiteralTypeCandidates("", hcl.Range{
 				Filename: "test.tf",
 				Start:    hcl.Pos{Line: 1, Column: 17, Byte: 16},
 				End:      hcl.Pos{Line: 1, Column: 17, Byte: 16},
