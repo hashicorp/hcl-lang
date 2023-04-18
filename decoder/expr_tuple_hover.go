@@ -20,7 +20,9 @@ func (tuple Tuple) HoverAtPos(ctx context.Context, pos hcl.Pos) *lang.HoverData 
 
 	for i, elemExpr := range eType.Exprs {
 		if i+1 > len(tuple.cons.Elems) {
-			return nil
+			// fall back to details about whole tuple
+			// for invalid (unknown) elements
+			break
 		}
 
 		if elemExpr.Range().ContainsPos(pos) {
