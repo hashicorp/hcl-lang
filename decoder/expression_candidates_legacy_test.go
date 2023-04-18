@@ -31,7 +31,7 @@ func TestLegacyDecoder_CandidateAtPos_expressions(t *testing.T) {
 			"string type",
 			map[string]*schema.AttributeSchema{
 				"attr": {
-					Expr: schema.LiteralTypeOnly(cty.String),
+					Constraint: schema.LiteralType{Type: cty.String},
 				},
 			},
 			`attr = 
@@ -43,13 +43,11 @@ func TestLegacyDecoder_CandidateAtPos_expressions(t *testing.T) {
 			"object as value",
 			map[string]*schema.AttributeSchema{
 				"attr": {
-					Expr: schema.ExprConstraints{
-						schema.LegacyLiteralValue{
-							Val: cty.ObjectVal(map[string]cty.Value{
-								"first":  cty.StringVal("blah"),
-								"second": cty.NumberIntVal(2345),
-							}),
-						},
+					Constraint: schema.LiteralValue{
+						Value: cty.ObjectVal(map[string]cty.Value{
+							"first":  cty.StringVal("blah"),
+							"second": cty.NumberIntVal(2345),
+						}),
 					},
 				},
 			},
@@ -79,8 +77,8 @@ func TestLegacyDecoder_CandidateAtPos_expressions(t *testing.T) {
   second = 2345
 }`,
 						Snippet: `{
-  first = "${1:blah}"
-  second = ${2:2345}
+  first = "blah"
+  second = 2345
 }`,
 					},
 					Kind: lang.ObjectCandidateKind,
@@ -91,10 +89,12 @@ func TestLegacyDecoder_CandidateAtPos_expressions(t *testing.T) {
 			"object as type",
 			map[string]*schema.AttributeSchema{
 				"attr": {
-					Expr: schema.LiteralTypeOnly(cty.Object(map[string]cty.Type{
-						"first":  cty.String,
-						"second": cty.Number,
-					})),
+					Constraint: schema.LiteralType{
+						Type: cty.Object(map[string]cty.Type{
+							"first":  cty.String,
+							"second": cty.Number,
+						}),
+					},
 				},
 			},
 			`attr = 
@@ -135,15 +135,13 @@ func TestLegacyDecoder_CandidateAtPos_expressions(t *testing.T) {
 			"object as expression",
 			map[string]*schema.AttributeSchema{
 				"attr": {
-					Expr: schema.ExprConstraints{
-						schema.ObjectExpr{
-							Attributes: schema.ObjectExprAttributes{
-								"first": &schema.AttributeSchema{
-									Expr: schema.LiteralTypeOnly(cty.String),
-								},
-								"second": &schema.AttributeSchema{
-									Expr: schema.LiteralTypeOnly(cty.Number),
-								},
+					Constraint: schema.Object{
+						Attributes: schema.ObjectAttributes{
+							"first": &schema.AttributeSchema{
+								Constraint: schema.LiteralType{Type: cty.String},
+							},
+							"second": &schema.AttributeSchema{
+								Constraint: schema.LiteralType{Type: cty.Number},
 							},
 						},
 					},
@@ -154,7 +152,7 @@ func TestLegacyDecoder_CandidateAtPos_expressions(t *testing.T) {
 			hcl.Pos{Line: 1, Column: 8, Byte: 7},
 			lang.CompleteCandidates([]lang.Candidate{
 				{
-					Label:  "{ }",
+					Label:  "{…}",
 					Detail: "object",
 					TextEdit: lang.TextEdit{
 						Range: hcl.Range{
@@ -182,15 +180,13 @@ func TestLegacyDecoder_CandidateAtPos_expressions(t *testing.T) {
 			"object as expression - attribute",
 			map[string]*schema.AttributeSchema{
 				"attr": {
-					Expr: schema.ExprConstraints{
-						schema.ObjectExpr{
-							Attributes: schema.ObjectExprAttributes{
-								"first": &schema.AttributeSchema{
-									Expr: schema.LiteralTypeOnly(cty.String),
-								},
-								"second": &schema.AttributeSchema{
-									Expr: schema.LiteralTypeOnly(cty.Number),
-								},
+					Constraint: schema.Object{
+						Attributes: schema.ObjectAttributes{
+							"first": &schema.AttributeSchema{
+								Constraint: schema.LiteralType{Type: cty.String},
+							},
+							"second": &schema.AttributeSchema{
+								Constraint: schema.LiteralType{Type: cty.Number},
 							},
 						},
 					},
@@ -219,7 +215,7 @@ func TestLegacyDecoder_CandidateAtPos_expressions(t *testing.T) {
 								Byte:   11,
 							},
 						},
-						NewText: `first = ""`,
+						NewText: `first`,
 						Snippet: `first = "${1:value}"`,
 					},
 					Kind: lang.AttributeCandidateKind,
@@ -241,8 +237,8 @@ func TestLegacyDecoder_CandidateAtPos_expressions(t *testing.T) {
 								Byte:   11,
 							},
 						},
-						NewText: "second = 1",
-						Snippet: "second = ${1:1}",
+						NewText: "second",
+						Snippet: "second = ${1:0}",
 					},
 					Kind: lang.AttributeCandidateKind,
 				},
@@ -252,15 +248,13 @@ func TestLegacyDecoder_CandidateAtPos_expressions(t *testing.T) {
 			"object as expression - attributes partially declared",
 			map[string]*schema.AttributeSchema{
 				"attr": {
-					Expr: schema.ExprConstraints{
-						schema.ObjectExpr{
-							Attributes: schema.ObjectExprAttributes{
-								"first": &schema.AttributeSchema{
-									Expr: schema.LiteralTypeOnly(cty.String),
-								},
-								"second": &schema.AttributeSchema{
-									Expr: schema.LiteralTypeOnly(cty.Number),
-								},
+					Constraint: schema.Object{
+						Attributes: schema.ObjectAttributes{
+							"first": &schema.AttributeSchema{
+								Constraint: schema.LiteralType{Type: cty.String},
+							},
+							"second": &schema.AttributeSchema{
+								Constraint: schema.LiteralType{Type: cty.Number},
 							},
 						},
 					},
@@ -290,8 +284,8 @@ func TestLegacyDecoder_CandidateAtPos_expressions(t *testing.T) {
 								Byte:   28,
 							},
 						},
-						NewText: "second = 1",
-						Snippet: "second = ${1:1}",
+						NewText: "second",
+						Snippet: "second = ${1:0}",
 					},
 					Kind: lang.AttributeCandidateKind,
 				},
@@ -301,15 +295,13 @@ func TestLegacyDecoder_CandidateAtPos_expressions(t *testing.T) {
 			"object as expression - attribute key unknown",
 			map[string]*schema.AttributeSchema{
 				"attr": {
-					Expr: schema.ExprConstraints{
-						schema.ObjectExpr{
-							Attributes: schema.ObjectExprAttributes{
-								"first": &schema.AttributeSchema{
-									Expr: schema.LiteralTypeOnly(cty.String),
-								},
-								"second": &schema.AttributeSchema{
-									Expr: schema.LiteralTypeOnly(cty.Number),
-								},
+					Constraint: schema.Object{
+						Attributes: schema.ObjectAttributes{
+							"first": &schema.AttributeSchema{
+								Constraint: schema.LiteralType{Type: cty.String},
+							},
+							"second": &schema.AttributeSchema{
+								Constraint: schema.LiteralType{Type: cty.Number},
 							},
 						},
 					},
@@ -341,8 +333,8 @@ func TestLegacyDecoder_CandidateAtPos_expressions(t *testing.T) {
 								Byte:   82,
 							},
 						},
-						NewText: "second = 1",
-						Snippet: "second = ${1:1}",
+						NewText: "second",
+						Snippet: "second = ${1:0}",
 					},
 					Kind: lang.AttributeCandidateKind,
 				},
@@ -352,13 +344,11 @@ func TestLegacyDecoder_CandidateAtPos_expressions(t *testing.T) {
 			"list as value",
 			map[string]*schema.AttributeSchema{
 				"attr": {
-					Expr: schema.ExprConstraints{
-						schema.LegacyLiteralValue{
-							Val: cty.ListVal([]cty.Value{
-								cty.StringVal("foo"),
-								cty.StringVal("bar"),
-							}),
-						},
+					Constraint: schema.LiteralValue{
+						Value: cty.ListVal([]cty.Value{
+							cty.StringVal("foo"),
+							cty.StringVal("bar"),
+						}),
 					},
 				},
 			},
@@ -368,7 +358,7 @@ func TestLegacyDecoder_CandidateAtPos_expressions(t *testing.T) {
 			lang.CompleteCandidates([]lang.Candidate{
 				{
 					Label:  `[ "foo", "bar" ]`,
-					Detail: "list",
+					Detail: "list of string",
 					TextEdit: lang.TextEdit{
 						Range: hcl.Range{
 							Filename: "test.tf",
@@ -383,8 +373,8 @@ func TestLegacyDecoder_CandidateAtPos_expressions(t *testing.T) {
 								Byte:   7,
 							},
 						},
-						NewText: "[\n  \"foo\",\n  \"bar\",\n]",
-						Snippet: "[\n  \"${1:foo}\",\n  \"${2:bar}\",\n]",
+						NewText: `["foo", "bar"]`,
+						Snippet: `["foo", "bar"]`,
 					},
 					Kind: lang.ListCandidateKind,
 				},
@@ -394,7 +384,7 @@ func TestLegacyDecoder_CandidateAtPos_expressions(t *testing.T) {
 			"map as type",
 			map[string]*schema.AttributeSchema{
 				"attr": {
-					Expr: schema.LiteralTypeOnly(cty.Map(cty.String)),
+					Constraint: schema.LiteralType{Type: cty.Map(cty.String)},
 				},
 			},
 			`attr = 
@@ -433,13 +423,11 @@ func TestLegacyDecoder_CandidateAtPos_expressions(t *testing.T) {
 			"map as value",
 			map[string]*schema.AttributeSchema{
 				"attr": {
-					Expr: schema.ExprConstraints{
-						schema.LegacyLiteralValue{
-							Val: cty.MapVal(map[string]cty.Value{
-								"foo": cty.StringVal("moo"),
-								"bar": cty.StringVal("boo"),
-							}),
-						},
+					Constraint: schema.LiteralValue{
+						Value: cty.MapVal(map[string]cty.Value{
+							"foo": cty.StringVal("moo"),
+							"bar": cty.StringVal("boo"),
+						}),
 					},
 				},
 			},
@@ -449,7 +437,7 @@ func TestLegacyDecoder_CandidateAtPos_expressions(t *testing.T) {
 			lang.CompleteCandidates([]lang.Candidate{
 				{
 					Label:  `{ "bar" = "boo", … }`,
-					Detail: "map",
+					Detail: "map of string",
 					TextEdit: lang.TextEdit{
 						Range: hcl.Range{
 							Filename: "test.tf",
@@ -469,8 +457,8 @@ func TestLegacyDecoder_CandidateAtPos_expressions(t *testing.T) {
   "foo" = "moo"
 }`,
 						Snippet: `{
-  "${1:bar}" = "${2:boo}"
-  "${3:foo}" = "${4:moo}"
+  "bar" = "boo"
+  "foo" = "moo"
 }`,
 					},
 					Kind: lang.MapCandidateKind,
@@ -481,35 +469,13 @@ func TestLegacyDecoder_CandidateAtPos_expressions(t *testing.T) {
 			"bool type",
 			map[string]*schema.AttributeSchema{
 				"attr": {
-					Expr: schema.LiteralTypeOnly(cty.Bool),
+					Constraint: schema.LiteralType{Type: cty.Bool},
 				},
 			},
 			`attr = 
 `,
 			hcl.Pos{Line: 1, Column: 8, Byte: 7},
 			lang.CompleteCandidates([]lang.Candidate{
-				{
-					Label:  "true",
-					Detail: "bool",
-					TextEdit: lang.TextEdit{
-						Range: hcl.Range{
-							Filename: "test.tf",
-							Start: hcl.Pos{
-								Line:   1,
-								Column: 8,
-								Byte:   7,
-							},
-							End: hcl.Pos{
-								Line:   1,
-								Column: 8,
-								Byte:   7,
-							},
-						},
-						NewText: "true",
-						Snippet: "${1:true}",
-					},
-					Kind: lang.BoolCandidateKind,
-				},
 				{
 					Label:  "false",
 					Detail: "bool",
@@ -528,7 +494,29 @@ func TestLegacyDecoder_CandidateAtPos_expressions(t *testing.T) {
 							},
 						},
 						NewText: "false",
-						Snippet: "${1:false}",
+						Snippet: "false",
+					},
+					Kind: lang.BoolCandidateKind,
+				},
+				{
+					Label:  "true",
+					Detail: "bool",
+					TextEdit: lang.TextEdit{
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start: hcl.Pos{
+								Line:   1,
+								Column: 8,
+								Byte:   7,
+							},
+							End: hcl.Pos{
+								Line:   1,
+								Column: 8,
+								Byte:   7,
+							},
+						},
+						NewText: "true",
+						Snippet: "true",
 					},
 					Kind: lang.BoolCandidateKind,
 				},
@@ -538,10 +526,10 @@ func TestLegacyDecoder_CandidateAtPos_expressions(t *testing.T) {
 			"string values",
 			map[string]*schema.AttributeSchema{
 				"attr": {
-					Expr: schema.ExprConstraints{
-						schema.LegacyLiteralValue{Val: cty.StringVal("first")},
-						schema.LegacyLiteralValue{Val: cty.StringVal("second")},
-						schema.LegacyLiteralValue{Val: cty.StringVal("third")},
+					Constraint: schema.OneOf{
+						schema.LiteralValue{Value: cty.StringVal("first")},
+						schema.LiteralValue{Value: cty.StringVal("second")},
+						schema.LiteralValue{Value: cty.StringVal("third")},
 					},
 				},
 			},
@@ -567,7 +555,7 @@ func TestLegacyDecoder_CandidateAtPos_expressions(t *testing.T) {
 							},
 						},
 						NewText: `"first"`,
-						Snippet: `"${1:first}"`},
+						Snippet: `"first"`},
 					Kind: lang.StringCandidateKind,
 				},
 				{
@@ -588,7 +576,7 @@ func TestLegacyDecoder_CandidateAtPos_expressions(t *testing.T) {
 							},
 						},
 						NewText: `"second"`,
-						Snippet: `"${1:second}"`},
+						Snippet: `"second"`},
 					Kind: lang.StringCandidateKind,
 				},
 				{
@@ -609,7 +597,7 @@ func TestLegacyDecoder_CandidateAtPos_expressions(t *testing.T) {
 							},
 						},
 						NewText: `"third"`,
-						Snippet: `"${1:third}"`},
+						Snippet: `"third"`},
 					Kind: lang.StringCandidateKind,
 				},
 			}),
@@ -618,9 +606,9 @@ func TestLegacyDecoder_CandidateAtPos_expressions(t *testing.T) {
 			"deprecated string value",
 			map[string]*schema.AttributeSchema{
 				"attr": {
-					Expr: schema.ExprConstraints{
-						schema.LegacyLiteralValue{Val: cty.StringVal("first")},
-						schema.LegacyLiteralValue{Val: cty.StringVal("second"), IsDeprecated: true},
+					Constraint: schema.OneOf{
+						schema.LiteralValue{Value: cty.StringVal("first")},
+						schema.LiteralValue{Value: cty.StringVal("second"), IsDeprecated: true},
 					},
 				},
 			},
@@ -646,7 +634,7 @@ func TestLegacyDecoder_CandidateAtPos_expressions(t *testing.T) {
 							},
 						},
 						NewText: `"first"`,
-						Snippet: `"${1:first}"`},
+						Snippet: `"first"`},
 					Kind: lang.StringCandidateKind,
 				},
 				{
@@ -668,7 +656,7 @@ func TestLegacyDecoder_CandidateAtPos_expressions(t *testing.T) {
 							},
 						},
 						NewText: `"second"`,
-						Snippet: `"${1:second}"`},
+						Snippet: `"second"`},
 					Kind: lang.StringCandidateKind,
 				},
 			}),
@@ -677,7 +665,7 @@ func TestLegacyDecoder_CandidateAtPos_expressions(t *testing.T) {
 			"tuple as list type",
 			map[string]*schema.AttributeSchema{
 				"attr": {
-					Expr: schema.LiteralTypeOnly(cty.List(cty.String)),
+					Constraint: schema.LiteralType{Type: cty.List(cty.String)},
 				},
 			},
 			`attr = 
@@ -712,7 +700,7 @@ func TestLegacyDecoder_CandidateAtPos_expressions(t *testing.T) {
 			"tuple as list type inside",
 			map[string]*schema.AttributeSchema{
 				"attr": {
-					Expr: schema.LiteralTypeOnly(cty.List(cty.String)),
+					Constraint: schema.LiteralType{Type: cty.List(cty.String)},
 				},
 			},
 			`attr = [  ]
@@ -724,10 +712,8 @@ func TestLegacyDecoder_CandidateAtPos_expressions(t *testing.T) {
 			"attribute as list expression",
 			map[string]*schema.AttributeSchema{
 				"attr": {
-					Expr: schema.ExprConstraints{
-						schema.ListExpr{
-							Elem: schema.LiteralTypeOnly(cty.String),
-						},
+					Constraint: schema.List{
+						Elem: schema.LiteralType{Type: cty.String},
 					},
 				},
 			},
@@ -745,7 +731,7 @@ func TestLegacyDecoder_CandidateAtPos_expressions(t *testing.T) {
 							End:      hcl.Pos{Line: 1, Column: 1, Byte: 0},
 						},
 						NewText: "attr",
-						Snippet: "attr = [\n  ${0}\n]",
+						Snippet: `attr = [ "${1:value}" ]`,
 					},
 					Kind: lang.AttributeCandidateKind,
 				},
@@ -755,10 +741,8 @@ func TestLegacyDecoder_CandidateAtPos_expressions(t *testing.T) {
 			"list expression",
 			map[string]*schema.AttributeSchema{
 				"attr": {
-					Expr: schema.ExprConstraints{
-						schema.ListExpr{
-							Elem: schema.LiteralTypeOnly(cty.String),
-						},
+					Constraint: schema.List{
+						Elem: schema.LiteralType{Type: cty.String},
 					},
 				},
 			},
@@ -775,8 +759,8 @@ func TestLegacyDecoder_CandidateAtPos_expressions(t *testing.T) {
 							Start:    hcl.Pos{Line: 1, Column: 8, Byte: 7},
 							End:      hcl.Pos{Line: 1, Column: 8, Byte: 7},
 						},
-						NewText: "[ ]",
-						Snippet: "[ ${0} ]",
+						NewText: `[ "value" ]`,
+						Snippet: `[ "${1:value}" ]`,
 					},
 					Kind: lang.ListCandidateKind,
 				},
@@ -786,39 +770,15 @@ func TestLegacyDecoder_CandidateAtPos_expressions(t *testing.T) {
 			"list expression inside",
 			map[string]*schema.AttributeSchema{
 				"attr": {
-					Expr: schema.ExprConstraints{
-						schema.ListExpr{
-							Elem: schema.LiteralTypeOnly(cty.Bool),
-						},
+					Constraint: schema.List{
+						Elem: schema.LiteralType{Type: cty.Bool},
 					},
 				},
 			},
-			`attr = [  ]
+			`attr = [ ]
 `,
 			hcl.Pos{Line: 1, Column: 10, Byte: 9},
 			lang.CompleteCandidates([]lang.Candidate{
-				{
-					Label:  "true",
-					Detail: "bool",
-					TextEdit: lang.TextEdit{
-						Range: hcl.Range{
-							Filename: "test.tf",
-							Start: hcl.Pos{
-								Line:   1,
-								Column: 10,
-								Byte:   9,
-							},
-							End: hcl.Pos{
-								Line:   1,
-								Column: 10,
-								Byte:   9,
-							},
-						},
-						NewText: "true",
-						Snippet: "${1:true}",
-					},
-					Kind: lang.BoolCandidateKind,
-				},
 				{
 					Label:  "false",
 					Detail: "bool",
@@ -837,7 +797,29 @@ func TestLegacyDecoder_CandidateAtPos_expressions(t *testing.T) {
 							},
 						},
 						NewText: "false",
-						Snippet: "${1:false}",
+						Snippet: "false",
+					},
+					Kind: lang.BoolCandidateKind,
+				},
+				{
+					Label:  "true",
+					Detail: "bool",
+					TextEdit: lang.TextEdit{
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start: hcl.Pos{
+								Line:   1,
+								Column: 10,
+								Byte:   9,
+							},
+							End: hcl.Pos{
+								Line:   1,
+								Column: 10,
+								Byte:   9,
+							},
+						},
+						NewText: "true",
+						Snippet: "true",
 					},
 					Kind: lang.BoolCandidateKind,
 				},
@@ -847,10 +829,8 @@ func TestLegacyDecoder_CandidateAtPos_expressions(t *testing.T) {
 			"attribute as set expression",
 			map[string]*schema.AttributeSchema{
 				"attr": {
-					Expr: schema.ExprConstraints{
-						schema.SetExpr{
-							Elem: schema.LiteralTypeOnly(cty.String),
-						},
+					Constraint: schema.Set{
+						Elem: schema.LiteralType{Type: cty.String},
 					},
 				},
 			},
@@ -868,7 +848,7 @@ func TestLegacyDecoder_CandidateAtPos_expressions(t *testing.T) {
 							End:      hcl.Pos{Line: 1, Column: 1, Byte: 0},
 						},
 						NewText: "attr",
-						Snippet: "attr = [\n  ${0}\n]",
+						Snippet: `attr = [ "${1:value}" ]`,
 					},
 					Kind: lang.AttributeCandidateKind,
 				},
@@ -878,10 +858,8 @@ func TestLegacyDecoder_CandidateAtPos_expressions(t *testing.T) {
 			"set expression",
 			map[string]*schema.AttributeSchema{
 				"attr": {
-					Expr: schema.ExprConstraints{
-						schema.SetExpr{
-							Elem: schema.LiteralTypeOnly(cty.String),
-						},
+					Constraint: schema.Set{
+						Elem: schema.LiteralType{Type: cty.String},
 					},
 				},
 			},
@@ -898,8 +876,8 @@ func TestLegacyDecoder_CandidateAtPos_expressions(t *testing.T) {
 							Start:    hcl.Pos{Line: 1, Column: 8, Byte: 7},
 							End:      hcl.Pos{Line: 1, Column: 8, Byte: 7},
 						},
-						NewText: "[ ]",
-						Snippet: "[ ${0} ]",
+						NewText: `[ "value" ]`,
+						Snippet: `[ "${1:value}" ]`,
 					},
 					Kind: lang.SetCandidateKind,
 				},
@@ -909,10 +887,8 @@ func TestLegacyDecoder_CandidateAtPos_expressions(t *testing.T) {
 			"set expression inside",
 			map[string]*schema.AttributeSchema{
 				"attr": {
-					Expr: schema.ExprConstraints{
-						schema.SetExpr{
-							Elem: schema.LiteralTypeOnly(cty.Bool),
-						},
+					Constraint: schema.Set{
+						Elem: schema.LiteralType{Type: cty.Bool},
 					},
 				},
 			},
@@ -920,28 +896,6 @@ func TestLegacyDecoder_CandidateAtPos_expressions(t *testing.T) {
 `,
 			hcl.Pos{Line: 1, Column: 10, Byte: 9},
 			lang.CompleteCandidates([]lang.Candidate{
-				{
-					Label:  "true",
-					Detail: "bool",
-					TextEdit: lang.TextEdit{
-						Range: hcl.Range{
-							Filename: "test.tf",
-							Start: hcl.Pos{
-								Line:   1,
-								Column: 10,
-								Byte:   9,
-							},
-							End: hcl.Pos{
-								Line:   1,
-								Column: 10,
-								Byte:   9,
-							},
-						},
-						NewText: "true",
-						Snippet: "${1:true}",
-					},
-					Kind: lang.BoolCandidateKind,
-				},
 				{
 					Label:  "false",
 					Detail: "bool",
@@ -960,7 +914,29 @@ func TestLegacyDecoder_CandidateAtPos_expressions(t *testing.T) {
 							},
 						},
 						NewText: "false",
-						Snippet: "${1:false}",
+						Snippet: "false",
+					},
+					Kind: lang.BoolCandidateKind,
+				},
+				{
+					Label:  "true",
+					Detail: "bool",
+					TextEdit: lang.TextEdit{
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start: hcl.Pos{
+								Line:   1,
+								Column: 10,
+								Byte:   9,
+							},
+							End: hcl.Pos{
+								Line:   1,
+								Column: 10,
+								Byte:   9,
+							},
+						},
+						NewText: "true",
+						Snippet: "true",
 					},
 					Kind: lang.BoolCandidateKind,
 				},
@@ -970,12 +946,10 @@ func TestLegacyDecoder_CandidateAtPos_expressions(t *testing.T) {
 			"attribute as tuple expression",
 			map[string]*schema.AttributeSchema{
 				"attr": {
-					Expr: schema.ExprConstraints{
-						schema.TupleExpr{
-							Elems: []schema.ExprConstraints{
-								schema.LiteralTypeOnly(cty.String),
-								schema.LiteralTypeOnly(cty.Number),
-							},
+					Constraint: schema.Tuple{
+						Elems: []schema.Constraint{
+							schema.LiteralType{Type: cty.String},
+							schema.LiteralType{Type: cty.Number},
 						},
 					},
 				},
@@ -994,7 +968,7 @@ func TestLegacyDecoder_CandidateAtPos_expressions(t *testing.T) {
 							End:      hcl.Pos{Line: 1, Column: 1, Byte: 0},
 						},
 						NewText: "attr",
-						Snippet: "attr = [\n  ${0}\n]",
+						Snippet: `attr = [ "${1:value}", ${2:0} ]`,
 					},
 					Kind: lang.AttributeCandidateKind,
 				},
@@ -1004,12 +978,10 @@ func TestLegacyDecoder_CandidateAtPos_expressions(t *testing.T) {
 			"tuple expression",
 			map[string]*schema.AttributeSchema{
 				"attr": {
-					Expr: schema.ExprConstraints{
-						schema.TupleExpr{
-							Elems: []schema.ExprConstraints{
-								schema.LiteralTypeOnly(cty.String),
-								schema.LiteralTypeOnly(cty.Number),
-							},
+					Constraint: schema.Tuple{
+						Elems: []schema.Constraint{
+							schema.LiteralType{Type: cty.String},
+							schema.LiteralType{Type: cty.Number},
 						},
 					},
 				},
@@ -1019,7 +991,7 @@ func TestLegacyDecoder_CandidateAtPos_expressions(t *testing.T) {
 			hcl.Pos{Line: 1, Column: 8, Byte: 7},
 			lang.CompleteCandidates([]lang.Candidate{
 				{
-					Label:  "[ string ]",
+					Label:  "[ string, number ]",
 					Detail: "tuple",
 					TextEdit: lang.TextEdit{
 						Range: hcl.Range{
@@ -1027,8 +999,8 @@ func TestLegacyDecoder_CandidateAtPos_expressions(t *testing.T) {
 							Start:    hcl.Pos{Line: 1, Column: 8, Byte: 7},
 							End:      hcl.Pos{Line: 1, Column: 8, Byte: 7},
 						},
-						NewText: "[ ]",
-						Snippet: "[ ${0} ]",
+						NewText: `[ "value", 0 ]`,
+						Snippet: `[ "${1:value}", ${2:0} ]`,
 					},
 					Kind: lang.TupleCandidateKind,
 				},
@@ -1038,12 +1010,10 @@ func TestLegacyDecoder_CandidateAtPos_expressions(t *testing.T) {
 			"tuple expression inside",
 			map[string]*schema.AttributeSchema{
 				"attr": {
-					Expr: schema.ExprConstraints{
-						schema.TupleExpr{
-							Elems: []schema.ExprConstraints{
-								schema.LiteralTypeOnly(cty.Bool),
-								schema.LiteralTypeOnly(cty.Number),
-							},
+					Constraint: schema.Tuple{
+						Elems: []schema.Constraint{
+							schema.LiteralType{Type: cty.Bool},
+							schema.LiteralType{Type: cty.Number},
 						},
 					},
 				},
@@ -1052,28 +1022,6 @@ func TestLegacyDecoder_CandidateAtPos_expressions(t *testing.T) {
 `,
 			hcl.Pos{Line: 1, Column: 10, Byte: 9},
 			lang.CompleteCandidates([]lang.Candidate{
-				{
-					Label:  "true",
-					Detail: "bool",
-					TextEdit: lang.TextEdit{
-						Range: hcl.Range{
-							Filename: "test.tf",
-							Start: hcl.Pos{
-								Line:   1,
-								Column: 10,
-								Byte:   9,
-							},
-							End: hcl.Pos{
-								Line:   1,
-								Column: 10,
-								Byte:   9,
-							},
-						},
-						NewText: "true",
-						Snippet: "${1:true}",
-					},
-					Kind: lang.BoolCandidateKind,
-				},
 				{
 					Label:  "false",
 					Detail: "bool",
@@ -1092,7 +1040,29 @@ func TestLegacyDecoder_CandidateAtPos_expressions(t *testing.T) {
 							},
 						},
 						NewText: "false",
-						Snippet: "${1:false}",
+						Snippet: "false",
+					},
+					Kind: lang.BoolCandidateKind,
+				},
+				{
+					Label:  "true",
+					Detail: "bool",
+					TextEdit: lang.TextEdit{
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start: hcl.Pos{
+								Line:   1,
+								Column: 10,
+								Byte:   9,
+							},
+							End: hcl.Pos{
+								Line:   1,
+								Column: 10,
+								Byte:   9,
+							},
+						},
+						NewText: "true",
+						Snippet: "true",
 					},
 					Kind: lang.BoolCandidateKind,
 				},
@@ -1102,11 +1072,9 @@ func TestLegacyDecoder_CandidateAtPos_expressions(t *testing.T) {
 			"keyword",
 			map[string]*schema.AttributeSchema{
 				"attr": {
-					Expr: schema.ExprConstraints{
-						schema.KeywordExpr{
-							Keyword: "foobar",
-							Name:    "special kw",
-						},
+					Constraint: schema.Keyword{
+						Keyword: "foobar",
+						Name:    "special kw",
 					},
 				},
 			},
@@ -1142,11 +1110,9 @@ func TestLegacyDecoder_CandidateAtPos_expressions(t *testing.T) {
 			"map expression",
 			map[string]*schema.AttributeSchema{
 				"attr": {
-					Expr: schema.ExprConstraints{
-						schema.MapExpr{
-							Elem: schema.LiteralTypeOnly(cty.String),
-							Name: "map of something",
-						},
+					Constraint: schema.Map{
+						Elem: schema.LiteralType{Type: cty.String},
+						Name: "map of something",
 					},
 				},
 			},
@@ -1155,7 +1121,7 @@ func TestLegacyDecoder_CandidateAtPos_expressions(t *testing.T) {
 			hcl.Pos{Line: 1, Column: 8, Byte: 7},
 			lang.CompleteCandidates([]lang.Candidate{
 				{
-					Label:  "{ key = string }",
+					Label:  `{ "key" = string }`,
 					Detail: "map of something",
 					TextEdit: lang.TextEdit{
 						Range: hcl.Range{
@@ -1171,8 +1137,8 @@ func TestLegacyDecoder_CandidateAtPos_expressions(t *testing.T) {
 								Byte:   7,
 							},
 						},
-						NewText: "{\n  name = \"\"\n}",
-						Snippet: "{\n  ${1:name} = \"${1:value}\"\n}",
+						NewText: "{\n  \"name\" = \"value\"\n}",
+						Snippet: "{\n  \"${1:name}\" = \"${2:value}\"\n}",
 					},
 					Kind: lang.MapCandidateKind,
 				},
@@ -1182,9 +1148,7 @@ func TestLegacyDecoder_CandidateAtPos_expressions(t *testing.T) {
 			"literal of dynamic pseudo type",
 			map[string]*schema.AttributeSchema{
 				"attr": {
-					Expr: schema.ExprConstraints{
-						schema.LiteralTypeExpr{Type: cty.DynamicPseudoType},
-					},
+					Constraint: schema.LiteralType{Type: cty.DynamicPseudoType},
 				},
 			},
 			`attr = 
@@ -1196,9 +1160,7 @@ func TestLegacyDecoder_CandidateAtPos_expressions(t *testing.T) {
 			"type declaration",
 			map[string]*schema.AttributeSchema{
 				"attr": {
-					Expr: schema.ExprConstraints{
-						schema.TypeDeclarationExpr{},
-					},
+					Constraint: schema.TypeDeclaration{},
 				},
 			},
 			`attr = 
@@ -1221,134 +1183,169 @@ func TestLegacyDecoder_CandidateAtPos_expressions(t *testing.T) {
 								Column: 8,
 								Byte:   7,
 							},
-						}, NewText: "bool", Snippet: "bool"},
-					Kind: lang.AttributeCandidateKind,
+						},
+						NewText: "bool",
+						Snippet: "bool",
+					},
+					Kind: lang.BoolCandidateKind,
 				},
 				{
 					Label:  "number",
 					Detail: "number",
-					TextEdit: lang.TextEdit{Range: hcl.Range{
-						Filename: "test.tf",
-						Start: hcl.Pos{
-							Line:   1,
-							Column: 8,
-							Byte:   7,
+					TextEdit: lang.TextEdit{
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start: hcl.Pos{
+								Line:   1,
+								Column: 8,
+								Byte:   7,
+							},
+							End: hcl.Pos{
+								Line:   1,
+								Column: 8,
+								Byte:   7,
+							},
 						},
-						End: hcl.Pos{
-							Line:   1,
-							Column: 8,
-							Byte:   7,
-						},
-					}, NewText: "number", Snippet: "number"},
-					Kind: lang.AttributeCandidateKind,
+						NewText: "number",
+						Snippet: "number",
+					},
+					Kind: lang.NumberCandidateKind,
 				},
 				{
 					Label:  "string",
 					Detail: "string",
-					TextEdit: lang.TextEdit{Range: hcl.Range{
-						Filename: "test.tf",
-						Start: hcl.Pos{
-							Line:   1,
-							Column: 8,
-							Byte:   7,
+					TextEdit: lang.TextEdit{
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start: hcl.Pos{
+								Line:   1,
+								Column: 8,
+								Byte:   7,
+							},
+							End: hcl.Pos{
+								Line:   1,
+								Column: 8,
+								Byte:   7,
+							},
 						},
-						End: hcl.Pos{
-							Line:   1,
-							Column: 8,
-							Byte:   7,
-						},
-					}, NewText: "string", Snippet: "string"},
-					Kind: lang.AttributeCandidateKind,
+						NewText: "string",
+						Snippet: "string",
+					},
+					Kind: lang.StringCandidateKind,
 				},
 				{
-					Label:  "list()",
-					Detail: "list()",
-					TextEdit: lang.TextEdit{Range: hcl.Range{
-						Filename: "test.tf",
-						Start: hcl.Pos{
-							Line:   1,
-							Column: 8,
-							Byte:   7,
+					Label:  "list(…)",
+					Detail: "list",
+					TextEdit: lang.TextEdit{
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start: hcl.Pos{
+								Line:   1,
+								Column: 8,
+								Byte:   7,
+							},
+							End: hcl.Pos{
+								Line:   1,
+								Column: 8,
+								Byte:   7,
+							},
 						},
-						End: hcl.Pos{
-							Line:   1,
-							Column: 8,
-							Byte:   7,
-						},
-					}, NewText: "list()", Snippet: "list(${0})"},
-					Kind: lang.AttributeCandidateKind,
+						NewText: "list()",
+						Snippet: "list(${0})",
+					},
+					TriggerSuggest: true,
+					Kind:           lang.ListCandidateKind,
 				},
 				{
-					Label:  "set()",
-					Detail: "set()",
-					TextEdit: lang.TextEdit{Range: hcl.Range{
-						Filename: "test.tf",
-						Start: hcl.Pos{
-							Line:   1,
-							Column: 8,
-							Byte:   7,
+					Label:  "set(…)",
+					Detail: "set",
+					TextEdit: lang.TextEdit{
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start: hcl.Pos{
+								Line:   1,
+								Column: 8,
+								Byte:   7,
+							},
+							End: hcl.Pos{
+								Line:   1,
+								Column: 8,
+								Byte:   7,
+							},
 						},
-						End: hcl.Pos{
-							Line:   1,
-							Column: 8,
-							Byte:   7,
-						},
-					}, NewText: "set()", Snippet: "set(${0})"},
-					Kind: lang.AttributeCandidateKind,
+						NewText: "set()",
+						Snippet: "set(${0})",
+					},
+					TriggerSuggest: true,
+					Kind:           lang.SetCandidateKind,
 				},
 				{
-					Label:  "tuple()",
-					Detail: "tuple()",
-					TextEdit: lang.TextEdit{Range: hcl.Range{
-						Filename: "test.tf",
-						Start: hcl.Pos{
-							Line:   1,
-							Column: 8,
-							Byte:   7,
+					Label:  "tuple([…])",
+					Detail: "tuple",
+					TextEdit: lang.TextEdit{
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start: hcl.Pos{
+								Line:   1,
+								Column: 8,
+								Byte:   7,
+							},
+							End: hcl.Pos{
+								Line:   1,
+								Column: 8,
+								Byte:   7,
+							},
 						},
-						End: hcl.Pos{
-							Line:   1,
-							Column: 8,
-							Byte:   7,
-						},
-					}, NewText: "tuple()", Snippet: "tuple(${0})"},
-					Kind: lang.AttributeCandidateKind,
+						NewText: "tuple([])",
+						Snippet: "tuple([ ${0} ])",
+					},
+					TriggerSuggest: true,
+					Kind:           lang.TupleCandidateKind,
 				},
 				{
-					Label:  "map()",
-					Detail: "map()",
-					TextEdit: lang.TextEdit{Range: hcl.Range{
-						Filename: "test.tf",
-						Start: hcl.Pos{
-							Line:   1,
-							Column: 8,
-							Byte:   7,
+					Label:  "map(…)",
+					Detail: "map",
+					TextEdit: lang.TextEdit{
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start: hcl.Pos{
+								Line:   1,
+								Column: 8,
+								Byte:   7,
+							},
+							End: hcl.Pos{
+								Line:   1,
+								Column: 8,
+								Byte:   7,
+							},
 						},
-						End: hcl.Pos{
-							Line:   1,
-							Column: 8,
-							Byte:   7,
-						},
-					}, NewText: "map()", Snippet: "map(${0})"},
-					Kind: lang.AttributeCandidateKind,
+						NewText: "map()",
+						Snippet: "map(${0})",
+					},
+					TriggerSuggest: true,
+					Kind:           lang.MapCandidateKind,
 				},
 				{
-					Label:  "object({})",
-					Detail: "object({})",
-					TextEdit: lang.TextEdit{Range: hcl.Range{
-						Filename: "test.tf",
-						Start: hcl.Pos{
-							Line:   1,
-							Column: 8,
-							Byte:   7,
+					Label:  "object({…})",
+					Detail: "object",
+					TextEdit: lang.TextEdit{
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start: hcl.Pos{
+								Line:   1,
+								Column: 8,
+								Byte:   7,
+							},
+							End: hcl.Pos{
+								Line:   1,
+								Column: 8,
+								Byte:   7,
+							},
 						},
-						End: hcl.Pos{
-							Line:   1,
-							Column: 8,
-							Byte:   7,
-						},
-					}, NewText: "object({})", Snippet: "object({\n ${1:name} = ${2}\n})"},
-					Kind: lang.AttributeCandidateKind,
+						NewText: "object({\n\n})",
+						Snippet: "object({\n  ${1:name} = ${2}\n})",
+					},
+					Kind: lang.ObjectCandidateKind,
 				},
 			}),
 		},
@@ -1356,9 +1353,7 @@ func TestLegacyDecoder_CandidateAtPos_expressions(t *testing.T) {
 			"empty list",
 			map[string]*schema.AttributeSchema{
 				"attr": {
-					Expr: schema.ExprConstraints{
-						schema.ListExpr{},
-					},
+					Constraint: schema.List{},
 				},
 			},
 			`attr = 
@@ -1366,7 +1361,7 @@ func TestLegacyDecoder_CandidateAtPos_expressions(t *testing.T) {
 			hcl.Pos{Line: 1, Column: 8, Byte: 7},
 			lang.CompleteCandidates([]lang.Candidate{
 				{
-					Label:  "[  ]",
+					Label:  "[ ]",
 					Detail: "list",
 					TextEdit: lang.TextEdit{
 						Range: hcl.Range{
@@ -1375,7 +1370,7 @@ func TestLegacyDecoder_CandidateAtPos_expressions(t *testing.T) {
 							End:      hcl.Pos{Line: 1, Column: 8, Byte: 7},
 						},
 						NewText: "[ ]",
-						Snippet: "[ ${0} ]",
+						Snippet: "[ ${1} ]",
 					},
 					Kind: lang.ListCandidateKind,
 				},
@@ -1385,12 +1380,10 @@ func TestLegacyDecoder_CandidateAtPos_expressions(t *testing.T) {
 			"multiple traversal constraints in set",
 			map[string]*schema.AttributeSchema{
 				"attr": {
-					Expr: schema.ExprConstraints{
-						schema.SetExpr{
-							Elem: schema.ExprConstraints{
-								schema.TraversalExpr{OfScopeId: lang.ScopeId("one")},
-								schema.TraversalExpr{OfScopeId: lang.ScopeId("two")},
-							},
+					Constraint: schema.Set{
+						Elem: schema.OneOf{
+							schema.Reference{OfScopeId: lang.ScopeId("one")},
+							schema.Reference{OfScopeId: lang.ScopeId("two")},
 						},
 					},
 				},
@@ -1409,7 +1402,7 @@ func TestLegacyDecoder_CandidateAtPos_expressions(t *testing.T) {
 							End:      hcl.Pos{Line: 1, Column: 8, Byte: 7},
 						},
 						NewText: "[ ]",
-						Snippet: "[ ${0} ]",
+						Snippet: "[ ${1} ]",
 					},
 					Kind:           lang.SetCandidateKind,
 					TriggerSuggest: true,
@@ -1459,9 +1452,7 @@ func TestLegacyDecoder_CandidateAtPos_traversalExpressions(t *testing.T) {
 			&schema.BodySchema{
 				Attributes: map[string]*schema.AttributeSchema{
 					"attr": {
-						Expr: schema.ExprConstraints{
-							schema.TraversalExpr{OfType: cty.String},
-						},
+						Constraint: schema.Reference{OfType: cty.String},
 					},
 				},
 			},
@@ -1477,9 +1468,7 @@ func TestLegacyDecoder_CandidateAtPos_traversalExpressions(t *testing.T) {
 			&schema.BodySchema{
 				Attributes: map[string]*schema.AttributeSchema{
 					"attr": {
-						Expr: schema.ExprConstraints{
-							schema.TraversalExpr{OfType: cty.List(cty.String)},
-						},
+						Constraint: schema.Reference{OfType: cty.List(cty.String)},
 					},
 				},
 			},
@@ -1509,9 +1498,7 @@ func TestLegacyDecoder_CandidateAtPos_traversalExpressions(t *testing.T) {
 			&schema.BodySchema{
 				Attributes: map[string]*schema.AttributeSchema{
 					"attr": {
-						Expr: schema.ExprConstraints{
-							schema.TraversalExpr{OfType: cty.String},
-						},
+						Constraint: schema.Reference{OfType: cty.String},
 					},
 				},
 			},
@@ -1564,9 +1551,7 @@ func TestLegacyDecoder_CandidateAtPos_traversalExpressions(t *testing.T) {
 			&schema.BodySchema{
 				Attributes: map[string]*schema.AttributeSchema{
 					"attr": {
-						Expr: schema.ExprConstraints{
-							schema.TraversalExpr{OfType: cty.DynamicPseudoType},
-						},
+						Constraint: schema.Reference{OfType: cty.DynamicPseudoType},
 					},
 				},
 			},
@@ -1641,9 +1626,7 @@ func TestLegacyDecoder_CandidateAtPos_traversalExpressions(t *testing.T) {
 			&schema.BodySchema{
 				Attributes: map[string]*schema.AttributeSchema{
 					"attr": {
-						Expr: schema.ExprConstraints{
-							schema.TraversalExpr{OfType: cty.String},
-						},
+						Constraint: schema.Reference{OfType: cty.String},
 					},
 				},
 			},
@@ -1718,9 +1701,7 @@ func TestLegacyDecoder_CandidateAtPos_traversalExpressions(t *testing.T) {
 			&schema.BodySchema{
 				Attributes: map[string]*schema.AttributeSchema{
 					"attr": {
-						Expr: schema.ExprConstraints{
-							schema.TraversalExpr{OfScopeId: lang.ScopeId("test")},
-						},
+						Constraint: schema.Reference{OfScopeId: lang.ScopeId("test")},
 					},
 				},
 			},
@@ -1773,13 +1754,11 @@ func TestLegacyDecoder_CandidateAtPos_traversalExpressions(t *testing.T) {
 			&schema.BodySchema{
 				Attributes: map[string]*schema.AttributeSchema{
 					"attr": {
-						Expr: schema.ExprConstraints{
-							schema.TraversalExpr{
-								Address: &schema.TraversalAddrSchema{
-									ScopeId: lang.ScopeId("blah"),
-								},
-								Name: "test",
+						Constraint: schema.Reference{
+							Address: &schema.ReferenceAddrSchema{
+								ScopeId: lang.ScopeId("blah"),
 							},
+							Name: "test",
 						},
 					},
 				},
@@ -1817,16 +1796,12 @@ func TestLegacyDecoder_CandidateAtPos_traversalExpressions(t *testing.T) {
 			&schema.BodySchema{
 				Attributes: map[string]*schema.AttributeSchema{
 					"attr": {
-						Expr: schema.ExprConstraints{
-							schema.SetExpr{
-								Elem: schema.ExprConstraints{
-									schema.TraversalExpr{
-										Address: &schema.TraversalAddrSchema{
-											ScopeId: lang.ScopeId("blah"),
-										},
-										Name: "test",
-									},
+						Constraint: schema.Set{
+							Elem: schema.Reference{
+								Address: &schema.ReferenceAddrSchema{
+									ScopeId: lang.ScopeId("blah"),
 								},
+								Name: "test",
 							},
 						},
 					},
@@ -1871,11 +1846,11 @@ func TestLegacyDecoder_CandidateAtPos_traversalExpressions(t *testing.T) {
 						Body: &schema.BodySchema{
 							Attributes: map[string]*schema.AttributeSchema{
 								"greeting": {
-									Expr:       schema.LiteralTypeOnly(cty.String),
+									Constraint: schema.LiteralType{Type: cty.String},
 									IsOptional: true,
 								},
 								"blah": {
-									Expr:       schema.LiteralTypeOnly(cty.Bool),
+									Constraint: schema.LiteralType{Type: cty.Bool},
 									IsComputed: true,
 								},
 							},
@@ -1897,9 +1872,7 @@ func TestLegacyDecoder_CandidateAtPos_traversalExpressions(t *testing.T) {
 						Body: &schema.BodySchema{
 							Attributes: map[string]*schema.AttributeSchema{
 								"one": {
-									Expr: schema.ExprConstraints{
-										schema.TraversalExpr{OfType: cty.String},
-									},
+									Constraint: schema.Reference{OfType: cty.String},
 									IsOptional: true,
 								},
 							},
@@ -1947,9 +1920,7 @@ another_block "meh" {
 			&schema.BodySchema{
 				Attributes: map[string]*schema.AttributeSchema{
 					"attr": {
-						Expr: schema.ExprConstraints{
-							schema.TraversalExpr{OfType: cty.String},
-						},
+						Constraint: schema.Reference{OfType: cty.String},
 					},
 				},
 			},
@@ -2024,9 +1995,7 @@ another_block "meh" {
 			&schema.BodySchema{
 				Attributes: map[string]*schema.AttributeSchema{
 					"attr": {
-						Expr: schema.ExprConstraints{
-							schema.TraversalExpr{OfType: cty.String},
-						},
+						Constraint: schema.Reference{OfType: cty.String},
 					},
 				},
 			},
@@ -2101,9 +2070,7 @@ another_block "meh" {
 			&schema.BodySchema{
 				Attributes: map[string]*schema.AttributeSchema{
 					"attr": {
-						Expr: schema.ExprConstraints{
-							schema.TraversalExpr{OfType: cty.String},
-						},
+						Constraint: schema.Reference{OfType: cty.String},
 					},
 				},
 			},
@@ -2190,9 +2157,7 @@ another_block "meh" {
 			&schema.BodySchema{
 				Attributes: map[string]*schema.AttributeSchema{
 					"attr": {
-						Expr: schema.ExprConstraints{
-							schema.TraversalExpr{OfType: cty.String},
-						},
+						Constraint: schema.Reference{OfType: cty.String},
 					},
 				},
 			},
@@ -2257,9 +2222,7 @@ another_block "meh" {
 			&schema.BodySchema{
 				Attributes: map[string]*schema.AttributeSchema{
 					"attr": {
-						Expr: schema.ExprConstraints{
-							schema.TraversalExpr{OfType: cty.String},
-						},
+						Constraint: schema.Reference{OfType: cty.String},
 					},
 				},
 			},
@@ -2359,9 +2322,7 @@ another_block "meh" {
 			&schema.BodySchema{
 				Attributes: map[string]*schema.AttributeSchema{
 					"attr": {
-						Expr: schema.ExprConstraints{
-							schema.TraversalExpr{OfType: cty.String},
-						},
+						Constraint: schema.Reference{OfType: cty.String},
 					},
 				},
 			},
@@ -2496,11 +2457,9 @@ variable "ccc" {}
 		Attributes: map[string]*schema.AttributeSchema{
 			"value": {
 				IsOptional: true,
-				Expr: schema.ExprConstraints{
-					schema.TraversalExpr{
-						OfScopeId: lang.ScopeId("variable"),
-						OfType:    cty.DynamicPseudoType,
-					},
+				Constraint: schema.Reference{
+					OfScopeId: lang.ScopeId("variable"),
+					OfType:    cty.DynamicPseudoType,
 				},
 			},
 		},
@@ -2676,7 +2635,7 @@ func TestLegacyDecoder_CandidateAtPos_expressions_Hooks(t *testing.T) {
 			"simple hook",
 			map[string]*schema.AttributeSchema{
 				"attr": {
-					Expr: schema.LiteralTypeOnly(cty.String),
+					Constraint: schema.LiteralType{Type: cty.String},
 					CompletionHooks: lang.CompletionHooks{
 						{
 							Name: "TestCompletionHook",
@@ -2723,7 +2682,7 @@ func TestLegacyDecoder_CandidateAtPos_expressions_Hooks(t *testing.T) {
 			"hook with prefix",
 			map[string]*schema.AttributeSchema{
 				"attr": {
-					Expr: schema.LiteralTypeOnly(cty.String),
+					Constraint: schema.LiteralType{Type: cty.String},
 					CompletionHooks: lang.CompletionHooks{
 						{
 							Name: "TestCompletionHook",
@@ -2766,7 +2725,7 @@ func TestLegacyDecoder_CandidateAtPos_expressions_Hooks(t *testing.T) {
 			"incomplete attr value",
 			map[string]*schema.AttributeSchema{
 				"attr": {
-					Expr: schema.LiteralTypeOnly(cty.String),
+					Constraint: schema.LiteralType{Type: cty.String},
 					CompletionHooks: lang.CompletionHooks{
 						{
 							Name: "TestCompletionHook",
@@ -2843,7 +2802,7 @@ func TestLegacyDecoder_CandidateAtPos_maxCandidates(t *testing.T) {
 	bodySchema := &schema.BodySchema{
 		Attributes: map[string]*schema.AttributeSchema{
 			"attr": {
-				Expr: schema.LiteralTypeOnly(cty.String),
+				Constraint: schema.LiteralType{Type: cty.String},
 				CompletionHooks: lang.CompletionHooks{
 					{
 						Name: "TestCompletionHook50",

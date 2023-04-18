@@ -84,5 +84,8 @@ func (ref Reference) Validate() error {
 	if ref.Address != nil && ref.Address.ScopeId == "" {
 		return errors.New("Address requires non-empty ScopeId")
 	}
+	if ref.OfType == cty.NilType && ref.OfScopeId == "" && ref.Address == nil {
+		return errors.New("one of OfType, OfScopeId and Address is required")
+	}
 	return nil
 }

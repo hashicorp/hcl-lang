@@ -29,7 +29,7 @@ func TestCollectReferenceOrigins_json(t *testing.T) {
 			&schema.BodySchema{
 				Attributes: map[string]*schema.AttributeSchema{
 					"attribute": {
-						Expr: schema.LiteralTypeOnly(cty.String),
+						Constraint: schema.LiteralType{Type: cty.String},
 					},
 				},
 			},
@@ -41,9 +41,7 @@ func TestCollectReferenceOrigins_json(t *testing.T) {
 			&schema.BodySchema{
 				Attributes: map[string]*schema.AttributeSchema{
 					"attr": {
-						Expr: schema.ExprConstraints{
-							schema.TraversalExpr{},
-						},
+						Constraint: schema.Reference{},
 					},
 				},
 			},
@@ -66,6 +64,7 @@ func TestCollectReferenceOrigins_json(t *testing.T) {
 							Byte:   19,
 						},
 					},
+					Constraints: reference.OriginConstraints{},
 				},
 			},
 		},
@@ -74,19 +73,13 @@ func TestCollectReferenceOrigins_json(t *testing.T) {
 			&schema.BodySchema{
 				Attributes: map[string]*schema.AttributeSchema{
 					"attr1": {
-						Expr: schema.ExprConstraints{
-							schema.TraversalExpr{},
-						},
+						Constraint: schema.Reference{},
 					},
 					"attr2": {
-						Expr: schema.ExprConstraints{
-							schema.TraversalExpr{},
-						},
+						Constraint: schema.Reference{},
 					},
 					"attr3": {
-						Expr: schema.ExprConstraints{
-							schema.TraversalExpr{},
-						},
+						Constraint: schema.Reference{},
 					},
 				},
 			},
@@ -113,6 +106,7 @@ func TestCollectReferenceOrigins_json(t *testing.T) {
 							Byte:   23,
 						},
 					},
+					Constraints: reference.OriginConstraints{},
 				},
 				reference.LocalOrigin{
 					Addr: lang.Address{
@@ -131,6 +125,7 @@ func TestCollectReferenceOrigins_json(t *testing.T) {
 							Byte:   52,
 						},
 					},
+					Constraints: reference.OriginConstraints{},
 				},
 				reference.LocalOrigin{
 					Addr: lang.Address{
@@ -149,6 +144,7 @@ func TestCollectReferenceOrigins_json(t *testing.T) {
 							Byte:   77,
 						},
 					},
+					Constraints: reference.OriginConstraints{},
 				},
 			},
 		},
@@ -157,8 +153,8 @@ func TestCollectReferenceOrigins_json(t *testing.T) {
 			&schema.BodySchema{
 				Attributes: map[string]*schema.AttributeSchema{
 					"attr1": {
-						Expr: schema.ExprConstraints{
-							schema.TraversalExpr{},
+						Constraint: schema.AnyExpression{
+							OfType: cty.DynamicPseudoType,
 						},
 					},
 				},
@@ -182,6 +178,9 @@ func TestCollectReferenceOrigins_json(t *testing.T) {
 							Byte:   20,
 						},
 					},
+					Constraints: reference.OriginConstraints{
+						{OfType: cty.DynamicPseudoType},
+					},
 				},
 				reference.LocalOrigin{
 					Addr: lang.Address{
@@ -199,6 +198,9 @@ func TestCollectReferenceOrigins_json(t *testing.T) {
 							Column: 32,
 							Byte:   31,
 						},
+					},
+					Constraints: reference.OriginConstraints{
+						{OfType: cty.DynamicPseudoType},
 					},
 				},
 				reference.LocalOrigin{
@@ -220,6 +222,9 @@ func TestCollectReferenceOrigins_json(t *testing.T) {
 							Byte:   50,
 						},
 					},
+					Constraints: reference.OriginConstraints{
+						{OfType: cty.DynamicPseudoType},
+					},
 				},
 			},
 		},
@@ -228,13 +233,13 @@ func TestCollectReferenceOrigins_json(t *testing.T) {
 			&schema.BodySchema{
 				Attributes: map[string]*schema.AttributeSchema{
 					"attr": {
-						Expr: schema.ExprConstraints{
-							schema.TraversalExpr{},
+						Constraint: schema.Reference{
+							OfType: cty.Number,
 						},
 					},
 				},
 			},
-			`{"attr": "${one.two[\"key\"].attr[0]}"}`,
+			`{"attr": "one.two[\"key\"].attr[0]"}`,
 			reference.Origins{
 				reference.LocalOrigin{
 					Addr: lang.Address{
@@ -248,14 +253,17 @@ func TestCollectReferenceOrigins_json(t *testing.T) {
 						Filename: "test.tf.json",
 						Start: hcl.Pos{
 							Line:   1,
-							Column: 13,
-							Byte:   12,
+							Column: 11,
+							Byte:   10,
 						},
 						End: hcl.Pos{
 							Line:   1,
-							Column: 35,
-							Byte:   34,
+							Column: 33,
+							Byte:   32,
 						},
+					},
+					Constraints: reference.OriginConstraints{
+						{OfType: cty.Number},
 					},
 				},
 			},
@@ -268,9 +276,7 @@ func TestCollectReferenceOrigins_json(t *testing.T) {
 						Body: &schema.BodySchema{
 							Attributes: map[string]*schema.AttributeSchema{
 								"attr": {
-									Expr: schema.ExprConstraints{
-										schema.TraversalExpr{},
-									},
+									Constraint: schema.Reference{},
 								},
 							},
 						},
@@ -301,6 +307,7 @@ func TestCollectReferenceOrigins_json(t *testing.T) {
 							Byte:   39,
 						},
 					},
+					Constraints: reference.OriginConstraints{},
 				},
 			},
 		},
@@ -311,9 +318,7 @@ func TestCollectReferenceOrigins_json(t *testing.T) {
 					"myblock": {
 						Body: &schema.BodySchema{
 							AnyAttribute: &schema.AttributeSchema{
-								Expr: schema.ExprConstraints{
-									schema.TraversalExpr{},
-								},
+								Constraint: schema.Reference{},
 							},
 						},
 					},
@@ -343,6 +348,7 @@ func TestCollectReferenceOrigins_json(t *testing.T) {
 							Byte:   39,
 						},
 					},
+					Constraints: reference.OriginConstraints{},
 				},
 			},
 		},
@@ -357,9 +363,7 @@ func TestCollectReferenceOrigins_json(t *testing.T) {
 						Body: &schema.BodySchema{
 							Attributes: map[string]*schema.AttributeSchema{
 								"static": {
-									Expr: schema.ExprConstraints{
-										schema.TraversalExpr{},
-									},
+									Constraint: schema.Reference{},
 								},
 							},
 						},
@@ -371,9 +375,7 @@ func TestCollectReferenceOrigins_json(t *testing.T) {
 							}): {
 								Attributes: map[string]*schema.AttributeSchema{
 									"dep_attr": {
-										Expr: schema.ExprConstraints{
-											schema.TraversalExpr{},
-										},
+										Constraint: schema.Reference{},
 									},
 								},
 							},
@@ -409,6 +411,7 @@ func TestCollectReferenceOrigins_json(t *testing.T) {
 							Byte:   61,
 						},
 					},
+					Constraints: reference.OriginConstraints{},
 				},
 				reference.LocalOrigin{
 					Addr: lang.Address{
@@ -428,6 +431,7 @@ func TestCollectReferenceOrigins_json(t *testing.T) {
 							Byte:   96,
 						},
 					},
+					Constraints: reference.OriginConstraints{},
 				},
 			},
 		},
@@ -442,9 +446,7 @@ func TestCollectReferenceOrigins_json(t *testing.T) {
 						Body: &schema.BodySchema{
 							Attributes: map[string]*schema.AttributeSchema{
 								"static": {
-									Expr: schema.ExprConstraints{
-										schema.TraversalExpr{},
-									},
+									Constraint: schema.Reference{},
 								},
 							},
 						},
@@ -456,9 +458,7 @@ func TestCollectReferenceOrigins_json(t *testing.T) {
 							}): {
 								Attributes: map[string]*schema.AttributeSchema{
 									"dep_attr": {
-										Expr: schema.ExprConstraints{
-											schema.TraversalExpr{},
-										},
+										Constraint: schema.Reference{},
 									},
 								},
 							},
@@ -494,6 +494,7 @@ func TestCollectReferenceOrigins_json(t *testing.T) {
 							Byte:   63,
 						},
 					},
+					Constraints: reference.OriginConstraints{},
 				},
 			},
 		},
@@ -502,36 +503,24 @@ func TestCollectReferenceOrigins_json(t *testing.T) {
 			&schema.BodySchema{
 				Attributes: map[string]*schema.AttributeSchema{
 					"list": {
-						Expr: schema.ExprConstraints{
-							schema.ListExpr{
-								Elem: schema.ExprConstraints{
-									schema.TraversalExpr{
-										OfScopeId: lang.ScopeId("test"),
-									},
-								},
+						Constraint: schema.List{
+							Elem: schema.Reference{
+								OfScopeId: lang.ScopeId("test"),
 							},
 						},
 					},
 					"set": {
-						Expr: schema.ExprConstraints{
-							schema.SetExpr{
-								Elem: schema.ExprConstraints{
-									schema.TraversalExpr{
-										OfScopeId: lang.ScopeId("test"),
-									},
-								},
+						Constraint: schema.Set{
+							Elem: schema.Reference{
+								OfScopeId: lang.ScopeId("test"),
 							},
 						},
 					},
 					"tuple": {
-						Expr: schema.ExprConstraints{
-							schema.TupleExpr{
-								Elems: []schema.ExprConstraints{
-									{
-										schema.TraversalExpr{
-											OfScopeId: lang.ScopeId("test"),
-										},
-									},
+						Constraint: schema.Tuple{
+							Elems: []schema.Constraint{
+								schema.Reference{
+									OfScopeId: lang.ScopeId("test"),
 								},
 							},
 						},
@@ -562,6 +551,9 @@ func TestCollectReferenceOrigins_json(t *testing.T) {
 							Byte:   26,
 						},
 					},
+					Constraints: reference.OriginConstraints{
+						{OfScopeId: lang.ScopeId("test")},
+					},
 				},
 				reference.LocalOrigin{
 					Addr: lang.Address{
@@ -580,6 +572,9 @@ func TestCollectReferenceOrigins_json(t *testing.T) {
 							Column: 25,
 							Byte:   56,
 						},
+					},
+					Constraints: reference.OriginConstraints{
+						{OfScopeId: lang.ScopeId("test")},
 					},
 				},
 				reference.LocalOrigin{
@@ -600,6 +595,9 @@ func TestCollectReferenceOrigins_json(t *testing.T) {
 							Byte:   87,
 						},
 					},
+					Constraints: reference.OriginConstraints{
+						{OfScopeId: lang.ScopeId("test")},
+					},
 				},
 			},
 		},
@@ -608,15 +606,11 @@ func TestCollectReferenceOrigins_json(t *testing.T) {
 			&schema.BodySchema{
 				Attributes: map[string]*schema.AttributeSchema{
 					"obj": {
-						Expr: schema.ExprConstraints{
-							schema.ObjectExpr{
-								Attributes: schema.ObjectExprAttributes{
-									"attr": &schema.AttributeSchema{
-										Expr: schema.ExprConstraints{
-											schema.TraversalExpr{
-												OfScopeId: lang.ScopeId("test"),
-											},
-										},
+						Constraint: schema.Object{
+							Attributes: schema.ObjectAttributes{
+								"attr": &schema.AttributeSchema{
+									Constraint: schema.Reference{
+										OfScopeId: lang.ScopeId("test"),
 									},
 								},
 							},
@@ -648,6 +642,9 @@ func TestCollectReferenceOrigins_json(t *testing.T) {
 							Byte:   37,
 						},
 					},
+					Constraints: reference.OriginConstraints{
+						{OfScopeId: lang.ScopeId("test")},
+					},
 				},
 			},
 		},
@@ -656,13 +653,9 @@ func TestCollectReferenceOrigins_json(t *testing.T) {
 			&schema.BodySchema{
 				Attributes: map[string]*schema.AttributeSchema{
 					"map": {
-						Expr: schema.ExprConstraints{
-							schema.MapExpr{
-								Elem: schema.ExprConstraints{
-									schema.TraversalExpr{
-										OfScopeId: lang.ScopeId("test"),
-									},
-								},
+						Constraint: schema.Map{
+							Elem: schema.Reference{
+								OfScopeId: lang.ScopeId("test"),
 							},
 						},
 					},
@@ -692,6 +685,9 @@ func TestCollectReferenceOrigins_json(t *testing.T) {
 							Byte:   36,
 						},
 					},
+					Constraints: reference.OriginConstraints{
+						{OfScopeId: lang.ScopeId("test")},
+					},
 				},
 			},
 		},
@@ -700,26 +696,22 @@ func TestCollectReferenceOrigins_json(t *testing.T) {
 			&schema.BodySchema{
 				Attributes: map[string]*schema.AttributeSchema{
 					"map": {
-						Expr: schema.ExprConstraints{
-							schema.TraversalExpr{OfType: cty.Map(cty.String)},
-							schema.MapExpr{
-								Elem: schema.ExprConstraints{
-									schema.TraversalExpr{OfType: cty.String},
-								},
+						Constraint: schema.OneOf{
+							schema.Reference{OfType: cty.Map(cty.String)},
+							schema.Map{
+								Elem: schema.Reference{OfType: cty.String},
 							},
 						},
 					},
 					"obj": {
-						Expr: schema.ExprConstraints{
-							schema.TraversalExpr{OfType: cty.Object(map[string]cty.Type{
+						Constraint: schema.OneOf{
+							schema.Reference{OfType: cty.Object(map[string]cty.Type{
 								"foo": cty.String,
 							})},
-							schema.ObjectExpr{
-								Attributes: schema.ObjectExprAttributes{
+							schema.Object{
+								Attributes: schema.ObjectAttributes{
 									"foo": &schema.AttributeSchema{
-										Expr: schema.ExprConstraints{
-											schema.TraversalExpr{OfType: cty.String},
-										},
+										Constraint: schema.Reference{OfType: cty.String},
 									},
 								},
 							},
@@ -755,6 +747,9 @@ func TestCollectReferenceOrigins_json(t *testing.T) {
 							Byte:   34,
 						},
 					},
+					Constraints: reference.OriginConstraints{
+						{OfType: cty.String},
+					},
 				},
 				reference.LocalOrigin{
 					Addr: lang.Address{
@@ -774,6 +769,9 @@ func TestCollectReferenceOrigins_json(t *testing.T) {
 							Byte:   74,
 						},
 					},
+					Constraints: reference.OriginConstraints{
+						{OfType: cty.String},
+					},
 				},
 			},
 		},
@@ -782,33 +780,27 @@ func TestCollectReferenceOrigins_json(t *testing.T) {
 			&schema.BodySchema{
 				Attributes: map[string]*schema.AttributeSchema{
 					"list": {
-						Expr: schema.ExprConstraints{
-							schema.TraversalExpr{OfType: cty.List(cty.String)},
-							schema.ListExpr{
-								Elem: schema.ExprConstraints{
-									schema.TraversalExpr{OfType: cty.String},
-								},
+						Constraint: schema.OneOf{
+							schema.Reference{OfType: cty.List(cty.String)},
+							schema.List{
+								Elem: schema.Reference{OfType: cty.String},
 							},
 						},
 					},
 					"set": {
-						Expr: schema.ExprConstraints{
-							schema.TraversalExpr{OfType: cty.Set(cty.String)},
-							schema.SetExpr{
-								Elem: schema.ExprConstraints{
-									schema.TraversalExpr{OfType: cty.String},
-								},
+						Constraint: schema.OneOf{
+							schema.Reference{OfType: cty.Set(cty.String)},
+							schema.Set{
+								Elem: schema.Reference{OfType: cty.String},
 							},
 						},
 					},
 					"tup": {
-						Expr: schema.ExprConstraints{
-							schema.TraversalExpr{OfType: cty.Tuple([]cty.Type{cty.String})},
-							schema.TupleExpr{
-								Elems: []schema.ExprConstraints{
-									{
-										schema.TraversalExpr{OfType: cty.String},
-									},
+						Constraint: schema.OneOf{
+							schema.Reference{OfType: cty.Tuple([]cty.Type{cty.String})},
+							schema.Tuple{
+								Elems: []schema.Constraint{
+									schema.Reference{OfType: cty.String},
 								},
 							},
 						},
@@ -839,6 +831,9 @@ func TestCollectReferenceOrigins_json(t *testing.T) {
 							Byte:   24,
 						},
 					},
+					Constraints: reference.OriginConstraints{
+						{OfType: cty.String},
+					},
 				},
 				reference.LocalOrigin{
 					Addr: lang.Address{
@@ -857,6 +852,9 @@ func TestCollectReferenceOrigins_json(t *testing.T) {
 							Column: 22,
 							Byte:   51,
 						},
+					},
+					Constraints: reference.OriginConstraints{
+						{OfType: cty.String},
 					},
 				},
 				reference.LocalOrigin{
@@ -877,12 +875,15 @@ func TestCollectReferenceOrigins_json(t *testing.T) {
 							Byte:   80,
 						},
 					},
+					Constraints: reference.OriginConstraints{
+						{OfType: cty.String},
+					},
 				},
 			},
 		},
 	}
 	for i, tc := range testCases {
-		t.Run(fmt.Sprintf("%d/%s", i, tc.name), func(t *testing.T) {
+		t.Run(fmt.Sprintf("%2d-%s", i, tc.name), func(t *testing.T) {
 			f, diags := json.Parse([]byte(tc.cfg), "test.tf.json")
 			if len(diags) > 0 {
 				t.Fatal(diags)

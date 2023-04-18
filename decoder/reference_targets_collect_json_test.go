@@ -38,7 +38,7 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 							ScopeId:     lang.ScopeId("specialthing"),
 						},
 						IsOptional: true,
-						Expr:       schema.LiteralTypeOnly(cty.String),
+						Constraint: schema.AnyExpression{OfType: cty.String},
 					},
 				},
 			},
@@ -92,7 +92,7 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 							AsExprType: true,
 						},
 						IsOptional: true,
-						Expr:       schema.LiteralTypeOnly(cty.String),
+						Constraint: schema.LiteralType{Type: cty.String},
 					},
 				},
 			},
@@ -146,7 +146,7 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 							AsExprType: true,
 						},
 						IsOptional: true,
-						Expr:       schema.LiteralTypeOnly(cty.DynamicPseudoType),
+						Constraint: schema.LiteralType{Type: cty.DynamicPseudoType},
 					},
 				},
 			},
@@ -200,9 +200,11 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 							AsExprType: true,
 						},
 						IsOptional: true,
-						Expr: schema.LiteralTypeOnly(cty.Object(map[string]cty.Type{
-							"nestedattr": cty.String,
-						})),
+						Constraint: schema.LiteralType{
+							Type: cty.Object(map[string]cty.Type{
+								"nestedattr": cty.String,
+							}),
+						},
 					},
 				},
 			},
@@ -248,7 +250,24 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 						},
 					},
 					NestedTargets: reference.Targets{
-						// TODO: See https: //github.com/hashicorp/terraform-ls/issues/675
+						{
+							Addr: lang.Address{
+								lang.RootStep{Name: "special"},
+								lang.AttrStep{Name: "testattr"},
+								lang.AttrStep{Name: "nestedattr"},
+							},
+							RangePtr: &hcl.Range{
+								Filename: "test.tf.json",
+								Start:    hcl.Pos{Line: 3, Column: 5, Byte: 22},
+								End:      hcl.Pos{Line: 3, Column: 25, Byte: 42},
+							},
+							DefRangePtr: &hcl.Range{
+								Filename: "test.tf.json",
+								Start:    hcl.Pos{Line: 3, Column: 5, Byte: 22},
+								End:      hcl.Pos{Line: 3, Column: 17, Byte: 34},
+							},
+							Type: cty.String,
+						},
 					},
 				},
 			},
@@ -266,7 +285,7 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 							AsExprType: true,
 						},
 						IsOptional: true,
-						Expr:       schema.LiteralTypeOnly(cty.Map(cty.String)),
+						Constraint: schema.LiteralType{Type: cty.Map(cty.String)},
 					},
 				},
 			},
@@ -310,7 +329,24 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 						},
 					},
 					NestedTargets: reference.Targets{
-						// TODO: See https: //github.com/hashicorp/terraform-ls/issues/675
+						{
+							Addr: lang.Address{
+								lang.RootStep{Name: "special"},
+								lang.AttrStep{Name: "testattr"},
+								lang.IndexStep{Key: cty.StringVal("nestedattr")},
+							},
+							RangePtr: &hcl.Range{
+								Filename: "test.tf.json",
+								Start:    hcl.Pos{Line: 3, Column: 5, Byte: 22},
+								End:      hcl.Pos{Line: 3, Column: 25, Byte: 42},
+							},
+							DefRangePtr: &hcl.Range{
+								Filename: "test.tf.json",
+								Start:    hcl.Pos{Line: 3, Column: 5, Byte: 22},
+								End:      hcl.Pos{Line: 3, Column: 17, Byte: 34},
+							},
+							Type: cty.String,
+						},
 					},
 				},
 			},
@@ -327,7 +363,7 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 							},
 							AsExprType: true,
 						},
-						Expr:       schema.LiteralTypeOnly(cty.List(cty.String)),
+						Constraint: schema.LiteralType{Type: cty.List(cty.String)},
 						IsOptional: true,
 					},
 				},
@@ -369,7 +405,19 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 						},
 					},
 					NestedTargets: reference.Targets{
-						// TODO: See https: //github.com/hashicorp/terraform-ls/issues/675
+						{
+							Addr: lang.Address{
+								lang.RootStep{Name: "special"},
+								lang.AttrStep{Name: "testattr"},
+								lang.IndexStep{Key: cty.NumberIntVal(0)},
+							},
+							RangePtr: &hcl.Range{
+								Filename: "test.tf.json",
+								Start:    hcl.Pos{Line: 2, Column: 17, Byte: 18},
+								End:      hcl.Pos{Line: 2, Column: 26, Byte: 27},
+							},
+							Type: cty.String,
+						},
 					},
 				},
 			},
@@ -386,10 +434,8 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 							},
 							AsExprType: true,
 						},
-						Expr: schema.ExprConstraints{
-							schema.ListExpr{
-								Elem: schema.LiteralTypeOnly(cty.String),
-							},
+						Constraint: schema.List{
+							Elem: schema.LiteralType{Type: cty.String},
 						},
 						IsOptional: true,
 					},
@@ -432,7 +478,19 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 						},
 					},
 					NestedTargets: reference.Targets{
-						// TODO: See https: //github.com/hashicorp/terraform-ls/issues/675
+						{
+							Addr: lang.Address{
+								lang.RootStep{Name: "special"},
+								lang.AttrStep{Name: "testattr"},
+								lang.IndexStep{Key: cty.NumberIntVal(0)},
+							},
+							RangePtr: &hcl.Range{
+								Filename: "test.tf.json",
+								Start:    hcl.Pos{Line: 2, Column: 17, Byte: 18},
+								End:      hcl.Pos{Line: 2, Column: 26, Byte: 27},
+							},
+							Type: cty.String,
+						},
 					},
 				},
 			},
@@ -475,7 +533,7 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 						Body: &schema.BodySchema{
 							Attributes: map[string]*schema.AttributeSchema{
 								"attr": {
-									Expr:       schema.LiteralTypeOnly(cty.Number),
+									Constraint: schema.LiteralType{Type: cty.Number},
 									IsOptional: true,
 								},
 							},
@@ -512,11 +570,11 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 						Body: &schema.BodySchema{
 							Attributes: map[string]*schema.AttributeSchema{
 								"attr": {
-									Expr:       schema.LiteralTypeOnly(cty.Number),
+									Constraint: schema.LiteralType{Type: cty.Number},
 									IsOptional: true,
 								},
 								"name": {
-									Expr:       schema.LiteralTypeOnly(cty.String),
+									Constraint: schema.LiteralType{Type: cty.String},
 									IsOptional: true,
 								},
 							},
@@ -590,47 +648,39 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 						Body: &schema.BodySchema{
 							Attributes: map[string]*schema.AttributeSchema{
 								"attr": {
-									Expr:       schema.LiteralTypeOnly(cty.Number),
+									Constraint: schema.LiteralType{Type: cty.Number},
 									IsOptional: true,
 								},
 								"name": {
-									Expr:       schema.LiteralTypeOnly(cty.String),
+									Constraint: schema.LiteralType{Type: cty.String},
 									IsOptional: true,
 								},
 								"map_attr": {
-									Expr: schema.ExprConstraints{
-										schema.MapExpr{Elem: schema.LiteralTypeOnly(cty.String)},
-									},
+									Constraint: schema.Map{Elem: schema.LiteralType{Type: cty.String}},
 									IsOptional: true,
 								},
 								"list_attr": {
-									Expr: schema.ExprConstraints{
-										schema.ListExpr{Elem: schema.LiteralTypeOnly(cty.String)},
-									},
+									Constraint: schema.List{Elem: schema.LiteralType{Type: cty.String}},
 									IsOptional: true,
 								},
 								"set_attr": {
-									Expr: schema.ExprConstraints{
-										schema.SetExpr{Elem: schema.LiteralTypeOnly(cty.String)},
-									},
+									Constraint: schema.Set{Elem: schema.LiteralType{Type: cty.String}},
 									IsOptional: true,
 								},
 								"tuple_attr": {
-									Expr: schema.ExprConstraints{
-										schema.TupleExpr{Elems: []schema.ExprConstraints{
-											schema.LiteralTypeOnly(cty.String),
-											schema.LiteralTypeOnly(cty.Number),
-										}},
+									Constraint: schema.Tuple{
+										Elems: []schema.Constraint{
+											schema.LiteralType{Type: cty.String},
+											schema.LiteralType{Type: cty.Number},
+										},
 									},
 									IsOptional: true,
 								},
 								"obj_attr": {
-									Expr: schema.ExprConstraints{
-										schema.ObjectExpr{
-											Attributes: schema.ObjectExprAttributes{
-												"example": &schema.AttributeSchema{
-													Expr: schema.LiteralTypeOnly(cty.String),
-												},
+									Constraint: schema.Object{
+										Attributes: schema.ObjectAttributes{
+											"example": &schema.AttributeSchema{
+												Constraint: schema.LiteralType{Type: cty.String},
 											},
 										},
 									},
@@ -728,11 +778,11 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 						Body: &schema.BodySchema{
 							Attributes: map[string]*schema.AttributeSchema{
 								"attr": {
-									Expr:       schema.LiteralTypeOnly(cty.Number),
+									Constraint: schema.LiteralType{Type: cty.Number},
 									IsOptional: true,
 								},
 								"name": {
-									Expr:       schema.LiteralTypeOnly(cty.String),
+									Constraint: schema.LiteralType{Type: cty.String},
 									IsOptional: true,
 								},
 							},
@@ -809,11 +859,11 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 						Body: &schema.BodySchema{
 							Attributes: map[string]*schema.AttributeSchema{
 								"attr": {
-									Expr:       schema.LiteralTypeOnly(cty.Number),
+									Constraint: schema.LiteralType{Type: cty.Number},
 									IsOptional: true,
 								},
 								"name": {
-									Expr:       schema.LiteralTypeOnly(cty.String),
+									Constraint: schema.LiteralType{Type: cty.String},
 									IsOptional: true,
 								},
 							},
@@ -889,11 +939,11 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 						Body: &schema.BodySchema{
 							Attributes: map[string]*schema.AttributeSchema{
 								"source_port": {
-									Expr:       schema.LiteralTypeOnly(cty.Number),
+									Constraint: schema.LiteralType{Type: cty.Number},
 									IsOptional: true,
 								},
 								"protocol": {
-									Expr:       schema.LiteralTypeOnly(cty.String),
+									Constraint: schema.LiteralType{Type: cty.String},
 									IsOptional: true,
 								},
 							},
@@ -1005,29 +1055,31 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 						Body: &schema.BodySchema{
 							Attributes: map[string]*schema.AttributeSchema{
 								"attr": {
-									Expr:       schema.LiteralTypeOnly(cty.Number),
+									Constraint: schema.LiteralType{Type: cty.Number},
 									IsOptional: true,
 								},
 								"name": {
-									Expr:       schema.LiteralTypeOnly(cty.String),
+									Constraint: schema.LiteralType{Type: cty.String},
 									IsOptional: true,
 								},
 								"map_attr": {
-									Expr: schema.ExprConstraints{
-										schema.MapExpr{Elem: schema.LiteralTypeOnly(cty.String)},
+									Constraint: schema.Map{
+										Elem: schema.LiteralType{Type: cty.String},
 									},
 									IsOptional: true,
 								},
 								"list_attr": {
-									Expr: schema.ExprConstraints{
-										schema.ListExpr{Elem: schema.LiteralTypeOnly(cty.String)},
+									Constraint: schema.List{
+										Elem: schema.LiteralType{Type: cty.String},
 									},
 									IsOptional: true,
 								},
 								"obj_attr": {
-									Expr: schema.LiteralTypeOnly(cty.Object(map[string]cty.Type{
-										"nestedattr": cty.String,
-									})),
+									Constraint: schema.LiteralType{
+										Type: cty.Object(map[string]cty.Type{
+											"nestedattr": cty.String,
+										}),
+									},
 									IsOptional: true,
 								},
 							},
@@ -1159,7 +1211,32 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 								},
 							},
 							NestedTargets: reference.Targets{
-								// TODO: See https: //github.com/hashicorp/terraform-ls/issues/675
+								{
+									Addr: lang.Address{
+										lang.RootStep{Name: "aws"},
+										lang.AttrStep{Name: "list_attr"},
+										lang.IndexStep{Key: cty.NumberIntVal(0)},
+									},
+									RangePtr: &hcl.Range{
+										Filename: "test.tf.json",
+										Start:    hcl.Pos{Line: 10, Column: 22, Byte: 175},
+										End:      hcl.Pos{Line: 10, Column: 27, Byte: 180},
+									},
+									Type: cty.String,
+								},
+								{
+									Addr: lang.Address{
+										lang.RootStep{Name: "aws"},
+										lang.AttrStep{Name: "list_attr"},
+										lang.IndexStep{Key: cty.NumberIntVal(1)},
+									},
+									RangePtr: &hcl.Range{
+										Filename: "test.tf.json",
+										Start:    hcl.Pos{Line: 10, Column: 29, Byte: 182},
+										End:      hcl.Pos{Line: 10, Column: 34, Byte: 187},
+									},
+									Type: cty.String,
+								},
 							},
 						},
 						{
@@ -1195,7 +1272,42 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 								},
 							},
 							NestedTargets: reference.Targets{
-								// TODO: See https: //github.com/hashicorp/terraform-ls/issues/675
+								{
+									Addr: lang.Address{
+										lang.RootStep{Name: "aws"},
+										lang.AttrStep{Name: "map_attr"},
+										lang.IndexStep{Key: cty.StringVal("one")},
+									},
+									RangePtr: &hcl.Range{
+										Filename: "test.tf.json",
+										Start:    hcl.Pos{Line: 7, Column: 9, Byte: 106},
+										End:      hcl.Pos{Line: 7, Column: 23, Byte: 120},
+									},
+									DefRangePtr: &hcl.Range{
+										Filename: "test.tf.json",
+										Start:    hcl.Pos{Line: 7, Column: 9, Byte: 106},
+										End:      hcl.Pos{Line: 7, Column: 14, Byte: 111},
+									},
+									Type: cty.String,
+								},
+								{
+									Addr: lang.Address{
+										lang.RootStep{Name: "aws"},
+										lang.AttrStep{Name: "map_attr"},
+										lang.IndexStep{Key: cty.StringVal("two")},
+									},
+									RangePtr: &hcl.Range{
+										Filename: "test.tf.json",
+										Start:    hcl.Pos{Line: 8, Column: 9, Byte: 130},
+										End:      hcl.Pos{Line: 8, Column: 23, Byte: 144},
+									},
+									DefRangePtr: &hcl.Range{
+										Filename: "test.tf.json",
+										Start:    hcl.Pos{Line: 8, Column: 9, Byte: 130},
+										End:      hcl.Pos{Line: 8, Column: 14, Byte: 135},
+									},
+									Type: cty.String,
+								},
 							},
 						},
 						{
@@ -1266,7 +1378,24 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 								},
 							},
 							NestedTargets: reference.Targets{
-								// TODO: See https: //github.com/hashicorp/terraform-ls/issues/675
+								{
+									Addr: lang.Address{
+										lang.RootStep{Name: "aws"},
+										lang.AttrStep{Name: "obj_attr"},
+										lang.AttrStep{Name: "nestedattr"},
+									},
+									RangePtr: &hcl.Range{
+										Filename: "test.tf.json",
+										Start:    hcl.Pos{Line: 12, Column: 9, Byte: 219},
+										End:      hcl.Pos{Line: 12, Column: 28, Byte: 238},
+									},
+									DefRangePtr: &hcl.Range{
+										Filename: "test.tf.json",
+										Start:    hcl.Pos{Line: 12, Column: 9, Byte: 219},
+										End:      hcl.Pos{Line: 12, Column: 21, Byte: 231},
+									},
+									Type: cty.String,
+								},
 							},
 						},
 					},
@@ -1296,25 +1425,25 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 							}): {
 								Attributes: map[string]*schema.AttributeSchema{
 									"attr": {
-										Expr:       schema.LiteralTypeOnly(cty.Number),
+										Constraint: schema.LiteralType{Type: cty.Number},
 										IsOptional: true,
 									},
 									"name": {
-										Expr:       schema.LiteralTypeOnly(cty.String),
+										Constraint: schema.LiteralType{Type: cty.String},
 										IsOptional: true,
 									},
 									"attr_list": {
-										Expr:       schema.LiteralTypeOnly(cty.List(cty.String)),
+										Constraint: schema.LiteralType{Type: cty.List(cty.String)},
 										IsOptional: true,
 									},
 									"attr_map": {
-										Expr:       schema.LiteralTypeOnly(cty.Map(cty.String)),
+										Constraint: schema.LiteralType{Type: cty.Map(cty.String)},
 										IsOptional: true,
 									},
 									"obj": {
-										Expr: schema.LiteralTypeOnly(cty.Object(map[string]cty.Type{
+										Constraint: schema.LiteralType{Type: cty.Object(map[string]cty.Type{
 											"nestedattr": cty.String,
-										})),
+										})},
 										IsOptional: true,
 									},
 								},
@@ -1417,25 +1546,25 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 							}): {
 								Attributes: map[string]*schema.AttributeSchema{
 									"attr": {
-										Expr:       schema.LiteralTypeOnly(cty.Number),
+										Constraint: schema.LiteralType{Type: cty.Number},
 										IsOptional: true,
 									},
 									"name": {
-										Expr:       schema.LiteralTypeOnly(cty.String),
+										Constraint: schema.LiteralType{Type: cty.String},
 										IsOptional: true,
 									},
 									"attr_list": {
-										Expr:       schema.LiteralTypeOnly(cty.List(cty.String)),
+										Constraint: schema.LiteralType{Type: cty.List(cty.String)},
 										IsOptional: true,
 									},
 									"attr_map": {
-										Expr:       schema.LiteralTypeOnly(cty.Map(cty.String)),
+										Constraint: schema.LiteralType{Type: cty.Map(cty.String)},
 										IsOptional: true,
 									},
 									"obj": {
-										Expr: schema.LiteralTypeOnly(cty.Object(map[string]cty.Type{
+										Constraint: schema.LiteralType{Type: cty.Object(map[string]cty.Type{
 											"nestedattr": cty.String,
-										})),
+										})},
 										IsOptional: true,
 									},
 								},
@@ -1579,7 +1708,32 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 								},
 							},
 							NestedTargets: reference.Targets{
-								// TODO: See https: //github.com/hashicorp/terraform-ls/issues/675
+								{
+									Addr: lang.Address{
+										lang.RootStep{Name: "aws"},
+										lang.AttrStep{Name: "attr_list"},
+										lang.IndexStep{Key: cty.NumberIntVal(0)},
+									},
+									RangePtr: &hcl.Range{
+										Filename: "test.tf.json",
+										Start:    hcl.Pos{Line: 6, Column: 21, Byte: 98},
+										End:      hcl.Pos{Line: 6, Column: 26, Byte: 103},
+									},
+									Type: cty.String,
+								},
+								{
+									Addr: lang.Address{
+										lang.RootStep{Name: "aws"},
+										lang.AttrStep{Name: "attr_list"},
+										lang.IndexStep{Key: cty.NumberIntVal(1)},
+									},
+									RangePtr: &hcl.Range{
+										Filename: "test.tf.json",
+										Start:    hcl.Pos{Line: 6, Column: 28, Byte: 105},
+										End:      hcl.Pos{Line: 6, Column: 33, Byte: 110},
+									},
+									Type: cty.String,
+								},
 							},
 						},
 						{
@@ -1615,7 +1769,24 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 								},
 							},
 							NestedTargets: reference.Targets{
-								// TODO: See https: //github.com/hashicorp/terraform-ls/issues/675
+								{
+									Addr: lang.Address{
+										lang.RootStep{Name: "aws"},
+										lang.AttrStep{Name: "attr_map"},
+										lang.IndexStep{Key: cty.StringVal("foo")},
+									},
+									RangePtr: &hcl.Range{
+										Filename: "test.tf.json",
+										Start:    hcl.Pos{Line: 8, Column: 9, Byte: 141},
+										End:      hcl.Pos{Line: 8, Column: 21, Byte: 153},
+									},
+									DefRangePtr: &hcl.Range{
+										Filename: "test.tf.json",
+										Start:    hcl.Pos{Line: 8, Column: 9, Byte: 141},
+										End:      hcl.Pos{Line: 8, Column: 14, Byte: 146},
+									},
+									Type: cty.String,
+								},
 							},
 						},
 						{
@@ -1686,7 +1857,24 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 								},
 							},
 							NestedTargets: reference.Targets{
-								// TODO: See https: //github.com/hashicorp/terraform-ls/issues/675
+								{
+									Addr: lang.Address{
+										lang.RootStep{Name: "aws"},
+										lang.AttrStep{Name: "obj"},
+										lang.AttrStep{Name: "nestedattr"},
+									},
+									RangePtr: &hcl.Range{
+										Filename: "test.tf.json",
+										Start:    hcl.Pos{Line: 11, Column: 9, Byte: 186},
+										End:      hcl.Pos{Line: 11, Column: 29, Byte: 206},
+									},
+									DefRangePtr: &hcl.Range{
+										Filename: "test.tf.json",
+										Start:    hcl.Pos{Line: 11, Column: 9, Byte: 186},
+										End:      hcl.Pos{Line: 11, Column: 21, Byte: 198},
+									},
+									Type: cty.String,
+								},
 							},
 						},
 					},
@@ -1717,11 +1905,11 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 									Body: &schema.BodySchema{
 										Attributes: map[string]*schema.AttributeSchema{
 											"protocol": {
-												Expr:       schema.LiteralTypeOnly(cty.String),
+												Constraint: schema.LiteralType{Type: cty.String},
 												IsOptional: true,
 											},
 											"port": {
-												Expr:       schema.LiteralTypeOnly(cty.Number),
+												Constraint: schema.LiteralType{Type: cty.Number},
 												IsOptional: true,
 											},
 										},
@@ -1730,7 +1918,7 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 							},
 							Attributes: map[string]*schema.AttributeSchema{
 								"attr": {
-									Expr:       schema.LiteralTypeOnly(cty.Number),
+									Constraint: schema.LiteralType{Type: cty.Number},
 									IsOptional: true,
 								},
 							},
@@ -1962,11 +2150,11 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 									Body: &schema.BodySchema{
 										Attributes: map[string]*schema.AttributeSchema{
 											"protocol": {
-												Expr:       schema.LiteralTypeOnly(cty.String),
+												Constraint: schema.LiteralType{Type: cty.String},
 												IsOptional: true,
 											},
 											"port": {
-												Expr:       schema.LiteralTypeOnly(cty.Number),
+												Constraint: schema.LiteralType{Type: cty.Number},
 												IsOptional: true,
 											},
 										},
@@ -1975,7 +2163,7 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 							},
 							Attributes: map[string]*schema.AttributeSchema{
 								"attr": {
-									Expr:       schema.LiteralTypeOnly(cty.Number),
+									Constraint: schema.LiteralType{Type: cty.Number},
 									IsOptional: true,
 								},
 							},
@@ -2355,11 +2543,11 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 									Body: &schema.BodySchema{
 										Attributes: map[string]*schema.AttributeSchema{
 											"protocol": {
-												Expr:       schema.LiteralTypeOnly(cty.String),
+												Constraint: schema.LiteralType{Type: cty.String},
 												IsOptional: true,
 											},
 											"port": {
-												Expr:       schema.LiteralTypeOnly(cty.Number),
+												Constraint: schema.LiteralType{Type: cty.Number},
 												IsOptional: true,
 											},
 										},
@@ -2368,7 +2556,7 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 							},
 							Attributes: map[string]*schema.AttributeSchema{
 								"attr": {
-									Expr:       schema.LiteralTypeOnly(cty.Number),
+									Constraint: schema.LiteralType{Type: cty.Number},
 									IsOptional: true,
 								},
 							},
@@ -2521,11 +2709,11 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 									Body: &schema.BodySchema{
 										Attributes: map[string]*schema.AttributeSchema{
 											"protocol": {
-												Expr:       schema.LiteralTypeOnly(cty.String),
+												Constraint: schema.LiteralType{Type: cty.String},
 												IsOptional: true,
 											},
 											"port": {
-												Expr:       schema.LiteralTypeOnly(cty.Number),
+												Constraint: schema.LiteralType{Type: cty.Number},
 												IsOptional: true,
 											},
 										},
@@ -2534,7 +2722,7 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 							},
 							Attributes: map[string]*schema.AttributeSchema{
 								"attr": {
-									Expr:       schema.LiteralTypeOnly(cty.Number),
+									Constraint: schema.LiteralType{Type: cty.Number},
 									IsOptional: true,
 								},
 							},
@@ -2917,11 +3105,11 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 									Body: &schema.BodySchema{
 										Attributes: map[string]*schema.AttributeSchema{
 											"protocol": {
-												Expr:       schema.LiteralTypeOnly(cty.String),
+												Constraint: schema.LiteralType{Type: cty.String},
 												IsOptional: true,
 											},
 											"port": {
-												Expr:       schema.LiteralTypeOnly(cty.Number),
+												Constraint: schema.LiteralType{Type: cty.Number},
 												IsOptional: true,
 											},
 										},
@@ -2930,7 +3118,7 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 							},
 							Attributes: map[string]*schema.AttributeSchema{
 								"attr": {
-									Expr:       schema.LiteralTypeOnly(cty.Number),
+									Constraint: schema.LiteralType{Type: cty.Number},
 									IsOptional: true,
 								},
 							},
@@ -3260,8 +3448,8 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 												},
 												End: hcl.Pos{
 													Line:   12,
-													Column: 10,
-													Byte:   203,
+													Column: 9,
+													Byte:   202,
 												},
 											},
 											Type: cty.String,
@@ -3280,11 +3468,9 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 				Attributes: map[string]*schema.AttributeSchema{
 					"testattr": {
 						IsOptional: true,
-						Expr: schema.ExprConstraints{
-							schema.TraversalExpr{
-								Address: &schema.TraversalAddrSchema{
-									ScopeId: lang.ScopeId("specialthing"),
-								},
+						Constraint: schema.Reference{
+							Address: &schema.ReferenceAddrSchema{
+								ScopeId: lang.ScopeId("specialthing"),
 							},
 						},
 					},
@@ -3292,7 +3478,18 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 			},
 			`{"testattr": "${special.test}"}`,
 			reference.Targets{
-				// TODO: See https: //github.com/hashicorp/terraform-ls/issues/675
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "special"},
+						lang.AttrStep{Name: "test"},
+					},
+					ScopeId: lang.ScopeId("specialthing"),
+					RangePtr: &hcl.Range{
+						Filename: "test.tf.json",
+						Start:    hcl.Pos{Line: 1, Column: 17, Byte: 16},
+						End:      hcl.Pos{Line: 1, Column: 29, Byte: 28},
+					},
+				},
 			},
 		},
 		{
@@ -3315,7 +3512,7 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 							Attributes: map[string]*schema.AttributeSchema{
 								"alias": {
 									IsOptional: true,
-									Expr:       schema.LiteralTypeOnly(cty.String),
+									Constraint: schema.LiteralType{Type: cty.String},
 								},
 							},
 						},
@@ -3448,9 +3645,7 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 							Attributes: map[string]*schema.AttributeSchema{
 								"type": {
 									IsOptional: true,
-									Expr: schema.ExprConstraints{
-										schema.TypeDeclarationExpr{},
-									},
+									Constraint: schema.TypeDeclaration{},
 								},
 							},
 						},
@@ -3521,13 +3716,11 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 							Attributes: map[string]*schema.AttributeSchema{
 								"type": {
 									IsOptional: true,
-									Expr: schema.ExprConstraints{
-										schema.TypeDeclarationExpr{},
-									},
+									Constraint: schema.TypeDeclaration{},
 								},
 								"default": {
 									IsOptional: true,
-									Expr:       schema.LiteralTypeOnly(cty.DynamicPseudoType),
+									Constraint: schema.LiteralType{Type: cty.DynamicPseudoType},
 								},
 							},
 						},
@@ -3599,13 +3792,11 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 							Attributes: map[string]*schema.AttributeSchema{
 								"type": {
 									IsOptional: true,
-									Expr: schema.ExprConstraints{
-										schema.TypeDeclarationExpr{},
-									},
+									Constraint: schema.TypeDeclaration{},
 								},
 								"default": {
 									IsOptional: true,
-									Expr:       schema.LiteralTypeOnly(cty.DynamicPseudoType),
+									Constraint: schema.LiteralType{Type: cty.DynamicPseudoType},
 								},
 							},
 						},
@@ -3677,13 +3868,11 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 							Attributes: map[string]*schema.AttributeSchema{
 								"type": {
 									IsOptional: true,
-									Expr: schema.ExprConstraints{
-										schema.TypeDeclarationExpr{},
-									},
+									Constraint: schema.TypeDeclaration{},
 								},
 								"default": {
 									IsOptional: true,
-									Expr:       schema.LiteralTypeOnly(cty.DynamicPseudoType),
+									Constraint: schema.LiteralType{Type: cty.DynamicPseudoType},
 								},
 							},
 						},
@@ -3755,13 +3944,11 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 							Attributes: map[string]*schema.AttributeSchema{
 								"type": {
 									IsOptional: true,
-									Expr: schema.ExprConstraints{
-										schema.TypeDeclarationExpr{},
-									},
+									Constraint: schema.TypeDeclaration{},
 								},
 								"default": {
 									IsOptional: true,
-									Expr:       schema.LiteralTypeOnly(cty.DynamicPseudoType),
+									Constraint: schema.LiteralType{Type: cty.DynamicPseudoType},
 								},
 							},
 						},
@@ -3943,7 +4130,7 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 							}): {
 								Attributes: map[string]*schema.AttributeSchema{
 									"attr": {
-										Expr:       schema.LiteralTypeOnly(cty.String),
+										Constraint: schema.LiteralType{Type: cty.String},
 										IsOptional: true,
 									},
 								},
@@ -4054,9 +4241,9 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 									ScopeId:    lang.ScopeId("local"),
 									AsExprType: true,
 								},
-								Expr: schema.ExprConstraints{
-									schema.TraversalExpr{OfType: cty.DynamicPseudoType},
-									schema.LiteralTypeExpr{Type: cty.DynamicPseudoType},
+								Constraint: schema.OneOf{
+									schema.Reference{OfType: cty.DynamicPseudoType},
+									schema.LiteralType{Type: cty.DynamicPseudoType},
 								},
 							},
 						},
@@ -4130,7 +4317,178 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 						},
 					},
 					NestedTargets: reference.Targets{
-						// TODO: See https: //github.com/hashicorp/terraform-ls/issues/675
+						{
+							Addr: lang.Address{
+								lang.RootStep{Name: "local"},
+								lang.AttrStep{Name: "top_obj"},
+								lang.AttrStep{Name: "first"},
+							},
+							ScopeId: "local",
+							RangePtr: &hcl.Range{
+								Filename: "test.tf.json",
+								Start:    hcl.Pos{Line: 4, Column: 7, Byte: 39},
+								End:      hcl.Pos{Line: 6, Column: 8, Byte: 79},
+							},
+							DefRangePtr: &hcl.Range{
+								Filename: "test.tf.json",
+								Start:    hcl.Pos{Line: 4, Column: 7, Byte: 39},
+								End:      hcl.Pos{Line: 4, Column: 14, Byte: 46},
+							},
+							Type: cty.Object(map[string]cty.Type{
+								"attr": cty.String,
+							}),
+							NestedTargets: reference.Targets{
+								{
+									Addr: lang.Address{
+										lang.RootStep{Name: "local"},
+										lang.AttrStep{Name: "top_obj"},
+										lang.AttrStep{Name: "first"},
+										lang.AttrStep{Name: "attr"},
+									},
+									ScopeId: "local",
+									Type:    cty.String,
+									RangePtr: &hcl.Range{
+										Filename: "test.tf.json",
+										Start:    hcl.Pos{Line: 5, Column: 9, Byte: 58},
+										End:      hcl.Pos{Line: 5, Column: 22, Byte: 71},
+									},
+									DefRangePtr: &hcl.Range{
+										Filename: "test.tf.json",
+										Start:    hcl.Pos{Line: 5, Column: 9, Byte: 58},
+										End:      hcl.Pos{Line: 5, Column: 15, Byte: 64},
+									},
+								},
+							},
+						},
+						{
+							Addr: lang.Address{
+								lang.RootStep{Name: "local"},
+								lang.AttrStep{Name: "top_obj"},
+								lang.AttrStep{Name: "fourth"},
+							},
+							ScopeId: "local",
+							RangePtr: &hcl.Range{
+								Filename: "test.tf.json",
+								Start:    hcl.Pos{Line: 13, Column: 7, Byte: 184},
+								End:      hcl.Pos{Line: 15, Column: 8, Byte: 225},
+							},
+							DefRangePtr: &hcl.Range{
+								Filename: "test.tf.json",
+								Start:    hcl.Pos{Line: 13, Column: 7, Byte: 184},
+								End:      hcl.Pos{Line: 13, Column: 15, Byte: 192},
+							},
+							Type: cty.Object(map[string]cty.Type{
+								"attr": cty.String,
+							}),
+							NestedTargets: reference.Targets{
+								{
+									Addr: lang.Address{
+										lang.RootStep{Name: "local"},
+										lang.AttrStep{Name: "top_obj"},
+										lang.AttrStep{Name: "fourth"},
+										lang.AttrStep{Name: "attr"},
+									},
+									ScopeId: "local",
+									Type:    cty.String,
+									RangePtr: &hcl.Range{
+										Filename: "test.tf.json",
+										Start:    hcl.Pos{Line: 14, Column: 9, Byte: 204},
+										End:      hcl.Pos{Line: 14, Column: 22, Byte: 217},
+									},
+									DefRangePtr: &hcl.Range{
+										Filename: "test.tf.json",
+										Start:    hcl.Pos{Line: 14, Column: 9, Byte: 204},
+										End:      hcl.Pos{Line: 14, Column: 15, Byte: 210},
+									},
+								},
+							},
+						},
+						{
+							Addr: lang.Address{
+								lang.RootStep{Name: "local"},
+								lang.AttrStep{Name: "top_obj"},
+								lang.AttrStep{Name: "second"},
+							},
+							ScopeId: "local",
+							RangePtr: &hcl.Range{
+								Filename: "test.tf.json",
+								Start:    hcl.Pos{Line: 7, Column: 7, Byte: 87},
+								End:      hcl.Pos{Line: 9, Column: 8, Byte: 128},
+							},
+							DefRangePtr: &hcl.Range{
+								Filename: "test.tf.json",
+								Start:    hcl.Pos{Line: 7, Column: 7, Byte: 87},
+								End:      hcl.Pos{Line: 7, Column: 15, Byte: 95},
+							},
+							Type: cty.Object(map[string]cty.Type{
+								"attr": cty.String,
+							}),
+							NestedTargets: reference.Targets{
+								{
+									Addr: lang.Address{
+										lang.RootStep{Name: "local"},
+										lang.AttrStep{Name: "top_obj"},
+										lang.AttrStep{Name: "second"},
+										lang.AttrStep{Name: "attr"},
+									},
+									ScopeId: "local",
+									Type:    cty.String,
+									RangePtr: &hcl.Range{
+										Filename: "test.tf.json",
+										Start:    hcl.Pos{Line: 8, Column: 9, Byte: 107},
+										End:      hcl.Pos{Line: 8, Column: 22, Byte: 120},
+									},
+									DefRangePtr: &hcl.Range{
+										Filename: "test.tf.json",
+										Start:    hcl.Pos{Line: 8, Column: 9, Byte: 107},
+										End:      hcl.Pos{Line: 8, Column: 15, Byte: 113},
+									},
+								},
+							},
+						},
+						{
+							Addr: lang.Address{
+								lang.RootStep{Name: "local"},
+								lang.AttrStep{Name: "top_obj"},
+								lang.AttrStep{Name: "third"},
+							},
+							ScopeId: "local",
+							RangePtr: &hcl.Range{
+								Filename: "test.tf.json",
+								Start:    hcl.Pos{Line: 10, Column: 7, Byte: 136},
+								End:      hcl.Pos{Line: 12, Column: 8, Byte: 176},
+							},
+							DefRangePtr: &hcl.Range{
+								Filename: "test.tf.json",
+								Start:    hcl.Pos{Line: 10, Column: 7, Byte: 136},
+								End:      hcl.Pos{Line: 10, Column: 14, Byte: 143},
+							},
+							Type: cty.Object(map[string]cty.Type{
+								"attr": cty.String,
+							}),
+							NestedTargets: reference.Targets{
+								{
+									Addr: lang.Address{
+										lang.RootStep{Name: "local"},
+										lang.AttrStep{Name: "top_obj"},
+										lang.AttrStep{Name: "third"},
+										lang.AttrStep{Name: "attr"},
+									},
+									ScopeId: "local",
+									Type:    cty.String,
+									RangePtr: &hcl.Range{
+										Filename: "test.tf.json",
+										Start:    hcl.Pos{Line: 11, Column: 9, Byte: 155},
+										End:      hcl.Pos{Line: 11, Column: 22, Byte: 168},
+									},
+									DefRangePtr: &hcl.Range{
+										Filename: "test.tf.json",
+										Start:    hcl.Pos{Line: 11, Column: 9, Byte: 155},
+										End:      hcl.Pos{Line: 11, Column: 15, Byte: 161},
+									},
+								},
+							},
+						},
 					},
 				},
 			},

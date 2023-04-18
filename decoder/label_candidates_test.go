@@ -37,7 +37,7 @@ func TestDecoder_CandidateAtPos_incompleteLabels(t *testing.T) {
 						},
 					}): {
 						Attributes: map[string]*schema.AttributeSchema{
-							"attr1": {Expr: schema.LiteralTypeOnly(cty.Number)},
+							"attr1": {Constraint: schema.LiteralType{Type: cty.Number}},
 						},
 					},
 					schema.NewSchemaKey(schema.DependencyKeys{
@@ -49,7 +49,7 @@ func TestDecoder_CandidateAtPos_incompleteLabels(t *testing.T) {
 						},
 					}): {
 						Attributes: map[string]*schema.AttributeSchema{
-							"attr2": {Expr: schema.LiteralTypeOnly(cty.Number)},
+							"attr2": {Constraint: schema.LiteralType{Type: cty.Number}},
 						},
 					},
 				},
@@ -159,7 +159,7 @@ func TestCandidatesAtPos_prefillRequiredFields(t *testing.T) {
 							}): {
 								Attributes: map[string]*schema.AttributeSchema{
 									"name": {
-										Expr:       schema.LiteralTypeOnly(cty.String),
+										Constraint: schema.LiteralType{Type: cty.String},
 										IsRequired: false,
 									},
 								},
@@ -205,7 +205,7 @@ func TestCandidatesAtPos_prefillRequiredFields(t *testing.T) {
 							}): {
 								Attributes: map[string]*schema.AttributeSchema{
 									"foo": {
-										Expr:       schema.LiteralTypeOnly(cty.String),
+										Constraint: schema.LiteralType{Type: cty.String},
 										IsRequired: true,
 									},
 								},
@@ -252,11 +252,11 @@ func TestCandidatesAtPos_prefillRequiredFields(t *testing.T) {
 							}): {
 								Attributes: map[string]*schema.AttributeSchema{
 									"name": {
-										Expr:       schema.LiteralTypeOnly(cty.String),
+										Constraint: schema.LiteralType{Type: cty.String},
 										IsRequired: true,
 									},
 									"anothername": {
-										Expr:       schema.LiteralTypeOnly(cty.String),
+										Constraint: schema.LiteralType{Type: cty.String},
 										IsRequired: true,
 									},
 								},
@@ -312,11 +312,11 @@ func TestCandidatesAtPos_prefillRequiredFields(t *testing.T) {
 							}): {
 								Attributes: map[string]*schema.AttributeSchema{
 									"name": {
-										Expr:       schema.LiteralTypeOnly(cty.String),
+										Constraint: schema.LiteralType{Type: cty.String},
 										IsRequired: true,
 									},
 									"anothername": {
-										Expr:       schema.LiteralTypeOnly(cty.String),
+										Constraint: schema.LiteralType{Type: cty.String},
 										IsRequired: true,
 									},
 								},
@@ -327,7 +327,7 @@ func TestCandidatesAtPos_prefillRequiredFields(t *testing.T) {
 										Body: &schema.BodySchema{
 											Attributes: map[string]*schema.AttributeSchema{
 												"name": {
-													Expr:       schema.LiteralTypeOnly(cty.String),
+													Constraint: schema.LiteralType{Type: cty.String},
 													IsRequired: true,
 												},
 											},
@@ -381,11 +381,11 @@ func TestCandidatesAtPos_prefillRequiredFields(t *testing.T) {
 							}): {
 								Attributes: map[string]*schema.AttributeSchema{
 									"name": {
-										Expr:       schema.LiteralTypeOnly(cty.String),
+										Constraint: schema.LiteralType{Type: cty.String},
 										IsRequired: true,
 									},
 									"anothername": {
-										Expr:       schema.LiteralTypeOnly(cty.String),
+										Constraint: schema.LiteralType{Type: cty.String},
 										IsRequired: true,
 									},
 								},
@@ -401,7 +401,7 @@ func TestCandidatesAtPos_prefillRequiredFields(t *testing.T) {
 										Body: &schema.BodySchema{
 											Attributes: map[string]*schema.AttributeSchema{
 												"name": {
-													Expr:       schema.LiteralTypeOnly(cty.String),
+													Constraint: schema.LiteralType{Type: cty.String},
 													IsRequired: false,
 												},
 											},
@@ -454,11 +454,11 @@ func TestCandidatesAtPos_prefillRequiredFields(t *testing.T) {
 							}): {
 								Attributes: map[string]*schema.AttributeSchema{
 									"name": {
-										Expr:       schema.LiteralTypeOnly(cty.String),
+										Constraint: schema.LiteralType{Type: cty.String},
 										IsRequired: true,
 									},
 									"anothername": {
-										Expr:       schema.LiteralTypeOnly(cty.String),
+										Constraint: schema.LiteralType{Type: cty.String},
 										IsRequired: true,
 									},
 								},
@@ -474,7 +474,7 @@ func TestCandidatesAtPos_prefillRequiredFields(t *testing.T) {
 										Body: &schema.BodySchema{
 											Attributes: map[string]*schema.AttributeSchema{
 												"name": {
-													Expr:       schema.LiteralTypeOnly(cty.String),
+													Constraint: schema.LiteralType{Type: cty.String},
 													IsRequired: true,
 												},
 											},
@@ -528,11 +528,11 @@ func TestCandidatesAtPos_prefillRequiredFields(t *testing.T) {
 							}): {
 								Attributes: map[string]*schema.AttributeSchema{
 									"name": {
-										Expr:       schema.LiteralTypeOnly(cty.String),
+										Constraint: schema.LiteralType{Type: cty.String},
 										IsRequired: true,
 									},
 									"anothername": {
-										Expr:       schema.LiteralTypeOnly(cty.String),
+										Constraint: schema.LiteralType{Type: cty.String},
 										IsRequired: true,
 									},
 								},
@@ -543,7 +543,7 @@ func TestCandidatesAtPos_prefillRequiredFields(t *testing.T) {
 										Body: &schema.BodySchema{
 											Attributes: map[string]*schema.AttributeSchema{
 												"name": {
-													Expr:       schema.LiteralTypeOnly(cty.String),
+													Constraint: schema.LiteralType{Type: cty.String},
 													IsRequired: true,
 												},
 											},
@@ -559,11 +559,11 @@ func TestCandidatesAtPos_prefillRequiredFields(t *testing.T) {
 																Body: &schema.BodySchema{
 																	Attributes: map[string]*schema.AttributeSchema{
 																		"port": {
-																			Expr:       schema.LiteralTypeOnly(cty.Number),
+																			Constraint: schema.LiteralType{Type: cty.Number},
 																			IsRequired: true,
 																		},
 																		"protocol": {
-																			Expr:       schema.LiteralTypeOnly(cty.String),
+																			Constraint: schema.LiteralType{Type: cty.String},
 																			IsRequired: true,
 																		},
 																	},
@@ -595,7 +595,7 @@ func TestCandidatesAtPos_prefillRequiredFields(t *testing.T) {
 		name = "${5:value}"
 		listener {
 			port_mapping {
-				port = ${6:1}
+				port = ${6:0}
 				protocol = "${7:value}"
 			}
 		}

@@ -25,10 +25,10 @@ func TestDecoder_CandidateAtPos_incompleteAttributes(t *testing.T) {
 				},
 				Body: &schema.BodySchema{
 					Attributes: map[string]*schema.AttributeSchema{
-						"attr1":           {Expr: schema.LiteralTypeOnly(cty.Number)},
-						"attr2":           {Expr: schema.LiteralTypeOnly(cty.Number)},
-						"some_other_attr": {Expr: schema.LiteralTypeOnly(cty.Number)},
-						"another_attr":    {Expr: schema.LiteralTypeOnly(cty.Number)},
+						"attr1":           {Constraint: schema.LiteralType{Type: cty.Number}},
+						"attr2":           {Constraint: schema.LiteralType{Type: cty.Number}},
+						"some_other_attr": {Constraint: schema.LiteralType{Type: cty.Number}},
+						"another_attr":    {Constraint: schema.LiteralType{Type: cty.Number}},
 					},
 				},
 			},
@@ -76,7 +76,7 @@ func TestDecoder_CandidateAtPos_incompleteAttributes(t *testing.T) {
 						},
 					},
 					NewText: "attr1",
-					Snippet: "attr1 = ${1:1}",
+					Snippet: "attr1 = ${1:0}",
 				},
 				Kind: lang.AttributeCandidateKind,
 			},
@@ -98,10 +98,10 @@ func TestDecoder_CandidateAtPos_computedAttributes(t *testing.T) {
 				},
 				Body: &schema.BodySchema{
 					Attributes: map[string]*schema.AttributeSchema{
-						"attr1":           {Expr: schema.LiteralTypeOnly(cty.Number), IsComputed: true},
-						"attr2":           {Expr: schema.LiteralTypeOnly(cty.Number), IsComputed: true, IsOptional: true},
-						"some_other_attr": {Expr: schema.LiteralTypeOnly(cty.Number)},
-						"another_attr":    {Expr: schema.LiteralTypeOnly(cty.Number)},
+						"attr1":           {Constraint: schema.LiteralType{Type: cty.Number}, IsComputed: true},
+						"attr2":           {Constraint: schema.LiteralType{Type: cty.Number}, IsComputed: true, IsOptional: true},
+						"some_other_attr": {Constraint: schema.LiteralType{Type: cty.Number}},
+						"another_attr":    {Constraint: schema.LiteralType{Type: cty.Number}},
 					},
 				},
 			},
@@ -147,7 +147,7 @@ func TestDecoder_CandidateAtPos_computedAttributes(t *testing.T) {
 						},
 					},
 					NewText: "attr2",
-					Snippet: "attr2 = ${1:1}",
+					Snippet: "attr2 = ${1:0}",
 				},
 				Kind: lang.AttributeCandidateKind,
 			},
@@ -239,18 +239,20 @@ func TestDecoder_CandidateAtPos_duplicateNames(t *testing.T) {
 		Attributes: map[string]*schema.AttributeSchema{
 			"ingress": {
 				IsOptional: true,
-				Expr: schema.LiteralTypeOnly(cty.Object(map[string]cty.Type{
-					"attr1": cty.String,
-					"attr2": cty.Number,
-				})),
+				Constraint: schema.LiteralType{
+					Type: cty.Object(map[string]cty.Type{
+						"attr1": cty.String,
+						"attr2": cty.Number,
+					}),
+				},
 			},
 		},
 		Blocks: map[string]*schema.BlockSchema{
 			"ingress": {
 				Body: &schema.BodySchema{
 					Attributes: map[string]*schema.AttributeSchema{
-						"attr1": {Expr: schema.LiteralTypeOnly(cty.String)},
-						"attr2": {Expr: schema.LiteralTypeOnly(cty.Number)},
+						"attr1": {Constraint: schema.LiteralType{Type: cty.String}, IsRequired: true},
+						"attr2": {Constraint: schema.LiteralType{Type: cty.Number}, IsRequired: true},
 					},
 				},
 			},
@@ -265,6 +267,7 @@ func TestDecoder_CandidateAtPos_duplicateNames(t *testing.T) {
 			"test.tf": f,
 		},
 	})
+	d.PrefillRequiredFields = true
 
 	candidates, err := d.CandidatesAtPos(ctx, "test.tf", hcl.InitialPos)
 	if err != nil {
@@ -284,7 +287,7 @@ func TestDecoder_CandidateAtPos_duplicateNames(t *testing.T) {
 					NewText: "ingress",
 					Snippet: `ingress = {
   attr1 = "${1:value}"
-  attr2 = ${2:1}
+  attr2 = ${2:0}
 }`,
 				},
 				Kind: lang.AttributeCandidateKind,

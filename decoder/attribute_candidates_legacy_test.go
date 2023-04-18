@@ -27,7 +27,7 @@ func TestLegacyDecoder_CompletionAtPos_EmptyCompletionData(t *testing.T) {
 			"primitive type",
 			"primitive",
 			&schema.AttributeSchema{
-				Expr: schema.LiteralTypeOnly(cty.String),
+				Constraint: schema.LiteralType{Type: cty.String},
 			},
 			lang.CompleteCandidates([]lang.Candidate{
 				{
@@ -50,7 +50,7 @@ func TestLegacyDecoder_CompletionAtPos_EmptyCompletionData(t *testing.T) {
 			"map of strings",
 			"mymap",
 			&schema.AttributeSchema{
-				Expr: schema.LiteralTypeOnly(cty.Map(cty.String)),
+				Constraint: schema.LiteralType{Type: cty.Map(cty.String)},
 			},
 			lang.CompleteCandidates([]lang.Candidate{
 				{
@@ -64,7 +64,7 @@ func TestLegacyDecoder_CompletionAtPos_EmptyCompletionData(t *testing.T) {
 						},
 						NewText: "mymap",
 						Snippet: `mymap = {
-  "${1:key}" = "${2:value}"
+  "${1:name}" = "${2:value}"
 }`,
 					},
 					Kind: lang.AttributeCandidateKind,
@@ -75,7 +75,7 @@ func TestLegacyDecoder_CompletionAtPos_EmptyCompletionData(t *testing.T) {
 			"map of numbers",
 			"mymap",
 			&schema.AttributeSchema{
-				Expr: schema.LiteralTypeOnly(cty.Map(cty.Number)),
+				Constraint: schema.LiteralType{Type: cty.Map(cty.Number)},
 			},
 			lang.CompleteCandidates([]lang.Candidate{
 				{
@@ -89,7 +89,7 @@ func TestLegacyDecoder_CompletionAtPos_EmptyCompletionData(t *testing.T) {
 						},
 						NewText: "mymap",
 						Snippet: `mymap = {
-  "${1:key}" = ${2:1}
+  "${1:name}" = ${2:0}
 }`,
 					},
 					Kind: lang.AttributeCandidateKind,
@@ -100,7 +100,7 @@ func TestLegacyDecoder_CompletionAtPos_EmptyCompletionData(t *testing.T) {
 			"list of numbers",
 			"mylist",
 			&schema.AttributeSchema{
-				Expr: schema.LiteralTypeOnly(cty.List(cty.Number)),
+				Constraint: schema.LiteralType{Type: cty.List(cty.Number)},
 			},
 			lang.CompleteCandidates([]lang.Candidate{
 				{
@@ -113,7 +113,7 @@ func TestLegacyDecoder_CompletionAtPos_EmptyCompletionData(t *testing.T) {
 							End:      hcl.InitialPos,
 						},
 						NewText: "mylist",
-						Snippet: `mylist = [ ${1:1} ]`,
+						Snippet: `mylist = [ ${1:0} ]`,
 					},
 					Kind: lang.AttributeCandidateKind,
 				},
@@ -123,10 +123,12 @@ func TestLegacyDecoder_CompletionAtPos_EmptyCompletionData(t *testing.T) {
 			"list of objects",
 			"mylistobj",
 			&schema.AttributeSchema{
-				Expr: schema.LiteralTypeOnly(cty.List(cty.Object(map[string]cty.Type{
-					"first":  cty.String,
-					"second": cty.Number,
-				}))),
+				Constraint: schema.LiteralType{
+					Type: cty.List(cty.Object(map[string]cty.Type{
+						"first":  cty.String,
+						"second": cty.Number,
+					})),
+				},
 			},
 			lang.CompleteCandidates([]lang.Candidate{
 				{
@@ -141,7 +143,7 @@ func TestLegacyDecoder_CompletionAtPos_EmptyCompletionData(t *testing.T) {
 						NewText: "mylistobj",
 						Snippet: `mylistobj = [ {
   first = "${1:value}"
-  second = ${2:1}
+  second = ${2:0}
 } ]`,
 					},
 					Kind: lang.AttributeCandidateKind,
@@ -152,7 +154,7 @@ func TestLegacyDecoder_CompletionAtPos_EmptyCompletionData(t *testing.T) {
 			"set of numbers",
 			"myset",
 			&schema.AttributeSchema{
-				Expr: schema.LiteralTypeOnly(cty.Set(cty.Number)),
+				Constraint: schema.LiteralType{Type: cty.Set(cty.Number)},
 			},
 			lang.CompleteCandidates([]lang.Candidate{
 				{
@@ -165,7 +167,7 @@ func TestLegacyDecoder_CompletionAtPos_EmptyCompletionData(t *testing.T) {
 							End:      hcl.InitialPos,
 						},
 						NewText: "myset",
-						Snippet: `myset = [ ${1:1} ]`,
+						Snippet: `myset = [ ${1:0} ]`,
 					},
 					Kind: lang.AttributeCandidateKind,
 				},
@@ -175,11 +177,13 @@ func TestLegacyDecoder_CompletionAtPos_EmptyCompletionData(t *testing.T) {
 			"object",
 			"myobj",
 			&schema.AttributeSchema{
-				Expr: schema.LiteralTypeOnly(cty.Object(map[string]cty.Type{
-					"keystr":  cty.String,
-					"keynum":  cty.Number,
-					"keybool": cty.Bool,
-				})),
+				Constraint: schema.LiteralType{
+					Type: cty.Object(map[string]cty.Type{
+						"keystr":  cty.String,
+						"keynum":  cty.Number,
+						"keybool": cty.Bool,
+					}),
+				},
 			},
 			lang.CompleteCandidates([]lang.Candidate{
 				{
@@ -194,7 +198,7 @@ func TestLegacyDecoder_CompletionAtPos_EmptyCompletionData(t *testing.T) {
 						NewText: "myobj",
 						Snippet: `myobj = {
   keybool = ${1:false}
-  keynum = ${2:1}
+  keynum = ${2:0}
   keystr = "${3:value}"
 }`,
 					},
@@ -206,7 +210,7 @@ func TestLegacyDecoder_CompletionAtPos_EmptyCompletionData(t *testing.T) {
 			"unknown type",
 			"mynil",
 			&schema.AttributeSchema{
-				Expr: schema.LiteralTypeOnly(cty.DynamicPseudoType),
+				Constraint: schema.LiteralType{Type: cty.DynamicPseudoType},
 			},
 			lang.CompleteCandidates([]lang.Candidate{
 				{
@@ -219,7 +223,7 @@ func TestLegacyDecoder_CompletionAtPos_EmptyCompletionData(t *testing.T) {
 							End:      hcl.InitialPos,
 						},
 						NewText: "mynil",
-						Snippet: `mynil = ${1}`,
+						Snippet: `mynil = `,
 					},
 					Kind: lang.AttributeCandidateKind,
 				},
@@ -229,13 +233,15 @@ func TestLegacyDecoder_CompletionAtPos_EmptyCompletionData(t *testing.T) {
 			"nested object",
 			"myobj",
 			&schema.AttributeSchema{
-				Expr: schema.LiteralTypeOnly(cty.Object(map[string]cty.Type{
-					"keystr": cty.String,
-					"another": cty.Object(map[string]cty.Type{
-						"nestedstr":     cty.String,
-						"nested_number": cty.Number,
+				Constraint: schema.LiteralType{
+					Type: cty.Object(map[string]cty.Type{
+						"keystr": cty.String,
+						"another": cty.Object(map[string]cty.Type{
+							"nestedstr":     cty.String,
+							"nested_number": cty.Number,
+						}),
 					}),
-				})),
+				},
 			},
 			lang.CompleteCandidates([]lang.Candidate{
 				{
@@ -250,7 +256,7 @@ func TestLegacyDecoder_CompletionAtPos_EmptyCompletionData(t *testing.T) {
 						NewText: "myobj",
 						Snippet: `myobj = {
   another = {
-    nested_number = ${1:1}
+    nested_number = ${1:0}
     nestedstr = "${2:value}"
   }
   keystr = "${3:value}"
@@ -275,6 +281,7 @@ func TestLegacyDecoder_CompletionAtPos_EmptyCompletionData(t *testing.T) {
 					"test.tf": f,
 				},
 			})
+			d.PrefillRequiredFields = true
 
 			ctx := context.Background()
 			candidates, err := d.CandidatesAtPos(ctx, "test.tf", hcl.InitialPos)

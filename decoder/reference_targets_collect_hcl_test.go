@@ -38,7 +38,7 @@ func TestCollectReferenceTargets_hcl(t *testing.T) {
 							ScopeId:     lang.ScopeId("specialthing"),
 						},
 						IsOptional: true,
-						Expr:       schema.LiteralTypeOnly(cty.String),
+						Constraint: schema.LiteralType{Type: cty.String},
 					},
 				},
 			},
@@ -93,7 +93,7 @@ func TestCollectReferenceTargets_hcl(t *testing.T) {
 							AsExprType: true,
 						},
 						IsOptional: true,
-						Expr:       schema.LiteralTypeOnly(cty.String),
+						Constraint: schema.LiteralType{Type: cty.String},
 					},
 				},
 			},
@@ -148,7 +148,7 @@ func TestCollectReferenceTargets_hcl(t *testing.T) {
 							AsExprType: true,
 						},
 						IsOptional: true,
-						Expr:       schema.LiteralTypeOnly(cty.DynamicPseudoType),
+						Constraint: schema.LiteralType{Type: cty.DynamicPseudoType},
 					},
 				},
 			},
@@ -203,9 +203,11 @@ func TestCollectReferenceTargets_hcl(t *testing.T) {
 							AsExprType: true,
 						},
 						IsOptional: true,
-						Expr: schema.LiteralTypeOnly(cty.Object(map[string]cty.Type{
-							"nestedattr": cty.String,
-						})),
+						Constraint: schema.LiteralType{
+							Type: cty.Object(map[string]cty.Type{
+								"nestedattr": cty.String,
+							}),
+						},
 					},
 				},
 			},
@@ -300,7 +302,7 @@ func TestCollectReferenceTargets_hcl(t *testing.T) {
 							AsExprType: true,
 						},
 						IsOptional: true,
-						Expr:       schema.LiteralTypeOnly(cty.Map(cty.String)),
+						Constraint: schema.LiteralType{Type: cty.Map(cty.String)},
 					},
 				},
 			},
@@ -392,7 +394,7 @@ func TestCollectReferenceTargets_hcl(t *testing.T) {
 							},
 							AsExprType: true,
 						},
-						Expr:       schema.LiteralTypeOnly(cty.List(cty.String)),
+						Constraint: schema.LiteralType{Type: cty.List(cty.String)},
 						IsOptional: true,
 					},
 				},
@@ -471,10 +473,8 @@ func TestCollectReferenceTargets_hcl(t *testing.T) {
 							},
 							AsExprType: true,
 						},
-						Expr: schema.ExprConstraints{
-							schema.ListExpr{
-								Elem: schema.LiteralTypeOnly(cty.String),
-							},
+						Constraint: schema.List{
+							Elem: schema.LiteralType{Type: cty.String},
 						},
 						IsOptional: true,
 					},
@@ -581,7 +581,7 @@ func TestCollectReferenceTargets_hcl(t *testing.T) {
 						Body: &schema.BodySchema{
 							Attributes: map[string]*schema.AttributeSchema{
 								"attr": {
-									Expr:       schema.LiteralTypeOnly(cty.Number),
+									Constraint: schema.LiteralType{Type: cty.Number},
 									IsOptional: true,
 								},
 							},
@@ -614,11 +614,11 @@ func TestCollectReferenceTargets_hcl(t *testing.T) {
 						Body: &schema.BodySchema{
 							Attributes: map[string]*schema.AttributeSchema{
 								"attr": {
-									Expr:       schema.LiteralTypeOnly(cty.Number),
+									Constraint: schema.LiteralType{Type: cty.Number},
 									IsOptional: true,
 								},
 								"name": {
-									Expr:       schema.LiteralTypeOnly(cty.String),
+									Constraint: schema.LiteralType{Type: cty.String},
 									IsOptional: true,
 								},
 							},
@@ -686,47 +686,45 @@ func TestCollectReferenceTargets_hcl(t *testing.T) {
 						Body: &schema.BodySchema{
 							Attributes: map[string]*schema.AttributeSchema{
 								"attr": {
-									Expr:       schema.LiteralTypeOnly(cty.Number),
+									Constraint: schema.LiteralType{Type: cty.Number},
 									IsOptional: true,
 								},
 								"name": {
-									Expr:       schema.LiteralTypeOnly(cty.String),
+									Constraint: schema.LiteralType{Type: cty.String},
 									IsOptional: true,
 								},
 								"map_attr": {
-									Expr: schema.ExprConstraints{
-										schema.MapExpr{Elem: schema.LiteralTypeOnly(cty.String)},
+									Constraint: schema.Map{
+										Elem: schema.LiteralType{Type: cty.String},
 									},
 									IsOptional: true,
 								},
 								"list_attr": {
-									Expr: schema.ExprConstraints{
-										schema.ListExpr{Elem: schema.LiteralTypeOnly(cty.String)},
+									Constraint: schema.List{
+										Elem: schema.LiteralType{Type: cty.String},
 									},
 									IsOptional: true,
 								},
 								"set_attr": {
-									Expr: schema.ExprConstraints{
-										schema.SetExpr{Elem: schema.LiteralTypeOnly(cty.String)},
+									Constraint: schema.Set{
+										Elem: schema.LiteralType{Type: cty.String},
 									},
 									IsOptional: true,
 								},
 								"tuple_attr": {
-									Expr: schema.ExprConstraints{
-										schema.TupleExpr{Elems: []schema.ExprConstraints{
-											schema.LiteralTypeOnly(cty.String),
-											schema.LiteralTypeOnly(cty.Number),
-										}},
+									Constraint: schema.Tuple{
+										Elems: []schema.Constraint{
+											schema.LiteralType{Type: cty.String},
+											schema.LiteralType{Type: cty.Number},
+										},
 									},
 									IsOptional: true,
 								},
 								"obj_attr": {
-									Expr: schema.ExprConstraints{
-										schema.ObjectExpr{
-											Attributes: schema.ObjectExprAttributes{
-												"example": &schema.AttributeSchema{
-													Expr: schema.LiteralTypeOnly(cty.String),
-												},
+									Constraint: schema.Object{
+										Attributes: schema.ObjectAttributes{
+											"example": &schema.AttributeSchema{
+												Constraint: schema.LiteralType{Type: cty.String},
 											},
 										},
 									},
@@ -818,11 +816,11 @@ func TestCollectReferenceTargets_hcl(t *testing.T) {
 						Body: &schema.BodySchema{
 							Attributes: map[string]*schema.AttributeSchema{
 								"attr": {
-									Expr:       schema.LiteralTypeOnly(cty.Number),
+									Constraint: schema.LiteralType{Type: cty.Number},
 									IsOptional: true,
 								},
 								"name": {
-									Expr:       schema.LiteralTypeOnly(cty.String),
+									Constraint: schema.LiteralType{Type: cty.String},
 									IsOptional: true,
 								},
 							},
@@ -894,11 +892,11 @@ func TestCollectReferenceTargets_hcl(t *testing.T) {
 						Body: &schema.BodySchema{
 							Attributes: map[string]*schema.AttributeSchema{
 								"attr": {
-									Expr:       schema.LiteralTypeOnly(cty.Number),
+									Constraint: schema.LiteralType{Type: cty.Number},
 									IsOptional: true,
 								},
 								"name": {
-									Expr:       schema.LiteralTypeOnly(cty.String),
+									Constraint: schema.LiteralType{Type: cty.String},
 									IsOptional: true,
 								},
 							},
@@ -968,11 +966,11 @@ func TestCollectReferenceTargets_hcl(t *testing.T) {
 						Body: &schema.BodySchema{
 							Attributes: map[string]*schema.AttributeSchema{
 								"source_port": {
-									Expr:       schema.LiteralTypeOnly(cty.Number),
+									Constraint: schema.LiteralType{Type: cty.Number},
 									IsOptional: true,
 								},
 								"protocol": {
-									Expr:       schema.LiteralTypeOnly(cty.String),
+									Constraint: schema.LiteralType{Type: cty.String},
 									IsOptional: true,
 								},
 							},
@@ -1080,29 +1078,31 @@ listener "https" {
 						Body: &schema.BodySchema{
 							Attributes: map[string]*schema.AttributeSchema{
 								"attr": {
-									Expr:       schema.LiteralTypeOnly(cty.Number),
+									Constraint: schema.LiteralType{Type: cty.Number},
 									IsOptional: true,
 								},
 								"name": {
-									Expr:       schema.LiteralTypeOnly(cty.String),
+									Constraint: schema.LiteralType{Type: cty.String},
 									IsOptional: true,
 								},
 								"map_attr": {
-									Expr: schema.ExprConstraints{
-										schema.MapExpr{Elem: schema.LiteralTypeOnly(cty.String)},
+									Constraint: schema.Map{
+										Elem: schema.LiteralType{Type: cty.String},
 									},
 									IsOptional: true,
 								},
 								"list_attr": {
-									Expr: schema.ExprConstraints{
-										schema.ListExpr{Elem: schema.LiteralTypeOnly(cty.String)},
+									Constraint: schema.List{
+										Elem: schema.LiteralType{Type: cty.String},
 									},
 									IsOptional: true,
 								},
 								"obj_attr": {
-									Expr: schema.LiteralTypeOnly(cty.Object(map[string]cty.Type{
-										"nestedattr": cty.String,
-									})),
+									Constraint: schema.LiteralType{
+										Type: cty.Object(map[string]cty.Type{
+											"nestedattr": cty.String,
+										}),
+									},
 									IsOptional: true,
 								},
 							},
@@ -1508,25 +1508,25 @@ listener "https" {
 							}): {
 								Attributes: map[string]*schema.AttributeSchema{
 									"attr": {
-										Expr:       schema.LiteralTypeOnly(cty.Number),
+										Constraint: schema.LiteralType{Type: cty.Number},
 										IsOptional: true,
 									},
 									"name": {
-										Expr:       schema.LiteralTypeOnly(cty.String),
+										Constraint: schema.LiteralType{Type: cty.String},
 										IsOptional: true,
 									},
 									"attr_list": {
-										Expr:       schema.LiteralTypeOnly(cty.List(cty.String)),
+										Constraint: schema.LiteralType{Type: cty.List(cty.String)},
 										IsOptional: true,
 									},
 									"attr_map": {
-										Expr:       schema.LiteralTypeOnly(cty.Map(cty.String)),
+										Constraint: schema.LiteralType{Type: cty.Map(cty.String)},
 										IsOptional: true,
 									},
 									"obj": {
-										Expr: schema.LiteralTypeOnly(cty.Object(map[string]cty.Type{
+										Constraint: schema.LiteralType{Type: cty.Object(map[string]cty.Type{
 											"nestedattr": cty.String,
-										})),
+										})},
 										IsOptional: true,
 									},
 								},
@@ -1625,25 +1625,25 @@ provider "test" {
 							}): {
 								Attributes: map[string]*schema.AttributeSchema{
 									"attr": {
-										Expr:       schema.LiteralTypeOnly(cty.Number),
+										Constraint: schema.LiteralType{Type: cty.Number},
 										IsOptional: true,
 									},
 									"name": {
-										Expr:       schema.LiteralTypeOnly(cty.String),
+										Constraint: schema.LiteralType{Type: cty.String},
 										IsOptional: true,
 									},
 									"attr_list": {
-										Expr:       schema.LiteralTypeOnly(cty.List(cty.String)),
+										Constraint: schema.LiteralType{Type: cty.List(cty.String)},
 										IsOptional: true,
 									},
 									"attr_map": {
-										Expr:       schema.LiteralTypeOnly(cty.Map(cty.String)),
+										Constraint: schema.LiteralType{Type: cty.Map(cty.String)},
 										IsOptional: true,
 									},
 									"obj": {
-										Expr: schema.LiteralTypeOnly(cty.Object(map[string]cty.Type{
+										Constraint: schema.LiteralType{Type: cty.Object(map[string]cty.Type{
 											"nestedattr": cty.String,
-										})),
+										})},
 										IsOptional: true,
 									},
 								},
@@ -2028,11 +2028,11 @@ provider "test" {
 									Body: &schema.BodySchema{
 										Attributes: map[string]*schema.AttributeSchema{
 											"protocol": {
-												Expr:       schema.LiteralTypeOnly(cty.String),
+												Constraint: schema.LiteralType{Type: cty.String},
 												IsOptional: true,
 											},
 											"port": {
-												Expr:       schema.LiteralTypeOnly(cty.Number),
+												Constraint: schema.LiteralType{Type: cty.Number},
 												IsOptional: true,
 											},
 										},
@@ -2041,7 +2041,7 @@ provider "test" {
 							},
 							Attributes: map[string]*schema.AttributeSchema{
 								"attr": {
-									Expr:       schema.LiteralTypeOnly(cty.Number),
+									Constraint: schema.LiteralType{Type: cty.Number},
 									IsOptional: true,
 								},
 							},
@@ -2269,11 +2269,11 @@ provider "test" {
 									Body: &schema.BodySchema{
 										Attributes: map[string]*schema.AttributeSchema{
 											"protocol": {
-												Expr:       schema.LiteralTypeOnly(cty.String),
+												Constraint: schema.LiteralType{Type: cty.String},
 												IsOptional: true,
 											},
 											"port": {
-												Expr:       schema.LiteralTypeOnly(cty.Number),
+												Constraint: schema.LiteralType{Type: cty.Number},
 												IsOptional: true,
 											},
 										},
@@ -2282,7 +2282,7 @@ provider "test" {
 							},
 							Attributes: map[string]*schema.AttributeSchema{
 								"attr": {
-									Expr:       schema.LiteralTypeOnly(cty.Number),
+									Constraint: schema.LiteralType{Type: cty.Number},
 									IsOptional: true,
 								},
 							},
@@ -2658,11 +2658,11 @@ provider "test" {
 									Body: &schema.BodySchema{
 										Attributes: map[string]*schema.AttributeSchema{
 											"protocol": {
-												Expr:       schema.LiteralTypeOnly(cty.String),
+												Constraint: schema.LiteralType{Type: cty.String},
 												IsOptional: true,
 											},
 											"port": {
-												Expr:       schema.LiteralTypeOnly(cty.Number),
+												Constraint: schema.LiteralType{Type: cty.Number},
 												IsOptional: true,
 											},
 										},
@@ -2671,7 +2671,7 @@ provider "test" {
 							},
 							Attributes: map[string]*schema.AttributeSchema{
 								"attr": {
-									Expr:       schema.LiteralTypeOnly(cty.Number),
+									Constraint: schema.LiteralType{Type: cty.Number},
 									IsOptional: true,
 								},
 							},
@@ -2820,11 +2820,11 @@ provider "test" {
 									Body: &schema.BodySchema{
 										Attributes: map[string]*schema.AttributeSchema{
 											"protocol": {
-												Expr:       schema.LiteralTypeOnly(cty.String),
+												Constraint: schema.LiteralType{Type: cty.String},
 												IsOptional: true,
 											},
 											"port": {
-												Expr:       schema.LiteralTypeOnly(cty.Number),
+												Constraint: schema.LiteralType{Type: cty.Number},
 												IsOptional: true,
 											},
 										},
@@ -2833,7 +2833,7 @@ provider "test" {
 							},
 							Attributes: map[string]*schema.AttributeSchema{
 								"attr": {
-									Expr:       schema.LiteralTypeOnly(cty.Number),
+									Constraint: schema.LiteralType{Type: cty.Number},
 									IsOptional: true,
 								},
 							},
@@ -3212,11 +3212,11 @@ provider "test" {
 									Body: &schema.BodySchema{
 										Attributes: map[string]*schema.AttributeSchema{
 											"protocol": {
-												Expr:       schema.LiteralTypeOnly(cty.String),
+												Constraint: schema.LiteralType{Type: cty.String},
 												IsOptional: true,
 											},
 											"port": {
-												Expr:       schema.LiteralTypeOnly(cty.Number),
+												Constraint: schema.LiteralType{Type: cty.Number},
 												IsOptional: true,
 											},
 										},
@@ -3225,7 +3225,7 @@ provider "test" {
 							},
 							Attributes: map[string]*schema.AttributeSchema{
 								"attr": {
-									Expr:       schema.LiteralTypeOnly(cty.Number),
+									Constraint: schema.LiteralType{Type: cty.Number},
 									IsOptional: true,
 								},
 							},
@@ -3569,11 +3569,9 @@ provider "test" {
 				Attributes: map[string]*schema.AttributeSchema{
 					"testattr": {
 						IsOptional: true,
-						Expr: schema.ExprConstraints{
-							schema.TraversalExpr{
-								Address: &schema.TraversalAddrSchema{
-									ScopeId: lang.ScopeId("specialthing"),
-								},
+						Constraint: schema.Reference{
+							Address: &schema.ReferenceAddrSchema{
+								ScopeId: lang.ScopeId("specialthing"),
 							},
 						},
 					},
@@ -3625,7 +3623,7 @@ provider "test" {
 							Attributes: map[string]*schema.AttributeSchema{
 								"alias": {
 									IsOptional: true,
-									Expr:       schema.LiteralTypeOnly(cty.String),
+									Constraint: schema.LiteralType{Type: cty.String},
 								},
 							},
 						},
@@ -3752,9 +3750,7 @@ provider "test" {
 							Attributes: map[string]*schema.AttributeSchema{
 								"type": {
 									IsOptional: true,
-									Expr: schema.ExprConstraints{
-										schema.TypeDeclarationExpr{},
-									},
+									Constraint: schema.TypeDeclaration{},
 								},
 							},
 						},
@@ -3821,13 +3817,11 @@ provider "test" {
 							Attributes: map[string]*schema.AttributeSchema{
 								"type": {
 									IsOptional: true,
-									Expr: schema.ExprConstraints{
-										schema.TypeDeclarationExpr{},
-									},
+									Constraint: schema.TypeDeclaration{},
 								},
 								"default": {
 									IsOptional: true,
-									Expr:       schema.LiteralTypeOnly(cty.DynamicPseudoType),
+									Constraint: schema.LiteralType{Type: cty.DynamicPseudoType},
 								},
 							},
 						},
@@ -3895,13 +3889,11 @@ provider "test" {
 							Attributes: map[string]*schema.AttributeSchema{
 								"type": {
 									IsOptional: true,
-									Expr: schema.ExprConstraints{
-										schema.TypeDeclarationExpr{},
-									},
+									Constraint: schema.TypeDeclaration{},
 								},
 								"default": {
 									IsOptional: true,
-									Expr:       schema.LiteralTypeOnly(cty.DynamicPseudoType),
+									Constraint: schema.LiteralType{Type: cty.DynamicPseudoType},
 								},
 							},
 						},
@@ -3969,13 +3961,11 @@ provider "test" {
 							Attributes: map[string]*schema.AttributeSchema{
 								"type": {
 									IsOptional: true,
-									Expr: schema.ExprConstraints{
-										schema.TypeDeclarationExpr{},
-									},
+									Constraint: schema.TypeDeclaration{},
 								},
 								"default": {
 									IsOptional: true,
-									Expr:       schema.LiteralTypeOnly(cty.DynamicPseudoType),
+									Constraint: schema.LiteralType{Type: cty.DynamicPseudoType},
 								},
 							},
 						},
@@ -4045,13 +4035,11 @@ provider "test" {
 							Attributes: map[string]*schema.AttributeSchema{
 								"type": {
 									IsOptional: true,
-									Expr: schema.ExprConstraints{
-										schema.TypeDeclarationExpr{},
-									},
+									Constraint: schema.TypeDeclaration{},
 								},
 								"default": {
 									IsOptional: true,
-									Expr:       schema.LiteralTypeOnly(cty.DynamicPseudoType),
+									Constraint: schema.LiteralType{Type: cty.DynamicPseudoType},
 								},
 							},
 						},
@@ -4227,7 +4215,7 @@ provider "test" {
 							}): {
 								Attributes: map[string]*schema.AttributeSchema{
 									"attr": {
-										Expr:       schema.LiteralTypeOnly(cty.String),
+										Constraint: schema.LiteralType{Type: cty.String},
 										IsOptional: true,
 									},
 								},
@@ -4334,9 +4322,9 @@ module "different" {
 									ScopeId:    lang.ScopeId("local"),
 									AsExprType: true,
 								},
-								Expr: schema.ExprConstraints{
-									schema.TraversalExpr{OfType: cty.DynamicPseudoType},
-									schema.LiteralTypeExpr{Type: cty.DynamicPseudoType},
+								Constraint: schema.OneOf{
+									schema.Reference{OfType: cty.DynamicPseudoType},
+									schema.LiteralType{Type: cty.DynamicPseudoType},
 								},
 							},
 						},
@@ -4487,6 +4475,81 @@ module "different" {
 							Addr: lang.Address{
 								lang.RootStep{Name: "local"},
 								lang.AttrStep{Name: "top_obj"},
+								lang.AttrStep{Name: "fourth"},
+							},
+							Type: cty.Object(map[string]cty.Type{
+								"attr": cty.String,
+							}),
+							ScopeId: lang.ScopeId("local"),
+							RangePtr: &hcl.Range{
+								Filename: "test.tf",
+								Start: hcl.Pos{
+									Line:   12,
+									Column: 5,
+									Byte:   145,
+								},
+								End: hcl.Pos{
+									Line:   14,
+									Column: 6,
+									Byte:   180,
+								},
+							},
+							DefRangePtr: &hcl.Range{
+								Filename: "test.tf",
+								Start: hcl.Pos{
+									Line:   12,
+									Column: 5,
+									Byte:   145,
+								},
+								End: hcl.Pos{
+									Line:   12,
+									Column: 11,
+									Byte:   151,
+								},
+							},
+							NestedTargets: reference.Targets{
+								{
+									Addr: lang.Address{
+										lang.RootStep{Name: "local"},
+										lang.AttrStep{Name: "top_obj"},
+										lang.AttrStep{Name: "fourth"},
+										lang.AttrStep{Name: "attr"},
+									},
+									Type:    cty.String,
+									ScopeId: lang.ScopeId("local"),
+									RangePtr: &hcl.Range{
+										Filename: "test.tf",
+										Start: hcl.Pos{
+											Line:   13,
+											Column: 7,
+											Byte:   162,
+										},
+										End: hcl.Pos{
+											Line:   13,
+											Column: 19,
+											Byte:   174,
+										},
+									},
+									DefRangePtr: &hcl.Range{
+										Filename: "test.tf",
+										Start: hcl.Pos{
+											Line:   13,
+											Column: 7,
+											Byte:   162,
+										},
+										End: hcl.Pos{
+											Line:   13,
+											Column: 11,
+											Byte:   166,
+										},
+									},
+								},
+							},
+						},
+						{
+							Addr: lang.Address{
+								lang.RootStep{Name: "local"},
+								lang.AttrStep{Name: "top_obj"},
 								lang.AttrStep{Name: "second"},
 							},
 							Type: cty.Object(map[string]cty.Type{
@@ -4628,81 +4691,6 @@ module "different" {
 											Line:   10,
 											Column: 11,
 											Byte:   126,
-										},
-									},
-								},
-							},
-						},
-						{
-							Addr: lang.Address{
-								lang.RootStep{Name: "local"},
-								lang.AttrStep{Name: "top_obj"},
-								lang.AttrStep{Name: "fourth"},
-							},
-							Type: cty.Object(map[string]cty.Type{
-								"attr": cty.String,
-							}),
-							ScopeId: lang.ScopeId("local"),
-							RangePtr: &hcl.Range{
-								Filename: "test.tf",
-								Start: hcl.Pos{
-									Line:   12,
-									Column: 5,
-									Byte:   145,
-								},
-								End: hcl.Pos{
-									Line:   14,
-									Column: 6,
-									Byte:   180,
-								},
-							},
-							DefRangePtr: &hcl.Range{
-								Filename: "test.tf",
-								Start: hcl.Pos{
-									Line:   12,
-									Column: 5,
-									Byte:   145,
-								},
-								End: hcl.Pos{
-									Line:   12,
-									Column: 11,
-									Byte:   151,
-								},
-							},
-							NestedTargets: reference.Targets{
-								{
-									Addr: lang.Address{
-										lang.RootStep{Name: "local"},
-										lang.AttrStep{Name: "top_obj"},
-										lang.AttrStep{Name: "fourth"},
-										lang.AttrStep{Name: "attr"},
-									},
-									Type:    cty.String,
-									ScopeId: lang.ScopeId("local"),
-									RangePtr: &hcl.Range{
-										Filename: "test.tf",
-										Start: hcl.Pos{
-											Line:   13,
-											Column: 7,
-											Byte:   162,
-										},
-										End: hcl.Pos{
-											Line:   13,
-											Column: 19,
-											Byte:   174,
-										},
-									},
-									DefRangePtr: &hcl.Range{
-										Filename: "test.tf",
-										Start: hcl.Pos{
-											Line:   13,
-											Column: 7,
-											Byte:   162,
-										},
-										End: hcl.Pos{
-											Line:   13,
-											Column: 11,
-											Byte:   166,
 										},
 									},
 								},

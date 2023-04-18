@@ -31,12 +31,14 @@ func TestLegacyDecoder_HoverAtPos_expressions(t *testing.T) {
 		{
 			"string as type",
 			map[string]*schema.AttributeSchema{
-				"str_attr": {Expr: schema.LiteralTypeOnly(cty.String)},
+				"str_attr": {
+					Constraint: schema.LiteralType{Type: cty.String},
+				},
 			},
 			`str_attr = "test"`,
 			hcl.Pos{Line: 1, Column: 15, Byte: 14},
 			&lang.HoverData{
-				Content: lang.Markdown("`\"test\"` _string_"),
+				Content: lang.Markdown("_string_"),
 				Range: hcl.Range{
 					Filename: "test.tf",
 					Start: hcl.Pos{
@@ -56,7 +58,9 @@ func TestLegacyDecoder_HoverAtPos_expressions(t *testing.T) {
 		{
 			"single-line heredoc string as type",
 			map[string]*schema.AttributeSchema{
-				"str_attr": {Expr: schema.LiteralTypeOnly(cty.String)},
+				"str_attr": {
+					Constraint: schema.LiteralType{Type: cty.String},
+				},
 			},
 			`str_attr = <<EOT
 hello world
@@ -64,9 +68,7 @@ EOT
 `,
 			hcl.Pos{Line: 2, Column: 3, Byte: 19},
 			&lang.HoverData{
-				Content: lang.Markdown("```\n" +
-					"hello world\n```\n" +
-					`_string_`),
+				Content: lang.Markdown("_string_"),
 				Range: hcl.Range{
 					Filename: "test.tf",
 					Start: hcl.Pos{
@@ -86,7 +88,9 @@ EOT
 		{
 			"multi-line heredoc string as type",
 			map[string]*schema.AttributeSchema{
-				"str_attr": {Expr: schema.LiteralTypeOnly(cty.String)},
+				"str_attr": {
+					Constraint: schema.LiteralType{Type: cty.String},
+				},
 			},
 			`str_attr = <<EOT
 hello
@@ -95,9 +99,7 @@ EOT
 `,
 			hcl.Pos{Line: 2, Column: 3, Byte: 19},
 			&lang.HoverData{
-				Content: lang.Markdown("```\n" +
-					"hello\nworld\n```\n" +
-					`_string_`),
+				Content: lang.Markdown("_string_"),
 				Range: hcl.Range{
 					Filename: "test.tf",
 					Start: hcl.Pos{
@@ -117,12 +119,14 @@ EOT
 		{
 			"integer as type",
 			map[string]*schema.AttributeSchema{
-				"int_attr": {Expr: schema.LiteralTypeOnly(cty.Number)},
+				"int_attr": {
+					Constraint: schema.LiteralType{Type: cty.Number},
+				},
 			},
 			`int_attr = 4222524`,
 			hcl.Pos{Line: 1, Column: 15, Byte: 14},
 			&lang.HoverData{
-				Content: lang.Markdown("`4222524` _number_"),
+				Content: lang.Markdown("_number_"),
 				Range: hcl.Range{
 					Filename: "test.tf",
 					Start: hcl.Pos{
@@ -142,12 +146,14 @@ EOT
 		{
 			"float as type",
 			map[string]*schema.AttributeSchema{
-				"float_attr": {Expr: schema.LiteralTypeOnly(cty.Number)},
+				"float_attr": {
+					Constraint: schema.LiteralType{Type: cty.Number},
+				},
 			},
 			`float_attr = 42.3212`,
 			hcl.Pos{Line: 1, Column: 16, Byte: 15},
 			&lang.HoverData{
-				Content: lang.Markdown("`42.3212` _number_"),
+				Content: lang.Markdown("_number_"),
 				Range: hcl.Range{
 					Filename: "test.tf",
 					Start: hcl.Pos{
@@ -167,24 +173,26 @@ EOT
 		{
 			"incompatible type",
 			map[string]*schema.AttributeSchema{
-				"not_str": {Expr: schema.LiteralTypeOnly(cty.Bool)},
+				"not_str": {
+					Constraint: schema.LiteralType{Type: cty.Bool},
+				},
 			},
 			`not_str = "blah"`,
 			hcl.Pos{Line: 1, Column: 14, Byte: 13},
 			nil,
-			&ConstraintMismatch{},
+			nil,
 		},
 		{
 			"string as value",
 			map[string]*schema.AttributeSchema{
-				"lit1": {Expr: schema.ExprConstraints{
-					schema.LegacyLiteralValue{Val: cty.StringVal("foo")},
-				}},
+				"lit1": {
+					Constraint: schema.LiteralValue{Value: cty.StringVal("foo")},
+				},
 			},
 			`lit1 = "foo"`,
 			hcl.Pos{Line: 1, Column: 10, Byte: 9},
 			&lang.HoverData{
-				Content: lang.Markdown("`\"foo\"` _string_"),
+				Content: lang.Markdown("_string_"),
 				Range: hcl.Range{
 					Filename: "test.tf",
 					Start: hcl.Pos{
@@ -204,28 +212,32 @@ EOT
 		{
 			"mismatching literal value",
 			map[string]*schema.AttributeSchema{
-				"lit2": {Expr: schema.ExprConstraints{
-					schema.LegacyLiteralValue{Val: cty.StringVal("bar")},
-				}},
+				"lit2": {
+					Constraint: schema.LiteralValue{Value: cty.StringVal("bar")},
+				},
 			},
 			`lit2 = "baz"`,
 			hcl.Pos{Line: 1, Column: 10, Byte: 9},
 			nil,
-			&ConstraintMismatch{},
+			nil,
 		},
 		{
 			"object as type",
 			map[string]*schema.AttributeSchema{
-				"litobj": {Expr: schema.LiteralTypeOnly(cty.Object(map[string]cty.Type{
-					"source":     cty.String,
-					"bool":       cty.Bool,
-					"notbool":    cty.String,
-					"nested_map": cty.Map(cty.String),
-					"nested_obj": cty.Object(map[string]cty.Type{
-						"one": cty.String,
-						"two": cty.Number,
-					}),
-				}))},
+				"litobj": {
+					Constraint: schema.LiteralType{
+						Type: cty.Object(map[string]cty.Type{
+							"source":     cty.String,
+							"bool":       cty.Bool,
+							"notbool":    cty.String,
+							"nested_map": cty.Map(cty.String),
+							"nested_obj": cty.Object(map[string]cty.Type{
+								"one": cty.String,
+								"two": cty.Number,
+							}),
+						}),
+					},
+				},
 			},
 			`litobj = {
     "source" = "blah"
@@ -238,7 +250,7 @@ EOT
 				Content: lang.Markdown("```" + `
 {
   bool = bool
-  nested_map = map of string
+  nested_map = map(string)
   nested_obj = {
     one = string
     two = number
@@ -267,13 +279,17 @@ _object_`),
 		{
 			"object as type with unknown key",
 			map[string]*schema.AttributeSchema{
-				"litobj": {Expr: schema.LiteralTypeOnly(cty.Object(map[string]cty.Type{
-					"source":     cty.String,
-					"bool":       cty.Bool,
-					"notbool":    cty.String,
-					"nested_map": cty.Map(cty.String),
-					"nested_obj": cty.Object(map[string]cty.Type{}),
-				}))},
+				"litobj": {
+					Constraint: schema.LiteralType{
+						Type: cty.Object(map[string]cty.Type{
+							"source":     cty.String,
+							"bool":       cty.Bool,
+							"notbool":    cty.String,
+							"nested_map": cty.Map(cty.String),
+							"nested_obj": cty.Object(map[string]cty.Type{}),
+						}),
+					},
+				},
 			},
 			`litobj = {
     "${var.src}" = "blah"
@@ -287,8 +303,8 @@ _object_`),
 				Content: lang.Markdown("```" + `
 {
   bool = bool
-  nested_map = map of string
-  nested_obj = object
+  nested_map = map(string)
+  nested_obj = {}
   notbool = string
   source = string
 }
@@ -313,31 +329,29 @@ _object_`),
 		{
 			"list of object expressions",
 			map[string]*schema.AttributeSchema{
-				"objects": {Expr: schema.ExprConstraints{
-					schema.ListExpr{
-						Elem: schema.ExprConstraints{
-							schema.ObjectExpr{
-								Attributes: schema.ObjectExprAttributes{
-									"source": &schema.AttributeSchema{
-										Expr: schema.LiteralTypeOnly(cty.String),
-									},
-									"bool": &schema.AttributeSchema{
-										Expr: schema.LiteralTypeOnly(cty.Bool),
-									},
-									"notbool": &schema.AttributeSchema{
-										Expr: schema.LiteralTypeOnly(cty.String),
-									},
-									"nested_map": &schema.AttributeSchema{
-										Expr: schema.LiteralTypeOnly(cty.Map(cty.String)),
-									},
-									"nested_obj": &schema.AttributeSchema{
-										Expr: schema.LiteralTypeOnly(cty.Object(map[string]cty.Type{})),
-									},
+				"objects": {
+					Constraint: schema.List{
+						Elem: schema.Object{
+							Attributes: schema.ObjectAttributes{
+								"source": &schema.AttributeSchema{
+									Constraint: schema.LiteralType{Type: cty.String},
+								},
+								"bool": &schema.AttributeSchema{
+									Constraint: schema.LiteralType{Type: cty.Bool},
+								},
+								"notbool": &schema.AttributeSchema{
+									Constraint: schema.LiteralType{Type: cty.String},
+								},
+								"nested_map": &schema.AttributeSchema{
+									Constraint: schema.LiteralType{Type: cty.Map(cty.String)},
+								},
+								"nested_obj": &schema.AttributeSchema{
+									Constraint: schema.LiteralType{Type: cty.Object(map[string]cty.Type{})},
 								},
 							},
 						},
 					},
-				}},
+				},
 			},
 			`objects = [
     {
@@ -369,31 +383,29 @@ _object_`),
 		{
 			"list of object expressions element",
 			map[string]*schema.AttributeSchema{
-				"objects": {Expr: schema.ExprConstraints{
-					schema.ListExpr{
-						Elem: schema.ExprConstraints{
-							schema.ObjectExpr{
-								Attributes: schema.ObjectExprAttributes{
-									"source": &schema.AttributeSchema{
-										Expr: schema.LiteralTypeOnly(cty.String),
-									},
-									"bool": &schema.AttributeSchema{
-										Expr: schema.LiteralTypeOnly(cty.Bool),
-									},
-									"notbool": &schema.AttributeSchema{
-										Expr: schema.LiteralTypeOnly(cty.String),
-									},
-									"nested_map": &schema.AttributeSchema{
-										Expr: schema.LiteralTypeOnly(cty.Map(cty.String)),
-									},
-									"nested_obj": &schema.AttributeSchema{
-										Expr: schema.LiteralTypeOnly(cty.Object(map[string]cty.Type{})),
-									},
+				"objects": {
+					Constraint: schema.List{
+						Elem: schema.Object{
+							Attributes: schema.ObjectAttributes{
+								"source": &schema.AttributeSchema{
+									Constraint: schema.LiteralType{Type: cty.String},
+								},
+								"bool": &schema.AttributeSchema{
+									Constraint: schema.LiteralType{Type: cty.Bool},
+								},
+								"notbool": &schema.AttributeSchema{
+									Constraint: schema.LiteralType{Type: cty.String},
+								},
+								"nested_map": &schema.AttributeSchema{
+									Constraint: schema.LiteralType{Type: cty.Map(cty.String)},
+								},
+								"nested_obj": &schema.AttributeSchema{
+									Constraint: schema.LiteralType{Type: cty.Object(map[string]cty.Type{})},
 								},
 							},
 						},
 					},
-				}},
+				},
 			},
 			`objects = [
     {
@@ -425,35 +437,33 @@ _object_`),
 		{
 			"nested object expression",
 			map[string]*schema.AttributeSchema{
-				"object": {Expr: schema.ExprConstraints{
-					schema.ObjectExpr{
-						Attributes: schema.ObjectExprAttributes{
+				"object": {
+					Constraint: schema.Object{
+						Attributes: schema.ObjectAttributes{
 							"nested": &schema.AttributeSchema{
-								Expr: schema.ExprConstraints{
-									schema.ObjectExpr{
-										Attributes: schema.ObjectExprAttributes{
-											"source": &schema.AttributeSchema{
-												Expr: schema.LiteralTypeOnly(cty.String),
-											},
-											"bool": &schema.AttributeSchema{
-												Expr: schema.LiteralTypeOnly(cty.Bool),
-											},
-											"notbool": &schema.AttributeSchema{
-												Expr: schema.LiteralTypeOnly(cty.String),
-											},
-											"nested_map": &schema.AttributeSchema{
-												Expr: schema.LiteralTypeOnly(cty.Map(cty.String)),
-											},
-											"nested_obj": &schema.AttributeSchema{
-												Expr: schema.LiteralTypeOnly(cty.Object(map[string]cty.Type{})),
-											},
+								Constraint: schema.Object{
+									Attributes: schema.ObjectAttributes{
+										"source": &schema.AttributeSchema{
+											Constraint: schema.LiteralType{Type: cty.String},
+										},
+										"bool": &schema.AttributeSchema{
+											Constraint: schema.LiteralType{Type: cty.Bool},
+										},
+										"notbool": &schema.AttributeSchema{
+											Constraint: schema.LiteralType{Type: cty.String},
+										},
+										"nested_map": &schema.AttributeSchema{
+											Constraint: schema.LiteralType{Type: cty.Map(cty.String)},
+										},
+										"nested_obj": &schema.AttributeSchema{
+											Constraint: schema.LiteralType{Type: cty.Object(map[string]cty.Type{})},
 										},
 									},
 								},
 							},
 						},
 					},
-				}},
+				},
 			},
 			`object = {
     nested = {
@@ -469,8 +479,8 @@ _object_`),
 {
   nested = {
     bool = bool
-    nested_map = map of string
-    nested_obj = object
+    nested_map = map(string)
+    nested_obj = {}
     notbool = string
     source = string
   }
@@ -495,35 +505,33 @@ _object_`),
 		{
 			"nested object expression inside",
 			map[string]*schema.AttributeSchema{
-				"object": {Expr: schema.ExprConstraints{
-					schema.ObjectExpr{
-						Attributes: schema.ObjectExprAttributes{
+				"object": {
+					Constraint: schema.Object{
+						Attributes: schema.ObjectAttributes{
 							"nested": &schema.AttributeSchema{
-								Expr: schema.ExprConstraints{
-									schema.ObjectExpr{
-										Attributes: schema.ObjectExprAttributes{
-											"source": &schema.AttributeSchema{
-												Expr: schema.LiteralTypeOnly(cty.String),
-											},
-											"bool": &schema.AttributeSchema{
-												Expr: schema.LiteralTypeOnly(cty.Bool),
-											},
-											"notbool": &schema.AttributeSchema{
-												Expr: schema.LiteralTypeOnly(cty.String),
-											},
-											"nested_map": &schema.AttributeSchema{
-												Expr: schema.LiteralTypeOnly(cty.Map(cty.String)),
-											},
-											"nested_obj": &schema.AttributeSchema{
-												Expr: schema.LiteralTypeOnly(cty.Object(map[string]cty.Type{})),
-											},
+								Constraint: schema.Object{
+									Attributes: schema.ObjectAttributes{
+										"source": &schema.AttributeSchema{
+											Constraint: schema.LiteralType{Type: cty.String},
+										},
+										"bool": &schema.AttributeSchema{
+											Constraint: schema.LiteralType{Type: cty.Bool},
+										},
+										"notbool": &schema.AttributeSchema{
+											Constraint: schema.LiteralType{Type: cty.String},
+										},
+										"nested_map": &schema.AttributeSchema{
+											Constraint: schema.LiteralType{Type: cty.Map(cty.String)},
+										},
+										"nested_obj": &schema.AttributeSchema{
+											Constraint: schema.LiteralType{Type: cty.Object(map[string]cty.Type{})},
 										},
 									},
 								},
 							},
 						},
 					},
-				}},
+				},
 			},
 			`object = {
     nested = {
@@ -555,27 +563,27 @@ _object_`),
 		{
 			"object as expression",
 			map[string]*schema.AttributeSchema{
-				"obj": {Expr: schema.ExprConstraints{
-					schema.ObjectExpr{
-						Attributes: schema.ObjectExprAttributes{
+				"obj": {
+					Constraint: schema.Object{
+						Attributes: schema.ObjectAttributes{
 							"source": &schema.AttributeSchema{
-								Expr: schema.LiteralTypeOnly(cty.String),
+								Constraint: schema.LiteralType{Type: cty.String},
 							},
 							"bool": &schema.AttributeSchema{
-								Expr: schema.LiteralTypeOnly(cty.Bool),
+								Constraint: schema.LiteralType{Type: cty.Bool},
 							},
 							"notbool": &schema.AttributeSchema{
-								Expr: schema.LiteralTypeOnly(cty.String),
+								Constraint: schema.LiteralType{Type: cty.String},
 							},
 							"nested_map": &schema.AttributeSchema{
-								Expr: schema.LiteralTypeOnly(cty.Map(cty.String)),
+								Constraint: schema.LiteralType{Type: cty.Map(cty.String)},
 							},
 							"nested_obj": &schema.AttributeSchema{
-								Expr: schema.LiteralTypeOnly(cty.Object(map[string]cty.Type{})),
+								Constraint: schema.LiteralType{Type: cty.Object(map[string]cty.Type{})},
 							},
 						},
 					},
-				}},
+				},
 			},
 			`obj = {
     source = "blah"
@@ -605,27 +613,27 @@ _object_`),
 		{
 			"object as expression with unknown key",
 			map[string]*schema.AttributeSchema{
-				"obj": {Expr: schema.ExprConstraints{
-					schema.ObjectExpr{
-						Attributes: schema.ObjectExprAttributes{
+				"obj": {
+					Constraint: schema.Object{
+						Attributes: schema.ObjectAttributes{
 							"source": &schema.AttributeSchema{
-								Expr: schema.LiteralTypeOnly(cty.String),
+								Constraint: schema.LiteralType{Type: cty.String},
 							},
 							"bool": &schema.AttributeSchema{
-								Expr: schema.LiteralTypeOnly(cty.Bool),
+								Constraint: schema.LiteralType{Type: cty.Bool},
 							},
 							"notbool": &schema.AttributeSchema{
-								Expr: schema.LiteralTypeOnly(cty.String),
+								Constraint: schema.LiteralType{Type: cty.String},
 							},
 							"nested_map": &schema.AttributeSchema{
-								Expr: schema.LiteralTypeOnly(cty.Map(cty.String)),
+								Constraint: schema.LiteralType{Type: cty.Map(cty.String)},
 							},
 							"nested_obj": &schema.AttributeSchema{
-								Expr: schema.LiteralTypeOnly(cty.Object(map[string]cty.Type{})),
+								Constraint: schema.LiteralType{Type: cty.Object(map[string]cty.Type{})},
 							},
 						},
 					},
-				}},
+				},
 			},
 			`obj = {
     var.src = "blah"
@@ -656,27 +664,27 @@ _object_`),
 		{
 			"object as expression - expression",
 			map[string]*schema.AttributeSchema{
-				"obj": {Expr: schema.ExprConstraints{
-					schema.ObjectExpr{
-						Attributes: schema.ObjectExprAttributes{
+				"obj": {
+					Constraint: schema.Object{
+						Attributes: schema.ObjectAttributes{
 							"source": &schema.AttributeSchema{
-								Expr: schema.LiteralTypeOnly(cty.String),
+								Constraint: schema.LiteralType{Type: cty.String},
 							},
 							"bool": &schema.AttributeSchema{
-								Expr: schema.LiteralTypeOnly(cty.Bool),
+								Constraint: schema.LiteralType{Type: cty.Bool},
 							},
 							"notbool": &schema.AttributeSchema{
-								Expr: schema.LiteralTypeOnly(cty.String),
+								Constraint: schema.LiteralType{Type: cty.String},
 							},
 							"nested_map": &schema.AttributeSchema{
-								Expr: schema.LiteralTypeOnly(cty.Map(cty.String)),
+								Constraint: schema.LiteralType{Type: cty.Map(cty.String)},
 							},
 							"nested_obj": &schema.AttributeSchema{
-								Expr: schema.LiteralTypeOnly(cty.Object(map[string]cty.Type{})),
+								Constraint: schema.LiteralType{Type: cty.Object(map[string]cty.Type{})},
 							},
 						},
 					},
-				}},
+				},
 			},
 			`obj = {
     source = "blah"
@@ -689,8 +697,8 @@ _object_`),
 				Content: lang.Markdown("```" + `
 {
   bool = bool
-  nested_map = map of string
-  nested_obj = object
+  nested_map = map(string)
+  nested_obj = {}
   notbool = string
   source = string
 }
@@ -715,27 +723,27 @@ _object_`),
 		{
 			"object as expression - attribute",
 			map[string]*schema.AttributeSchema{
-				"obj": {Expr: schema.ExprConstraints{
-					schema.ObjectExpr{
-						Attributes: schema.ObjectExprAttributes{
+				"obj": {
+					Constraint: schema.Object{
+						Attributes: schema.ObjectAttributes{
 							"source": &schema.AttributeSchema{
-								Expr: schema.LiteralTypeOnly(cty.String),
+								Constraint: schema.LiteralType{Type: cty.String},
 							},
 							"bool": &schema.AttributeSchema{
-								Expr: schema.LiteralTypeOnly(cty.Bool),
+								Constraint: schema.LiteralType{Type: cty.Bool},
 							},
 							"notbool": &schema.AttributeSchema{
-								Expr: schema.LiteralTypeOnly(cty.String),
+								Constraint: schema.LiteralType{Type: cty.String},
 							},
 							"nested_map": &schema.AttributeSchema{
-								Expr: schema.LiteralTypeOnly(cty.Map(cty.String)),
+								Constraint: schema.LiteralType{Type: cty.Map(cty.String)},
 							},
 							"nested_obj": &schema.AttributeSchema{
-								Expr: schema.LiteralTypeOnly(cty.Object(map[string]cty.Type{})),
+								Constraint: schema.LiteralType{Type: cty.Object(map[string]cty.Type{})},
 							},
 						},
 					},
-				}},
+				},
 			},
 			`obj = {
     source = "blah"
@@ -765,7 +773,9 @@ _object_`),
 		{
 			"map as type",
 			map[string]*schema.AttributeSchema{
-				"nummap": {Expr: schema.LiteralTypeOnly(cty.Map(cty.Number))},
+				"nummap": {
+					Constraint: schema.LiteralType{Type: cty.Map(cty.Number)},
+				},
 			},
 			`nummap = {
   first = 12
@@ -793,23 +803,22 @@ _object_`),
 		{
 			"map as value",
 			map[string]*schema.AttributeSchema{
-				"nummap": {Expr: schema.ExprConstraints{
-					schema.LegacyLiteralValue{
-						Val: cty.MapVal(map[string]cty.Value{
+				"nummap": {
+					Constraint: schema.LiteralValue{
+						Value: cty.MapVal(map[string]cty.Value{
 							"first":  cty.NumberIntVal(12),
 							"second": cty.NumberIntVal(24),
 						}),
 					},
-				}},
+				},
 			},
 			`nummap = {
   "first" = 12
   "second" = 24
 }`,
-			hcl.Pos{Line: 2, Column: 9, Byte: 19},
+			hcl.Pos{Line: 1, Column: 10, Byte: 9},
 			&lang.HoverData{
-				Content: lang.Markdown("```\n" +
-					"{\n  \"first\" = 12\n  \"second\" = 24\n}\n```\n_map of number_"),
+				Content: lang.Markdown("_map of number_"),
 				Range: hcl.Range{
 					Filename: "test.tf",
 					Start: hcl.Pos{
@@ -829,10 +838,12 @@ _object_`),
 		{
 			"list as type",
 			map[string]*schema.AttributeSchema{
-				"mylist": {Expr: schema.LiteralTypeOnly(cty.List(cty.String))},
+				"mylist": {
+					Constraint: schema.LiteralType{Type: cty.List(cty.String)},
+				},
 			},
 			`mylist = [ "one", "two" ]`,
-			hcl.Pos{Line: 1, Column: 16, Byte: 15},
+			hcl.Pos{Line: 1, Column: 10, Byte: 9},
 			&lang.HoverData{
 				Content: lang.Markdown("_list of string_"),
 				Range: hcl.Range{
@@ -854,7 +865,9 @@ _object_`),
 		{
 			"set as type",
 			map[string]*schema.AttributeSchema{
-				"myset": {Expr: schema.LiteralTypeOnly(cty.Set(cty.String))},
+				"myset": {
+					Constraint: schema.LiteralType{Type: cty.Set(cty.String)},
+				},
 			},
 			`myset = [ "aa", "bb", "cc" ]`,
 			hcl.Pos{Line: 1, Column: 16, Byte: 15},
@@ -879,11 +892,11 @@ _object_`),
 		{
 			"matching keyword",
 			map[string]*schema.AttributeSchema{
-				"keyword": {Expr: schema.ExprConstraints{
-					schema.KeywordExpr{
+				"keyword": {
+					Constraint: schema.Keyword{
 						Keyword: "foobar",
 					},
-				}},
+				},
 			},
 			`keyword = foobar`,
 			hcl.Pos{Line: 1, Column: 14, Byte: 13},
@@ -908,12 +921,12 @@ _object_`),
 		{
 			"map expression",
 			map[string]*schema.AttributeSchema{
-				"mapexpr": {Expr: schema.ExprConstraints{
-					schema.MapExpr{
+				"mapexpr": {
+					Constraint: schema.Map{
 						Name: "special map",
-						Elem: schema.LiteralTypeOnly(cty.String),
+						Elem: schema.LiteralType{Type: cty.String},
 					},
-				}},
+				},
 			},
 			`mapexpr = {
   key1 = "val1"
@@ -941,12 +954,12 @@ _object_`),
 		{
 			"list expression",
 			map[string]*schema.AttributeSchema{
-				"list": {Expr: schema.ExprConstraints{
-					schema.ListExpr{
+				"list": {
+					Constraint: schema.List{
 						Description: lang.Markdown("Special list"),
-						Elem:        schema.LiteralTypeOnly(cty.String),
+						Elem:        schema.LiteralType{Type: cty.String},
 					},
-				}},
+				},
 			},
 			`list = [ "one", "two" ]`,
 			hcl.Pos{Line: 1, Column: 8, Byte: 7},
@@ -971,16 +984,16 @@ _object_`),
 		{
 			"list expression element",
 			map[string]*schema.AttributeSchema{
-				"list": {Expr: schema.ExprConstraints{
-					schema.ListExpr{
-						Elem: schema.LiteralTypeOnly(cty.String),
+				"list": {
+					Constraint: schema.List{
+						Elem: schema.LiteralType{Type: cty.String},
 					},
-				}},
+				},
 			},
 			`list = [ "one", "two" ]`,
 			hcl.Pos{Line: 1, Column: 12, Byte: 11},
 			&lang.HoverData{
-				Content: lang.Markdown("`\"one\"` _string_"),
+				Content: lang.Markdown("_string_"),
 				Range: hcl.Range{
 					Filename: "test.tf",
 					Start: hcl.Pos{
@@ -1000,12 +1013,12 @@ _object_`),
 		{
 			"set expression",
 			map[string]*schema.AttributeSchema{
-				"set": {Expr: schema.ExprConstraints{
-					schema.SetExpr{
+				"set": {
+					Constraint: schema.Set{
 						Description: lang.Markdown("Special set"),
-						Elem:        schema.LiteralTypeOnly(cty.String),
+						Elem:        schema.LiteralType{Type: cty.String},
 					},
-				}},
+				},
 			},
 			`set = [ "one", "two" ]`,
 			hcl.Pos{Line: 1, Column: 7, Byte: 6},
@@ -1030,16 +1043,16 @@ _object_`),
 		{
 			"set expression element",
 			map[string]*schema.AttributeSchema{
-				"set": {Expr: schema.ExprConstraints{
-					schema.SetExpr{
-						Elem: schema.LiteralTypeOnly(cty.String),
+				"set": {
+					Constraint: schema.Set{
+						Elem: schema.LiteralType{Type: cty.String},
 					},
-				}},
+				},
 			},
 			`set = [ "one", "two" ]`,
 			hcl.Pos{Line: 1, Column: 12, Byte: 11},
 			&lang.HoverData{
-				Content: lang.Markdown("`\"one\"` _string_"),
+				Content: lang.Markdown("_string_"),
 				Range: hcl.Range{
 					Filename: "test.tf",
 					Start: hcl.Pos{
@@ -1059,14 +1072,14 @@ _object_`),
 		{
 			"tuple expression",
 			map[string]*schema.AttributeSchema{
-				"tup": {Expr: schema.ExprConstraints{
-					schema.TupleExpr{
+				"tup": {
+					Constraint: schema.Tuple{
 						Description: lang.Markdown("Special tuple"),
-						Elems: []schema.ExprConstraints{
-							schema.LiteralTypeOnly(cty.String),
+						Elems: []schema.Constraint{
+							schema.LiteralType{Type: cty.String},
 						},
 					},
-				}},
+				},
 			},
 			`tup = [ "one", "two" ]`,
 			hcl.Pos{Line: 1, Column: 7, Byte: 6},
@@ -1091,18 +1104,18 @@ _object_`),
 		{
 			"tuple expression element",
 			map[string]*schema.AttributeSchema{
-				"tup": {Expr: schema.ExprConstraints{
-					schema.TupleExpr{
-						Elems: []schema.ExprConstraints{
-							schema.LiteralTypeOnly(cty.String),
+				"tup": {
+					Constraint: schema.Tuple{
+						Elems: []schema.Constraint{
+							schema.LiteralType{Type: cty.String},
 						},
 					},
-				}},
+				},
 			},
 			`tup = [ "one", "two" ]`,
 			hcl.Pos{Line: 1, Column: 12, Byte: 11},
 			&lang.HoverData{
-				Content: lang.Markdown("`\"one\"` _string_"),
+				Content: lang.Markdown("_string_"),
 				Range: hcl.Range{
 					Filename: "test.tf",
 					Start: hcl.Pos{
@@ -1122,9 +1135,9 @@ _object_`),
 		{
 			"object as value",
 			map[string]*schema.AttributeSchema{
-				"objval": {Expr: schema.ExprConstraints{
-					schema.LegacyLiteralValue{
-						Val: cty.ObjectVal(map[string]cty.Value{
+				"objval": {
+					Constraint: schema.LiteralValue{
+						Value: cty.ObjectVal(map[string]cty.Value{
 							"source": cty.StringVal("blah"),
 							"bool":   cty.True,
 							"nested_obj": cty.ObjectVal(map[string]cty.Value{
@@ -1135,7 +1148,7 @@ _object_`),
 							}),
 						}),
 					},
-				}},
+				},
 			},
 			`objval = {
   source = "blah"
@@ -1145,18 +1158,16 @@ _object_`),
   }
   nested_tuple = [ 42 ]
 }`,
-			hcl.Pos{Line: 3, Column: 8, Byte: 36},
+			hcl.Pos{Line: 1, Column: 10, Byte: 9},
 			&lang.HoverData{
 				Content: lang.Markdown("```\n" +
 					`{
-  bool = true
+  bool = bool
   nested_obj = {
-    greetings = "hello"
+    greetings = string
   }
-  nested_tuple = [
-    42,
-  ]
-  source = "blah"
+  nested_tuple = tuple([number])
+  source = string
 }` +
 					"\n```\n_object_"),
 				Range: hcl.Range{
@@ -1178,19 +1189,19 @@ _object_`),
 		{
 			"list as value",
 			map[string]*schema.AttributeSchema{
-				"listval": {Expr: schema.ExprConstraints{
-					schema.LegacyLiteralValue{
-						Val: cty.ListVal([]cty.Value{
+				"listval": {
+					Constraint: schema.LiteralValue{
+						Value: cty.ListVal([]cty.Value{
 							cty.StringVal("first"),
 							cty.StringVal("second"),
 						}),
 					},
-				}},
+				},
 			},
 			`listval = [ "first", "second" ]`,
-			hcl.Pos{Line: 1, Column: 16, Byte: 15},
+			hcl.Pos{Line: 1, Column: 11, Byte: 10},
 			&lang.HoverData{
-				Content: lang.Markdown("```\n[\n  \"first\",\n  \"second\",\n]\n```\n_list of string_"),
+				Content: lang.Markdown("_list of string_"),
 				Range: hcl.Range{
 					Filename: "test.tf",
 					Start: hcl.Pos{
@@ -1210,19 +1221,19 @@ _object_`),
 		{
 			"set as value",
 			map[string]*schema.AttributeSchema{
-				"setval": {Expr: schema.ExprConstraints{
-					schema.LegacyLiteralValue{
-						Val: cty.SetVal([]cty.Value{
+				"setval": {
+					Constraint: schema.LiteralValue{
+						Value: cty.SetVal([]cty.Value{
 							cty.StringVal("west"),
 							cty.StringVal("east"),
 						}),
 					},
-				}},
+				},
 			},
 			`setval = [ "west", "east" ]`,
-			hcl.Pos{Line: 1, Column: 16, Byte: 15},
+			hcl.Pos{Line: 1, Column: 10, Byte: 9},
 			&lang.HoverData{
-				Content: lang.Markdown("```\n[\n  \"east\",\n  \"west\",\n]\n```\n_set of string_"),
+				Content: lang.Markdown("_set of string_"),
 				Range: hcl.Range{
 					Filename: "test.tf",
 					Start: hcl.Pos{
@@ -1243,14 +1254,13 @@ _object_`),
 			"attribute with multiple constraints",
 			map[string]*schema.AttributeSchema{
 				"attr": {
-					Expr: schema.ExprConstraints{
-						schema.SetExpr{
-							Elem: schema.ExprConstraints{
-								schema.TraversalExpr{OfScopeId: lang.ScopeId("one")},
-								schema.TraversalExpr{OfScopeId: lang.ScopeId("two")},
-							},
+					Constraint: schema.Set{
+						Elem: schema.OneOf{
+							schema.Reference{OfScopeId: lang.ScopeId("one")},
+							schema.Reference{OfScopeId: lang.ScopeId("two")},
 						},
-					}},
+					},
+				},
 			},
 			`attr = []`,
 			hcl.Pos{Line: 1, Column: 3, Byte: 2},
@@ -1276,14 +1286,13 @@ _object_`),
 			"expression with multiple constraints",
 			map[string]*schema.AttributeSchema{
 				"attr": {
-					Expr: schema.ExprConstraints{
-						schema.SetExpr{
-							Elem: schema.ExprConstraints{
-								schema.TraversalExpr{OfScopeId: lang.ScopeId("one")},
-								schema.TraversalExpr{OfScopeId: lang.ScopeId("two")},
-							},
+					Constraint: schema.Set{
+						Elem: schema.OneOf{
+							schema.Reference{OfScopeId: lang.ScopeId("one")},
+							schema.Reference{OfScopeId: lang.ScopeId("two")},
 						},
-					}},
+					},
+				},
 			},
 			`attr = [  ]`,
 			hcl.Pos{Line: 1, Column: 10, Byte: 9},
@@ -1358,9 +1367,7 @@ func TestLegacyDecoder_HoverAtPos_traversalExpressions(t *testing.T) {
 			"unknown traversal",
 			map[string]*schema.AttributeSchema{
 				"attr": {
-					Expr: schema.ExprConstraints{
-						schema.TraversalExpr{OfType: cty.String},
-					},
+					Constraint: schema.Reference{OfType: cty.String},
 				},
 			},
 			reference.Targets{},
@@ -1393,15 +1400,13 @@ func TestLegacyDecoder_HoverAtPos_traversalExpressions(t *testing.T) {
 			`attr = var.blah`,
 			hcl.Pos{Line: 1, Column: 10, Byte: 9},
 			nil,
-			&reference.NoTargetFound{},
+			nil,
 		},
 		{
 			"known mismatching traversal",
 			map[string]*schema.AttributeSchema{
 				"attr": {
-					Expr: schema.ExprConstraints{
-						schema.TraversalExpr{OfType: cty.String},
-					},
+					Constraint: schema.Reference{OfType: cty.String},
 				},
 			},
 			reference.Targets{
@@ -1442,15 +1447,13 @@ func TestLegacyDecoder_HoverAtPos_traversalExpressions(t *testing.T) {
 			`attr = var.blah`,
 			hcl.Pos{Line: 1, Column: 10, Byte: 9},
 			nil,
-			&reference.NoTargetFound{},
+			nil,
 		},
 		{
 			"known type matching traversal",
 			map[string]*schema.AttributeSchema{
 				"attr": {
-					Expr: schema.ExprConstraints{
-						schema.TraversalExpr{OfType: cty.String},
-					},
+					Constraint: schema.Reference{OfType: cty.String},
 				},
 			},
 			reference.Targets{
@@ -1512,9 +1515,7 @@ func TestLegacyDecoder_HoverAtPos_traversalExpressions(t *testing.T) {
 			"loosely matching traversal pointing to unknown type",
 			map[string]*schema.AttributeSchema{
 				"attr": {
-					Expr: schema.ExprConstraints{
-						schema.TraversalExpr{OfType: cty.String},
-					},
+					Constraint: schema.Reference{OfType: cty.String},
 				},
 			},
 			reference.Targets{
@@ -1577,9 +1578,7 @@ func TestLegacyDecoder_HoverAtPos_traversalExpressions(t *testing.T) {
 			"scope ID matching traversal",
 			map[string]*schema.AttributeSchema{
 				"attr": {
-					Expr: schema.ExprConstraints{
-						schema.TraversalExpr{OfScopeId: lang.ScopeId("foo")},
-					},
+					Constraint: schema.Reference{OfScopeId: lang.ScopeId("foo")},
 				},
 			},
 			reference.Targets{
@@ -1642,9 +1641,7 @@ func TestLegacyDecoder_HoverAtPos_traversalExpressions(t *testing.T) {
 			"matching target but missing collected origin",
 			map[string]*schema.AttributeSchema{
 				"attr": {
-					Expr: schema.ExprConstraints{
-						schema.TraversalExpr{OfType: cty.String},
-					},
+					Constraint: schema.Reference{OfType: cty.String},
 				},
 			},
 			reference.Targets{
@@ -1660,7 +1657,7 @@ func TestLegacyDecoder_HoverAtPos_traversalExpressions(t *testing.T) {
 			`attr = var.blah`,
 			hcl.Pos{Line: 1, Column: 10, Byte: 9},
 			nil,
-			&reference.NoTargetFound{},
+			nil,
 		},
 	}
 

@@ -149,9 +149,9 @@ func TestDecoder_HoverAtPos_nilBodySchema(t *testing.T) {
 								},
 							}): {
 								Attributes: map[string]*schema.AttributeSchema{
-									"one":   {Expr: schema.LiteralTypeOnly(cty.String)},
-									"two":   {Expr: schema.LiteralTypeOnly(cty.Number)},
-									"three": {Expr: schema.LiteralTypeOnly(cty.Bool)},
+									"one":   {Constraint: schema.LiteralType{Type: cty.String}},
+									"two":   {Constraint: schema.LiteralType{Type: cty.Number}},
+									"three": {Constraint: schema.LiteralType{Type: cty.Bool}},
 								},
 							},
 						},
@@ -202,9 +202,9 @@ func TestDecoder_HoverAtPos_nilBodySchema(t *testing.T) {
 								},
 							}): {
 								Attributes: map[string]*schema.AttributeSchema{
-									"one":   {Expr: schema.LiteralTypeOnly(cty.String)},
-									"two":   {Expr: schema.LiteralTypeOnly(cty.Number)},
-									"three": {Expr: schema.LiteralTypeOnly(cty.Bool)},
+									"one":   {Constraint: schema.LiteralType{Type: cty.String}},
+									"two":   {Constraint: schema.LiteralType{Type: cty.Number}},
+									"three": {Constraint: schema.LiteralType{Type: cty.Bool}},
 								},
 							},
 						},
@@ -276,7 +276,7 @@ func TestDecoder_HoverAtPos_unknownAttribute(t *testing.T) {
 		Labels: resourceLabelSchema,
 		Body: &schema.BodySchema{
 			Attributes: map[string]*schema.AttributeSchema{
-				"count": {Expr: schema.LiteralTypeOnly(cty.Number)},
+				"count": {Constraint: schema.LiteralType{Type: cty.Number}},
 			},
 		},
 	}
@@ -324,7 +324,7 @@ func TestDecoder_HoverAtPos_unknownBlock(t *testing.T) {
 		Labels: resourceLabelSchema,
 		Body: &schema.BodySchema{
 			Attributes: map[string]*schema.AttributeSchema{
-				"count": {Expr: schema.LiteralTypeOnly(cty.Number)},
+				"count": {Constraint: schema.LiteralType{Type: cty.Number}},
 			},
 		},
 	}
@@ -371,7 +371,7 @@ func TestDecoder_HoverAtPos_invalidBlockPositions(t *testing.T) {
 		Labels: resourceLabelSchema,
 		Body: &schema.BodySchema{
 			Attributes: map[string]*schema.AttributeSchema{
-				"num_attr": {Expr: schema.LiteralTypeOnly(cty.Number)},
+				"num_attr": {Constraint: schema.LiteralType{Type: cty.Number}},
 			},
 		},
 	}
@@ -448,8 +448,8 @@ func TestDecoder_HoverAtPos_rightHandSide(t *testing.T) {
 		Labels: resourceLabelSchema,
 		Body: &schema.BodySchema{
 			Attributes: map[string]*schema.AttributeSchema{
-				"num_attr": {Expr: schema.LiteralTypeOnly(cty.Number)},
-				"str_attr": {Expr: schema.LiteralTypeOnly(cty.String), Description: lang.PlainText("Special attribute")},
+				"num_attr": {Constraint: schema.LiteralType{Type: cty.Number}},
+				"str_attr": {Constraint: schema.LiteralType{Type: cty.String}, Description: lang.PlainText("Special attribute")},
 			},
 		},
 	}
@@ -482,7 +482,7 @@ func TestDecoder_HoverAtPos_rightHandSide(t *testing.T) {
 		t.Fatal(err)
 	}
 	expectedData := &lang.HoverData{
-		Content: lang.Markdown("`\"test\"` _string_"),
+		Content: lang.Markdown("_string_"),
 		Range: hcl.Range{
 			Filename: "test.tf",
 			Start:    hcl.Pos{Line: 2, Column: 14, Byte: 29},
@@ -504,22 +504,22 @@ func TestDecoder_HoverAtPos_basic(t *testing.T) {
 		Description: lang.Markdown("My special block"),
 		Body: &schema.BodySchema{
 			Attributes: map[string]*schema.AttributeSchema{
-				"num_attr": {Expr: schema.LiteralTypeOnly(cty.Number)},
+				"num_attr": {Constraint: schema.LiteralType{Type: cty.Number}},
 				"str_attr": {
-					Expr:        schema.LiteralTypeOnly(cty.String),
+					Constraint:  schema.LiteralType{Type: cty.String},
 					IsOptional:  true,
 					Description: lang.PlainText("Special attribute"),
 				},
 				"bool_attr": {
-					Expr:        schema.LiteralTypeOnly(cty.Bool),
+					Constraint:  schema.LiteralType{Type: cty.Bool},
 					IsSensitive: true,
 					Description: lang.PlainText("Flag attribute"),
 				},
 				"object_attr": {
-					Expr: schema.LiteralTypeOnly(cty.ObjectWithOptionalAttrs(map[string]cty.Type{
+					Constraint: schema.LiteralType{Type: cty.ObjectWithOptionalAttrs(map[string]cty.Type{
 						"opt_attr": cty.Bool,
 						"req_attr": cty.Number,
-					}, []string{"opt_attr"})),
+					}, []string{"opt_attr"})},
 					Description: lang.PlainText("Order attribute"),
 				},
 			},
@@ -637,11 +637,11 @@ func TestDecoder_HoverAtPos_basic(t *testing.T) {
 			"optional in object",
 			hcl.Pos{Line: 6, Column: 10, Byte: 105},
 			&lang.HoverData{
-				Content: lang.Markdown("```\n{\n  opt_attr = optional, bool\n  req_attr = number\n}\n```\n_object_"),
+				Content: lang.Markdown("**opt_attr** _optional, bool_"),
 				Range: hcl.Range{
 					Filename: "test.tf",
-					Start:    hcl.Pos{Line: 5, Column: 17, Byte: 97},
-					End:      hcl.Pos{Line: 8, Column: 4, Byte: 138},
+					Start:    hcl.Pos{Line: 6, Column: 4, Byte: 102},
+					End:      hcl.Pos{Line: 6, Column: 20, Byte: 118},
 				},
 			},
 		},
@@ -672,7 +672,7 @@ func TestDecoder_HoverAtPos_URL(t *testing.T) {
 		Body: &schema.BodySchema{
 			HoverURL: "https://en.wikipedia.org/wiki/Food",
 			Attributes: map[string]*schema.AttributeSchema{
-				"any_attr": {Expr: schema.LiteralTypeOnly(cty.Number)},
+				"any_attr": {Constraint: schema.LiteralType{Type: cty.Number}},
 			},
 		},
 		DependentBody: map[schema.SchemaKey]*schema.BodySchema{
@@ -846,7 +846,7 @@ func TestDecoder_HoverAtPos_typeDeclaration(t *testing.T) {
 		Body: &schema.BodySchema{
 			Attributes: map[string]*schema.AttributeSchema{
 				"type": {
-					Expr:        schema.ExprConstraints{schema.TypeDeclarationExpr{}},
+					Constraint:  schema.TypeDeclaration{},
 					IsOptional:  true,
 					Description: lang.PlainText("Special attribute"),
 				},
@@ -871,7 +871,7 @@ func TestDecoder_HoverAtPos_typeDeclaration(t *testing.T) {
 }
 `,
 			&lang.HoverData{
-				Content: lang.Markdown("Type declaration"),
+				Content: lang.Markdown("_string_"),
 				Range: hcl.Range{
 					Filename: "test.tf",
 					Start:    hcl.Pos{Line: 2, Column: 10, Byte: 27},
@@ -886,7 +886,7 @@ func TestDecoder_HoverAtPos_typeDeclaration(t *testing.T) {
 }
 `,
 			&lang.HoverData{
-				Content: lang.Markdown("Type declaration"),
+				Content: lang.Markdown("_list of string_"),
 				Range: hcl.Range{
 					Filename: "test.tf",
 					Start:    hcl.Pos{Line: 2, Column: 10, Byte: 27},
@@ -903,7 +903,7 @@ func TestDecoder_HoverAtPos_typeDeclaration(t *testing.T) {
 }
 `,
 			&lang.HoverData{
-				Content: lang.Markdown("Type declaration"),
+				Content: lang.Markdown("```\n{\n  vegan = bool\n}\n```\n_object_"),
 				Range: hcl.Range{
 					Filename: "test.tf",
 					Start:    hcl.Pos{Line: 2, Column: 10, Byte: 27},
@@ -926,7 +926,7 @@ func TestDecoder_HoverAtPos_typeDeclaration(t *testing.T) {
 			})
 
 			ctx := context.Background()
-			pos := hcl.Pos{Line: 2, Column: 6, Byte: 32}
+			pos := hcl.Pos{Line: 2, Column: 11, Byte: 28}
 			data, err := d.HoverAtPos(ctx, "test.tf", pos)
 			if err != nil {
 				t.Fatal(err)
@@ -997,9 +997,9 @@ func TestDecoder_HoverAtPos_extensions_count(t *testing.T) {
 							Attributes: map[string]*schema.AttributeSchema{
 								"foo": {
 									IsOptional: true,
-									Expr: schema.ExprConstraints{
-										schema.TraversalExpr{OfType: cty.Number},
-										schema.LiteralTypeExpr{Type: cty.Number},
+									Constraint: schema.OneOf{
+										schema.Reference{OfType: cty.Number},
+										schema.LiteralType{Type: cty.Number},
 									},
 								},
 							},
@@ -1175,10 +1175,8 @@ func TestDecoder_HoverAtPos_extension_for_each(t *testing.T) {
 							Attributes: map[string]*schema.AttributeSchema{
 								"foo": {
 									IsOptional: true,
-									Expr: schema.ExprConstraints{
-										schema.TraversalExpr{
-											OfType: cty.String,
-										},
+									Constraint: schema.Reference{
+										OfType: cty.String,
 									},
 								},
 							},
@@ -1279,10 +1277,8 @@ func TestDecoder_HoverAtPos_extension_for_each(t *testing.T) {
 							Attributes: map[string]*schema.AttributeSchema{
 								"foo": {
 									IsOptional: true,
-									Expr: schema.ExprConstraints{
-										schema.TraversalExpr{
-											OfType: cty.String,
-										},
+									Constraint: schema.Reference{
+										OfType: cty.String,
 									},
 								},
 							},
@@ -1639,10 +1635,8 @@ func TestDecoder_HoverAtPos_extensions_references(t *testing.T) {
 							Attributes: map[string]*schema.AttributeSchema{
 								"foo": {
 									IsOptional: true,
-									Expr: schema.ExprConstraints{
-										schema.TraversalExpr{
-											OfType: cty.String,
-										},
+									Constraint: schema.Reference{
+										OfType: cty.String,
 									},
 								},
 							},
@@ -1667,7 +1661,7 @@ func TestDecoder_HoverAtPos_extensions_references(t *testing.T) {
 						Body: &schema.BodySchema{
 							Attributes: map[string]*schema.AttributeSchema{
 								"type": {
-									Expr:       schema.ExprConstraints{schema.TypeDeclarationExpr{}},
+									Constraint: schema.TypeDeclaration{},
 									IsOptional: true,
 								},
 							},
@@ -1709,10 +1703,8 @@ variable "name" {
 							Attributes: map[string]*schema.AttributeSchema{
 								"foo": {
 									IsOptional: true,
-									Expr: schema.ExprConstraints{
-										schema.TraversalExpr{
-											OfType: cty.Number,
-										},
+									Constraint: schema.Reference{
+										OfType: cty.Number,
 									},
 								},
 							},
@@ -1737,7 +1729,7 @@ variable "name" {
 						Body: &schema.BodySchema{
 							Attributes: map[string]*schema.AttributeSchema{
 								"type": {
-									Expr:       schema.ExprConstraints{schema.TypeDeclarationExpr{}},
+									Constraint: schema.TypeDeclaration{},
 									IsOptional: true,
 								},
 							},

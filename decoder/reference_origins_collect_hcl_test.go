@@ -29,7 +29,7 @@ func TestCollectReferenceOrigins_hcl_local(t *testing.T) {
 			&schema.BodySchema{
 				Attributes: map[string]*schema.AttributeSchema{
 					"attribute": {
-						Expr: schema.LiteralTypeOnly(cty.String),
+						Constraint: schema.LiteralType{Type: cty.String},
 					},
 				},
 			},
@@ -41,9 +41,7 @@ func TestCollectReferenceOrigins_hcl_local(t *testing.T) {
 			&schema.BodySchema{
 				Attributes: map[string]*schema.AttributeSchema{
 					"attr": {
-						Expr: schema.ExprConstraints{
-							schema.TraversalExpr{},
-						},
+						Constraint: schema.Reference{},
 					},
 				},
 			},
@@ -53,7 +51,7 @@ func TestCollectReferenceOrigins_hcl_local(t *testing.T) {
 					Addr: lang.Address{
 						lang.RootStep{Name: "onestep"},
 					},
-					Constraints: reference.OriginConstraints{{}},
+					Constraints: reference.OriginConstraints{},
 					Range: hcl.Range{
 						Filename: "test.tf",
 						Start: hcl.Pos{
@@ -75,19 +73,13 @@ func TestCollectReferenceOrigins_hcl_local(t *testing.T) {
 			&schema.BodySchema{
 				Attributes: map[string]*schema.AttributeSchema{
 					"attr1": {
-						Expr: schema.ExprConstraints{
-							schema.TraversalExpr{},
-						},
+						Constraint: schema.Reference{},
 					},
 					"attr2": {
-						Expr: schema.ExprConstraints{
-							schema.TraversalExpr{},
-						},
+						Constraint: schema.Reference{},
 					},
 					"attr3": {
-						Expr: schema.ExprConstraints{
-							schema.TraversalExpr{},
-						},
+						Constraint: schema.Reference{},
 					},
 				},
 			},
@@ -99,7 +91,7 @@ attr3 = onestep`,
 					Addr: lang.Address{
 						lang.RootStep{Name: "onestep"},
 					},
-					Constraints: reference.OriginConstraints{{}},
+					Constraints: reference.OriginConstraints{},
 					Range: hcl.Range{
 						Filename: "test.tf",
 						Start: hcl.Pos{
@@ -118,7 +110,7 @@ attr3 = onestep`,
 					Addr: lang.Address{
 						lang.RootStep{Name: "anotherstep"},
 					},
-					Constraints: reference.OriginConstraints{{}},
+					Constraints: reference.OriginConstraints{},
 					Range: hcl.Range{
 						Filename: "test.tf",
 						Start: hcl.Pos{
@@ -137,7 +129,7 @@ attr3 = onestep`,
 					Addr: lang.Address{
 						lang.RootStep{Name: "onestep"},
 					},
-					Constraints: reference.OriginConstraints{{}},
+					Constraints: reference.OriginConstraints{},
 					Range: hcl.Range{
 						Filename: "test.tf",
 						Start: hcl.Pos{
@@ -159,9 +151,7 @@ attr3 = onestep`,
 			&schema.BodySchema{
 				Attributes: map[string]*schema.AttributeSchema{
 					"attr1": {
-						Expr: schema.ExprConstraints{
-							schema.TraversalExpr{},
-						},
+						Constraint: schema.AnyExpression{},
 					},
 				},
 			},
@@ -171,7 +161,9 @@ attr3 = onestep`,
 					Addr: lang.Address{
 						lang.RootStep{Name: "onestep"},
 					},
-					Constraints: reference.OriginConstraints{{}},
+					Constraints: reference.OriginConstraints{
+						{OfType: cty.DynamicPseudoType},
+					},
 					Range: hcl.Range{
 						Filename: "test.tf",
 						Start: hcl.Pos{
@@ -190,7 +182,9 @@ attr3 = onestep`,
 					Addr: lang.Address{
 						lang.RootStep{Name: "onestep"},
 					},
-					Constraints: reference.OriginConstraints{{}},
+					Constraints: reference.OriginConstraints{
+						{OfType: cty.DynamicPseudoType},
+					},
 					Range: hcl.Range{
 						Filename: "test.tf",
 						Start: hcl.Pos{
@@ -211,7 +205,9 @@ attr3 = onestep`,
 						lang.AttrStep{Name: "foo"},
 						lang.AttrStep{Name: "bar"},
 					},
-					Constraints: reference.OriginConstraints{{}},
+					Constraints: reference.OriginConstraints{
+						{OfType: cty.DynamicPseudoType},
+					},
 					Range: hcl.Range{
 						Filename: "test.tf",
 						Start: hcl.Pos{
@@ -233,9 +229,7 @@ attr3 = onestep`,
 			&schema.BodySchema{
 				Attributes: map[string]*schema.AttributeSchema{
 					"attr": {
-						Expr: schema.ExprConstraints{
-							schema.TraversalExpr{},
-						},
+						Constraint: schema.Reference{},
 					},
 				},
 			},
@@ -249,7 +243,7 @@ attr3 = onestep`,
 						lang.AttrStep{Name: "attr"},
 						lang.IndexStep{Key: cty.NumberIntVal(0)},
 					},
-					Constraints: reference.OriginConstraints{{}},
+					Constraints: reference.OriginConstraints{},
 					Range: hcl.Range{
 						Filename: "test.tf",
 						Start: hcl.Pos{
@@ -274,9 +268,7 @@ attr3 = onestep`,
 						Body: &schema.BodySchema{
 							Attributes: map[string]*schema.AttributeSchema{
 								"attr": {
-									Expr: schema.ExprConstraints{
-										schema.TraversalExpr{},
-									},
+									Constraint: schema.Reference{},
 								},
 							},
 						},
@@ -292,7 +284,7 @@ attr3 = onestep`,
 					Addr: lang.Address{
 						lang.RootStep{Name: "onestep"},
 					},
-					Constraints: reference.OriginConstraints{{}},
+					Constraints: reference.OriginConstraints{},
 					Range: hcl.Range{
 						Filename: "test.tf",
 						Start: hcl.Pos{
@@ -316,9 +308,7 @@ attr3 = onestep`,
 					"myblock": {
 						Body: &schema.BodySchema{
 							AnyAttribute: &schema.AttributeSchema{
-								Expr: schema.ExprConstraints{
-									schema.TraversalExpr{},
-								},
+								Constraint: schema.Reference{},
 							},
 						},
 					},
@@ -333,7 +323,7 @@ attr3 = onestep`,
 					Addr: lang.Address{
 						lang.RootStep{Name: "onestep"},
 					},
-					Constraints: reference.OriginConstraints{{}},
+					Constraints: reference.OriginConstraints{},
 					Range: hcl.Range{
 						Filename: "test.tf",
 						Start: hcl.Pos{
@@ -361,9 +351,7 @@ attr3 = onestep`,
 						Body: &schema.BodySchema{
 							Attributes: map[string]*schema.AttributeSchema{
 								"static": {
-									Expr: schema.ExprConstraints{
-										schema.TraversalExpr{},
-									},
+									Constraint: schema.Reference{},
 								},
 							},
 						},
@@ -375,9 +363,7 @@ attr3 = onestep`,
 							}): {
 								Attributes: map[string]*schema.AttributeSchema{
 									"dep_attr": {
-										Expr: schema.ExprConstraints{
-											schema.TraversalExpr{},
-										},
+										Constraint: schema.Reference{},
 									},
 								},
 							},
@@ -396,7 +382,7 @@ attr3 = onestep`,
 						lang.RootStep{Name: "var"},
 						lang.AttrStep{Name: "first"},
 					},
-					Constraints: reference.OriginConstraints{{}},
+					Constraints: reference.OriginConstraints{},
 					Range: hcl.Range{
 						Filename: "test.tf",
 						Start: hcl.Pos{
@@ -416,7 +402,7 @@ attr3 = onestep`,
 						lang.RootStep{Name: "var"},
 						lang.AttrStep{Name: "second"},
 					},
-					Constraints: reference.OriginConstraints{{}},
+					Constraints: reference.OriginConstraints{},
 					Range: hcl.Range{
 						Filename: "test.tf",
 						Start: hcl.Pos{
@@ -444,9 +430,7 @@ attr3 = onestep`,
 						Body: &schema.BodySchema{
 							Attributes: map[string]*schema.AttributeSchema{
 								"static": {
-									Expr: schema.ExprConstraints{
-										schema.TraversalExpr{},
-									},
+									Constraint: schema.Reference{},
 								},
 							},
 						},
@@ -458,9 +442,7 @@ attr3 = onestep`,
 							}): {
 								Attributes: map[string]*schema.AttributeSchema{
 									"dep_attr": {
-										Expr: schema.ExprConstraints{
-											schema.TraversalExpr{},
-										},
+										Constraint: schema.Reference{},
 									},
 								},
 							},
@@ -479,7 +461,7 @@ attr3 = onestep`,
 						lang.RootStep{Name: "var"},
 						lang.AttrStep{Name: "first"},
 					},
-					Constraints: reference.OriginConstraints{{}},
+					Constraints: reference.OriginConstraints{},
 					Range: hcl.Range{
 						Filename: "test.tf",
 						Start: hcl.Pos{
@@ -501,36 +483,24 @@ attr3 = onestep`,
 			&schema.BodySchema{
 				Attributes: map[string]*schema.AttributeSchema{
 					"list": {
-						Expr: schema.ExprConstraints{
-							schema.ListExpr{
-								Elem: schema.ExprConstraints{
-									schema.TraversalExpr{
-										OfScopeId: lang.ScopeId("test"),
-									},
-								},
+						Constraint: schema.List{
+							Elem: schema.Reference{
+								OfScopeId: lang.ScopeId("test"),
 							},
 						},
 					},
 					"set": {
-						Expr: schema.ExprConstraints{
-							schema.SetExpr{
-								Elem: schema.ExprConstraints{
-									schema.TraversalExpr{
-										OfScopeId: lang.ScopeId("test"),
-									},
-								},
+						Constraint: schema.Set{
+							Elem: schema.Reference{
+								OfScopeId: lang.ScopeId("test"),
 							},
 						},
 					},
 					"tuple": {
-						Expr: schema.ExprConstraints{
-							schema.TupleExpr{
-								Elems: []schema.ExprConstraints{
-									{
-										schema.TraversalExpr{
-											OfScopeId: lang.ScopeId("test"),
-										},
-									},
+						Constraint: schema.Tuple{
+							Elems: []schema.Constraint{
+								schema.Reference{
+									OfScopeId: lang.ScopeId("test"),
 								},
 							},
 						},
@@ -615,15 +585,11 @@ tuple = [ var.third ]
 			&schema.BodySchema{
 				Attributes: map[string]*schema.AttributeSchema{
 					"obj": {
-						Expr: schema.ExprConstraints{
-							schema.ObjectExpr{
-								Attributes: schema.ObjectExprAttributes{
-									"attr": &schema.AttributeSchema{
-										Expr: schema.ExprConstraints{
-											schema.TraversalExpr{
-												OfScopeId: lang.ScopeId("test"),
-											},
-										},
+						Constraint: schema.Object{
+							Attributes: schema.ObjectAttributes{
+								"attr": &schema.AttributeSchema{
+									Constraint: schema.Reference{
+										OfScopeId: lang.ScopeId("test"),
 									},
 								},
 							},
@@ -664,13 +630,9 @@ tuple = [ var.third ]
 			&schema.BodySchema{
 				Attributes: map[string]*schema.AttributeSchema{
 					"map": {
-						Expr: schema.ExprConstraints{
-							schema.MapExpr{
-								Elem: schema.ExprConstraints{
-									schema.TraversalExpr{
-										OfScopeId: lang.ScopeId("test"),
-									},
-								},
+						Constraint: schema.Map{
+							Elem: schema.Reference{
+								OfScopeId: lang.ScopeId("test"),
 							},
 						},
 					},
@@ -709,26 +671,22 @@ tuple = [ var.third ]
 			&schema.BodySchema{
 				Attributes: map[string]*schema.AttributeSchema{
 					"map": {
-						Expr: schema.ExprConstraints{
-							schema.TraversalExpr{OfType: cty.Map(cty.String)},
-							schema.MapExpr{
-								Elem: schema.ExprConstraints{
-									schema.TraversalExpr{OfType: cty.String},
-								},
+						Constraint: schema.OneOf{
+							schema.Reference{OfType: cty.Map(cty.String)},
+							schema.Map{
+								Elem: schema.Reference{OfType: cty.String},
 							},
 						},
 					},
 					"obj": {
-						Expr: schema.ExprConstraints{
-							schema.TraversalExpr{OfType: cty.Object(map[string]cty.Type{
+						Constraint: schema.OneOf{
+							schema.Reference{OfType: cty.Object(map[string]cty.Type{
 								"foo": cty.String,
 							})},
-							schema.ObjectExpr{
-								Attributes: schema.ObjectExprAttributes{
+							schema.Object{
+								Attributes: schema.ObjectAttributes{
 									"foo": &schema.AttributeSchema{
-										Expr: schema.ExprConstraints{
-											schema.TraversalExpr{OfType: cty.String},
-										},
+										Constraint: schema.Reference{OfType: cty.String},
 									},
 								},
 							},
@@ -795,33 +753,27 @@ obj = {
 			&schema.BodySchema{
 				Attributes: map[string]*schema.AttributeSchema{
 					"list": {
-						Expr: schema.ExprConstraints{
-							schema.TraversalExpr{OfType: cty.List(cty.String)},
-							schema.ListExpr{
-								Elem: schema.ExprConstraints{
-									schema.TraversalExpr{OfType: cty.String},
-								},
+						Constraint: schema.OneOf{
+							schema.Reference{OfType: cty.List(cty.String)},
+							schema.List{
+								Elem: schema.Reference{OfType: cty.String},
 							},
 						},
 					},
 					"set": {
-						Expr: schema.ExprConstraints{
-							schema.TraversalExpr{OfType: cty.Set(cty.String)},
-							schema.SetExpr{
-								Elem: schema.ExprConstraints{
-									schema.TraversalExpr{OfType: cty.String},
-								},
+						Constraint: schema.OneOf{
+							schema.Reference{OfType: cty.Set(cty.String)},
+							schema.Set{
+								Elem: schema.Reference{OfType: cty.String},
 							},
 						},
 					},
 					"tup": {
-						Expr: schema.ExprConstraints{
-							schema.TraversalExpr{OfType: cty.Tuple([]cty.Type{cty.String})},
-							schema.TupleExpr{
-								Elems: []schema.ExprConstraints{
-									{
-										schema.TraversalExpr{OfType: cty.String},
-									},
+						Constraint: schema.OneOf{
+							schema.Reference{OfType: cty.Tuple([]cty.Type{cty.String})},
+							schema.Tuple{
+								Elems: []schema.Constraint{
+									schema.Reference{OfType: cty.String},
 								},
 							},
 						},
@@ -906,9 +858,7 @@ tup = [ var.three ]
 			&schema.BodySchema{
 				Attributes: map[string]*schema.AttributeSchema{
 					"attr": {
-						Expr: schema.ExprConstraints{
-							schema.TraversalExpr{},
-						},
+						Constraint: schema.Reference{},
 					},
 				},
 				ImpliedOrigins: schema.ImpliedOrigins{
@@ -935,7 +885,7 @@ tup = [ var.three ]
 						lang.AttrStep{Name: "refname"},
 						lang.AttrStep{Name: "outname"},
 					},
-					Constraints: reference.OriginConstraints{{}},
+					Constraints: reference.OriginConstraints{},
 					Range: hcl.Range{
 						Filename: "test.tf",
 						Start: hcl.Pos{
@@ -977,7 +927,7 @@ tup = [ var.three ]
 		},
 	}
 	for i, tc := range testCases {
-		t.Run(fmt.Sprintf("%d/%s", i, tc.name), func(t *testing.T) {
+		t.Run(fmt.Sprintf("%2d-%s", i, tc.name), func(t *testing.T) {
 			f, _ := hclsyntax.ParseConfig([]byte(tc.cfg), "test.tf", hcl.InitialPos)
 
 			d := testPathDecoder(t, &PathContext{
@@ -1011,9 +961,9 @@ func TestCollectReferenceOrigins_hcl_path(t *testing.T) {
 			&schema.BodySchema{
 				Attributes: map[string]*schema.AttributeSchema{
 					"attr": {
-						Expr: schema.ExprConstraints{
-							schema.TraversalExpr{OfType: cty.String},
-							schema.LiteralTypeExpr{Type: cty.String},
+						Constraint: schema.OneOf{
+							schema.Reference{OfType: cty.String},
+							schema.LiteralType{Type: cty.String},
 						},
 						OriginForTarget: &schema.PathTarget{
 							Address: schema.Address{
@@ -1064,10 +1014,8 @@ func TestCollectReferenceOrigins_hcl_path(t *testing.T) {
 						Body: &schema.BodySchema{
 							Attributes: map[string]*schema.AttributeSchema{
 								"source": {
-									Expr: schema.ExprConstraints{
-										schema.LiteralTypeExpr{Type: cty.String},
-									},
-									IsDepKey: true,
+									Constraint: schema.LiteralType{Type: cty.String},
+									IsDepKey:   true,
 								},
 							},
 						},
@@ -1084,9 +1032,9 @@ func TestCollectReferenceOrigins_hcl_path(t *testing.T) {
 							}): {
 								Attributes: map[string]*schema.AttributeSchema{
 									"attr": {
-										Expr: schema.ExprConstraints{
-											schema.TraversalExpr{OfType: cty.String},
-											schema.LiteralTypeExpr{Type: cty.String},
+										Constraint: schema.OneOf{
+											schema.Reference{OfType: cty.String},
+											schema.LiteralType{Type: cty.String},
 										},
 										OriginForTarget: &schema.PathTarget{
 											Address: schema.Address{
