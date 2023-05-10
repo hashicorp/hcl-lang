@@ -97,6 +97,20 @@ func TestCompletionAtPos_exprLiteralType(t *testing.T) {
 			}),
 		},
 		{
+			"bool by prefix with dot",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.LiteralType{
+						Type: cty.Bool,
+					},
+				},
+			},
+			`attr = f.
+`,
+			hcl.Pos{Line: 1, Column: 10, Byte: 9},
+			lang.CompleteCandidates([]lang.Candidate{}),
+		},
+		{
 			"string",
 			map[string]*schema.AttributeSchema{
 				"attr": {

@@ -76,6 +76,17 @@ func TestCompletionAtPos_exprKeyword(t *testing.T) {
 			}),
 		},
 		{
+			"matching prefix with dot",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.Keyword{Keyword: "foobar"},
+				},
+			},
+			`attr = f.`,
+			hcl.Pos{Line: 1, Column: 10, Byte: 9},
+			lang.CompleteCandidates([]lang.Candidate{}),
+		},
+		{
 			"matching prefix in the middle",
 			map[string]*schema.AttributeSchema{
 				"attr": {
