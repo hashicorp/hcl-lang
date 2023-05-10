@@ -32,6 +32,12 @@ func (td TypeDeclaration) CompletionAtPos(ctx context.Context, pos hcl.Pos) []la
 		}
 
 		prefixLen := pos.Byte - eType.Range().Start.Byte
+		if prefixLen > len(eType.Traversal.RootName()) {
+			// The user has probably typed an extra character, such as a
+			// period, that is not (yet) part of the expression. This prefix
+			// won't match anything, so we'll return early.
+			return []lang.Candidate{}
+		}
 		prefix := eType.Traversal.RootName()[0:prefixLen]
 
 		editRange := hcl.Range{
