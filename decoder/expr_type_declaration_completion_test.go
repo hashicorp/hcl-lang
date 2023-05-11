@@ -125,6 +125,18 @@ func TestCompletionAtPos_exprTypeDeclaration(t *testing.T) {
 			}),
 		},
 		{
+			"partial name with dot",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.TypeDeclaration{},
+				},
+			},
+			`attr = st.
+`,
+			hcl.Pos{Line: 1, Column: 11, Byte: 10},
+			lang.CompleteCandidates([]lang.Candidate{}),
+		},
+		{
 			"partial list name",
 			map[string]*schema.AttributeSchema{
 				"attr": {

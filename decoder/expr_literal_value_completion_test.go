@@ -118,6 +118,20 @@ func TestCompletionAtPos_exprLiteralValue(t *testing.T) {
 			}),
 		},
 		{
+			"bool partial with dot",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.LiteralValue{
+						Value: cty.BoolVal(true),
+					},
+				},
+			},
+			`attr = tr.
+`,
+			hcl.Pos{Line: 1, Column: 11, Byte: 10},
+			lang.CompleteCandidates([]lang.Candidate{}),
+		},
+		{
 			"bool partial middle",
 			map[string]*schema.AttributeSchema{
 				"attr": {
