@@ -86,6 +86,14 @@ func (d *PathDecoder) validateFilePerSchema(ctx context.Context, body *hclsyntax
 				})
 			}
 		}
+		if validLabelNum > len(block.Labels) {
+			diags = append(diags, &hcl.Diagnostic{
+				Severity: hcl.DiagError,
+				Summary:  "Missing label",
+				Detail:   fmt.Sprintf("All %s blocks must have %d label(s).", block.Type, validLabelNum),
+				Subject:  &block.TypeRange,
+			})
+		}
 
 		// track block-type count
 
