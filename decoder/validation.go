@@ -24,10 +24,10 @@ func (d *PathDecoder) ValidateFilePerSchema(ctx context.Context, filename string
 	// Check if body is hcl, else return early
 	body, ok := f.Body.(*hclsyntax.Body)
 	if !ok {
-		return hcl.Diagnostics{}, nil // TODO! error
+		return hcl.Diagnostics{}, nil // TODO! return error
 	}
 
-	// compare targets and origins for diags
+	// TODO! compare targets and origins for diags
 
 	// "walk" the configuration, compare it against the schema
 	return d.validateFilePerSchema(ctx, body, d.pathCtx.Schema)
@@ -57,9 +57,8 @@ func (d *PathDecoder) validateFilePerSchema(ctx context.Context, body *hclsyntax
 				Subject:  &attr.SrcRange,
 			})
 		}
-		// track attributes
 	}
-	// compare required attributes with tracked ones
+	// TODO!: missing required attributes
 
 	for _, block := range body.Blocks {
 		blockSchema, ok := bodySchema.Blocks[block.Type]
@@ -86,6 +85,7 @@ func (d *PathDecoder) validateFilePerSchema(ctx context.Context, body *hclsyntax
 				})
 			}
 		}
+		// check for missing labels
 		if validLabelNum > len(block.Labels) {
 			diags = append(diags, &hcl.Diagnostic{
 				Severity: hcl.DiagError,
@@ -94,8 +94,6 @@ func (d *PathDecoder) validateFilePerSchema(ctx context.Context, body *hclsyntax
 				Subject:  &block.TypeRange,
 			})
 		}
-
-		// track block-type count
 
 		// Dig deeper
 		if block.Body != nil {
@@ -111,7 +109,8 @@ func (d *PathDecoder) validateFilePerSchema(ctx context.Context, body *hclsyntax
 			diags = append(diags, d...)
 		}
 	}
-	// compare block-type counts against schema min max
+	// TODO!: missing required blocks
+	// TODO!: check max on blocks
 
 	return diags, nil
 }
