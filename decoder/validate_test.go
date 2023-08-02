@@ -52,7 +52,8 @@ func TestValidate_schema(t *testing.T) {
 					},
 				},
 			},
-			`foo = 1`,
+			`test = 1
+	foo = 1`,
 			hcl.Diagnostics{
 				&hcl.Diagnostic{
 					Severity: hcl.DiagError,
@@ -60,8 +61,8 @@ func TestValidate_schema(t *testing.T) {
 					Detail:   "An attribute named \"foo\" is not expected here",
 					Subject: &hcl.Range{
 						Filename: "test.tf",
-						Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
-						End:      hcl.Pos{Line: 1, Column: 8, Byte: 7},
+						Start:    hcl.Pos{Line: 2, Column: 2, Byte: 10},
+						End:      hcl.Pos{Line: 2, Column: 9, Byte: 17},
 					},
 				},
 			},
@@ -83,6 +84,7 @@ func TestValidate_schema(t *testing.T) {
 				},
 			},
 			`foo {
+	test = 1
 	foo = 1
 }`,
 			hcl.Diagnostics{
@@ -92,8 +94,8 @@ func TestValidate_schema(t *testing.T) {
 					Detail:   "An attribute named \"foo\" is not expected here",
 					Subject: &hcl.Range{
 						Filename: "test.tf",
-						Start:    hcl.Pos{Line: 2, Column: 2, Byte: 7},
-						End:      hcl.Pos{Line: 2, Column: 9, Byte: 14},
+						Start:    hcl.Pos{Line: 3, Column: 2, Byte: 17},
+						End:      hcl.Pos{Line: 3, Column: 9, Byte: 24},
 					},
 				},
 			},
@@ -185,7 +187,9 @@ wakka = 2
 					},
 				},
 			},
-			`foo {}`,
+			`foo {
+	test =1
+}`,
 			hcl.Diagnostics{
 				&hcl.Diagnostic{
 					Severity: hcl.DiagWarning,
@@ -221,7 +225,9 @@ wakka = 2
 					},
 				},
 			},
-			`foo "expected" "notExpected" {}`,
+			`foo "expected" "notExpected" {
+	test = 1
+}`,
 			hcl.Diagnostics{
 				&hcl.Diagnostic{
 					Severity: hcl.DiagError,
@@ -260,7 +266,9 @@ wakka = 2
 					},
 				},
 			},
-			`foo "expected" {}`,
+			`foo "expected" {
+	test = 1
+}`,
 			hcl.Diagnostics{
 				&hcl.Diagnostic{
 					Severity: hcl.DiagError,
@@ -299,6 +307,7 @@ wakka = 2
 			`foo {
 				one {}
 				two {}
+				test = 1
 			}`,
 			hcl.Diagnostics{
 				&hcl.Diagnostic{
@@ -337,6 +346,7 @@ wakka = 2
 			},
 			`foo {
 				one {}
+				test = 1
 			}`,
 			hcl.Diagnostics{
 				&hcl.Diagnostic{
@@ -347,6 +357,34 @@ wakka = 2
 						Filename: "test.tf",
 						Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
 						End:      hcl.Pos{Line: 1, Column: 4, Byte: 3},
+					},
+				},
+			},
+		},
+
+		{
+			"missing required attribute",
+			&schema.BodySchema{
+				Attributes: map[string]*schema.AttributeSchema{
+					"wakka": {
+						IsRequired: true,
+						Constraint: schema.LiteralType{Type: cty.String},
+					},
+					"bar":{
+						Constraint: schema.LiteralType{Type: cty.String},
+					},
+				},
+			},
+			`bar = "baz"`,
+			hcl.Diagnostics{
+				&hcl.Diagnostic{
+					Severity: hcl.DiagError,
+					Summary:  "Required attribute \"wakka\" not specified",
+					Detail:   "An attribute named \"wakka\" is required here",
+					Subject: &hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
+						End:      hcl.Pos{Line: 1, Column: 12, Byte: 11},
 					},
 				},
 			},

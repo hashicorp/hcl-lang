@@ -147,5 +147,25 @@ func (d *PathDecoder) validateBody(ctx context.Context, body *hclsyntax.Body, bo
 		}
 	}
 
+	for name, attribute := range bodySchema.Attributes {
+		if attribute.IsRequired {
+			_, ok := body.Attributes[name]
+			if !ok {
+				// ---------- diag ERR unknown attribute
+				diags = append(diags, &hcl.Diagnostic{
+					Severity: hcl.DiagError,
+					Summary:  fmt.Sprintf("Required attribute %q not specified", name),
+					Detail:   fmt.Sprintf("An attribute named %q is required here", name),
+					// TODO This is the closest I could think of
+					// maybe block instead ?
+					Subject:  &body.SrcRange,
+				})
+
+			}
+		}
+	}
+
+	// TODO : check for required blocks
+
 	return diags
 }
