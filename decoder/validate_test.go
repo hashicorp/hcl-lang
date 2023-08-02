@@ -107,12 +107,12 @@ func TestValidate_schema(t *testing.T) {
 						IsRequired: true,
 					},
 					"wakka": {
-						Constraint: schema.LiteralType{Type: cty.Number},
-						IsRequired: false,
+						Constraint:   schema.LiteralType{Type: cty.Number},
+						IsRequired:   false,
 						IsDeprecated: true,
 						Description: lang.MarkupContent{
 							Value: "Use `wakka_wakka` instead",
-							Kind: lang.MarkdownKind,
+							Kind:  lang.MarkdownKind,
 						},
 					},
 				},
@@ -172,7 +172,7 @@ wakka = 2
 						IsDeprecated: true,
 						Description: lang.MarkupContent{
 							Value: "Use `wakka` instead",
-							Kind: lang.MarkdownKind,
+							Kind:  lang.MarkdownKind,
 						},
 						Body: &schema.BodySchema{
 							Attributes: map[string]*schema.AttributeSchema{
@@ -191,6 +191,81 @@ wakka = 2
 					Severity: hcl.DiagWarning,
 					Summary:  "\"foo\" is deprecated",
 					Detail:   "Reason: \"Use `wakka` instead\"",
+					Subject: &hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
+						End:      hcl.Pos{Line: 1, Column: 4, Byte: 3},
+					},
+				},
+			},
+		},
+
+		{
+			"extra block labels",
+			&schema.BodySchema{
+				Blocks: map[string]*schema.BlockSchema{
+					"foo": {
+						Labels: []*schema.LabelSchema{
+							{
+								Name: "expected",
+							},
+						},
+						Body: &schema.BodySchema{
+							Attributes: map[string]*schema.AttributeSchema{
+								"test": {
+									Constraint: schema.LiteralType{Type: cty.Number},
+									IsRequired: true,
+								},
+							},
+						},
+					},
+				},
+			},
+			`foo "expected" "notExpected" {}`,
+			hcl.Diagnostics{
+				&hcl.Diagnostic{
+					Severity: hcl.DiagError,
+					Summary:  "Too many labels specified for \"foo\"",
+					Detail:   "Only 1 label(s) are expected for \"foo\" blocks",
+					Subject: &hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 1, Column: 16, Byte: 15},
+						End:      hcl.Pos{Line: 1, Column: 29, Byte: 28},
+					},
+				},
+			},
+		},
+
+		{
+			"too few block labels",
+			&schema.BodySchema{
+				Blocks: map[string]*schema.BlockSchema{
+					"foo": {
+						Labels: []*schema.LabelSchema{
+							{
+								Name: "expected",
+							},
+							{
+								Name: "expected2",
+							},
+						},
+						Body: &schema.BodySchema{
+							Attributes: map[string]*schema.AttributeSchema{
+								"test": {
+									Constraint: schema.LiteralType{Type: cty.Number},
+									IsRequired: true,
+								},
+							},
+						},
+					},
+				},
+			},
+			`foo "expected" {}`,
+			hcl.Diagnostics{
+				&hcl.Diagnostic{
+					Severity: hcl.DiagError,
+					Summary:  "Not enough labels specified for \"foo\"",
+					Detail:   "All \"foo\" blocks must have 2 label(s)",
 					Subject: &hcl.Range{
 						Filename: "test.tf",
 						Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},

@@ -88,6 +88,29 @@ func (d *PathDecoder) validateBody(ctx context.Context, body *hclsyntax.Body, bo
 			})
 		}
 
+		// ---------- daig ERR extraneous block labels
+		validLabelNum := len(blockSchema.Labels)
+		for i := range block.Labels {
+			if i >= validLabelNum {
+				diags = append(diags, &hcl.Diagnostic{
+					Severity: hcl.DiagError,
+					Summary:  fmt.Sprintf("Too many labels specified for %q", block.Type),
+					Detail:   fmt.Sprintf("Only %d label(s) are expected for %q blocks", validLabelNum, block.Type),
+					Subject:  &block.LabelRanges[i],
+				})
+			}
+		}
+
+		// ---------- diag ERR missing labels
+		if validLabelNum > len(block.Labels) {
+			diags = append(diags, &hcl.Diagnostic{
+				Severity: hcl.DiagError,
+				Summary:  fmt.Sprintf("Not enough labels specified for %q", block.Type),
+				Detail:   fmt.Sprintf("All %q blocks must have %d label(s)", block.Type, validLabelNum),
+				Subject:  &block.TypeRange,
+			})
+		}
+
 		if block.Body != nil {
 			mergedSchema, err := mergeBlockBodySchemas(block.AsHCLBlock(), blockSchema)
 			if err != nil {
