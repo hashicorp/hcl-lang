@@ -39,6 +39,10 @@ type DecoderContext struct {
 	// a resolve hook, ResolveCandidate will execute the hook and return
 	// additional (resolved) data for the completion item.
 	CompletionResolveHooks CompletionResolveFuncMap
+
+	// Validations represent a slice of executable functions
+	// which will validate each file in a path
+	Validations []lang.ValidationFunc
 }
 
 func NewDecoderContext() DecoderContext {

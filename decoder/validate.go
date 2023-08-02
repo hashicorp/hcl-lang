@@ -25,8 +25,10 @@ func (d *PathDecoder) Validate(ctx context.Context) (hcl.Diagnostics, error) {
 		diags = diags.Extend(d.validateBody(ctx, body, d.pathCtx.Schema))
 	}
 
-	// Validate the references
-	// Iterate over d.decoderCtx.ValidationFuncs, collect diagnostics
+	// Run validation functions
+	for _, vFunc := range d.decoderCtx.Validations {
+		diags = diags.Extend(vFunc(ctx))
+	}
 
 	return diags, nil
 }
