@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/hashicorp/hcl-lang/lang"
 	"github.com/hashicorp/hcl-lang/schema"
 	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hclsyntax"
@@ -93,6 +94,41 @@ func TestValidate_schema(t *testing.T) {
 						Filename: "test.tf",
 						Start:    hcl.Pos{Line: 2, Column: 2, Byte: 7},
 						End:      hcl.Pos{Line: 2, Column: 9, Byte: 14},
+					},
+				},
+			},
+		},
+		{
+			"deprecated attribute",
+			&schema.BodySchema{
+				Attributes: map[string]*schema.AttributeSchema{
+					"test": {
+						Constraint: schema.LiteralType{Type: cty.Number},
+						IsRequired: true,
+					},
+					"wakka": {
+						Constraint: schema.LiteralType{Type: cty.Number},
+						IsRequired: false,
+						IsDeprecated: true,
+						Description: lang.MarkupContent{
+							Value: "Use `wakka_wakka` instead",
+							Kind: lang.MarkdownKind,
+						},
+					},
+				},
+			},
+			`test = 1
+wakka = 2
+`,
+			hcl.Diagnostics{
+				&hcl.Diagnostic{
+					Severity: hcl.DiagWarning,
+					Summary:  "\"wakka\" is deprecated",
+					Detail:   "Reason: \"Use `wakka_wakka` instead\"",
+					Subject: &hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 2, Column: 1, Byte: 9},
+						End:      hcl.Pos{Line: 2, Column: 10, Byte: 18},
 					},
 				},
 			},

@@ -41,7 +41,7 @@ func (d *PathDecoder) validateBody(ctx context.Context, body *hclsyntax.Body, bo
 	diags := hcl.Diagnostics{}
 
 	for name, attribute := range body.Attributes {
-		_, ok := bodySchema.Attributes[name]
+		attributeSchema, ok := bodySchema.Attributes[name]
 		if !ok {
 			// ---------- diag ERR unknown attribute
 			diags = append(diags, &hcl.Diagnostic{
@@ -50,8 +50,19 @@ func (d *PathDecoder) validateBody(ctx context.Context, body *hclsyntax.Body, bo
 				Detail:   fmt.Sprintf("An attribute named %q is not expected here", name),
 				Subject:  &attribute.SrcRange,
 			})
+			// don't check futher because this isn't a valid attribute
+			continue
 		}
-		// TODO! validate against schema
+
+		// ---------- diag WARN deprecated attribute
+		if attributeSchema.IsDeprecated {
+			diags = append(diags, &hcl.Diagnostic{
+				Severity: hcl.DiagWarning,
+				Summary:  fmt.Sprintf("%q is deprecated", name),
+				Detail:  fmt.Sprintf("Reason: %q", attributeSchema.Description.Value),
+				Subject:  &attribute.SrcRange,
+			})
+		}
 	}
 
 	for _, block := range body.Blocks {
