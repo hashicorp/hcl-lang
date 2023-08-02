@@ -59,7 +59,7 @@ func (d *PathDecoder) validateBody(ctx context.Context, body *hclsyntax.Body, bo
 			diags = append(diags, &hcl.Diagnostic{
 				Severity: hcl.DiagWarning,
 				Summary:  fmt.Sprintf("%q is deprecated", name),
-				Detail:  fmt.Sprintf("Reason: %q", attributeSchema.Description.Value),
+				Detail:   fmt.Sprintf("Reason: %q", attributeSchema.Description.Value),
 				Subject:  &attribute.SrcRange,
 			})
 		}
@@ -83,7 +83,7 @@ func (d *PathDecoder) validateBody(ctx context.Context, body *hclsyntax.Body, bo
 			diags = append(diags, &hcl.Diagnostic{
 				Severity: hcl.DiagWarning,
 				Summary:  fmt.Sprintf("%q is deprecated", block.Type),
-				Detail:  fmt.Sprintf("Reason: %q", blockSchema.Description.Value),
+				Detail:   fmt.Sprintf("Reason: %q", blockSchema.Description.Value),
 				Subject:  &block.TypeRange,
 			})
 		}
@@ -109,6 +109,32 @@ func (d *PathDecoder) validateBody(ctx context.Context, body *hclsyntax.Body, bo
 				Detail:   fmt.Sprintf("All %q blocks must have %d label(s)", block.Type, validLabelNum),
 				Subject:  &block.TypeRange,
 			})
+		}
+
+		// current number of blocks in this Body
+		numBlocks := len(block.Body.Blocks)
+
+		if blockSchema.MaxItems > 0 {
+			if numBlocks > int(blockSchema.MaxItems) {
+				diags = append(diags, &hcl.Diagnostic{
+					Severity: hcl.DiagError,
+					Summary:  fmt.Sprintf("Too many blocks specified for %q", block.Type),
+					Detail:   fmt.Sprintf("Only %d block(s) are expected for %q", blockSchema.MaxItems, block.Type),
+					Subject:  &block.TypeRange,
+				})
+			}
+		}
+
+		if blockSchema.MinItems > 0 {
+			// ---------- diag ERR too little blocks
+			if numBlocks < int(blockSchema.MinItems) {
+				diags = append(diags, &hcl.Diagnostic{
+					Severity: hcl.DiagError,
+					Summary:  fmt.Sprintf("Too few blocks specified for %q", block.Type),
+					Detail:   fmt.Sprintf("At least %d block(s) are expected for %q", blockSchema.MinItems, block.Type),
+					Subject:  &block.TypeRange,
+				})
+			}
 		}
 
 		if block.Body != nil {

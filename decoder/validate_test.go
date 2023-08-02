@@ -274,6 +274,84 @@ wakka = 2
 				},
 			},
 		},
+
+
+		{
+			"too many blocks",
+			&schema.BodySchema{
+				Blocks: map[string]*schema.BlockSchema{
+					"foo": {
+						MaxItems: 1,
+						Body: &schema.BodySchema{
+							Blocks: map[string]*schema.BlockSchema{
+								"one":&schema.BlockSchema{},
+								"two":&schema.BlockSchema{},
+							},
+							Attributes: map[string]*schema.AttributeSchema{
+								"test": {
+									Constraint: schema.LiteralType{Type: cty.Number},
+									IsRequired: true,
+								},
+							},
+						},
+					},
+				},
+			},
+			`foo {
+				one {}
+				two {}
+			}`,
+			hcl.Diagnostics{
+				&hcl.Diagnostic{
+					Severity: hcl.DiagError,
+					Summary:  "Too many blocks specified for \"foo\"",
+					Detail:   "Only 1 block(s) are expected for \"foo\"",
+					Subject: &hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
+						End:      hcl.Pos{Line: 1, Column: 4, Byte: 3},
+					},
+				},
+			},
+		},
+
+		{
+			"too few blocks",
+			&schema.BodySchema{
+				Blocks: map[string]*schema.BlockSchema{
+					"foo": {
+						MinItems: 2,
+						Body: &schema.BodySchema{
+							Blocks: map[string]*schema.BlockSchema{
+								"one":&schema.BlockSchema{},
+								"two":&schema.BlockSchema{},
+							},
+							Attributes: map[string]*schema.AttributeSchema{
+								"test": {
+									Constraint: schema.LiteralType{Type: cty.Number},
+									IsRequired: true,
+								},
+							},
+						},
+					},
+				},
+			},
+			`foo {
+				one {}
+			}`,
+			hcl.Diagnostics{
+				&hcl.Diagnostic{
+					Severity: hcl.DiagError,
+					Summary:  "Too few blocks specified for \"foo\"",
+					Detail:   "At least 2 block(s) are expected for \"foo\"",
+					Subject: &hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
+						End:      hcl.Pos{Line: 1, Column: 4, Byte: 3},
+					},
+				},
+			},
+		},
 	}
 
 	for i, tc := range testCases {
