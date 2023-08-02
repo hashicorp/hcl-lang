@@ -68,9 +68,25 @@ func (d *PathDecoder) validateBody(ctx context.Context, body *hclsyntax.Body, bo
 	for _, block := range body.Blocks {
 		blockSchema, ok := bodySchema.Blocks[block.Type]
 		if !ok {
-			// TODO! unknown block validation
+			diags = append(diags, &hcl.Diagnostic{
+				Severity: hcl.DiagError,
+				Summary:  "Unexpected block",
+				Detail:   fmt.Sprintf("Blocks of type %q are not expected here", block.Type),
+				Subject:  &block.TypeRange,
+			})
+			// don't check futher because this isn't a valid block
+			continue
 		}
-		// TODO! validate against schema
+
+		// ---------- diag WARN deprecated block
+		if blockSchema.IsDeprecated {
+			diags = append(diags, &hcl.Diagnostic{
+				Severity: hcl.DiagWarning,
+				Summary:  fmt.Sprintf("%q is deprecated", block.Type),
+				Detail:  fmt.Sprintf("Reason: %q", blockSchema.Description.Value),
+				Subject:  &block.TypeRange,
+			})
+		}
 
 		if block.Body != nil {
 			mergedSchema, err := mergeBlockBodySchemas(block.AsHCLBlock(), blockSchema)

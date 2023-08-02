@@ -133,6 +133,72 @@ wakka = 2
 				},
 			},
 		},
+		{
+			"unknown block",
+			&schema.BodySchema{
+				Blocks: map[string]*schema.BlockSchema{
+					"foo": {
+						Body: &schema.BodySchema{
+							Attributes: map[string]*schema.AttributeSchema{
+								"test": {
+									Constraint: schema.LiteralType{Type: cty.Number},
+									IsRequired: true,
+								},
+							},
+						},
+					},
+				},
+			},
+			`bar {}`,
+			hcl.Diagnostics{
+				&hcl.Diagnostic{
+					Severity: hcl.DiagError,
+					Summary:  "Unexpected block",
+					Detail:   "Blocks of type \"bar\" are not expected here",
+					Subject: &hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
+						End:      hcl.Pos{Line: 1, Column: 4, Byte: 3},
+					},
+				},
+			},
+		},
+
+		{
+			"deprecated block",
+			&schema.BodySchema{
+				Blocks: map[string]*schema.BlockSchema{
+					"foo": {
+						IsDeprecated: true,
+						Description: lang.MarkupContent{
+							Value: "Use `wakka` instead",
+							Kind: lang.MarkdownKind,
+						},
+						Body: &schema.BodySchema{
+							Attributes: map[string]*schema.AttributeSchema{
+								"test": {
+									Constraint: schema.LiteralType{Type: cty.Number},
+									IsRequired: true,
+								},
+							},
+						},
+					},
+				},
+			},
+			`foo {}`,
+			hcl.Diagnostics{
+				&hcl.Diagnostic{
+					Severity: hcl.DiagWarning,
+					Summary:  "\"foo\" is deprecated",
+					Detail:   "Reason: \"Use `wakka` instead\"",
+					Subject: &hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
+						End:      hcl.Pos{Line: 1, Column: 4, Byte: 3},
+					},
+				},
+			},
+		},
 	}
 
 	for i, tc := range testCases {
