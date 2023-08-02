@@ -41,6 +41,62 @@ func TestValidate_schema(t *testing.T) {
 			`test = 1`,
 			hcl.Diagnostics{},
 		},
+		{
+			"unknown attribute",
+			&schema.BodySchema{
+				Attributes: map[string]*schema.AttributeSchema{
+					"test": {
+						Constraint: schema.LiteralType{Type: cty.Number},
+						IsRequired: true,
+					},
+				},
+			},
+			`foo = 1`,
+			hcl.Diagnostics{
+				&hcl.Diagnostic{
+					Severity: hcl.DiagError,
+					Summary:  "Unexpected attribute",
+					Detail:   "An attribute named \"foo\" is not expected here",
+					Subject: &hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
+						End:      hcl.Pos{Line: 1, Column: 8, Byte: 7},
+					},
+				},
+			},
+		},
+		{
+			"unknown block attribute",
+			&schema.BodySchema{
+				Blocks: map[string]*schema.BlockSchema{
+					"foo": {
+						Body: &schema.BodySchema{
+							Attributes: map[string]*schema.AttributeSchema{
+								"test": {
+									Constraint: schema.LiteralType{Type: cty.Number},
+									IsRequired: true,
+								},
+							},
+						},
+					},
+				},
+			},
+			`foo {
+	foo = 1
+}`,
+			hcl.Diagnostics{
+				&hcl.Diagnostic{
+					Severity: hcl.DiagError,
+					Summary:  "Unexpected attribute",
+					Detail:   "An attribute named \"foo\" is not expected here",
+					Subject: &hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 2, Column: 2, Byte: 7},
+						End:      hcl.Pos{Line: 2, Column: 9, Byte: 14},
+					},
+				},
+			},
+		},
 	}
 
 	for i, tc := range testCases {

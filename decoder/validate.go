@@ -5,6 +5,7 @@ package decoder
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/hashicorp/hcl-lang/schema"
 	"github.com/hashicorp/hcl/v2"
@@ -39,10 +40,16 @@ func (d *PathDecoder) Validate(ctx context.Context) (hcl.Diagnostics, error) {
 func (d *PathDecoder) validateBody(ctx context.Context, body *hclsyntax.Body, bodySchema *schema.BodySchema) hcl.Diagnostics {
 	diags := hcl.Diagnostics{}
 
-	for name, _ := range body.Attributes {
+	for name, attribute := range body.Attributes {
 		_, ok := bodySchema.Attributes[name]
 		if !ok {
-			// TODO! unknown attribute validation
+			// ---------- diag ERR unknown attribute
+			diags = append(diags, &hcl.Diagnostic{
+				Severity: hcl.DiagError,
+				Summary:  "Unexpected attribute",
+				Detail:   fmt.Sprintf("An attribute named %q is not expected here", name),
+				Subject:  &attribute.SrcRange,
+			})
 		}
 		// TODO! validate against schema
 	}
