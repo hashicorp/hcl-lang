@@ -275,7 +275,6 @@ wakka = 2
 			},
 		},
 
-
 		{
 			"too many blocks",
 			&schema.BodySchema{
@@ -284,8 +283,8 @@ wakka = 2
 						MaxItems: 1,
 						Body: &schema.BodySchema{
 							Blocks: map[string]*schema.BlockSchema{
-								"one":&schema.BlockSchema{},
-								"two":&schema.BlockSchema{},
+								"one": &schema.BlockSchema{},
+								"two": &schema.BlockSchema{},
 							},
 							Attributes: map[string]*schema.AttributeSchema{
 								"test": {
@@ -323,8 +322,8 @@ wakka = 2
 						MinItems: 2,
 						Body: &schema.BodySchema{
 							Blocks: map[string]*schema.BlockSchema{
-								"one":&schema.BlockSchema{},
-								"two":&schema.BlockSchema{},
+								"one": &schema.BlockSchema{},
+								"two": &schema.BlockSchema{},
 							},
 							Attributes: map[string]*schema.AttributeSchema{
 								"test": {
