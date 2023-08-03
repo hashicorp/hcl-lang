@@ -41,14 +41,20 @@ func (d *PathDecoder) Validate(ctx context.Context) (hcl.Diagnostics, error) {
 // validateBody returns a set of Diagnostics for a given HCL body
 //
 // Validations available:
-//	- unexpected attribute
-//	- missing required attribute
-//	- deprecated attribute
 //
-//	- unexpected block
-//	- deprecated block
-//  - min blocks
-//  - max blocks
+//   - unexpected attribute
+//
+//   - missing required attribute
+//
+//   - deprecated attribute
+//
+//   - unexpected block
+//
+//   - deprecated block
+//
+//   - min blocks
+//
+//   - max blocks
 func (d *PathDecoder) validateBody(ctx context.Context, body *hclsyntax.Body, bodySchema *schema.BodySchema) hcl.Diagnostics {
 	diags := hcl.Diagnostics{}
 
@@ -78,11 +84,32 @@ func (d *PathDecoder) validateBody(ctx context.Context, body *hclsyntax.Body, bo
 		}
 	}
 
+	// Iterate over all schema Attributes and check if specified in the configuration
+	for name, attribute := range bodySchema.Attributes {
+		if attribute.IsRequired {
+			_, ok := body.Attributes[name]
+			if !ok {
+				// ---------- diag ERR unknown attribute
+				diags = append(diags, &hcl.Diagnostic{
+					Severity: hcl.DiagError,
+					Summary:  fmt.Sprintf("Required attribute %q not specified", name),
+					Detail:   fmt.Sprintf("An attribute named %q is required here", name),
+					// TODO This is the closest I could think of
+					// maybe block instead ?
+					Subject: &body.SrcRange,
+				})
+			}
+		}
+	}
+
+	// keep track of blocks actually used so we can compare to schema later
+	specifiedBlocks := make(map[string]int)
+
 	// Iterate over all Blocks in the body
-	// Recurse for nested blocks
 	for _, block := range body.Blocks {
 		blockSchema, ok := bodySchema.Blocks[block.Type]
 		if !ok {
+			// ---------- diag ERR unknown block
 			diags = append(diags, &hcl.Diagnostic{
 				Severity: hcl.DiagError,
 				Summary:  "Unexpected block",
@@ -98,8 +125,9 @@ func (d *PathDecoder) validateBody(ctx context.Context, body *hclsyntax.Body, bo
 			diags = append(diags, &hcl.Diagnostic{
 				Severity: hcl.DiagWarning,
 				Summary:  fmt.Sprintf("%q is deprecated", block.Type),
-				Detail:   fmt.Sprintf("Reason: %q", blockSchema.Description.Value),
-				Subject:  &block.TypeRange,
+				// todo check if description is there
+				Detail:  fmt.Sprintf("Reason: %q", blockSchema.Description.Value),
+				Subject: &block.TypeRange,
 			})
 		}
 
@@ -126,63 +154,53 @@ func (d *PathDecoder) validateBody(ctx context.Context, body *hclsyntax.Body, bo
 			})
 		}
 
-		// current number of blocks in this Body
-		numBlocks := len(block.Body.Blocks)
-
-		if blockSchema.MaxItems > 0 {
-			if numBlocks > int(blockSchema.MaxItems) {
-				diags = append(diags, &hcl.Diagnostic{
-					Severity: hcl.DiagError,
-					Summary:  fmt.Sprintf("Too many blocks specified for %q", block.Type),
-					Detail:   fmt.Sprintf("Only %d block(s) are expected for %q", blockSchema.MaxItems, block.Type),
-					Subject:  &block.TypeRange,
-				})
-			}
-		}
-
-		if blockSchema.MinItems > 0 {
-			// ---------- diag ERR too little blocks
-			if numBlocks < int(blockSchema.MinItems) {
-				diags = append(diags, &hcl.Diagnostic{
-					Severity: hcl.DiagError,
-					Summary:  fmt.Sprintf("Too few blocks specified for %q", block.Type),
-					Detail:   fmt.Sprintf("At least %d block(s) are expected for %q", blockSchema.MinItems, block.Type),
-					Subject:  &block.TypeRange,
-				})
-			}
-		}
-
 		if block.Body != nil {
 			mergedSchema, err := mergeBlockBodySchemas(block.AsHCLBlock(), blockSchema)
 			if err != nil {
 				// TODO! err
 			}
 
+			// Recurse for nested blocks
 			diags = diags.Extend(d.validateBody(ctx, block.Body, mergedSchema))
 		}
+
+		// build list of blocks specified
+		specifiedBlocks[block.Type]++
 	}
 
-	// Iterate over all schema Attributes and check if
-	// specified in the configuration
-	for name, attribute := range bodySchema.Attributes {
-		if attribute.IsRequired {
-			_, ok := body.Attributes[name]
-			if !ok {
-				// ---------- diag ERR unknown attribute
-				diags = append(diags, &hcl.Diagnostic{
-					Severity: hcl.DiagError,
-					Summary:  fmt.Sprintf("Required attribute %q not specified", name),
-					Detail:   fmt.Sprintf("An attribute named %q is required here", name),
-					// TODO This is the closest I could think of
-					// maybe block instead ?
-					Subject:  &body.SrcRange,
-				})
+	// Iterate over bodySchema Blocks and check if they are specified in configuration
+	for name, block := range bodySchema.Blocks {
+		// check if the bodySchema Block is specified in the configuration
+		numBlocks, ok := specifiedBlocks[name]
+		if ok {
+			// check if schema says there should be maximum number of items for this block
+			if block.MaxItems > 0 {
+				// ---------- diag ERR too many blocks
+				if numBlocks > int(block.MaxItems) {
+					diags = append(diags, &hcl.Diagnostic{
+						Severity: hcl.DiagError,
+						Summary:  fmt.Sprintf("Too many blocks specified for %q", name),
+						Detail:   fmt.Sprintf("Only %d block(s) are expected for %q", block.MaxItems, name),
+						Subject:  &body.Blocks[block.Type].TypeRange,
+					})
+				}
+			}
+
+			// check if schema says there should be minimum number of items for this block
+			if block.MinItems > 0 {
+				// ---------- diag ERR too little blocks
+				if numBlocks < int(block.MinItems) {
+					diags = append(diags, &hcl.Diagnostic{
+						Severity: hcl.DiagError,
+						Summary:  fmt.Sprintf("Too few blocks specified for %q", name),
+						Detail:   fmt.Sprintf("At least %d block(s) are expected for %q", block.MinItems, name),
+						Subject:  &body.Blocks[block.Type].TypeRange,
+					})
+				}
 
 			}
 		}
 	}
-
-	// TODO : check for required blocks
 
 	return diags
 }

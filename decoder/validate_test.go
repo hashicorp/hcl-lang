@@ -42,6 +42,7 @@ func TestValidate_schema(t *testing.T) {
 			`test = 1`,
 			hcl.Diagnostics{},
 		},
+		// attributes
 		{
 			"unknown attribute",
 			&schema.BodySchema{
@@ -135,6 +136,34 @@ wakka = 2
 				},
 			},
 		},
+		// blocks
+		{
+			"missing required attribute",
+			&schema.BodySchema{
+				Attributes: map[string]*schema.AttributeSchema{
+					"wakka": {
+						IsRequired: true,
+						Constraint: schema.LiteralType{Type: cty.String},
+					},
+					"bar":{
+						Constraint: schema.LiteralType{Type: cty.String},
+					},
+				},
+			},
+			`bar = "baz"`,
+			hcl.Diagnostics{
+				&hcl.Diagnostic{
+					Severity: hcl.DiagError,
+					Summary:  "Required attribute \"wakka\" not specified",
+					Detail:   "An attribute named \"wakka\" is required here",
+					Subject: &hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
+						End:      hcl.Pos{Line: 1, Column: 12, Byte: 11},
+					},
+				},
+			},
+		},
 		{
 			"unknown block",
 			&schema.BodySchema{
@@ -203,7 +232,6 @@ wakka = 2
 				},
 			},
 		},
-
 		{
 			"extra block labels",
 			&schema.BodySchema{
@@ -241,7 +269,6 @@ wakka = 2
 				},
 			},
 		},
-
 		{
 			"too few block labels",
 			&schema.BodySchema{
@@ -282,16 +309,57 @@ wakka = 2
 				},
 			},
 		},
-
 		{
 			"too many blocks",
 			&schema.BodySchema{
 				Blocks: map[string]*schema.BlockSchema{
 					"foo": {
-						MaxItems: 1,
 						Body: &schema.BodySchema{
 							Blocks: map[string]*schema.BlockSchema{
-								"one": &schema.BlockSchema{},
+								"bar": &schema.BlockSchema{
+									MaxItems: 1,
+								},
+								"two": &schema.BlockSchema{},
+							},
+							Attributes: map[string]*schema.AttributeSchema{
+								"test": {
+									Constraint: schema.LiteralType{Type: cty.Number},
+									IsRequired: true,
+								},
+							},
+						},
+					},
+				},
+			},
+			`foo {
+				bar {}
+				bar {}
+				two {}
+				test = 1
+			}`,
+			hcl.Diagnostics{
+				&hcl.Diagnostic{
+					Severity: hcl.DiagError,
+					Summary:  "Too many blocks specified for \"bar\"",
+					Detail:   "Only 1 block(s) are expected for \"bar\"",
+					Subject: &hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 2, Column: 5, Byte: 10},
+						End:      hcl.Pos{Line: 2, Column: 8, Byte: 13},
+					},
+				},
+			},
+		},
+		{
+			"too few blocks",
+			&schema.BodySchema{
+				Blocks: map[string]*schema.BlockSchema{
+					"foo": {
+						Body: &schema.BodySchema{
+							Blocks: map[string]*schema.BlockSchema{
+								"one": &schema.BlockSchema{
+									MinItems: 2,
+								},
 								"two": &schema.BlockSchema{},
 							},
 							Attributes: map[string]*schema.AttributeSchema{
@@ -312,79 +380,12 @@ wakka = 2
 			hcl.Diagnostics{
 				&hcl.Diagnostic{
 					Severity: hcl.DiagError,
-					Summary:  "Too many blocks specified for \"foo\"",
-					Detail:   "Only 1 block(s) are expected for \"foo\"",
+					Summary:  "Too few blocks specified for \"one\"",
+					Detail:   "At least 2 block(s) are expected for \"one\"",
 					Subject: &hcl.Range{
 						Filename: "test.tf",
-						Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
-						End:      hcl.Pos{Line: 1, Column: 4, Byte: 3},
-					},
-				},
-			},
-		},
-
-		{
-			"too few blocks",
-			&schema.BodySchema{
-				Blocks: map[string]*schema.BlockSchema{
-					"foo": {
-						MinItems: 2,
-						Body: &schema.BodySchema{
-							Blocks: map[string]*schema.BlockSchema{
-								"one": &schema.BlockSchema{},
-								"two": &schema.BlockSchema{},
-							},
-							Attributes: map[string]*schema.AttributeSchema{
-								"test": {
-									Constraint: schema.LiteralType{Type: cty.Number},
-									IsRequired: true,
-								},
-							},
-						},
-					},
-				},
-			},
-			`foo {
-				one {}
-				test = 1
-			}`,
-			hcl.Diagnostics{
-				&hcl.Diagnostic{
-					Severity: hcl.DiagError,
-					Summary:  "Too few blocks specified for \"foo\"",
-					Detail:   "At least 2 block(s) are expected for \"foo\"",
-					Subject: &hcl.Range{
-						Filename: "test.tf",
-						Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
-						End:      hcl.Pos{Line: 1, Column: 4, Byte: 3},
-					},
-				},
-			},
-		},
-
-		{
-			"missing required attribute",
-			&schema.BodySchema{
-				Attributes: map[string]*schema.AttributeSchema{
-					"wakka": {
-						IsRequired: true,
-						Constraint: schema.LiteralType{Type: cty.String},
-					},
-					"bar":{
-						Constraint: schema.LiteralType{Type: cty.String},
-					},
-				},
-			},
-			`bar = "baz"`,
-			hcl.Diagnostics{
-				&hcl.Diagnostic{
-					Severity: hcl.DiagError,
-					Summary:  "Required attribute \"wakka\" not specified",
-					Detail:   "An attribute named \"wakka\" is required here",
-					Subject: &hcl.Range{
-						Filename: "test.tf",
-						Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
-						End:      hcl.Pos{Line: 1, Column: 12, Byte: 11},
+						Start:    hcl.Pos{Line: 2, Column: 5, Byte: 10},
+						End:      hcl.Pos{Line: 2, Column: 8, Byte: 13},
 					},
 				},
 			},
