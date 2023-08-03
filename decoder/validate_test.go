@@ -145,7 +145,7 @@ wakka = 2
 						IsRequired: true,
 						Constraint: schema.LiteralType{Type: cty.String},
 					},
-					"bar":{
+					"bar": {
 						Constraint: schema.LiteralType{Type: cty.String},
 					},
 				},
