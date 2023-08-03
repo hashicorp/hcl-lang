@@ -12,6 +12,7 @@ import (
 	"github.com/hashicorp/hcl/v2/hclsyntax"
 )
 
+// Validate returns a set of Diagnostics for all known files
 func (d *PathDecoder) Validate(ctx context.Context) (hcl.Diagnostics, error) {
 	if d.pathCtx.Schema == nil {
 		return hcl.Diagnostics{}, &NoSchemaError{}
@@ -37,9 +38,21 @@ func (d *PathDecoder) Validate(ctx context.Context) (hcl.Diagnostics, error) {
 	return diags, nil
 }
 
+// validateBody returns a set of Diagnostics for a given HCL body
+//
+// Validations available:
+//	- unexpected attribute
+//	- missing required attribute
+//	- deprecated attribute
+//
+//	- unexpected block
+//	- deprecated block
+//  - min blocks
+//  - max blocks
 func (d *PathDecoder) validateBody(ctx context.Context, body *hclsyntax.Body, bodySchema *schema.BodySchema) hcl.Diagnostics {
 	diags := hcl.Diagnostics{}
 
+	// Iterate over all Attributes in the body
 	for name, attribute := range body.Attributes {
 		attributeSchema, ok := bodySchema.Attributes[name]
 		if !ok {
@@ -65,6 +78,8 @@ func (d *PathDecoder) validateBody(ctx context.Context, body *hclsyntax.Body, bo
 		}
 	}
 
+	// Iterate over all Blocks in the body
+	// Recurse for nested blocks
 	for _, block := range body.Blocks {
 		blockSchema, ok := bodySchema.Blocks[block.Type]
 		if !ok {
@@ -147,6 +162,8 @@ func (d *PathDecoder) validateBody(ctx context.Context, body *hclsyntax.Body, bo
 		}
 	}
 
+	// Iterate over all schema Attributes and check if
+	// specified in the configuration
 	for name, attribute := range bodySchema.Attributes {
 		if attribute.IsRequired {
 			_, ok := body.Attributes[name]
