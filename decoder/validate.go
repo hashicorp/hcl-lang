@@ -13,27 +13,27 @@ import (
 )
 
 // Validate returns a set of Diagnostics for all known files
-func (d *PathDecoder) Validate(ctx context.Context) (hcl.Diagnostics, error) {
+func (d *PathDecoder) Validate(ctx context.Context) (map[string]hcl.Diagnostics, error) {
+	diags := make(map[string]hcl.Diagnostics, 0)
 	if d.pathCtx.Schema == nil {
-		return hcl.Diagnostics{}, &NoSchemaError{}
+		return diags, &NoSchemaError{}
 	}
 
-	diags := hcl.Diagnostics{}
 	// Validate module files per schema
-	for _, f := range d.pathCtx.Files {
+	for filename, f := range d.pathCtx.Files {
 		body, ok := f.Body.(*hclsyntax.Body)
 		if !ok {
 			// TODO! error
 			continue
 		}
 
-		diags = diags.Extend(d.validateBody(ctx, body, d.pathCtx.Schema))
+		diags[filename] = d.validateBody(ctx, body, d.pathCtx.Schema)
 	}
 
 	// Run validation functions
-	for _, vFunc := range d.decoderCtx.Validations {
-		diags = diags.Extend(vFunc(ctx))
-	}
+	// for _, vFunc := range d.decoderCtx.Validations {
+	// 	diags = diags.Extend(vFunc(ctx))
+	// }
 
 	return diags, nil
 }
