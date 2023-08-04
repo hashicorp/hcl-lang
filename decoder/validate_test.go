@@ -28,7 +28,7 @@ func TestValidate_schema(t *testing.T) {
 			schema.NewBodySchema(),
 			``,
 			map[string]hcl.Diagnostics{
-				"test.tf": hcl.Diagnostics{},
+				"test.tf": {},
 			},
 		},
 		{
@@ -43,7 +43,7 @@ func TestValidate_schema(t *testing.T) {
 			},
 			`test = 1`,
 			map[string]hcl.Diagnostics{
-				"test.tf": hcl.Diagnostics{},
+				"test.tf": {},
 			},
 		},
 		// attributes
@@ -60,7 +60,7 @@ func TestValidate_schema(t *testing.T) {
 			`test = 1
 	foo = 1`,
 			map[string]hcl.Diagnostics{
-				"test.tf": hcl.Diagnostics{
+				"test.tf": {
 					&hcl.Diagnostic{
 						Severity: hcl.DiagError,
 						Summary:  "Unexpected attribute",
@@ -132,7 +132,7 @@ func TestValidate_schema(t *testing.T) {
 wakka = 2
 `,
 			map[string]hcl.Diagnostics{
-				"test.tf": hcl.Diagnostics{
+				"test.tf": {
 					&hcl.Diagnostic{
 						Severity: hcl.DiagWarning,
 						Summary:  "\"wakka\" is deprecated",
@@ -162,7 +162,7 @@ wakka = 2
 			},
 			`bar = "baz"`,
 			map[string]hcl.Diagnostics{
-				"test.tf": hcl.Diagnostics{
+				"test.tf": {
 					&hcl.Diagnostic{
 						Severity: hcl.DiagError,
 						Summary:  "Required attribute \"wakka\" not specified",
@@ -194,7 +194,7 @@ wakka = 2
 			},
 			`bar {}`,
 			map[string]hcl.Diagnostics{
-				"test.tf": hcl.Diagnostics{
+				"test.tf": {
 					&hcl.Diagnostic{
 						Severity: hcl.DiagError,
 						Summary:  "Unexpected block",
@@ -233,7 +233,7 @@ wakka = 2
 	test =1
 }`,
 			map[string]hcl.Diagnostics{
-				"test.tf": hcl.Diagnostics{
+				"test.tf": {
 					&hcl.Diagnostic{
 						Severity: hcl.DiagWarning,
 						Summary:  "\"foo\" is deprecated",
@@ -272,7 +272,7 @@ wakka = 2
 	test = 1
 }`,
 			map[string]hcl.Diagnostics{
-				"test.tf": hcl.Diagnostics{
+				"test.tf": {
 					&hcl.Diagnostic{
 						Severity: hcl.DiagError,
 						Summary:  "Too many labels specified for \"foo\"",
@@ -314,7 +314,7 @@ wakka = 2
 	test = 1
 }`,
 			map[string]hcl.Diagnostics{
-				"test.tf": hcl.Diagnostics{
+				"test.tf": {
 					&hcl.Diagnostic{
 						Severity: hcl.DiagError,
 						Summary:  "Not enough labels specified for \"foo\"",
@@ -335,10 +335,10 @@ wakka = 2
 					"foo": {
 						Body: &schema.BodySchema{
 							Blocks: map[string]*schema.BlockSchema{
-								"bar": &schema.BlockSchema{
+								"bar": {
 									MaxItems: 1,
 								},
-								"two": &schema.BlockSchema{},
+								"two": {},
 							},
 							Attributes: map[string]*schema.AttributeSchema{
 								"test": {
@@ -379,10 +379,10 @@ wakka = 2
 					"foo": {
 						Body: &schema.BodySchema{
 							Blocks: map[string]*schema.BlockSchema{
-								"one": &schema.BlockSchema{
+								"one": {
 									MinItems: 2,
 								},
-								"two": &schema.BlockSchema{},
+								"two": {},
 							},
 							Attributes: map[string]*schema.AttributeSchema{
 								"test": {
@@ -400,7 +400,7 @@ wakka = 2
 				test = 1
 			}`,
 			map[string]hcl.Diagnostics{
-				"test.tf": hcl.Diagnostics{
+				"test.tf": {
 					&hcl.Diagnostic{
 						Severity: hcl.DiagError,
 						Summary:  "Too few blocks specified for \"one\"",
@@ -421,10 +421,10 @@ wakka = 2
 					"foo": {
 						Body: &schema.BodySchema{
 							Blocks: map[string]*schema.BlockSchema{
-								"one": &schema.BlockSchema{
+								"one": {
 									MinItems: 2,
 								},
-								"two": &schema.BlockSchema{},
+								"two": {},
 							},
 							Attributes: map[string]*schema.AttributeSchema{
 								"test": {
@@ -440,7 +440,7 @@ wakka = 2
 				test = 1
 			}`,
 			map[string]hcl.Diagnostics{
-				"test.tf": hcl.Diagnostics{
+				"test.tf": {
 					&hcl.Diagnostic{
 						Severity: hcl.DiagError,
 						Summary:  "Too few blocks specified for \"one\"",
@@ -461,11 +461,11 @@ wakka = 2
 					"foo": {
 						Body: &schema.BodySchema{
 							Blocks: map[string]*schema.BlockSchema{
-								"one": &schema.BlockSchema{
+								"one": {
 									MinItems: 2,
 									MaxItems: 4,
 								},
-								"two": &schema.BlockSchema{},
+								"two": {},
 							},
 							Attributes: map[string]*schema.AttributeSchema{
 								"test": {
@@ -494,10 +494,10 @@ wakka = 2
 					"foo": {
 						Body: &schema.BodySchema{
 							Blocks: map[string]*schema.BlockSchema{
-								"one": &schema.BlockSchema{
+								"one": {
 									MinItems: 2,
 								},
-								"two": &schema.BlockSchema{
+								"two": {
 									MaxItems: 1,
 								},
 							},
@@ -528,10 +528,10 @@ wakka = 2
 					"foo": {
 						Body: &schema.BodySchema{
 							Blocks: map[string]*schema.BlockSchema{
-								"one": &schema.BlockSchema{
+								"one": {
 									MinItems: 2,
 								},
-								"two": &schema.BlockSchema{
+								"two": {
 									MaxItems: 1,
 								},
 							},
@@ -583,10 +583,10 @@ wakka = 2
 					"foo": {
 						Body: &schema.BodySchema{
 							Blocks: map[string]*schema.BlockSchema{
-								"one": &schema.BlockSchema{
+								"one": {
 									MaxItems: 4,
 								},
-								"two": &schema.BlockSchema{},
+								"two": {},
 							},
 							Attributes: map[string]*schema.AttributeSchema{
 								"test": {
