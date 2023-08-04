@@ -21,13 +21,15 @@ func TestValidate_schema(t *testing.T) {
 		testName            string
 		bodySchema          *schema.BodySchema
 		cfg                 string
-		expectedDiagnostics hcl.Diagnostics
+		expectedDiagnostics map[string]hcl.Diagnostics
 	}{
 		{
 			"empty schema",
 			schema.NewBodySchema(),
 			``,
-			hcl.Diagnostics{},
+			map[string]hcl.Diagnostics{
+				"test.tf": hcl.Diagnostics{},
+			},
 		},
 		{
 			"valid schema",
@@ -40,7 +42,9 @@ func TestValidate_schema(t *testing.T) {
 				},
 			},
 			`test = 1`,
-			hcl.Diagnostics{},
+			map[string]hcl.Diagnostics{
+				"test.tf": hcl.Diagnostics{},
+			},
 		},
 		// attributes
 		{
@@ -55,15 +59,17 @@ func TestValidate_schema(t *testing.T) {
 			},
 			`test = 1
 	foo = 1`,
-			hcl.Diagnostics{
-				&hcl.Diagnostic{
-					Severity: hcl.DiagError,
-					Summary:  "Unexpected attribute",
-					Detail:   "An attribute named \"foo\" is not expected here",
-					Subject: &hcl.Range{
-						Filename: "test.tf",
-						Start:    hcl.Pos{Line: 2, Column: 2, Byte: 10},
-						End:      hcl.Pos{Line: 2, Column: 9, Byte: 17},
+			map[string]hcl.Diagnostics{
+				"test.tf": hcl.Diagnostics{
+					&hcl.Diagnostic{
+						Severity: hcl.DiagError,
+						Summary:  "Unexpected attribute",
+						Detail:   "An attribute named \"foo\" is not expected here",
+						Subject: &hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 2, Column: 2, Byte: 10},
+							End:      hcl.Pos{Line: 2, Column: 9, Byte: 17},
+						},
 					},
 				},
 			},
@@ -88,15 +94,17 @@ func TestValidate_schema(t *testing.T) {
 	test = 1
 	foo = 1
 }`,
-			hcl.Diagnostics{
-				&hcl.Diagnostic{
-					Severity: hcl.DiagError,
-					Summary:  "Unexpected attribute",
-					Detail:   "An attribute named \"foo\" is not expected here",
-					Subject: &hcl.Range{
-						Filename: "test.tf",
-						Start:    hcl.Pos{Line: 3, Column: 2, Byte: 17},
-						End:      hcl.Pos{Line: 3, Column: 9, Byte: 24},
+			map[string]hcl.Diagnostics{
+				"test.tf": hcl.Diagnostics{
+					&hcl.Diagnostic{
+						Severity: hcl.DiagError,
+						Summary:  "Unexpected attribute",
+						Detail:   "An attribute named \"foo\" is not expected here",
+						Subject: &hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 3, Column: 2, Byte: 17},
+							End:      hcl.Pos{Line: 3, Column: 9, Byte: 24},
+						},
 					},
 				},
 			},
@@ -123,15 +131,17 @@ func TestValidate_schema(t *testing.T) {
 			`test = 1
 wakka = 2
 `,
-			hcl.Diagnostics{
-				&hcl.Diagnostic{
-					Severity: hcl.DiagWarning,
-					Summary:  "\"wakka\" is deprecated",
-					Detail:   "Reason: \"Use `wakka_wakka` instead\"",
-					Subject: &hcl.Range{
-						Filename: "test.tf",
-						Start:    hcl.Pos{Line: 2, Column: 1, Byte: 9},
-						End:      hcl.Pos{Line: 2, Column: 10, Byte: 18},
+			map[string]hcl.Diagnostics{
+				"test.tf": hcl.Diagnostics{
+					&hcl.Diagnostic{
+						Severity: hcl.DiagWarning,
+						Summary:  "\"wakka\" is deprecated",
+						Detail:   "Reason: \"Use `wakka_wakka` instead\"",
+						Subject: &hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 2, Column: 1, Byte: 9},
+							End:      hcl.Pos{Line: 2, Column: 10, Byte: 18},
+						},
 					},
 				},
 			},
@@ -151,15 +161,17 @@ wakka = 2
 				},
 			},
 			`bar = "baz"`,
-			hcl.Diagnostics{
-				&hcl.Diagnostic{
-					Severity: hcl.DiagError,
-					Summary:  "Required attribute \"wakka\" not specified",
-					Detail:   "An attribute named \"wakka\" is required here",
-					Subject: &hcl.Range{
-						Filename: "test.tf",
-						Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
-						End:      hcl.Pos{Line: 1, Column: 12, Byte: 11},
+			map[string]hcl.Diagnostics{
+				"test.tf": hcl.Diagnostics{
+					&hcl.Diagnostic{
+						Severity: hcl.DiagError,
+						Summary:  "Required attribute \"wakka\" not specified",
+						Detail:   "An attribute named \"wakka\" is required here",
+						Subject: &hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
+							End:      hcl.Pos{Line: 1, Column: 12, Byte: 11},
+						},
 					},
 				},
 			},
@@ -181,15 +193,17 @@ wakka = 2
 				},
 			},
 			`bar {}`,
-			hcl.Diagnostics{
-				&hcl.Diagnostic{
-					Severity: hcl.DiagError,
-					Summary:  "Unexpected block",
-					Detail:   "Blocks of type \"bar\" are not expected here",
-					Subject: &hcl.Range{
-						Filename: "test.tf",
-						Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
-						End:      hcl.Pos{Line: 1, Column: 4, Byte: 3},
+			map[string]hcl.Diagnostics{
+				"test.tf": hcl.Diagnostics{
+					&hcl.Diagnostic{
+						Severity: hcl.DiagError,
+						Summary:  "Unexpected block",
+						Detail:   "Blocks of type \"bar\" are not expected here",
+						Subject: &hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
+							End:      hcl.Pos{Line: 1, Column: 4, Byte: 3},
+						},
 					},
 				},
 			},
@@ -219,15 +233,17 @@ wakka = 2
 			`foo {
 	test =1
 }`,
-			hcl.Diagnostics{
-				&hcl.Diagnostic{
-					Severity: hcl.DiagWarning,
-					Summary:  "\"foo\" is deprecated",
-					Detail:   "Reason: \"Use `wakka` instead\"",
-					Subject: &hcl.Range{
-						Filename: "test.tf",
-						Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
-						End:      hcl.Pos{Line: 1, Column: 4, Byte: 3},
+			map[string]hcl.Diagnostics{
+				"test.tf": hcl.Diagnostics{
+					&hcl.Diagnostic{
+						Severity: hcl.DiagWarning,
+						Summary:  "\"foo\" is deprecated",
+						Detail:   "Reason: \"Use `wakka` instead\"",
+						Subject: &hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
+							End:      hcl.Pos{Line: 1, Column: 4, Byte: 3},
+						},
 					},
 				},
 			},
@@ -256,15 +272,17 @@ wakka = 2
 			`foo "expected" "notExpected" {
 	test = 1
 }`,
-			hcl.Diagnostics{
-				&hcl.Diagnostic{
-					Severity: hcl.DiagError,
-					Summary:  "Too many labels specified for \"foo\"",
-					Detail:   "Only 1 label(s) are expected for \"foo\" blocks",
-					Subject: &hcl.Range{
-						Filename: "test.tf",
-						Start:    hcl.Pos{Line: 1, Column: 16, Byte: 15},
-						End:      hcl.Pos{Line: 1, Column: 29, Byte: 28},
+			map[string]hcl.Diagnostics{
+				"test.tf": hcl.Diagnostics{
+					&hcl.Diagnostic{
+						Severity: hcl.DiagError,
+						Summary:  "Too many labels specified for \"foo\"",
+						Detail:   "Only 1 label(s) are expected for \"foo\" blocks",
+						Subject: &hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 1, Column: 16, Byte: 15},
+							End:      hcl.Pos{Line: 1, Column: 29, Byte: 28},
+						},
 					},
 				},
 			},
@@ -296,15 +314,17 @@ wakka = 2
 			`foo "expected" {
 	test = 1
 }`,
-			hcl.Diagnostics{
-				&hcl.Diagnostic{
-					Severity: hcl.DiagError,
-					Summary:  "Not enough labels specified for \"foo\"",
-					Detail:   "All \"foo\" blocks must have 2 label(s)",
-					Subject: &hcl.Range{
-						Filename: "test.tf",
-						Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
-						End:      hcl.Pos{Line: 1, Column: 4, Byte: 3},
+			map[string]hcl.Diagnostics{
+				"test.tf": hcl.Diagnostics{
+					&hcl.Diagnostic{
+						Severity: hcl.DiagError,
+						Summary:  "Not enough labels specified for \"foo\"",
+						Detail:   "All \"foo\" blocks must have 2 label(s)",
+						Subject: &hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
+							End:      hcl.Pos{Line: 1, Column: 4, Byte: 3},
+						},
 					},
 				},
 			},
@@ -337,15 +357,17 @@ wakka = 2
 				two {}
 				test = 1
 			}`,
-			hcl.Diagnostics{
-				&hcl.Diagnostic{
-					Severity: hcl.DiagError,
-					Summary:  "Too many blocks specified for \"bar\"",
-					Detail:   "Only 1 block(s) are expected for \"bar\"",
-					Subject: &hcl.Range{
-						Filename: "test.tf",
-						Start:    hcl.Pos{Line: 2, Column: 5, Byte: 10},
-						End:      hcl.Pos{Line: 2, Column: 8, Byte: 13},
+			map[string]hcl.Diagnostics{
+				"test.tf": hcl.Diagnostics{
+					&hcl.Diagnostic{
+						Severity: hcl.DiagError,
+						Summary:  "Too many blocks specified for \"bar\"",
+						Detail:   "Only 1 block(s) are expected for \"bar\"",
+						Subject: &hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 2, Column: 5, Byte: 10},
+							End:      hcl.Pos{Line: 2, Column: 8, Byte: 13},
+						},
 					},
 				},
 			},
@@ -381,15 +403,57 @@ wakka = 2
 				two {}
 				test = 1
 			}`,
-			hcl.Diagnostics{
-				&hcl.Diagnostic{
-					Severity: hcl.DiagError,
-					Summary:  "Too few blocks specified for \"one\"",
-					Detail:   "At least 2 block(s) are expected for \"one\"",
-					Subject: &hcl.Range{
-						Filename: "test.tf",
-						Start:    hcl.Pos{Line: 2, Column: 5, Byte: 10},
-						End:      hcl.Pos{Line: 2, Column: 8, Byte: 13},
+			map[string]hcl.Diagnostics{
+				"test.tf": hcl.Diagnostics{
+					&hcl.Diagnostic{
+						Severity: hcl.DiagError,
+						Summary:  "Too few blocks specified for \"one\"",
+						Detail:   "At least 2 block(s) are expected for \"one\"",
+						Subject: &hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 2, Column: 5, Byte: 10},
+							End:      hcl.Pos{Line: 2, Column: 8, Byte: 13},
+						},
+					},
+				},
+			},
+		},
+		{
+			"minitems with no blocks",
+			&schema.BodySchema{
+				Blocks: map[string]*schema.BlockSchema{
+					"foo": {
+						Body: &schema.BodySchema{
+							Blocks: map[string]*schema.BlockSchema{
+								"one": &schema.BlockSchema{
+									MinItems: 2,
+								},
+								"two": &schema.BlockSchema{},
+							},
+							Attributes: map[string]*schema.AttributeSchema{
+								"test": {
+									Constraint: schema.LiteralType{Type: cty.Number},
+									IsRequired: true,
+								},
+							},
+						},
+					},
+				},
+			},
+			`foo {
+				test = 1
+			}`,
+			map[string]hcl.Diagnostics{
+				"test.tf": hcl.Diagnostics{
+					&hcl.Diagnostic{
+						Severity: hcl.DiagError,
+						Summary:  "Too few blocks specified for \"one\"",
+						Detail:   "At least 2 block(s) are expected for \"one\"",
+						Subject: &hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 1, Column: 5, Byte: 4},
+							End:      hcl.Pos{Line: 3, Column: 5, Byte: 23},
+						},
 					},
 				},
 			},

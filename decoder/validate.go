@@ -173,16 +173,14 @@ func (d *PathDecoder) validateBody(ctx context.Context, body *hclsyntax.Body, bo
 		// check if the bodySchema Block is specified in the configuration
 		numBlocks, ok := specifiedBlocks[name]
 		if ok {
+			// block is in schema and user specified it in configuration
 			// check if schema says there should be maximum number of items for this block
 			if block.MaxItems > 0 {
 				// ---------- diag ERR too many blocks
 				if numBlocks > int(block.MaxItems) {
-					diags = append(diags, &hcl.Diagnostic{
-						Severity: hcl.DiagError,
-						Summary:  fmt.Sprintf("Too many blocks specified for %q", name),
-						Detail:   fmt.Sprintf("Only %d block(s) are expected for %q", block.MaxItems, name),
-						Subject:  &body.Blocks[block.Type].TypeRange,
-					})
+					subjectRange := &body.Blocks[block.Type].TypeRange
+					maxItems := block.MaxItems
+					diags = tooManyBlocksDiag(diags, name, maxItems, subjectRange)
 				}
 			}
 
@@ -190,17 +188,60 @@ func (d *PathDecoder) validateBody(ctx context.Context, body *hclsyntax.Body, bo
 			if block.MinItems > 0 {
 				// ---------- diag ERR too little blocks
 				if numBlocks < int(block.MinItems) {
-					diags = append(diags, &hcl.Diagnostic{
-						Severity: hcl.DiagError,
-						Summary:  fmt.Sprintf("Too few blocks specified for %q", name),
-						Detail:   fmt.Sprintf("At least %d block(s) are expected for %q", block.MinItems, name),
-						Subject:  &body.Blocks[block.Type].TypeRange,
-					})
+					subjectRange := &body.Blocks[block.Type].TypeRange
+					minItems := block.MinItems
+					diags = tooFewItems(diags, name, minItems, subjectRange)
 				}
+			}
+		}else {
+			// block is in schema, but user did not specify it in configuration
+			// check if schema says there should be maximum number of items for this block
+			numBlocks = 0
+			if block.MaxItems > 0 {
+				// ---------- diag ERR too many blocks
+				if numBlocks > int(block.MaxItems) {
+					// use current body range as there isn't a block to reference because
+					// the user didn't write anything here
+					subjectRange := &body.SrcRange
+					maxItems := block.MaxItems
+					diags = tooManyBlocksDiag(diags, name, maxItems, subjectRange)
+				}
+			}
 
+
+			// check if schema says there should be minimum number of items for this block
+			if block.MinItems > 0 {
+				// ---------- diag ERR too little blocks
+				if numBlocks < int(block.MinItems) {
+					// use current body range as there isn't a block to reference because
+					// the user didn't write anything here
+					subjectRange := &body.SrcRange
+					minItems := block.MinItems
+					diags = tooFewItems(diags, name, minItems, subjectRange)
+				}
 			}
 		}
 	}
 
+	return diags
+}
+
+func tooFewItems(diags hcl.Diagnostics, name string, minItems uint64, subjectRange *hcl.Range) hcl.Diagnostics {
+	diags = append(diags, &hcl.Diagnostic{
+		Severity: hcl.DiagError,
+		Summary:  fmt.Sprintf("Too few blocks specified for %q", name),
+		Detail:   fmt.Sprintf("At least %d block(s) are expected for %q", minItems, name),
+		Subject:  subjectRange,
+	})
+	return diags
+}
+
+func tooManyBlocksDiag(diags hcl.Diagnostics, name string, maxItems uint64, subjectRange *hcl.Range) hcl.Diagnostics {
+	diags = append(diags, &hcl.Diagnostic{
+		Severity: hcl.DiagError,
+		Summary:  fmt.Sprintf("Too many blocks specified for %q", name),
+		Detail:   fmt.Sprintf("Only %d block(s) are expected for %q", maxItems, name),
+		Subject:  subjectRange,
+	})
 	return diags
 }
