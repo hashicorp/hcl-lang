@@ -193,7 +193,7 @@ func (d *PathDecoder) validateBody(ctx context.Context, body *hclsyntax.Body, bo
 					diags = tooFewItems(diags, name, minItems, subjectRange)
 				}
 			}
-		}else {
+		} else {
 			// block is in schema, but user did not specify it in configuration
 			// check if schema says there should be maximum number of items for this block
 			numBlocks = 0
@@ -207,7 +207,6 @@ func (d *PathDecoder) validateBody(ctx context.Context, body *hclsyntax.Body, bo
 					diags = tooManyBlocksDiag(diags, name, maxItems, subjectRange)
 				}
 			}
-
 
 			// check if schema says there should be minimum number of items for this block
 			if block.MinItems > 0 {
