@@ -190,7 +190,7 @@ func (d *PathDecoder) validateBody(ctx context.Context, body *hclsyntax.Body, bo
 				if numBlocks < int(block.MinItems) {
 					subjectRange := &body.Blocks[block.Type].TypeRange
 					minItems := block.MinItems
-					diags = tooFewItems(diags, name, minItems, subjectRange)
+					diags = tooFewItemsDiag(diags, name, minItems, subjectRange)
 				}
 			}
 		} else {
@@ -216,7 +216,7 @@ func (d *PathDecoder) validateBody(ctx context.Context, body *hclsyntax.Body, bo
 					// the user didn't write anything here
 					subjectRange := &body.SrcRange
 					minItems := block.MinItems
-					diags = tooFewItems(diags, name, minItems, subjectRange)
+					diags = tooFewItemsDiag(diags, name, minItems, subjectRange)
 				}
 			}
 		}
@@ -225,7 +225,7 @@ func (d *PathDecoder) validateBody(ctx context.Context, body *hclsyntax.Body, bo
 	return diags
 }
 
-func tooFewItems(diags hcl.Diagnostics, name string, minItems uint64, subjectRange *hcl.Range) hcl.Diagnostics {
+func tooFewItemsDiag(diags hcl.Diagnostics, name string, minItems uint64, subjectRange *hcl.Range) hcl.Diagnostics {
 	diags = append(diags, &hcl.Diagnostic{
 		Severity: hcl.DiagError,
 		Summary:  fmt.Sprintf("Too few blocks specified for %q", name),

@@ -95,7 +95,7 @@ func TestValidate_schema(t *testing.T) {
 	foo = 1
 }`,
 			map[string]hcl.Diagnostics{
-				"test.tf": hcl.Diagnostics{
+				"test.tf": {
 					&hcl.Diagnostic{
 						Severity: hcl.DiagError,
 						Summary:  "Unexpected attribute",
@@ -208,7 +208,6 @@ wakka = 2
 				},
 			},
 		},
-
 		{
 			"deprecated block",
 			&schema.BodySchema{
@@ -358,7 +357,7 @@ wakka = 2
 				test = 1
 			}`,
 			map[string]hcl.Diagnostics{
-				"test.tf": hcl.Diagnostics{
+				"test.tf": {
 					&hcl.Diagnostic{
 						Severity: hcl.DiagError,
 						Summary:  "Too many blocks specified for \"bar\"",
@@ -372,10 +371,7 @@ wakka = 2
 				},
 			},
 		},
-		// have min items, but no blocks specified
 		// either min or max is in schema but no blocks specified
-		// have min and max on same block in schema
-		// have min and max set on two different blocks
 		{
 			"too few blocks",
 			&schema.BodySchema{
@@ -456,6 +452,157 @@ wakka = 2
 						},
 					},
 				},
+			},
+		},
+		{
+			"min and max items with enough blocks for minitems",
+			&schema.BodySchema{
+				Blocks: map[string]*schema.BlockSchema{
+					"foo": {
+						Body: &schema.BodySchema{
+							Blocks: map[string]*schema.BlockSchema{
+								"one": &schema.BlockSchema{
+									MinItems: 2,
+									MaxItems: 4,
+								},
+								"two": &schema.BlockSchema{},
+							},
+							Attributes: map[string]*schema.AttributeSchema{
+								"test": {
+									Constraint: schema.LiteralType{Type: cty.Number},
+									IsRequired: true,
+								},
+							},
+						},
+					},
+				},
+			},
+			`foo {
+				one {}
+				one {}
+				one {}
+				test = 1
+			}`,
+			map[string]hcl.Diagnostics{
+				"test.tf": {},
+			},
+		},
+		{
+			"min and max set on two different blocks with correct number",
+			&schema.BodySchema{
+				Blocks: map[string]*schema.BlockSchema{
+					"foo": {
+						Body: &schema.BodySchema{
+							Blocks: map[string]*schema.BlockSchema{
+								"one": &schema.BlockSchema{
+									MinItems: 2,
+								},
+								"two": &schema.BlockSchema{
+									MaxItems: 1,
+								},
+							},
+							Attributes: map[string]*schema.AttributeSchema{
+								"test": {
+									Constraint: schema.LiteralType{Type: cty.Number},
+									IsRequired: true,
+								},
+							},
+						},
+					},
+				},
+			},
+			`foo {
+				one {}
+				one {}
+				two {}
+				test = 1
+			}`,
+			map[string]hcl.Diagnostics{
+				"test.tf": {},
+			},
+		},
+		{
+			"min and max set on two different blocks with incorrect number",
+			&schema.BodySchema{
+				Blocks: map[string]*schema.BlockSchema{
+					"foo": {
+						Body: &schema.BodySchema{
+							Blocks: map[string]*schema.BlockSchema{
+								"one": &schema.BlockSchema{
+									MinItems: 2,
+								},
+								"two": &schema.BlockSchema{
+									MaxItems: 1,
+								},
+							},
+							Attributes: map[string]*schema.AttributeSchema{
+								"test": {
+									Constraint: schema.LiteralType{Type: cty.Number},
+									IsRequired: true,
+								},
+							},
+						},
+					},
+				},
+			},
+			`foo {
+				one {}
+				two {}
+				two {}
+				test = 1
+			}`,
+			map[string]hcl.Diagnostics{
+				"test.tf": {
+					&hcl.Diagnostic{
+						Severity: hcl.DiagError,
+						Summary:  "Too few blocks specified for \"one\"",
+						Detail:   "At least 2 block(s) are expected for \"one\"",
+						Subject: &hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 2, Column: 5, Byte: 10},
+							End:      hcl.Pos{Line: 2, Column: 8, Byte: 13},
+						},
+					},
+					&hcl.Diagnostic{
+						Severity: hcl.DiagError,
+						Summary:  "Too many blocks specified for \"two\"",
+						Detail:   "Only 1 block(s) are expected for \"two\"",
+						Subject: &hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 2, Column: 5, Byte: 10},
+							End:      hcl.Pos{Line: 2, Column: 8, Byte: 13},
+						},
+					},
+				},
+			},
+		},
+		{
+			"max is in schema but no blocks specified",
+			&schema.BodySchema{
+				Blocks: map[string]*schema.BlockSchema{
+					"foo": {
+						Body: &schema.BodySchema{
+							Blocks: map[string]*schema.BlockSchema{
+								"one": &schema.BlockSchema{
+									MaxItems: 4,
+								},
+								"two": &schema.BlockSchema{},
+							},
+							Attributes: map[string]*schema.AttributeSchema{
+								"test": {
+									Constraint: schema.LiteralType{Type: cty.Number},
+									IsRequired: true,
+								},
+							},
+						},
+					},
+				},
+			},
+			`foo {
+				test = 1
+			}`,
+			map[string]hcl.Diagnostics{
+				"test.tf": {},
 			},
 		},
 	}
