@@ -350,6 +350,10 @@ wakka = 2
 				},
 			},
 		},
+		// have min items, but no blocks specified
+		// either min or max is in schema but no blocks specified
+		// have min and max on same block in schema
+		// have min and max set on two different blocks
 		{
 			"too few blocks",
 			&schema.BodySchema{
