@@ -556,8 +556,8 @@ wakka = 2
 				"test.tf": {
 					&hcl.Diagnostic{
 						Severity: hcl.DiagError,
-						Summary:  "Too few blocks specified for \"one\"",
-						Detail:   "At least 2 block(s) are expected for \"one\"",
+						Summary:  "Too many blocks specified for \"two\"",
+						Detail:   "Only 1 block(s) are expected for \"two\"",
 						Subject: &hcl.Range{
 							Filename: "test.tf",
 							Start:    hcl.Pos{Line: 2, Column: 5, Byte: 10},
@@ -566,8 +566,8 @@ wakka = 2
 					},
 					&hcl.Diagnostic{
 						Severity: hcl.DiagError,
-						Summary:  "Too many blocks specified for \"two\"",
-						Detail:   "Only 1 block(s) are expected for \"two\"",
+						Summary:  "Too few blocks specified for \"one\"",
+						Detail:   "At least 2 block(s) are expected for \"one\"",
 						Subject: &hcl.Range{
 							Filename: "test.tf",
 							Start:    hcl.Pos{Line: 2, Column: 5, Byte: 10},
