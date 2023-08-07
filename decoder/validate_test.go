@@ -625,8 +625,9 @@ wakka = 2
 			}
 
 			sortedDiags := diags["test.tf"]
-			sort.SliceStable(sortedDiags, func(i, j int) bool {
-				return sortedDiags[i].Subject.Start.Byte < sortedDiags[j].Subject.Start.Byte
+			sort.Slice(sortedDiags, func(i, j int) bool {
+				return sortedDiags[i].Subject.Start.Byte < sortedDiags[j].Subject.Start.Byte ||
+					sortedDiags[i].Summary < sortedDiags[j].Summary
 			})
 
 			if diff := cmp.Diff(tc.expectedDiagnostics["test.tf"], sortedDiags); diff != "" {
