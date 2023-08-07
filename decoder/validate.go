@@ -67,7 +67,7 @@ func (d *PathDecoder) validateBody(ctx context.Context, body *hclsyntax.Body, bo
 				Severity: hcl.DiagError,
 				Summary:  "Unexpected attribute",
 				Detail:   fmt.Sprintf("An attribute named %q is not expected here", name),
-				Subject:  &attribute.SrcRange,
+				Subject:  attribute.SrcRange.Ptr(),
 			})
 			// don't check futher because this isn't a valid attribute
 			continue
@@ -79,7 +79,7 @@ func (d *PathDecoder) validateBody(ctx context.Context, body *hclsyntax.Body, bo
 				Severity: hcl.DiagWarning,
 				Summary:  fmt.Sprintf("%q is deprecated", name),
 				Detail:   fmt.Sprintf("Reason: %q", attributeSchema.Description.Value),
-				Subject:  &attribute.SrcRange,
+				Subject:  attribute.SrcRange.Ptr(),
 			})
 		}
 	}
@@ -96,7 +96,7 @@ func (d *PathDecoder) validateBody(ctx context.Context, body *hclsyntax.Body, bo
 					Detail:   fmt.Sprintf("An attribute named %q is required here", name),
 					// TODO This is the closest I could think of
 					// maybe block instead ?
-					Subject: &body.SrcRange,
+					Subject: body.SrcRange.Ptr(),
 				})
 			}
 		}
@@ -114,7 +114,7 @@ func (d *PathDecoder) validateBody(ctx context.Context, body *hclsyntax.Body, bo
 				Severity: hcl.DiagError,
 				Summary:  "Unexpected block",
 				Detail:   fmt.Sprintf("Blocks of type %q are not expected here", block.Type),
-				Subject:  &block.TypeRange,
+				Subject:  block.TypeRange.Ptr(),
 			})
 			// don't check futher because this isn't a valid block
 			continue
@@ -139,7 +139,7 @@ func (d *PathDecoder) validateBody(ctx context.Context, body *hclsyntax.Body, bo
 					Severity: hcl.DiagError,
 					Summary:  fmt.Sprintf("Too many labels specified for %q", block.Type),
 					Detail:   fmt.Sprintf("Only %d label(s) are expected for %q blocks", validLabelNum, block.Type),
-					Subject:  &block.LabelRanges[i],
+					Subject:  block.LabelRanges[i].Ptr(),
 				})
 			}
 		}
@@ -150,7 +150,7 @@ func (d *PathDecoder) validateBody(ctx context.Context, body *hclsyntax.Body, bo
 				Severity: hcl.DiagError,
 				Summary:  fmt.Sprintf("Not enough labels specified for %q", block.Type),
 				Detail:   fmt.Sprintf("All %q blocks must have %d label(s)", block.Type, validLabelNum),
-				Subject:  &block.TypeRange,
+				Subject:  block.TypeRange.Ptr(),
 			})
 		}
 

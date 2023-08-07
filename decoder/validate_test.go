@@ -6,6 +6,7 @@ package decoder
 import (
 	"context"
 	"fmt"
+	"sort"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -623,7 +624,10 @@ wakka = 2
 				t.Fatal(err)
 			}
 
-			if diff := cmp.Diff(tc.expectedDiagnostics, diags); diff != "" {
+			sortedDiags := diags["test.tf"]
+			sort.Slice(sortedDiags, func(i, j int) bool { return sortedDiags[i].Subject.Start.Byte < sortedDiags[j].Subject.Start.Byte })
+
+			if diff := cmp.Diff(tc.expectedDiagnostics["test.tf"], sortedDiags); diff != "" {
 				t.Fatalf("unexpected diagnostics: %s", diff)
 			}
 		})
