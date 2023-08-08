@@ -180,7 +180,7 @@ func (d *PathDecoder) validateBody(ctx context.Context, body *hclsyntax.Body, bo
 				if numBlocks > int(block.MaxItems) {
 					subjectRange := &body.Blocks[block.Type].TypeRange
 					maxItems := block.MaxItems
-					diags = tooManyBlocksDiag(diags, name, maxItems, subjectRange)
+					diags = append(diags, tooManyBlocksDiag(diags, name, maxItems, subjectRange))
 				}
 			}
 
@@ -190,7 +190,7 @@ func (d *PathDecoder) validateBody(ctx context.Context, body *hclsyntax.Body, bo
 				if numBlocks < int(block.MinItems) {
 					subjectRange := &body.Blocks[block.Type].TypeRange
 					minItems := block.MinItems
-					diags = tooFewItemsDiag(diags, name, minItems, subjectRange)
+					diags = append(diags, tooFewItemsDiag(diags, name, minItems, subjectRange))
 				}
 			}
 		} else {
@@ -204,7 +204,7 @@ func (d *PathDecoder) validateBody(ctx context.Context, body *hclsyntax.Body, bo
 					// the user didn't write anything here
 					subjectRange := &body.SrcRange
 					maxItems := block.MaxItems
-					diags = tooManyBlocksDiag(diags, name, maxItems, subjectRange)
+					diags = append(diags, tooManyBlocksDiag(diags, name, maxItems, subjectRange))
 				}
 			}
 
@@ -216,7 +216,7 @@ func (d *PathDecoder) validateBody(ctx context.Context, body *hclsyntax.Body, bo
 					// the user didn't write anything here
 					subjectRange := &body.SrcRange
 					minItems := block.MinItems
-					diags = tooFewItemsDiag(diags, name, minItems, subjectRange)
+					diags = append(diags, tooFewItemsDiag(diags, name, minItems, subjectRange))
 				}
 			}
 		}
@@ -225,22 +225,20 @@ func (d *PathDecoder) validateBody(ctx context.Context, body *hclsyntax.Body, bo
 	return diags
 }
 
-func tooFewItemsDiag(diags hcl.Diagnostics, name string, minItems uint64, subjectRange *hcl.Range) hcl.Diagnostics {
-	diags = append(diags, &hcl.Diagnostic{
+func tooFewItemsDiag(diags hcl.Diagnostics, name string, minItems uint64, subjectRange *hcl.Range) *hcl.Diagnostic {
+	return &hcl.Diagnostic{
 		Severity: hcl.DiagError,
 		Summary:  fmt.Sprintf("Too few blocks specified for %q", name),
 		Detail:   fmt.Sprintf("At least %d block(s) are expected for %q", minItems, name),
 		Subject:  subjectRange,
-	})
-	return diags
+	}
 }
 
-func tooManyBlocksDiag(diags hcl.Diagnostics, name string, maxItems uint64, subjectRange *hcl.Range) hcl.Diagnostics {
-	diags = append(diags, &hcl.Diagnostic{
+func tooManyBlocksDiag(diags hcl.Diagnostics, name string, maxItems uint64, subjectRange *hcl.Range) *hcl.Diagnostic {
+	return &hcl.Diagnostic{
 		Severity: hcl.DiagError,
 		Summary:  fmt.Sprintf("Too many blocks specified for %q", name),
 		Detail:   fmt.Sprintf("Only %d block(s) are expected for %q", maxItems, name),
 		Subject:  subjectRange,
-	})
-	return diags
+	}
 }
