@@ -62,15 +62,18 @@ func (d *PathDecoder) validateBody(ctx context.Context, body *hclsyntax.Body, bo
 	for name, attribute := range body.Attributes {
 		attributeSchema, ok := bodySchema.Attributes[name]
 		if !ok {
-			// ---------- diag ERR unknown attribute
-			diags = append(diags, &hcl.Diagnostic{
-				Severity: hcl.DiagError,
-				Summary:  "Unexpected attribute",
-				Detail:   fmt.Sprintf("An attribute named %q is not expected here", name),
-				Subject:  attribute.SrcRange.Ptr(),
-			})
-			// don't check futher because this isn't a valid attribute
-			continue
+			if bodySchema.AnyAttribute == nil {
+				// ---------- diag ERR unknown attribute
+				diags = append(diags, &hcl.Diagnostic{
+					Severity: hcl.DiagError,
+					Summary:  "Unexpected attribute",
+					Detail:   fmt.Sprintf("An attribute named %q is not expected here", name),
+					Subject:  attribute.SrcRange.Ptr(),
+				})
+				// don't check futher because this isn't a valid attribute
+				continue
+			}
+			attributeSchema = bodySchema.AnyAttribute
 		}
 
 		// ---------- diag WARN deprecated attribute

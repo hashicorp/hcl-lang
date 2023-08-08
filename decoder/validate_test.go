@@ -606,6 +606,60 @@ wakka = 2
 				"test.tf": {},
 			},
 		},
+		{
+			"any attribute",
+			&schema.BodySchema{
+				Blocks: map[string]*schema.BlockSchema{
+					"foo": {
+						Body: &schema.BodySchema{
+							AnyAttribute: &schema.AttributeSchema{
+								Constraint: schema.LiteralType{Type: cty.Number},
+								IsOptional: true,
+							},
+						},
+					},
+				},
+			},
+			`foo {
+				test = 1
+			}`,
+			map[string]hcl.Diagnostics{
+				"test.tf": {},
+			},
+		},
+		{
+			"deprecated any attribute",
+			&schema.BodySchema{
+				Blocks: map[string]*schema.BlockSchema{
+					"foo": {
+						Body: &schema.BodySchema{
+							AnyAttribute: &schema.AttributeSchema{
+								Constraint:   schema.LiteralType{Type: cty.Number},
+								IsOptional:   true,
+								IsDeprecated: true,
+							},
+						},
+					},
+				},
+			},
+			`foo {
+				test = 1
+			}`,
+			map[string]hcl.Diagnostics{
+				"test.tf": {
+					{
+						Severity: hcl.DiagWarning,
+						Summary:  `"test" is deprecated`,
+						Detail:   `Reason: ""`,
+						Subject: &hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 2, Column: 5, Byte: 10},
+							End:      hcl.Pos{Line: 2, Column: 13, Byte: 18},
+						},
+					},
+				},
+			},
+		},
 	}
 
 	for i, tc := range testCases {
