@@ -28,9 +28,7 @@ func TestValidate_schema(t *testing.T) {
 			"empty schema",
 			schema.NewBodySchema(),
 			``,
-			map[string]hcl.Diagnostics{
-				"test.tf": {},
-			},
+			map[string]hcl.Diagnostics{},
 		},
 		{
 			"valid schema",
@@ -43,9 +41,7 @@ func TestValidate_schema(t *testing.T) {
 				},
 			},
 			`test = 1`,
-			map[string]hcl.Diagnostics{
-				"test.tf": {},
-			},
+			map[string]hcl.Diagnostics{},
 		},
 		// attributes
 		{
@@ -365,8 +361,8 @@ wakka = 2
 						Detail:   "Only 1 block(s) are expected for \"bar\"",
 						Subject: &hcl.Range{
 							Filename: "test.tf",
-							Start:    hcl.Pos{Line: 2, Column: 5, Byte: 10},
-							End:      hcl.Pos{Line: 2, Column: 8, Byte: 13},
+							Start:    hcl.Pos{Line: 1, Column: 5, Byte: 4},
+							End:      hcl.Pos{Line: 6, Column: 5, Byte: 56},
 						},
 					},
 				},
@@ -408,8 +404,8 @@ wakka = 2
 						Detail:   "At least 2 block(s) are expected for \"one\"",
 						Subject: &hcl.Range{
 							Filename: "test.tf",
-							Start:    hcl.Pos{Line: 2, Column: 5, Byte: 10},
-							End:      hcl.Pos{Line: 2, Column: 8, Byte: 13},
+							Start:    hcl.Pos{Line: 1, Column: 5, Byte: 4},
+							End:      hcl.Pos{Line: 5, Column: 5, Byte: 45},
 						},
 					},
 				},
@@ -484,9 +480,7 @@ wakka = 2
 				one {}
 				test = 1
 			}`,
-			map[string]hcl.Diagnostics{
-				"test.tf": {},
-			},
+			map[string]hcl.Diagnostics{},
 		},
 		{
 			"min and max set on two different blocks with correct number",
@@ -518,9 +512,7 @@ wakka = 2
 				two {}
 				test = 1
 			}`,
-			map[string]hcl.Diagnostics{
-				"test.tf": {},
-			},
+			map[string]hcl.Diagnostics{},
 		},
 		{
 			"min and max set on two different blocks with incorrect number",
@@ -560,8 +552,8 @@ wakka = 2
 						Detail:   "At least 2 block(s) are expected for \"one\"",
 						Subject: &hcl.Range{
 							Filename: "test.tf",
-							Start:    hcl.Pos{Line: 2, Column: 5, Byte: 10},
-							End:      hcl.Pos{Line: 2, Column: 8, Byte: 13},
+							Start:    hcl.Pos{Line: 1, Column: 5, Byte: 4},
+							End:      hcl.Pos{Line: 6, Column: 5, Byte: 56},
 						},
 					},
 					&hcl.Diagnostic{
@@ -570,8 +562,8 @@ wakka = 2
 						Detail:   "Only 1 block(s) are expected for \"two\"",
 						Subject: &hcl.Range{
 							Filename: "test.tf",
-							Start:    hcl.Pos{Line: 2, Column: 5, Byte: 10},
-							End:      hcl.Pos{Line: 2, Column: 8, Byte: 13},
+							Start:    hcl.Pos{Line: 1, Column: 5, Byte: 4},
+							End:      hcl.Pos{Line: 6, Column: 5, Byte: 56},
 						},
 					},
 				},
@@ -602,9 +594,7 @@ wakka = 2
 			`foo {
 				test = 1
 			}`,
-			map[string]hcl.Diagnostics{
-				"test.tf": {},
-			},
+			map[string]hcl.Diagnostics{},
 		},
 		{
 			"any attribute",
@@ -623,9 +613,7 @@ wakka = 2
 			`foo {
 				test = 1
 			}`,
-			map[string]hcl.Diagnostics{
-				"test.tf": {},
-			},
+			map[string]hcl.Diagnostics{},
 		},
 		{
 			"deprecated any attribute",
@@ -678,15 +666,18 @@ wakka = 2
 				t.Fatal(err)
 			}
 
-			sortedDiags := diags["test.tf"]
-			sort.Slice(sortedDiags, func(i, j int) bool {
-				return sortedDiags[i].Subject.Start.Byte < sortedDiags[j].Subject.Start.Byte ||
-					sortedDiags[i].Summary < sortedDiags[j].Summary
-			})
+			sortDiagnostics(diags["test.tf"])
 
-			if diff := cmp.Diff(tc.expectedDiagnostics["test.tf"], sortedDiags); diff != "" {
+			if diff := cmp.Diff(tc.expectedDiagnostics["test.tf"], diags["test.tf"]); diff != "" {
 				t.Fatalf("unexpected diagnostics: %s", diff)
 			}
 		})
 	}
+}
+
+func sortDiagnostics(diags hcl.Diagnostics) {
+	sort.Slice(diags, func(i, j int) bool {
+		return diags[i].Subject.Start.Byte < diags[j].Subject.Start.Byte ||
+			diags[i].Summary < diags[j].Summary
+	})
 }
