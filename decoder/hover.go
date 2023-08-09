@@ -9,6 +9,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/hashicorp/hcl-lang/decoder/internal/schemahelper"
 	"github.com/hashicorp/hcl-lang/lang"
 	"github.com/hashicorp/hcl-lang/reference"
 	"github.com/hashicorp/hcl-lang/schema"
@@ -143,7 +144,7 @@ func (d *PathDecoder) hoverAtPos(ctx context.Context, body *hclsyntax.Body, body
 			}
 
 			if block.Body != nil && block.Body.Range().ContainsPos(pos) {
-				mergedSchema, err := mergeBlockBodySchemas(block.AsHCLBlock(), blockSchema)
+				mergedSchema, err := schemahelper.MergeBlockBodySchemas(block.AsHCLBlock(), blockSchema)
 				if err != nil {
 					return nil, err
 				}
@@ -166,7 +167,7 @@ func (d *PathDecoder) hoverContentForLabel(i int, block *hclsyntax.Block, bSchem
 	labelSchema := bSchema.Labels[i]
 
 	if labelSchema.IsDepKey {
-		bs, _, ok := NewBlockSchema(bSchema).DependentBodySchema(block.AsHCLBlock())
+		bs, _, ok := schemahelper.NewBlockSchema(bSchema).DependentBodySchema(block.AsHCLBlock())
 		if ok {
 			content := fmt.Sprintf("`%s`", value)
 			if bs.Detail != "" {

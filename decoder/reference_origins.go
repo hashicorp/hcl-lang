@@ -7,6 +7,8 @@ import (
 	"context"
 	"sort"
 
+	"github.com/hashicorp/hcl-lang/decoder/internal/ast"
+	"github.com/hashicorp/hcl-lang/decoder/internal/schemahelper"
 	"github.com/hashicorp/hcl-lang/lang"
 	"github.com/hashicorp/hcl-lang/reference"
 	"github.com/hashicorp/hcl-lang/schema"
@@ -124,7 +126,7 @@ func (d *PathDecoder) referenceOriginsInBody(body hcl.Body, bodySchema *schema.B
 	ctx := context.Background()
 
 	impliedOrigins = append(impliedOrigins, bodySchema.ImpliedOrigins...)
-	content := decodeBody(body, bodySchema)
+	content := ast.DecodeBody(body, bodySchema)
 
 	for _, attr := range content.Attributes {
 		var aSchema *schema.AttributeSchema
@@ -190,7 +192,7 @@ func (d *PathDecoder) referenceOriginsInBody(body hcl.Body, bodySchema *schema.B
 				// skip unknown blocks
 				continue
 			}
-			mergedSchema, err := mergeBlockBodySchemas(block.Block, bSchema)
+			mergedSchema, err := schemahelper.MergeBlockBodySchemas(block.Block, bSchema)
 			if err != nil {
 				continue
 			}

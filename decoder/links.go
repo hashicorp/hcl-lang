@@ -6,6 +6,7 @@ package decoder
 import (
 	"net/url"
 
+	"github.com/hashicorp/hcl-lang/decoder/internal/schemahelper"
 	"github.com/hashicorp/hcl-lang/lang"
 	"github.com/hashicorp/hcl-lang/schema"
 	"github.com/hashicorp/hcl/v2"
@@ -45,7 +46,7 @@ func (d *PathDecoder) linksInBody(body *hclsyntax.Body, bodySchema *schema.BodyS
 
 		// Currently only block bodies have links associated
 		if block.Body != nil {
-			depSchema, dk, ok := NewBlockSchema(blockSchema).DependentBodySchema(block.AsHCLBlock())
+			depSchema, dk, ok := schemahelper.NewBlockSchema(blockSchema).DependentBodySchema(block.AsHCLBlock())
 			if ok && depSchema.DocsLink != nil {
 				link := depSchema.DocsLink
 				u, err := d.docsURL(link.URL, "documentLink")

@@ -7,6 +7,7 @@ import (
 	"context"
 	"sort"
 
+	"github.com/hashicorp/hcl-lang/decoder/internal/schemahelper"
 	"github.com/hashicorp/hcl-lang/lang"
 	"github.com/hashicorp/hcl-lang/reference"
 	"github.com/hashicorp/hcl-lang/schema"
@@ -126,7 +127,7 @@ func (d *PathDecoder) tokensForBody(ctx context.Context, body *hclsyntax.Body, b
 		}
 
 		if block.Body != nil {
-			mergedSchema, err := mergeBlockBodySchemas(block.AsHCLBlock(), blockSchema)
+			mergedSchema, err := schemahelper.MergeBlockBodySchemas(block.AsHCLBlock(), blockSchema)
 			if err != nil {
 				continue
 			}

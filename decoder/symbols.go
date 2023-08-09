@@ -9,6 +9,8 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/hashicorp/hcl-lang/decoder/internal/ast"
+	"github.com/hashicorp/hcl-lang/decoder/internal/schemahelper"
 	"github.com/hashicorp/hcl-lang/lang"
 	"github.com/hashicorp/hcl-lang/schema"
 	"github.com/hashicorp/hcl/v2"
@@ -96,7 +98,7 @@ func (d *PathDecoder) symbolsForBody(body hcl.Body, bodySchema *schema.BodySchem
 		return symbols
 	}
 
-	content := decodeBody(body, bodySchema)
+	content := ast.DecodeBody(body, bodySchema)
 
 	for name, attr := range content.Attributes {
 		symbols = append(symbols, &AttributeSymbol{
@@ -114,7 +116,7 @@ func (d *PathDecoder) symbolsForBody(body hcl.Body, bodySchema *schema.BodySchem
 			bs, ok := bodySchema.Blocks[block.Type]
 			if ok {
 				bSchema = bs.Body
-				mergedSchema, err := mergeBlockBodySchemas(block.Block, bs)
+				mergedSchema, err := schemahelper.MergeBlockBodySchemas(block.Block, bs)
 				if err == nil {
 					bSchema = mergedSchema
 				}
