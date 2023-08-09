@@ -8,6 +8,8 @@ import (
 	"context"
 	"sort"
 
+	"github.com/hashicorp/hcl-lang/decoder/internal/ast"
+	"github.com/hashicorp/hcl-lang/decoder/internal/schemahelper"
 	"github.com/hashicorp/hcl-lang/lang"
 	"github.com/hashicorp/hcl-lang/reference"
 	"github.com/hashicorp/hcl-lang/schema"
@@ -101,14 +103,14 @@ func (d *PathDecoder) CollectReferenceTargets() (reference.Targets, error) {
 	return refs, nil
 }
 
-func (d *PathDecoder) decodeReferenceTargetsForBody(body hcl.Body, parentBlock *blockContent, bodySchema *schema.BodySchema) reference.Targets {
+func (d *PathDecoder) decodeReferenceTargetsForBody(body hcl.Body, parentBlock *ast.BlockContent, bodySchema *schema.BodySchema) reference.Targets {
 	refs := make(reference.Targets, 0)
 
 	if bodySchema == nil {
 		return reference.Targets{}
 	}
 
-	content := decodeBody(body, bodySchema)
+	content := ast.DecodeBody(body, bodySchema)
 
 	for _, attr := range content.Attributes {
 		if bodySchema.Extensions != nil {
@@ -140,7 +142,7 @@ func (d *PathDecoder) decodeReferenceTargetsForBody(body hcl.Body, parentBlock *
 			continue
 		}
 
-		mergedSchema, err := mergeBlockBodySchemas(blk.Block, bSchema)
+		mergedSchema, err := schemahelper.MergeBlockBodySchemas(blk.Block, bSchema)
 		if err != nil {
 			mergedSchema = bSchema.Body
 		}
@@ -203,11 +205,11 @@ func (d *PathDecoder) decodeReferenceTargetsForBody(body hcl.Body, parentBlock *
 				}
 			}
 
-			depSchema, _, ok := NewBlockSchema(bSchema).DependentBodySchema(blk.Block)
+			depSchema, _, ok := schemahelper.NewBlockSchema(bSchema).DependentBodySchema(blk.Block)
 			if ok {
 				fullSchema := depSchema
 				if bSchema.Address.BodyAsData {
-					mergedSchema, err := mergeBlockBodySchemas(blk.Block, bSchema)
+					mergedSchema, err := schemahelper.MergeBlockBodySchemas(blk.Block, bSchema)
 					if err != nil {
 						continue
 					}
@@ -249,7 +251,7 @@ func (d *PathDecoder) decodeReferenceTargetsForBody(body hcl.Body, parentBlock *
 	return refs
 }
 
-func decodeTargetableBody(body hcl.Body, parentBlock *blockContent, tt *schema.Targetable) reference.Target {
+func decodeTargetableBody(body hcl.Body, parentBlock *ast.BlockContent, tt *schema.Targetable) reference.Target {
 	target := reference.Target{
 		Addr:        tt.Address.Copy(),
 		ScopeId:     tt.ScopeId,
@@ -709,7 +711,7 @@ func bodySchemaAsAttrTypes(bodySchema *schema.BodySchema) map[string]cty.Type {
 func (d *PathDecoder) collectInferredReferenceTargetsForBody(addr lang.Address, bAddrSchema *schema.BlockAddrSchema, body hcl.Body, bodySchema *schema.BodySchema, selfRefBodyRangePtr *hcl.Range, selfRefAddr lang.Address) reference.Targets {
 	refs := make(reference.Targets, 0)
 
-	content := decodeBody(body, bodySchema)
+	content := ast.DecodeBody(body, bodySchema)
 	// We don't get body range for JSON here
 	// TODO? calculate or implement upstream
 	if bAddrSchema.DependentBodySelfRef && content.RangePtr != nil && selfRefBodyRangePtr == nil {
@@ -1025,7 +1027,7 @@ func (d *PathDecoder) collectInferredReferenceTargetsForBody(addr lang.Address, 
 
 type blockCollection struct {
 	Schema *schema.BlockSchema
-	Blocks []*blockContent
+	Blocks []*ast.BlockContent
 }
 
 type blockTypes map[string]*blockCollection
@@ -1043,7 +1045,7 @@ func (bt blockTypes) OfSchemaType(t schema.BlockType) blockTypes {
 func blocksTypesWithSchema(body hcl.Body, bodySchema *schema.BodySchema) blockTypes {
 	blockTypes := make(blockTypes, 0)
 
-	content := decodeBody(body, bodySchema)
+	content := ast.DecodeBody(body, bodySchema)
 
 	for _, block := range content.Blocks {
 		bSchema, ok := bodySchema.Blocks[block.Type]
@@ -1056,7 +1058,7 @@ func blocksTypesWithSchema(body hcl.Body, bodySchema *schema.BodySchema) blockTy
 		if !ok {
 			blockTypes[block.Type] = &blockCollection{
 				Schema: bSchema,
-				Blocks: make([]*blockContent, 0),
+				Blocks: make([]*ast.BlockContent, 0),
 			}
 		}
 
@@ -1144,7 +1146,7 @@ func resolveBlockAddress(block *hcl.Block, blockSchema *schema.BlockSchema) (lan
 			}
 			stepName = block.Labels[step.Index]
 		case schema.AttrValueStep:
-			content := decodeBody(block.Body, blockSchema.Body)
+			content := ast.DecodeBody(block.Body, blockSchema.Body)
 
 			attr, ok := content.Attributes[step.Name]
 			if !ok && step.IsOptional {

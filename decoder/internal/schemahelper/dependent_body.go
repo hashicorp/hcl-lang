@@ -1,9 +1,10 @@
 // Copyright (c) HashiCorp, Inc.
 // SPDX-License-Identifier: MPL-2.0
 
-package decoder
+package schemahelper
 
 import (
+	"github.com/hashicorp/hcl-lang/decoder/internal/ast"
 	"github.com/hashicorp/hcl-lang/lang"
 	"github.com/hashicorp/hcl-lang/schema"
 	"github.com/hashicorp/hcl/v2"
@@ -79,7 +80,7 @@ func dependencyKeysFromBlock(block *hcl.Block, blockSchema blockSchema) schema.D
 		return dk
 	}
 
-	content := decodeBody(block.Body, blockSchema.Body)
+	content := ast.DecodeBody(block.Body, blockSchema.Body)
 
 	for name, attrSchema := range blockSchema.Body.Attributes {
 		if attrSchema.IsDepKey {

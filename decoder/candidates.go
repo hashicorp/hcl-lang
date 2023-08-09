@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/hashicorp/hcl-lang/decoder/internal/schemahelper"
 	"github.com/hashicorp/hcl-lang/lang"
 	"github.com/hashicorp/hcl-lang/schema"
 	"github.com/hashicorp/hcl/v2"
@@ -142,7 +143,7 @@ func (d *PathDecoder) candidatesAtPos(ctx context.Context, body *hclsyntax.Body,
 			}
 
 			if block.Body != nil && block.Body.Range().ContainsPos(pos) {
-				mergedSchema, err := mergeBlockBodySchemas(block.AsHCLBlock(), blockSchema)
+				mergedSchema, err := schemahelper.MergeBlockBodySchemas(block.AsHCLBlock(), blockSchema)
 				if err != nil {
 					return lang.ZeroCandidates(), err
 				}
