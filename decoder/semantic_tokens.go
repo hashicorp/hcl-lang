@@ -59,9 +59,9 @@ func (d *PathDecoder) tokensForBody(ctx context.Context, body *hclsyntax.Body, b
 		attrSchema, ok := bodySchema.Attributes[name]
 		if !ok {
 			if bodySchema.Extensions != nil && name == "count" && bodySchema.Extensions.Count {
-				attrSchema = countAttributeSchema()
+				attrSchema = schemahelper.CountAttributeSchema()
 			} else if bodySchema.Extensions != nil && name == "for_each" && bodySchema.Extensions.ForEach {
-				attrSchema = forEachAttributeSchema()
+				attrSchema = schemahelper.ForEachAttributeSchema()
 			} else {
 				if bodySchema.AnyAttribute == nil {
 					// unknown attribute

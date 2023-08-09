@@ -648,6 +648,42 @@ wakka = 2
 				},
 			},
 		},
+		{
+			"count attribute present no diags",
+			&schema.BodySchema{
+				Blocks: map[string]*schema.BlockSchema{
+					"foo": {
+						Body: &schema.BodySchema{
+							Extensions: &schema.BodyExtensions{
+								Count: true,
+							},
+						},
+					},
+				},
+			},
+			`foo {
+				count = 1
+			}`,
+			map[string]hcl.Diagnostics{},
+		},
+		{
+			"for_each attribute present no diags",
+			&schema.BodySchema{
+				Blocks: map[string]*schema.BlockSchema{
+					"foo": {
+						Body: &schema.BodySchema{
+							Extensions: &schema.BodyExtensions{
+								ForEach: true,
+							},
+						},
+					},
+				},
+			},
+			`foo {
+				for_each = []
+			}`,
+			map[string]hcl.Diagnostics{},
+		},
 	}
 
 	for i, tc := range testCases {
