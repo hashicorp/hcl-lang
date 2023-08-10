@@ -70,7 +70,7 @@ func Walk(ctx context.Context, node hclsyntax.Node, nodeSchema schema.Schema, w 
 		if ok && bSchema.Body != nil {
 			mergedSchema, ok := schemahelper.MergeBlockBodySchemas(nodeType.AsHCLBlock(), bSchema)
 			if !ok {
-				// TODO
+				ctx = schemahelper.WithUnknownSchema(ctx)
 			}
 			blockBodySchema = mergedSchema
 		}

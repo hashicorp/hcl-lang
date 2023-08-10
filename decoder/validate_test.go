@@ -789,6 +789,117 @@ wakka = 2
 			}`,
 			map[string]hcl.Diagnostics{},
 		},
+		{
+			"missing dependent body",
+			// Eventually this should be a warning diagnostic but it's not appropriate yet
+			// At least in Terraform we don't yet have a way of easily addressing
+			// missing provider schemas (which are represented as dependent bodies).
+			&schema.BodySchema{
+				Blocks: map[string]*schema.BlockSchema{
+					"resource": {
+						Body: &schema.BodySchema{
+							Attributes: map[string]*schema.AttributeSchema{
+								"depends_on": {
+									IsOptional: true,
+									Constraint: schema.LiteralType{Type: cty.List(cty.String)},
+								},
+							},
+						},
+						Labels: []*schema.LabelSchema{
+							{
+								Name:     "key",
+								IsDepKey: true,
+							},
+						},
+						DependentBody: map[schema.SchemaKey]*schema.BodySchema{
+							schema.NewSchemaKey(schema.DependencyKeys{
+								Labels: []schema.LabelDependent{
+									{Index: 0, Value: "aws_instance"},
+								},
+							}): {
+								Attributes: map[string]*schema.AttributeSchema{
+									"size": {
+										IsOptional: true,
+										Constraint: schema.LiteralType{Type: cty.Number},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			`resource "google_instance" {
+				size = 42
+				moot = "moot"
+				depends_on = []
+			}
+			resource "aws_instance" {
+				size = 42
+				toot = "toot"
+				depends_on = []
+			}`,
+			map[string]hcl.Diagnostics{
+				"test.tf": {
+					&hcl.Diagnostic{
+						Severity: hcl.DiagError,
+						Summary:  "Unexpected attribute",
+						Detail:   `An attribute named "toot" is not expected here`,
+						Subject: &hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 8, Column: 5, Byte: 133},
+							End:      hcl.Pos{Line: 8, Column: 18, Byte: 146},
+						},
+					},
+				},
+			},
+		},
+		{
+			"missing dependent body with deprecated static attribute",
+			// Eventually this should be a warning diagnostic but it's not appropriate yet
+			// At least in Terraform we don't yet have a way of easily addressing
+			// missing provider schemas (which are represented as dependent bodies).
+			&schema.BodySchema{
+				Blocks: map[string]*schema.BlockSchema{
+					"resource": {
+						Body: &schema.BodySchema{
+							Attributes: map[string]*schema.AttributeSchema{
+								"depends_on": {
+									IsOptional:   true,
+									IsDeprecated: true,
+									Constraint:   schema.LiteralType{Type: cty.List(cty.String)},
+								},
+							},
+						},
+						Labels: []*schema.LabelSchema{
+							{
+								Name:     "key",
+								IsDepKey: true,
+							},
+						},
+						DependentBody: map[schema.SchemaKey]*schema.BodySchema{},
+					},
+				},
+			},
+			`resource "google_instance" {
+				size = 42
+				moot = "moot"
+				depends_on = []
+			}`,
+			map[string]hcl.Diagnostics{
+				"test.tf": {
+					&hcl.Diagnostic{
+						Severity: hcl.DiagWarning,
+						Summary:  `"depends_on" is deprecated`,
+						Detail:   `Reason: ""`,
+						Subject: &hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 4, Column: 5, Byte: 65},
+							End:      hcl.Pos{Line: 4, Column: 20, Byte: 80},
+						},
+					},
+				},
+			},
+		},
 	}
 
 	for i, tc := range testCases {
