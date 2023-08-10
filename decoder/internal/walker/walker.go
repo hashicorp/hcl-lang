@@ -38,6 +38,14 @@ func Walk(ctx context.Context, node hclsyntax.Node, nodeSchema schema.Schema, w 
 					attrSchema = bodySchema.AnyAttribute
 				}
 
+				if bodySchema.Extensions != nil && bodySchema.Extensions.Count && attr.Name == "count" {
+					attrSchema = schemahelper.CountAttributeSchema()
+				}
+
+				if bodySchema.Extensions != nil && bodySchema.Extensions.ForEach && attr.Name == "for_each" {
+					attrSchema = schemahelper.ForEachAttributeSchema()
+				}
+
 				diags = diags.Extend(Walk(ctx, attr, attrSchema, w))
 			}
 

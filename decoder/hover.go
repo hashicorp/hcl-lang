@@ -56,9 +56,9 @@ func (d *PathDecoder) hoverAtPos(ctx context.Context, body *hclsyntax.Body, body
 			}
 
 			if bodySchema.Extensions != nil && bodySchema.Extensions.Count && name == "count" {
-				aSchema = countAttributeSchema()
+				aSchema = schemahelper.CountAttributeSchema()
 			} else if bodySchema.Extensions != nil && bodySchema.Extensions.ForEach && name == "for_each" {
-				aSchema = forEachAttributeSchema()
+				aSchema = schemahelper.ForEachAttributeSchema()
 			} else {
 				var ok bool
 				aSchema, ok = bodySchema.Attributes[attr.Name]

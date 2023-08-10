@@ -131,9 +131,9 @@ func (d *PathDecoder) referenceOriginsInBody(body hcl.Body, bodySchema *schema.B
 	for _, attr := range content.Attributes {
 		var aSchema *schema.AttributeSchema
 		if bodySchema.Extensions != nil && bodySchema.Extensions.Count && attr.Name == "count" {
-			aSchema = countAttributeSchema()
+			aSchema = schemahelper.CountAttributeSchema()
 		} else if bodySchema.Extensions != nil && bodySchema.Extensions.ForEach && attr.Name == "for_each" {
-			aSchema = forEachAttributeSchema()
+			aSchema = schemahelper.ForEachAttributeSchema()
 		} else {
 			var ok bool
 			aSchema, ok = bodySchema.Attributes[attr.Name]

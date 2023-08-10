@@ -8,6 +8,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/hashicorp/hcl-lang/decoder/internal/schemahelper"
 	"github.com/hashicorp/hcl-lang/lang"
 	"github.com/hashicorp/hcl-lang/schema"
 	"github.com/hashicorp/hcl/v2"
@@ -27,7 +28,7 @@ func (d *PathDecoder) bodySchemaCandidates(ctx context.Context, body *hclsyntax.
 			// check if count attribute is already declared, so we don't
 			// suggest a duplicate
 			if _, ok := body.Attributes["count"]; !ok {
-				candidates.List = append(candidates.List, attributeSchemaToCandidate(ctx, "count", countAttributeSchema(), editRng))
+				candidates.List = append(candidates.List, attributeSchemaToCandidate(ctx, "count", schemahelper.CountAttributeSchema(), editRng))
 			}
 		}
 
@@ -35,7 +36,7 @@ func (d *PathDecoder) bodySchemaCandidates(ctx context.Context, body *hclsyntax.
 			// check if for_each attribute is already declared, so we don't
 			// suggest a duplicate
 			if _, present := body.Attributes["for_each"]; !present {
-				candidates.List = append(candidates.List, attributeSchemaToCandidate(ctx, "for_each", forEachAttributeSchema(), editRng))
+				candidates.List = append(candidates.List, attributeSchemaToCandidate(ctx, "for_each", schemahelper.ForEachAttributeSchema(), editRng))
 			}
 		}
 	}
