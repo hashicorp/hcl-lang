@@ -19,7 +19,10 @@ func (dm DiagnosticsMap) Extend(diagMap DiagnosticsMap) DiagnosticsMap {
 		if !ok {
 			dm[fileName] = make(hcl.Diagnostics, 0)
 		}
-		dm[fileName].Extend(diags)
+
+		// TODO: this seems to wipe instead of extend
+		// dm[fileName].Extend(diags)
+		dm[fileName] = append(dm[fileName], diags...)
 	}
 
 	return dm
