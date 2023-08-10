@@ -8,14 +8,15 @@ import (
 
 	"github.com/hashicorp/hcl-lang/decoder/internal/validator"
 	"github.com/hashicorp/hcl-lang/decoder/internal/walker"
+	"github.com/hashicorp/hcl-lang/lang"
 	"github.com/hashicorp/hcl-lang/schema"
 	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hclsyntax"
 )
 
 // Validate returns a set of Diagnostics for all known files
-func (d *PathDecoder) Validate(ctx context.Context) (map[string]hcl.Diagnostics, error) {
-	diags := make(map[string]hcl.Diagnostics)
+func (d *PathDecoder) Validate(ctx context.Context) (lang.DiagnosticsMap, error) {
+	diags := make(lang.DiagnosticsMap)
 	if d.pathCtx.Schema == nil {
 		return diags, &NoSchemaError{}
 	}
@@ -44,10 +45,12 @@ func (d *PathDecoder) Validate(ctx context.Context) (map[string]hcl.Diagnostics,
 		})
 	}
 
+	ctx = withPathContext(ctx, d.pathCtx)
+
 	// Run validation functions
-	// for _, vFunc := range d.decoderCtx.Validations {
-	// 	diags = diags.Extend(vFunc(ctx))
-	// }
+	for _, vFunc := range d.decoderCtx.Validations {
+		diags = diags.Extend(vFunc(ctx))
+	}
 
 	return diags, nil
 }
