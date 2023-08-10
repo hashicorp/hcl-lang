@@ -684,6 +684,111 @@ wakka = 2
 			}`,
 			map[string]hcl.Diagnostics{},
 		},
+		{
+			"dynamic block disabled and present",
+			&schema.BodySchema{
+				Blocks: map[string]*schema.BlockSchema{
+					"foo": {
+						Body: &schema.BodySchema{
+							Extensions: &schema.BodyExtensions{
+								DynamicBlocks: false,
+							},
+						},
+						Labels: []*schema.LabelSchema{
+							{
+								Name:     "key",
+								IsDepKey: true,
+							},
+						},
+						DependentBody: map[schema.SchemaKey]*schema.BodySchema{
+							schema.NewSchemaKey(schema.DependencyKeys{
+								Labels: []schema.LabelDependent{
+									{Index: 0, Value: "toot"},
+								},
+							}): {
+								Blocks: map[string]*schema.BlockSchema{
+									"noot": {
+										Body: &schema.BodySchema{
+											Attributes: map[string]*schema.AttributeSchema{
+												"test": {
+													IsOptional: true,
+													Constraint: schema.LiteralType{Type: cty.String},
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			`foo "toot" {
+				dynamic "test" {
+					for_each = {}
+				}
+			}`,
+			map[string]hcl.Diagnostics{
+				"test.tf": {
+					&hcl.Diagnostic{
+						Severity: hcl.DiagError,
+						Summary:  "Unexpected block",
+						Detail:   `Blocks of type "dynamic" are not expected here`,
+						Subject: &hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 2, Column: 5, Byte: 17},
+							End:      hcl.Pos{Line: 2, Column: 12, Byte: 24},
+						},
+					},
+				},
+			},
+		},
+		{
+			"dynamic block enabled and present",
+			&schema.BodySchema{
+				Blocks: map[string]*schema.BlockSchema{
+					"foo": {
+						Body: &schema.BodySchema{
+							Extensions: &schema.BodyExtensions{
+								DynamicBlocks: true,
+							},
+						},
+						Labels: []*schema.LabelSchema{
+							{
+								Name:     "key",
+								IsDepKey: true,
+							},
+						},
+						DependentBody: map[schema.SchemaKey]*schema.BodySchema{
+							schema.NewSchemaKey(schema.DependencyKeys{
+								Labels: []schema.LabelDependent{
+									{Index: 0, Value: "toot"},
+								},
+							}): {
+								Blocks: map[string]*schema.BlockSchema{
+									"noot": {
+										Body: &schema.BodySchema{
+											Attributes: map[string]*schema.AttributeSchema{
+												"test": {
+													IsOptional: true,
+													Constraint: schema.LiteralType{Type: cty.String},
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			`foo "toot" {
+				dynamic "test" {
+					for_each = {}
+				}
+			}`,
+			map[string]hcl.Diagnostics{},
+		},
 	}
 
 	for i, tc := range testCases {
