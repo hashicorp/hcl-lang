@@ -192,10 +192,7 @@ func (d *PathDecoder) referenceOriginsInBody(body hcl.Body, bodySchema *schema.B
 				// skip unknown blocks
 				continue
 			}
-			mergedSchema, err := schemahelper.MergeBlockBodySchemas(block.Block, bSchema)
-			if err != nil {
-				continue
-			}
+			mergedSchema, _ := schemahelper.MergeBlockBodySchemas(block.Block, bSchema)
 
 			os, ios := d.referenceOriginsInBody(block.Body, mergedSchema)
 			origins = append(origins, os...)

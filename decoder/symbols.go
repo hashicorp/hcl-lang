@@ -116,10 +116,8 @@ func (d *PathDecoder) symbolsForBody(body hcl.Body, bodySchema *schema.BodySchem
 			bs, ok := bodySchema.Blocks[block.Type]
 			if ok {
 				bSchema = bs.Body
-				mergedSchema, err := schemahelper.MergeBlockBodySchemas(block.Block, bs)
-				if err == nil {
-					bSchema = mergedSchema
-				}
+				mergedSchema, _ := schemahelper.MergeBlockBodySchemas(block.Block, bs)
+				bSchema = mergedSchema
 			}
 		}
 

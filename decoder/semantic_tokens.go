@@ -127,10 +127,7 @@ func (d *PathDecoder) tokensForBody(ctx context.Context, body *hclsyntax.Body, b
 		}
 
 		if block.Body != nil {
-			mergedSchema, err := schemahelper.MergeBlockBodySchemas(block.AsHCLBlock(), blockSchema)
-			if err != nil {
-				continue
-			}
+			mergedSchema, _ := schemahelper.MergeBlockBodySchemas(block.AsHCLBlock(), blockSchema)
 
 			tokens = append(tokens, d.tokensForBody(ctx, block.Body, mergedSchema, blockModifiers)...)
 		}
