@@ -8,7 +8,7 @@ import (
 	"github.com/hashicorp/hcl/v2"
 )
 
-func MergeBlockBodySchemas(block *hcl.Block, blockSchema *schema.BlockSchema) (*schema.BodySchema, error) {
+func MergeBlockBodySchemas(block *hcl.Block, blockSchema *schema.BlockSchema) (*schema.BodySchema, bool) {
 	mergedSchema := &schema.BodySchema{}
 	if blockSchema.Body != nil {
 		mergedSchema = blockSchema.Body.Copy()
@@ -26,7 +26,7 @@ func MergeBlockBodySchemas(block *hcl.Block, blockSchema *schema.BlockSchema) (*
 		mergedSchema.ImpliedOrigins = make([]schema.ImpliedOrigin, 0)
 	}
 
-	depSchema, _, ok := NewBlockSchema(blockSchema).DependentBodySchema(block)
+	depSchema, depKeys, ok := NewBlockSchema(blockSchema).DependentBodySchema(block)
 	if ok {
 		for name, attr := range depSchema.Attributes {
 			if _, exists := mergedSchema.Attributes[name]; !exists {
@@ -90,5 +90,10 @@ func MergeBlockBodySchemas(block *hcl.Block, blockSchema *schema.BlockSchema) (*
 		mergedSchema.Blocks["dynamic"] = buildDynamicBlockSchema(mergedSchema)
 	}
 
-	return mergedSchema, nil
+	expectedDepBody := len(depKeys.Labels) > 0 || len(depKeys.Attributes) > 0
+
+	// report success either if there wasn't any dependent body merging to do
+	// or if the merging was successful
+
+	return mergedSchema, !expectedDepBody || ok
 }

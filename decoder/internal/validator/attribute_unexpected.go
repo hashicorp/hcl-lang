@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/hashicorp/hcl-lang/decoder/internal/schemahelper"
 	"github.com/hashicorp/hcl-lang/schema"
 	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hclsyntax"
@@ -15,6 +16,12 @@ import (
 type UnexpectedAttribute struct{}
 
 func (v UnexpectedAttribute) Visit(ctx context.Context, node hclsyntax.Node, nodeSchema schema.Schema) (diags hcl.Diagnostics) {
+	if schemahelper.HasUnknownSchema(ctx) {
+		// Avoid checking for unexpected attributes
+		// if we cannot tell which ones are expected.
+		return
+	}
+
 	attr, ok := node.(*hclsyntax.Attribute)
 	if !ok {
 		return

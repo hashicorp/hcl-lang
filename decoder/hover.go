@@ -144,11 +144,7 @@ func (d *PathDecoder) hoverAtPos(ctx context.Context, body *hclsyntax.Body, body
 			}
 
 			if block.Body != nil && block.Body.Range().ContainsPos(pos) {
-				mergedSchema, err := schemahelper.MergeBlockBodySchemas(block.AsHCLBlock(), blockSchema)
-				if err != nil {
-					return nil, err
-				}
-
+				mergedSchema, _ := schemahelper.MergeBlockBodySchemas(block.AsHCLBlock(), blockSchema)
 				return d.hoverAtPos(ctx, block.Body, mergedSchema, pos)
 			}
 		}

@@ -142,10 +142,7 @@ func (d *PathDecoder) decodeReferenceTargetsForBody(body hcl.Body, parentBlock *
 			continue
 		}
 
-		mergedSchema, err := schemahelper.MergeBlockBodySchemas(blk.Block, bSchema)
-		if err != nil {
-			mergedSchema = bSchema.Body
-		}
+		mergedSchema, _ := schemahelper.MergeBlockBodySchemas(blk.Block, bSchema)
 
 		iRefs := d.decodeReferenceTargetsForBody(blk.Body, blk, mergedSchema)
 		refs = append(refs, iRefs...)
@@ -209,10 +206,7 @@ func (d *PathDecoder) decodeReferenceTargetsForBody(body hcl.Body, parentBlock *
 			if ok {
 				fullSchema := depSchema
 				if bSchema.Address.BodyAsData {
-					mergedSchema, err := schemahelper.MergeBlockBodySchemas(blk.Block, bSchema)
-					if err != nil {
-						continue
-					}
+					mergedSchema, _ := schemahelper.MergeBlockBodySchemas(blk.Block, bSchema)
 					bodyRef.NestedTargets = make(reference.Targets, 0)
 					fullSchema = mergedSchema
 				}

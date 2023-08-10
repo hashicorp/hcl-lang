@@ -143,11 +143,7 @@ func (d *PathDecoder) candidatesAtPos(ctx context.Context, body *hclsyntax.Body,
 			}
 
 			if block.Body != nil && block.Body.Range().ContainsPos(pos) {
-				mergedSchema, err := schemahelper.MergeBlockBodySchemas(block.AsHCLBlock(), blockSchema)
-				if err != nil {
-					return lang.ZeroCandidates(), err
-				}
-
+				mergedSchema, _ := schemahelper.MergeBlockBodySchemas(block.AsHCLBlock(), blockSchema)
 				return d.candidatesAtPos(ctx, block.Body, outerBodyRng, mergedSchema, pos)
 			}
 		}
