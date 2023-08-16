@@ -45,7 +45,7 @@ func (d *PathDecoder) Validate(ctx context.Context) (lang.DiagnosticsMap, error)
 		})
 	}
 
-	ctx = withPathContext(ctx, d.pathCtx)
+	ctx = WithPathContext(ctx, d.pathCtx)
 
 	// Run validation functions
 	for _, vFunc := range d.decoderCtx.Validations {

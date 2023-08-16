@@ -21,7 +21,7 @@ func (d *Decoder) CodeLensesForFile(ctx context.Context, path lang.Path, file st
 
 	pathCtx, err := d.pathReader.PathContext(path)
 	if err == nil {
-		ctx = withPathContext(ctx, pathCtx)
+		ctx = WithPathContext(ctx, pathCtx)
 	}
 
 	ctx = withPathReader(ctx, d.pathReader)
