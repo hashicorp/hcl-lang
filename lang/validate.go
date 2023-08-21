@@ -25,3 +25,11 @@ func (dm DiagnosticsMap) Extend(diagMap DiagnosticsMap) DiagnosticsMap {
 
 	return dm
 }
+
+func (dm DiagnosticsMap) Count() int {
+	count := 0
+	for _, diags := range dm {
+		count += len(diags)
+	}
+	return count
+}
