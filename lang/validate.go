@@ -25,3 +25,12 @@ func (dm DiagnosticsMap) Extend(diagMap DiagnosticsMap) DiagnosticsMap {
 
 	return dm
 }
+
+// Count returns the number of diagnostics for all files
+func (dm DiagnosticsMap) Count() int {
+	count := 0
+	for _, diags := range dm {
+		count += len(diags)
+	}
+	return count
+}
