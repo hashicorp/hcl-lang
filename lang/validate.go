@@ -20,7 +20,7 @@ func (dm DiagnosticsMap) Extend(diagMap DiagnosticsMap) DiagnosticsMap {
 			dm[fileName] = make(hcl.Diagnostics, 0)
 		}
 
-		dm[fileName].Extend(diags)
+		dm[fileName] = dm[fileName].Extend(diags)
 	}
 
 	return dm
