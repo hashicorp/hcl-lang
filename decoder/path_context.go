@@ -24,7 +24,7 @@ type PathContext struct {
 
 type pathCtxKey struct{}
 
-func WithPathContext(ctx context.Context, pathCtx *PathContext) context.Context {
+func withPathContext(ctx context.Context, pathCtx *PathContext) context.Context {
 	return context.WithValue(ctx, pathCtxKey{}, pathCtx)
 }
 
