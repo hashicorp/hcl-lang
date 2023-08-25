@@ -4,12 +4,8 @@
 package lang
 
 import (
-	"context"
-
 	"github.com/hashicorp/hcl/v2"
 )
-
-type ValidationFunc func(ctx context.Context) DiagnosticsMap
 
 type DiagnosticsMap map[string]hcl.Diagnostics
 
