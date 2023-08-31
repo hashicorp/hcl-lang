@@ -927,6 +927,81 @@ wakka = 2
 	}
 }
 
+func TestValidate_schema_SingleFile(t *testing.T) {
+	testCases := []struct {
+		testName            string
+		bodySchema          *schema.BodySchema
+		filename            string
+		cfg                 string
+		expectedDiagnostics hcl.Diagnostics
+	}{
+		{
+			"valid schema",
+			&schema.BodySchema{
+				Attributes: map[string]*schema.AttributeSchema{
+					"test": {
+						Constraint: schema.LiteralType{Type: cty.Number},
+						IsRequired: true,
+					},
+				},
+			},
+			"test.tf",
+			`test = 1`,
+			nil,
+		},
+		{
+			"unknown attribute",
+			&schema.BodySchema{
+				Attributes: map[string]*schema.AttributeSchema{
+					"test": {
+						Constraint: schema.LiteralType{Type: cty.Number},
+						IsRequired: true,
+					},
+				},
+			},
+			"test.tf",
+			`test = 1
+	foo = 1`,
+			hcl.Diagnostics{
+				{
+					Severity: hcl.DiagError,
+					Summary:  "Unexpected attribute",
+					Detail:   "An attribute named \"foo\" is not expected here",
+					Subject: &hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 2, Column: 2, Byte: 10},
+						End:      hcl.Pos{Line: 2, Column: 9, Byte: 17},
+					},
+				},
+			},
+		},
+	}
+
+	for i, tc := range testCases {
+		t.Run(fmt.Sprintf("%2d-%s", i, tc.testName), func(t *testing.T) {
+			f, _ := hclsyntax.ParseConfig([]byte(tc.cfg), "test.tf", hcl.InitialPos)
+			d := testPathDecoder(t, &PathContext{
+				Schema: tc.bodySchema,
+				Files: map[string]*hcl.File{
+					tc.filename: f,
+				},
+			})
+
+			ctx := context.Background()
+			diags, err := d.ValidateFile(ctx, tc.filename)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			sortDiagnostics(diags)
+
+			if diff := cmp.Diff(tc.expectedDiagnostics, diags); diff != "" {
+				t.Fatalf("unexpected diagnostics: %s", diff)
+			}
+		})
+	}
+}
+
 func sortDiagnostics(diags hcl.Diagnostics) {
 	sort.Slice(diags, func(i, j int) bool {
 		return diags[i].Subject.Start.Byte < diags[j].Subject.Start.Byte ||
