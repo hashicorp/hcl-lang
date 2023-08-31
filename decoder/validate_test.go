@@ -936,11 +936,18 @@ func TestValidate_schema_SingleFile(t *testing.T) {
 		expectedDiagnostics hcl.Diagnostics
 	}{
 		{
-			"empty schema",
-			schema.NewBodySchema(),
+			"valid schema",
+			&schema.BodySchema{
+				Attributes: map[string]*schema.AttributeSchema{
+					"test": {
+						Constraint: schema.LiteralType{Type: cty.Number},
+						IsRequired: true,
+					},
+				},
+			},
 			"test.tf",
-			``,
-			hcl.Diagnostics{},
+			`test = 1`,
+			nil,
 		},
 		{
 			"unknown attribute",
