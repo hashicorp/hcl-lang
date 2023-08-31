@@ -48,7 +48,7 @@ func (d *PathDecoder) Validate(ctx context.Context) (lang.DiagnosticsMap, error)
 	return diags, nil
 }
 
-// ValidateFile returns a list of Diagnostics for a specific file
+// ValidateFile validates given file and returns a list of Diagnostics for that file
 func (d *PathDecoder) ValidateFile(ctx context.Context, filename string) (hcl.Diagnostics, error) {
 	if d.pathCtx.Schema == nil {
 		return hcl.Diagnostics{}, &NoSchemaError{}
@@ -61,8 +61,7 @@ func (d *PathDecoder) ValidateFile(ctx context.Context, filename string) (hcl.Di
 
 	body, ok := f.Body.(*hclsyntax.Body)
 	if !ok {
-		// TODO! error
-		return hcl.Diagnostics{}, nil
+		return hcl.Diagnostics{}, &UnknownFileFormatError{Filename: filename}
 	}
 
 	return walker.Walk(ctx, body, d.pathCtx.Schema, validationWalker{
