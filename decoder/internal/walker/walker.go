@@ -21,7 +21,7 @@ type Walker interface {
 // This is similar to upstream hclsyntax.Walk() which does not make it possible
 // to keep track of schema.
 func Walk(ctx context.Context, node hclsyntax.Node, nodeSchema schema.Schema, w Walker) hcl.Diagnostics {
-	var diags hcl.Diagnostics
+	diags := hcl.Diagnostics{}
 
 	switch nodeType := node.(type) {
 	case *hclsyntax.Body:
