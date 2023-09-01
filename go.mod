@@ -1,6 +1,6 @@
 module github.com/hashicorp/hcl-lang
 
-go 1.18
+go 1.21
 
 require (
 	github.com/google/go-cmp v0.5.9
