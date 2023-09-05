@@ -20,6 +20,7 @@ func buildDynamicBlockSchema(inputSchema *schema.BodySchema) *schema.BlockSchema
 			Blocks: map[string]*schema.BlockSchema{
 				"content": {
 					Description: lang.PlainText("The body of each generated block"),
+					MinItems:    1,
 					MaxItems:    1,
 					Body:        block.Body.Copy(),
 				},
