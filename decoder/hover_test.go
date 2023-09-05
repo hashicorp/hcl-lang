@@ -1500,7 +1500,7 @@ func TestDecoder_HoverAtPos_extensions_dynamic(t *testing.T) {
 			hcl.Pos{Line: 5, Column: 13, Byte: 102},
 			&lang.HoverData{
 				Content: lang.MarkupContent{
-					Value: "**content** _Block, max: 1_\n\n" +
+					Value: "**content** _Block, min: 1, max: 1_\n\n" +
 						"The body of each generated block",
 					Kind: lang.MarkdownKind,
 				},

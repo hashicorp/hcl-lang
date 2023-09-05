@@ -1900,7 +1900,7 @@ resource "aws_elastic_beanstalk_environment" "example" {
 						Value: "The body of each generated block",
 						Kind:  lang.PlainTextKind,
 					},
-					Detail: "Block, max: 1",
+					Detail: "Block, min: 1, max: 1",
 					Kind:   lang.BlockCandidateKind,
 					TextEdit: lang.TextEdit{
 						Range: hcl.Range{
