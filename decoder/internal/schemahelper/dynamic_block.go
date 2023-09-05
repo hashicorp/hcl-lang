@@ -41,10 +41,11 @@ func buildDynamicBlockSchema(inputSchema *schema.BodySchema) *schema.BlockSchema
 				"for_each": {
 					Constraint: schema.OneOf{
 						schema.AnyExpression{OfType: cty.Map(cty.DynamicPseudoType)},
+						schema.AnyExpression{OfType: cty.List(cty.DynamicPseudoType)},
 						schema.AnyExpression{OfType: cty.Set(cty.String)},
 					},
 					IsRequired:  true,
-					Description: lang.Markdown("A meta-argument that accepts a map or a set of strings, and creates an instance for each item in that map or set."),
+					Description: lang.Markdown("A meta-argument that accepts a list, map or a set of strings, and creates an instance for each item in that list, map or set."),
 				},
 				"iterator": {
 					Constraint: schema.LiteralType{Type: cty.String},
