@@ -1,6 +1,6 @@
 module github.com/hashicorp/hcl-lang
 
-go 1.21
+go 1.21.0
 
 require (
 	github.com/google/go-cmp v0.5.9
@@ -14,7 +14,6 @@ require (
 
 require (
 	github.com/agext/levenshtein v1.2.1 // indirect
-	github.com/apparentlymart/go-textseg/v13 v13.0.0 // indirect
 	github.com/apparentlymart/go-textseg/v15 v15.0.0 // indirect
 	github.com/hashicorp/errwrap v1.0.0 // indirect
 	github.com/mitchellh/go-wordwrap v0.0.0-20150314170334-ad45545899c7 // indirect
