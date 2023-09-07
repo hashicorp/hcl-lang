@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/hashicorp/hcl-lang/decoder/internal/schemahelper"
 	"github.com/hashicorp/hcl-lang/schema"
 	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hclsyntax"
@@ -15,7 +16,7 @@ import (
 type MinBlocks struct{}
 
 func (v MinBlocks) Visit(ctx context.Context, node hclsyntax.Node, nodeSchema schema.Schema) (diags hcl.Diagnostics) {
-	body, ok := node.(*hclsyntax.Body)
+	_, ok := node.(*hclsyntax.Body)
 	if !ok {
 		return
 	}
@@ -24,20 +25,14 @@ func (v MinBlocks) Visit(ctx context.Context, node hclsyntax.Node, nodeSchema sc
 		return
 	}
 
-	foundBlocks := make(map[string]uint64)
-	for _, block := range body.Blocks {
-		if _, ok := foundBlocks[block.Type]; !ok {
-			foundBlocks[block.Type] = 0
-		}
-
-		foundBlocks[block.Type]++
-	}
+	foundBlocks := schemahelper.FoundBlocks(ctx)
+	dynamicBlocks := schemahelper.DynamicBlocks(ctx)
 
 	bodySchema := nodeSchema.(*schema.BodySchema)
 	for name, blockSchema := range bodySchema.Blocks {
 		if blockSchema.MinItems != 0 {
 			foundBlocks, ok := foundBlocks[name]
-			if !ok || foundBlocks < blockSchema.MinItems {
+			if (!ok || foundBlocks < blockSchema.MinItems) && !hasDynamicBlockInBody(bodySchema, dynamicBlocks, name) {
 				diags = append(diags, &hcl.Diagnostic{
 					Severity: hcl.DiagError,
 					Summary:  fmt.Sprintf("Too few blocks specified for %q", name),
@@ -49,4 +44,16 @@ func (v MinBlocks) Visit(ctx context.Context, node hclsyntax.Node, nodeSchema sc
 	}
 
 	return
+}
+
+func hasDynamicBlockInBody(bodySchema *schema.BodySchema, dynamicBlocks map[string]uint64, blockName string) bool {
+	if bodySchema.Extensions == nil || !bodySchema.Extensions.DynamicBlocks {
+		return false
+	}
+
+	if count, ok := dynamicBlocks[blockName]; ok && count > 0 {
+		return true
+	}
+
+	return false
 }

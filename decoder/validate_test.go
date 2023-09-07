@@ -597,6 +597,47 @@ wakka = 2
 			map[string]hcl.Diagnostics{},
 		},
 		{
+			"minitems with dynamic block",
+			&schema.BodySchema{
+				Blocks: map[string]*schema.BlockSchema{
+					"foo": {
+						Labels: []*schema.LabelSchema{
+							{
+								Name:     "type",
+								IsDepKey: true,
+							},
+						},
+						Body: &schema.BodySchema{
+							Extensions: &schema.BodyExtensions{
+								DynamicBlocks: true,
+							},
+						},
+						DependentBody: map[schema.SchemaKey]*schema.BodySchema{
+							schema.NewSchemaKey(schema.DependencyKeys{
+								Labels: []schema.LabelDependent{
+									{Index: 0, Value: "type"},
+								},
+							}): {
+								Blocks: map[string]*schema.BlockSchema{
+									"one": {
+										MinItems: 2,
+										Body:     schema.NewBodySchema(),
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			`foo "type" {
+				dynamic "one" {
+					for_each = []
+					content {}
+				}
+			}`,
+			map[string]hcl.Diagnostics{},
+		},
+		{
 			"any attribute",
 			&schema.BodySchema{
 				Blocks: map[string]*schema.BlockSchema{
