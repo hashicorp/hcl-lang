@@ -26,7 +26,7 @@ func Walk(ctx context.Context, node hclsyntax.Node, nodeSchema schema.Schema, w 
 	switch nodeType := node.(type) {
 	case *hclsyntax.Body:
 		foundBlocks := make(map[string]uint64)
-
+		dynamicBlocks := make(map[string]uint64)
 		bodySchema, ok := nodeSchema.(*schema.BodySchema)
 		if ok {
 			for _, attr := range nodeType.Attributes {
@@ -61,10 +61,21 @@ func Walk(ctx context.Context, node hclsyntax.Node, nodeSchema schema.Schema, w 
 				}
 				foundBlocks[block.Type]++
 
+				if block.Type == "dynamic" {
+					if len(block.Labels) > 0 {
+						label := block.Labels[0]
+						if _, ok := dynamicBlocks[label]; !ok {
+							dynamicBlocks[label] = 0
+						}
+						dynamicBlocks[label]++
+					}
+				}
+
 				diags = diags.Extend(Walk(ctx, block, blockSchema, w))
 			}
 		}
 		ctx = schemahelper.WithFoundBlocks(ctx, foundBlocks)
+		ctx = schemahelper.WithDynamicBlocks(ctx, dynamicBlocks)
 
 		diags = diags.Extend(w.Visit(ctx, node, nodeSchema))
 

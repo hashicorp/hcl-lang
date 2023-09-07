@@ -7,6 +7,7 @@ import "context"
 
 type unknownSchemaCtxKey struct{}
 type foundBlocksCtxKey struct{}
+type dynamicBlocksCtxKey struct{}
 
 // WithUnknownSchema attaches a flag indicating that the schema being passed
 // is not wholly known.
@@ -32,4 +33,12 @@ func WithFoundBlocks(ctx context.Context, foundBlocks map[string]uint64) context
 
 func FoundBlocks(ctx context.Context) map[string]uint64 {
 	return ctx.Value(foundBlocksCtxKey{}).(map[string]uint64)
+}
+
+func WithDynamicBlocks(ctx context.Context, dynamicBlocks map[string]uint64) context.Context {
+	return context.WithValue(ctx, dynamicBlocksCtxKey{}, dynamicBlocks)
+}
+
+func DynamicBlocks(ctx context.Context) map[string]uint64 {
+	return ctx.Value(dynamicBlocksCtxKey{}).(map[string]uint64)
 }

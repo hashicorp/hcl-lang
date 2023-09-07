@@ -26,12 +26,13 @@ func (v MinBlocks) Visit(ctx context.Context, node hclsyntax.Node, nodeSchema sc
 	}
 
 	foundBlocks := schemahelper.FoundBlocks(ctx)
+	dynamicBlocks := schemahelper.DynamicBlocks(ctx)
 
 	bodySchema := nodeSchema.(*schema.BodySchema)
 	for name, blockSchema := range bodySchema.Blocks {
 		if blockSchema.MinItems != 0 {
 			foundBlocks, ok := foundBlocks[name]
-			if !ok || foundBlocks < blockSchema.MinItems {
+			if (!ok || foundBlocks < blockSchema.MinItems) && !hasDynamicBlockInBody(bodySchema, dynamicBlocks, name) {
 				diags = append(diags, &hcl.Diagnostic{
 					Severity: hcl.DiagError,
 					Summary:  fmt.Sprintf("Too few blocks specified for %q", name),
@@ -43,4 +44,16 @@ func (v MinBlocks) Visit(ctx context.Context, node hclsyntax.Node, nodeSchema sc
 	}
 
 	return
+}
+
+func hasDynamicBlockInBody(bodySchema *schema.BodySchema, dynamicBlocks map[string]uint64, blockName string) bool {
+	if bodySchema.Extensions == nil || !bodySchema.Extensions.DynamicBlocks {
+		return false
+	}
+
+	if count, ok := dynamicBlocks[blockName]; ok && count > 0 {
+		return true
+	}
+
+	return false
 }
