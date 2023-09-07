@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/hashicorp/hcl-lang/decoder/internal/schemahelper"
 	"github.com/hashicorp/hcl-lang/schema"
 	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hclsyntax"
@@ -15,7 +16,7 @@ import (
 type MaxBlocks struct{}
 
 func (v MaxBlocks) Visit(ctx context.Context, node hclsyntax.Node, nodeSchema schema.Schema) (diags hcl.Diagnostics) {
-	body, ok := node.(*hclsyntax.Body)
+	_, ok := node.(*hclsyntax.Body)
 	if !ok {
 		return
 	}
@@ -24,14 +25,7 @@ func (v MaxBlocks) Visit(ctx context.Context, node hclsyntax.Node, nodeSchema sc
 		return
 	}
 
-	foundBlocks := make(map[string]uint64)
-	for _, block := range body.Blocks {
-		if _, ok := foundBlocks[block.Type]; !ok {
-			foundBlocks[block.Type] = 0
-		}
-
-		foundBlocks[block.Type]++
-	}
+	foundBlocks := schemahelper.FoundBlocks(ctx)
 
 	bodySchema := nodeSchema.(*schema.BodySchema)
 	for name, blockSchema := range bodySchema.Blocks {

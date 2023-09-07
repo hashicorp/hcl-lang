@@ -6,6 +6,7 @@ package schemahelper
 import "context"
 
 type unknownSchemaCtxKey struct{}
+type foundBlocksCtxKey struct{}
 
 // WithUnknownSchema attaches a flag indicating that the schema being passed
 // is not wholly known.
@@ -23,4 +24,12 @@ func HasUnknownSchema(ctx context.Context) bool {
 		return false
 	}
 	return uSchema
+}
+
+func WithFoundBlocks(ctx context.Context, foundBlocks map[string]uint64) context.Context {
+	return context.WithValue(ctx, foundBlocksCtxKey{}, foundBlocks)
+}
+
+func FoundBlocks(ctx context.Context) map[string]uint64 {
+	return ctx.Value(foundBlocksCtxKey{}).(map[string]uint64)
 }
