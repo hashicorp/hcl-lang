@@ -12,6 +12,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/hashicorp/hcl-lang/lang"
 	"github.com/hashicorp/hcl-lang/schema"
+	"github.com/hashicorp/hcl-lang/validator"
 	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hclsyntax"
 	"github.com/zclconf/go-cty/cty"
@@ -951,6 +952,7 @@ wakka = 2
 				Files: map[string]*hcl.File{
 					"test.tf": f,
 				},
+				Validators: testValidators,
 			})
 
 			ctx := context.Background()
@@ -1026,6 +1028,7 @@ func TestValidate_schema_SingleFile(t *testing.T) {
 				Files: map[string]*hcl.File{
 					tc.filename: f,
 				},
+				Validators: testValidators,
 			})
 
 			ctx := context.Background()
@@ -1048,4 +1051,15 @@ func sortDiagnostics(diags hcl.Diagnostics) {
 		return diags[i].Subject.Start.Byte < diags[j].Subject.Start.Byte ||
 			diags[i].Summary < diags[j].Summary
 	})
+}
+
+var testValidators = []validator.Validator{
+	validator.BlockLabelsLength{},
+	validator.DeprecatedAttribute{},
+	validator.DeprecatedBlock{},
+	validator.MaxBlocks{},
+	validator.MinBlocks{},
+	validator.MissingRequiredAttribute{},
+	validator.UnexpectedAttribute{},
+	validator.UnexpectedBlock{},
 }

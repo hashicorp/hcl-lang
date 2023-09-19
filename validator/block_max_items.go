@@ -7,8 +7,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/hashicorp/hcl-lang/decoder/internal/schemahelper"
 	"github.com/hashicorp/hcl-lang/schema"
+	"github.com/hashicorp/hcl-lang/schemacontext"
 	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hclsyntax"
 )
@@ -25,7 +25,7 @@ func (v MaxBlocks) Visit(ctx context.Context, node hclsyntax.Node, nodeSchema sc
 		return
 	}
 
-	foundBlocks := schemahelper.FoundBlocks(ctx)
+	foundBlocks := schemacontext.FoundBlocks(ctx)
 
 	bodySchema := nodeSchema.(*schema.BodySchema)
 	for name, blockSchema := range bodySchema.Blocks {
