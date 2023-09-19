@@ -9,6 +9,7 @@ import (
 
 	"github.com/hashicorp/hcl-lang/reference"
 	"github.com/hashicorp/hcl-lang/schema"
+	"github.com/hashicorp/hcl-lang/validator"
 	"github.com/hashicorp/hcl/v2"
 )
 
@@ -20,6 +21,7 @@ type PathContext struct {
 	ReferenceTargets reference.Targets
 	Files            map[string]*hcl.File
 	Functions        map[string]schema.FunctionSignature
+	Validators       []validator.Validator
 }
 
 type pathCtxKey struct{}

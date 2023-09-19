@@ -6,24 +6,13 @@ package decoder
 import (
 	"context"
 
-	"github.com/hashicorp/hcl-lang/decoder/internal/validator"
 	"github.com/hashicorp/hcl-lang/decoder/internal/walker"
 	"github.com/hashicorp/hcl-lang/lang"
 	"github.com/hashicorp/hcl-lang/schema"
+	"github.com/hashicorp/hcl-lang/validator"
 	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hclsyntax"
 )
-
-var builtinValidators = []validator.Validator{
-	validator.BlockLabelsLength{},
-	validator.DeprecatedAttribute{},
-	validator.DeprecatedBlock{},
-	validator.MaxBlocks{},
-	validator.MinBlocks{},
-	validator.MissingRequiredAttribute{},
-	validator.UnexpectedAttribute{},
-	validator.UnexpectedBlock{},
-}
 
 // Validate returns a set of Diagnostics for all known files
 func (d *PathDecoder) Validate(ctx context.Context) (lang.DiagnosticsMap, error) {
@@ -41,7 +30,7 @@ func (d *PathDecoder) Validate(ctx context.Context) (lang.DiagnosticsMap, error)
 		}
 
 		diags[filename] = walker.Walk(ctx, body, d.pathCtx.Schema, validationWalker{
-			validators: builtinValidators,
+			validators: d.pathCtx.Validators,
 		})
 	}
 
@@ -65,7 +54,7 @@ func (d *PathDecoder) ValidateFile(ctx context.Context, filename string) (hcl.Di
 	}
 
 	return walker.Walk(ctx, body, d.pathCtx.Schema, validationWalker{
-		validators: builtinValidators,
+		validators: d.pathCtx.Validators,
 	}), nil
 }
 

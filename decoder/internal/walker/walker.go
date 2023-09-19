@@ -8,6 +8,7 @@ import (
 
 	"github.com/hashicorp/hcl-lang/decoder/internal/schemahelper"
 	"github.com/hashicorp/hcl-lang/schema"
+	"github.com/hashicorp/hcl-lang/schemacontext"
 	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hclsyntax"
 )
@@ -74,8 +75,8 @@ func Walk(ctx context.Context, node hclsyntax.Node, nodeSchema schema.Schema, w 
 				diags = diags.Extend(Walk(ctx, block, blockSchema, w))
 			}
 		}
-		ctx = schemahelper.WithFoundBlocks(ctx, foundBlocks)
-		ctx = schemahelper.WithDynamicBlocks(ctx, dynamicBlocks)
+		ctx = schemacontext.WithFoundBlocks(ctx, foundBlocks)
+		ctx = schemacontext.WithDynamicBlocks(ctx, dynamicBlocks)
 
 		diags = diags.Extend(w.Visit(ctx, node, nodeSchema))
 
@@ -89,7 +90,7 @@ func Walk(ctx context.Context, node hclsyntax.Node, nodeSchema schema.Schema, w 
 		if ok && bSchema.Body != nil {
 			mergedSchema, ok := schemahelper.MergeBlockBodySchemas(nodeType.AsHCLBlock(), bSchema)
 			if !ok {
-				ctx = schemahelper.WithUnknownSchema(ctx)
+				ctx = schemacontext.WithUnknownSchema(ctx)
 			}
 			blockBodySchema = mergedSchema
 		}
