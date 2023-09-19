@@ -21,6 +21,10 @@ func (d *PathDecoder) Validate(ctx context.Context) (lang.DiagnosticsMap, error)
 		return diags, &NoSchemaError{}
 	}
 
+	if len(d.pathCtx.Validators) == 0 {
+		return diags, nil
+	}
+
 	// Validate module files per schema
 	for filename, f := range d.pathCtx.Files {
 		body, ok := f.Body.(*hclsyntax.Body)
@@ -41,6 +45,10 @@ func (d *PathDecoder) Validate(ctx context.Context) (lang.DiagnosticsMap, error)
 func (d *PathDecoder) ValidateFile(ctx context.Context, filename string) (hcl.Diagnostics, error) {
 	if d.pathCtx.Schema == nil {
 		return hcl.Diagnostics{}, &NoSchemaError{}
+	}
+
+	if len(d.pathCtx.Validators) == 0 {
+		return hcl.Diagnostics{}, nil
 	}
 
 	f, err := d.fileByName(filename)
