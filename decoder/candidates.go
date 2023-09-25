@@ -172,9 +172,9 @@ func (d *PathDecoder) isPosInsideAttrExpr(attr *hclsyntax.Attribute, pos hcl.Pos
 		return true
 	}
 
-	// edge case: end of incomplete traversal with '.' (which parser ignores)
+	// edge case: end of incomplete expression with trailing '.' (which parser ignores)
 	endByte := attr.Expr.Range().End.Byte
-	if _, ok := attr.Expr.(*hclsyntax.ScopeTraversalExpr); ok && pos.Byte-endByte == 1 {
+	if pos.Byte-endByte == 1 {
 		suspectedDotRng := hcl.Range{
 			Filename: attr.Expr.Range().Filename,
 			Start:    attr.Expr.Range().End,
