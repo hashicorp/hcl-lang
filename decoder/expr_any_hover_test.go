@@ -1478,3 +1478,130 @@ foo = "noot"
 		})
 	}
 }
+
+func TestHoverAtPos_exprAny_operators(t *testing.T) {
+	testCases := []struct {
+		testName          string
+		attrSchema        map[string]*schema.AttributeSchema
+		cfg               string
+		pos               hcl.Pos
+		expectedHoverData *lang.HoverData
+	}{
+		{
+			"binary operator LHS",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.AnyExpression{
+						OfType: cty.Number,
+					},
+				},
+			},
+			`attr = 42 + 43
+`,
+			hcl.Pos{Line: 1, Column: 9, Byte: 8},
+			&lang.HoverData{
+				Content: lang.Markdown("_number_"),
+				Range: hcl.Range{
+					Filename: "test.tf",
+					Start:    hcl.Pos{Line: 1, Column: 8, Byte: 7},
+					End:      hcl.Pos{Line: 1, Column: 10, Byte: 9},
+				},
+			},
+		},
+		{
+			"binary operator RHS",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.AnyExpression{
+						OfType: cty.Number,
+					},
+				},
+			},
+			`attr = 42 + 43
+`,
+			hcl.Pos{Line: 1, Column: 14, Byte: 13},
+			&lang.HoverData{
+				Content: lang.Markdown("_number_"),
+				Range: hcl.Range{
+					Filename: "test.tf",
+					Start:    hcl.Pos{Line: 1, Column: 13, Byte: 12},
+					End:      hcl.Pos{Line: 1, Column: 15, Byte: 14},
+				},
+			},
+		},
+		{
+			"binary operator mismatching constraint",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.AnyExpression{
+						OfType: cty.Number,
+					},
+				},
+			},
+			`attr = true || false
+`,
+			hcl.Pos{Line: 1, Column: 9, Byte: 8},
+			nil,
+		},
+		{
+			"unary operator",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.AnyExpression{
+						OfType: cty.Bool,
+					},
+				},
+			},
+			`attr = !true
+`,
+			hcl.Pos{Line: 1, Column: 11, Byte: 10},
+			&lang.HoverData{
+				Content: lang.Markdown("_bool_"),
+				Range: hcl.Range{
+					Filename: "test.tf",
+					Start:    hcl.Pos{Line: 1, Column: 9, Byte: 8},
+					End:      hcl.Pos{Line: 1, Column: 13, Byte: 12},
+				},
+			},
+		},
+		{
+			"unary operator mismatching constraint",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.AnyExpression{
+						OfType: cty.Number,
+					},
+				},
+			},
+			`attr = !true
+`,
+			hcl.Pos{Line: 1, Column: 11, Byte: 10},
+			nil,
+		},
+	}
+	for i, tc := range testCases {
+		t.Run(fmt.Sprintf("%d-%s", i, tc.testName), func(t *testing.T) {
+			bodySchema := &schema.BodySchema{
+				Attributes: tc.attrSchema,
+			}
+
+			f, _ := hclsyntax.ParseConfig([]byte(tc.cfg), "test.tf", hcl.InitialPos)
+			d := testPathDecoder(t, &PathContext{
+				Schema: bodySchema,
+				Files: map[string]*hcl.File{
+					"test.tf": f,
+				},
+			})
+
+			ctx := context.Background()
+			hoverData, err := d.HoverAtPos(ctx, "test.tf", tc.pos)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			if diff := cmp.Diff(tc.expectedHoverData, hoverData); diff != "" {
+				t.Fatalf("unexpected hover data: %s", diff)
+			}
+		})
+	}
+}
