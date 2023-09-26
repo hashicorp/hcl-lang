@@ -11,6 +11,7 @@ import (
 	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hclsyntax"
 	"github.com/zclconf/go-cty/cty"
+	"github.com/zclconf/go-cty/cty/convert"
 )
 
 func (a Any) ReferenceOrigins(ctx context.Context, allowSelfRefs bool) reference.Origins {
@@ -118,9 +119,12 @@ func (a Any) refOriginsForNonComplexExpr(ctx context.Context, allowSelfRefs bool
 	// TODO: Support splat expression https://github.com/hashicorp/terraform-ls/issues/526
 	// TODO: Support for-in-if expression https://github.com/hashicorp/terraform-ls/issues/527
 	// TODO: Support conditional expression https://github.com/hashicorp/terraform-ls/issues/528
-	// TODO: Support operator expresssions https://github.com/hashicorp/terraform-ls/issues/529
 	// TODO: Support complex index expressions https://github.com/hashicorp/terraform-ls/issues/531
 	// TODO: Support relative traversals https://github.com/hashicorp/terraform-ls/issues/532
+
+	if origins, ok := a.refOriginsForOperatorExpr(ctx, allowSelfRefs); ok {
+		return origins
+	}
 
 	// attempt to get accurate constraint for the origins
 	// if we recognise the given expression
@@ -169,4 +173,70 @@ func (a Any) refOriginsForNonComplexExpr(ctx context.Context, allowSelfRefs bool
 		}
 	}
 	return origins
+}
+
+func (a Any) refOriginsForOperatorExpr(ctx context.Context, allowSelfRefs bool) (reference.Origins, bool) {
+	origins := make(reference.Origins, 0)
+
+	// There is currently no way of decoding operator expressions in JSON
+	// so we just collect them using the fallback logic assuming "any"
+	// constraint and focus on collecting expressions in HCL with more
+	// accurate constraints below.
+
+	switch eType := a.expr.(type) {
+	case *hclsyntax.BinaryOpExpr:
+		opReturnType := eType.Op.Type
+
+		// Check if such an operation is even allowed within the constraint
+		if _, err := convert.Convert(cty.UnknownVal(opReturnType), a.cons.OfType); err != nil {
+			return origins, true
+		}
+
+		opFuncParams := eType.Op.Impl.Params()
+		if len(opFuncParams) != 2 {
+			// This should never happen if HCL implementation is correct
+			return origins, true
+		}
+
+		leftExpr := newExpression(a.pathCtx, eType.LHS, schema.AnyExpression{
+			OfType: opFuncParams[0].Type,
+		})
+		if expr, ok := leftExpr.(ReferenceOriginsExpression); ok {
+			origins = append(origins, expr.ReferenceOrigins(ctx, allowSelfRefs)...)
+		}
+
+		rightExpr := newExpression(a.pathCtx, eType.RHS, schema.AnyExpression{
+			OfType: opFuncParams[1].Type,
+		})
+		if expr, ok := rightExpr.(ReferenceOriginsExpression); ok {
+			origins = append(origins, expr.ReferenceOrigins(ctx, allowSelfRefs)...)
+		}
+
+		return origins, true
+
+	case *hclsyntax.UnaryOpExpr:
+		opReturnType := eType.Op.Type
+
+		// Check if such an operation is even allowed within the constraint
+		if _, err := convert.Convert(cty.UnknownVal(opReturnType), a.cons.OfType); err != nil {
+			return origins, true
+		}
+
+		opFuncParams := eType.Op.Impl.Params()
+		if len(opFuncParams) != 1 {
+			// This should never happen if HCL implementation is correct
+			return origins, true
+		}
+
+		expr := newExpression(a.pathCtx, eType.Val, schema.AnyExpression{
+			OfType: opFuncParams[0].Type,
+		})
+		if expr, ok := expr.(ReferenceOriginsExpression); ok {
+			origins = append(origins, expr.ReferenceOrigins(ctx, allowSelfRefs)...)
+		}
+
+		return origins, true
+	}
+
+	return origins, false
 }

@@ -728,3 +728,329 @@ func TestCollectRefOrigins_exprAny_functions_json(t *testing.T) {
 		})
 	}
 }
+
+func TestCollectRefOrigins_exprAny_operators_hcl(t *testing.T) {
+	testCases := []struct {
+		testName           string
+		attrSchema         map[string]*schema.AttributeSchema
+		cfg                string
+		expectedRefOrigins reference.Origins
+	}{
+		{
+			"binary operator",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.AnyExpression{
+						OfType: cty.Number,
+					},
+				},
+			},
+			`attr = var.foo + var.bar
+`,
+			reference.Origins{
+				reference.LocalOrigin{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "foo"},
+					},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 1, Column: 8, Byte: 7},
+						End:      hcl.Pos{Line: 1, Column: 15, Byte: 14},
+					},
+					Constraints: reference.OriginConstraints{
+						{
+							OfType: cty.Number,
+						},
+					},
+				},
+				reference.LocalOrigin{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "bar"},
+					},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 1, Column: 18, Byte: 17},
+						End:      hcl.Pos{Line: 1, Column: 25, Byte: 24},
+					},
+					Constraints: reference.OriginConstraints{
+						{
+							OfType: cty.Number,
+						},
+					},
+				},
+			},
+		},
+		{
+			"binary operator mismatching constraint",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.AnyExpression{
+						OfType: cty.List(cty.String),
+					},
+				},
+			},
+			`attr = var.foo + var.bar
+`,
+			reference.Origins{},
+		},
+		{
+			"unary operator",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.AnyExpression{
+						OfType: cty.Bool,
+					},
+				},
+			},
+			`attr = !var.foo
+`,
+			reference.Origins{
+				reference.LocalOrigin{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "foo"},
+					},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 1, Column: 9, Byte: 8},
+						End:      hcl.Pos{Line: 1, Column: 16, Byte: 15},
+					},
+					Constraints: reference.OriginConstraints{
+						{
+							OfType: cty.Bool,
+						},
+					},
+				},
+			},
+		},
+		{
+			"unary operator mismatching constraint",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.AnyExpression{
+						OfType: cty.List(cty.String),
+					},
+				},
+			},
+			`attr = !var.foo
+`,
+			reference.Origins{},
+		},
+	}
+
+	for i, tc := range testCases {
+		t.Run(fmt.Sprintf("%d-%s", i, tc.testName), func(t *testing.T) {
+			bodySchema := &schema.BodySchema{
+				Attributes: tc.attrSchema,
+			}
+
+			f, diags := hclsyntax.ParseConfig([]byte(tc.cfg), "test.tf", hcl.InitialPos)
+			if len(diags) > 0 {
+				t.Error(diags)
+			}
+			d := testPathDecoder(t, &PathContext{
+				Schema: bodySchema,
+				Files: map[string]*hcl.File{
+					"test.tf": f,
+				},
+			})
+
+			origins, err := d.CollectReferenceOrigins()
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			if diff := cmp.Diff(tc.expectedRefOrigins, origins, ctydebug.CmpOptions); diff != "" {
+				t.Fatalf("unexpected origins: %s", diff)
+			}
+		})
+	}
+}
+
+func TestCollectRefOrigins_exprAny_operators_json(t *testing.T) {
+	testCases := []struct {
+		testName           string
+		attrSchema         map[string]*schema.AttributeSchema
+		cfg                string
+		expectedRefOrigins reference.Origins
+	}{
+		{
+			"binary operator",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.AnyExpression{
+						OfType: cty.Number,
+					},
+				},
+			},
+			`{"attr": "${var.foo + var.bar}"}`,
+			reference.Origins{
+				reference.LocalOrigin{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "foo"},
+					},
+					Range: hcl.Range{
+						Filename: "test.tf.json",
+						Start:    hcl.Pos{Line: 1, Column: 13, Byte: 12},
+						End:      hcl.Pos{Line: 1, Column: 20, Byte: 19},
+					},
+					Constraints: reference.OriginConstraints{
+						{
+							OfType: cty.DynamicPseudoType,
+						},
+					},
+				},
+				reference.LocalOrigin{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "bar"},
+					},
+					Range: hcl.Range{
+						Filename: "test.tf.json",
+						Start:    hcl.Pos{Line: 1, Column: 23, Byte: 22},
+						End:      hcl.Pos{Line: 1, Column: 30, Byte: 29},
+					},
+					Constraints: reference.OriginConstraints{
+						{
+							OfType: cty.DynamicPseudoType,
+						},
+					},
+				},
+			},
+		},
+		{
+			"binary operator mismatching constraint",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.AnyExpression{
+						OfType: cty.List(cty.String),
+					},
+				},
+			},
+			`{"attr": "${var.foo + var.bar}"}`,
+			reference.Origins{
+				reference.LocalOrigin{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "foo"},
+					},
+					Range: hcl.Range{
+						Filename: "test.tf.json",
+						Start:    hcl.Pos{Line: 1, Column: 13, Byte: 12},
+						End:      hcl.Pos{Line: 1, Column: 20, Byte: 19},
+					},
+					Constraints: reference.OriginConstraints{
+						{
+							OfType: cty.DynamicPseudoType,
+						},
+					},
+				},
+				reference.LocalOrigin{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "bar"},
+					},
+					Range: hcl.Range{
+						Filename: "test.tf.json",
+						Start:    hcl.Pos{Line: 1, Column: 23, Byte: 22},
+						End:      hcl.Pos{Line: 1, Column: 30, Byte: 29},
+					},
+					Constraints: reference.OriginConstraints{
+						{
+							OfType: cty.DynamicPseudoType,
+						},
+					},
+				},
+			},
+		},
+		{
+			"unary operator",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.AnyExpression{
+						OfType: cty.Bool,
+					},
+				},
+			},
+			`{"attr": "${!var.foo}"}`,
+			reference.Origins{
+				reference.LocalOrigin{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "foo"},
+					},
+					Range: hcl.Range{
+						Filename: "test.tf.json",
+						Start:    hcl.Pos{Line: 1, Column: 14, Byte: 13},
+						End:      hcl.Pos{Line: 1, Column: 21, Byte: 20},
+					},
+					Constraints: reference.OriginConstraints{
+						{
+							OfType: cty.DynamicPseudoType,
+						},
+					},
+				},
+			},
+		},
+		{
+			"unary operator mismatching constraint",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.AnyExpression{
+						OfType: cty.List(cty.String),
+					},
+				},
+			},
+			`{"attr": "${!var.foo}"}`,
+			reference.Origins{
+				reference.LocalOrigin{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "foo"},
+					},
+					Range: hcl.Range{
+						Filename: "test.tf.json",
+						Start:    hcl.Pos{Line: 1, Column: 14, Byte: 13},
+						End:      hcl.Pos{Line: 1, Column: 21, Byte: 20},
+					},
+					Constraints: reference.OriginConstraints{
+						{
+							OfType: cty.DynamicPseudoType,
+						},
+					},
+				},
+			},
+		},
+	}
+
+	for i, tc := range testCases {
+		t.Run(fmt.Sprintf("%d-%s", i, tc.testName), func(t *testing.T) {
+			bodySchema := &schema.BodySchema{
+				Attributes: tc.attrSchema,
+			}
+
+			f, diags := json.ParseWithStartPos([]byte(tc.cfg), "test.tf.json", hcl.InitialPos)
+			if len(diags) > 0 {
+				t.Error(diags)
+			}
+			d := testPathDecoder(t, &PathContext{
+				Schema: bodySchema,
+				Files: map[string]*hcl.File{
+					"test.tf.json": f,
+				},
+			})
+
+			origins, err := d.CollectReferenceOrigins()
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			if diff := cmp.Diff(tc.expectedRefOrigins, origins, ctydebug.CmpOptions); diff != "" {
+				t.Fatalf("unexpected origins: %s", diff)
+			}
+		})
+	}
+}
