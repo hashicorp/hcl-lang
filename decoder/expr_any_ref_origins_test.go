@@ -61,7 +61,7 @@ func TestCollectRefOrigins_exprAny_references_hcl(t *testing.T) {
 					},
 					Constraints: reference.OriginConstraints{
 						{
-							OfType: cty.DynamicPseudoType,
+							OfType: cty.String,
 						},
 					},
 				},
@@ -90,7 +90,7 @@ func TestCollectRefOrigins_exprAny_references_hcl(t *testing.T) {
 					},
 					Constraints: reference.OriginConstraints{
 						{
-							OfType: cty.DynamicPseudoType,
+							OfType: cty.String,
 						},
 					},
 				},
@@ -508,7 +508,7 @@ func TestCollectRefOrigins_exprAny_functions_hcl(t *testing.T) {
 					},
 					Constraints: reference.OriginConstraints{
 						{
-							OfType: cty.DynamicPseudoType,
+							OfType: cty.String,
 						},
 					},
 				},

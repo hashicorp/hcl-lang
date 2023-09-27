@@ -115,7 +115,6 @@ func (a Any) ReferenceOrigins(ctx context.Context, allowSelfRefs bool) reference
 }
 
 func (a Any) refOriginsForNonComplexExpr(ctx context.Context, allowSelfRefs bool) reference.Origins {
-	// TODO: Support TemplateExpr https://github.com/hashicorp/terraform-ls/issues/522
 	// TODO: Support splat expression https://github.com/hashicorp/terraform-ls/issues/526
 	// TODO: Support for-in-if expression https://github.com/hashicorp/terraform-ls/issues/527
 	// TODO: Support conditional expression https://github.com/hashicorp/terraform-ls/issues/528
@@ -123,6 +122,10 @@ func (a Any) refOriginsForNonComplexExpr(ctx context.Context, allowSelfRefs bool
 	// TODO: Support relative traversals https://github.com/hashicorp/terraform-ls/issues/532
 
 	if origins, ok := a.refOriginsForOperatorExpr(ctx, allowSelfRefs); ok {
+		return origins
+	}
+
+	if origins, ok := a.refOriginsForTemplateExpr(ctx, allowSelfRefs); ok {
 		return origins
 	}
 
@@ -233,6 +236,43 @@ func (a Any) refOriginsForOperatorExpr(ctx context.Context, allowSelfRefs bool) 
 		})
 		if expr, ok := expr.(ReferenceOriginsExpression); ok {
 			origins = append(origins, expr.ReferenceOrigins(ctx, allowSelfRefs)...)
+		}
+
+		return origins, true
+	}
+
+	return origins, false
+}
+
+func (a Any) refOriginsForTemplateExpr(ctx context.Context, allowSelfRefs bool) (reference.Origins, bool) {
+	origins := make(reference.Origins, 0)
+
+	switch eType := a.expr.(type) {
+	case *hclsyntax.TemplateExpr:
+		if eType.IsStringLiteral() {
+			return nil, false
+		}
+
+		for _, partExpr := range eType.Parts {
+			cons := schema.AnyExpression{
+				OfType: cty.String,
+			}
+			expr := newExpression(a.pathCtx, partExpr, cons)
+
+			if e, ok := expr.(ReferenceOriginsExpression); ok {
+				origins = append(origins, e.ReferenceOrigins(ctx, allowSelfRefs)...)
+			}
+		}
+
+		return origins, true
+	case *hclsyntax.TemplateWrapExpr:
+		cons := schema.AnyExpression{
+			OfType: cty.String,
+		}
+		expr := newExpression(a.pathCtx, eType.Wrapped, cons)
+
+		if e, ok := expr.(ReferenceOriginsExpression); ok {
+			origins = append(origins, e.ReferenceOrigins(ctx, allowSelfRefs)...)
 		}
 
 		return origins, true
