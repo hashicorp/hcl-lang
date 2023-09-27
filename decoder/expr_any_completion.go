@@ -98,7 +98,6 @@ func (a Any) CompletionAtPos(ctx context.Context, pos hcl.Pos) []lang.Candidate 
 func (a Any) completeNonComplexExprAtPos(ctx context.Context, pos hcl.Pos) []lang.Candidate {
 	candidates := make([]lang.Candidate, 0)
 
-	// TODO: Support TemplateExpr https://github.com/hashicorp/terraform-ls/issues/522
 	// TODO: Support splat expression https://github.com/hashicorp/terraform-ls/issues/526
 	// TODO: Support for-in-if expression https://github.com/hashicorp/terraform-ls/issues/527
 	// TODO: Support conditional expression https://github.com/hashicorp/terraform-ls/issues/528
@@ -110,6 +109,12 @@ func (a Any) completeNonComplexExprAtPos(ctx context.Context, pos hcl.Pos) []lan
 		return candidates
 	}
 	candidates = append(candidates, opCandidates...)
+
+	templateCandidates, ok := a.completeTemplateExprAtPos(ctx, pos)
+	if !ok {
+		return candidates
+	}
+	candidates = append(candidates, templateCandidates...)
 
 	ref := Reference{
 		expr:    a.expr,
@@ -210,6 +215,61 @@ func (a Any) completeOperatorExprAtPos(ctx context.Context, pos hcl.Pos) ([]lang
 		}
 
 		return candidates, false
+	}
+
+	return candidates, true
+}
+
+func (a Any) completeTemplateExprAtPos(ctx context.Context, pos hcl.Pos) ([]lang.Candidate, bool) {
+	candidates := make([]lang.Candidate, 0)
+
+	switch eType := a.expr.(type) {
+	case *hclsyntax.TemplateExpr:
+		if eType.IsStringLiteral() {
+			return candidates, false
+		}
+
+		for _, partExpr := range eType.Parts {
+			// We overshot the position and stop
+			if partExpr.Range().Start.Byte > pos.Byte {
+				break
+			}
+
+			// We're not checking the end byte position here, because we don't
+			// allow completion after the }
+			if partExpr.Range().ContainsPos(pos) || partExpr.Range().End.Byte == pos.Byte {
+				cons := schema.AnyExpression{
+					OfType: cty.String,
+				}
+				return newExpression(a.pathCtx, partExpr, cons).CompletionAtPos(ctx, pos), true
+			}
+
+			// Trailing dot may be ignored by the parser so we attempt to recover it
+			if pos.Byte-partExpr.Range().End.Byte == 1 {
+				fileBytes := a.pathCtx.Files[partExpr.Range().Filename].Bytes
+				trailingRune := fileBytes[partExpr.Range().End.Byte:pos.Byte][0]
+
+				if trailingRune == '.' {
+					cons := schema.AnyExpression{
+						OfType: cty.String,
+					}
+					return newExpression(a.pathCtx, partExpr, cons).CompletionAtPos(ctx, pos), true
+				}
+			}
+		}
+
+		return candidates, false
+	case *hclsyntax.TemplateWrapExpr:
+		if eType.Wrapped.Range().ContainsPos(pos) {
+			cons := schema.AnyExpression{
+				OfType: cty.String,
+			}
+			return newExpression(a.pathCtx, eType.Wrapped, cons).CompletionAtPos(ctx, pos), true
+		}
+
+		return candidates, false
+	case *hclsyntax.TemplateJoinExpr:
+		// TODO: implement when support for expressions https://github.com/hashicorp/terraform-ls/issues/527 lands
 	}
 
 	return candidates, true
