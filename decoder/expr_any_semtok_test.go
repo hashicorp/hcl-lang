@@ -2503,3 +2503,157 @@ foo = "noot"
 		})
 	}
 }
+
+func TestSemanticTokens_exprAny_operators(t *testing.T) {
+	testCases := []struct {
+		testName               string
+		attrSchema             map[string]*schema.AttributeSchema
+		cfg                    string
+		expectedSemanticTokens []lang.SemanticToken
+	}{
+		{
+			"binary operator",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.AnyExpression{
+						OfType: cty.Number,
+					},
+				},
+			},
+			`attr = 42 + 43
+`,
+			[]lang.SemanticToken{
+				{
+					Type:      lang.TokenAttrName,
+					Modifiers: lang.SemanticTokenModifiers{},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
+						End:      hcl.Pos{Line: 1, Column: 5, Byte: 4},
+					},
+				},
+				{
+					Type:      lang.TokenNumber,
+					Modifiers: lang.SemanticTokenModifiers{},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 1, Column: 8, Byte: 7},
+						End:      hcl.Pos{Line: 1, Column: 10, Byte: 9},
+					},
+				},
+				{
+					Type:      lang.TokenNumber,
+					Modifiers: lang.SemanticTokenModifiers{},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 1, Column: 13, Byte: 12},
+						End:      hcl.Pos{Line: 1, Column: 15, Byte: 14},
+					},
+				},
+			},
+		},
+		{
+			"binary operator mismatching constraint",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.AnyExpression{
+						OfType: cty.List(cty.String),
+					},
+				},
+			},
+			`attr = 42 + 43
+`,
+			[]lang.SemanticToken{
+				{
+					Type:      lang.TokenAttrName,
+					Modifiers: lang.SemanticTokenModifiers{},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
+						End:      hcl.Pos{Line: 1, Column: 5, Byte: 4},
+					},
+				},
+			},
+		},
+		{
+			"unary operator",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.AnyExpression{
+						OfType: cty.Bool,
+					},
+				},
+			},
+			`attr = !true
+`,
+			[]lang.SemanticToken{
+				{
+					Type:      lang.TokenAttrName,
+					Modifiers: lang.SemanticTokenModifiers{},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
+						End:      hcl.Pos{Line: 1, Column: 5, Byte: 4},
+					},
+				},
+				{
+					Type:      lang.TokenBool,
+					Modifiers: lang.SemanticTokenModifiers{},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 1, Column: 9, Byte: 8},
+						End:      hcl.Pos{Line: 1, Column: 13, Byte: 12},
+					},
+				},
+			},
+		},
+		{
+			"unary operator mismatching constraint",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.AnyExpression{
+						OfType: cty.List(cty.String),
+					},
+				},
+			},
+			`attr = !true
+`,
+			[]lang.SemanticToken{
+				{
+					Type:      lang.TokenAttrName,
+					Modifiers: lang.SemanticTokenModifiers{},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
+						End:      hcl.Pos{Line: 1, Column: 5, Byte: 4},
+					},
+				},
+			},
+		},
+	}
+	for i, tc := range testCases {
+		t.Run(fmt.Sprintf("%d-%s", i, tc.testName), func(t *testing.T) {
+			bodySchema := &schema.BodySchema{
+				Attributes: tc.attrSchema,
+			}
+
+			f, _ := hclsyntax.ParseConfig([]byte(tc.cfg), "test.tf", hcl.InitialPos)
+			d := testPathDecoder(t, &PathContext{
+				Schema: bodySchema,
+				Files: map[string]*hcl.File{
+					"test.tf": f,
+				},
+			})
+
+			ctx := context.Background()
+			tokens, err := d.SemanticTokensInFile(ctx, "test.tf")
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			if diff := cmp.Diff(tc.expectedSemanticTokens, tokens); diff != "" {
+				t.Fatalf("unexpected tokens: %s", diff)
+			}
+		})
+	}
+}

@@ -2826,3 +2826,602 @@ func TestCompletionAtPos_exprAny_skipComplex(t *testing.T) {
 		})
 	}
 }
+
+func TestCompletionAtPos_exprAny_operators(t *testing.T) {
+	testCases := []struct {
+		testName           string
+		attrSchema         map[string]*schema.AttributeSchema
+		refTargets         reference.Targets
+		cfg                string
+		pos                hcl.Pos
+		expectedCandidates lang.Candidates
+	}{
+		{
+			"logical OR",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.AnyExpression{
+						OfType: cty.Bool,
+					},
+				},
+			},
+			reference.Targets{},
+			`attr = true || f
+`,
+			hcl.Pos{Line: 1, Column: 17, Byte: 16},
+			lang.CompleteCandidates([]lang.Candidate{
+				{
+					Label:  "false",
+					Detail: "bool",
+					Kind:   lang.BoolCandidateKind,
+					TextEdit: lang.TextEdit{
+						NewText: "false",
+						Snippet: "false",
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 1, Column: 16, Byte: 15},
+							End:      hcl.Pos{Line: 1, Column: 17, Byte: 16},
+						},
+					},
+				},
+			}),
+		},
+		{
+			"logical OR mismatching constraint",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.AnyExpression{
+						OfType: cty.Number,
+					},
+				},
+			},
+			reference.Targets{},
+			`attr = true || f
+`,
+			hcl.Pos{Line: 1, Column: 17, Byte: 16},
+			lang.CompleteCandidates([]lang.Candidate{}),
+		},
+		{
+			"adding",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.AnyExpression{
+						OfType: cty.Number,
+					},
+				},
+			},
+			reference.Targets{
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "bar"},
+					},
+					RangePtr: &hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 2, Column: 1, Byte: 17},
+						End:      hcl.Pos{Line: 2, Column: 3, Byte: 19},
+					},
+					Type: cty.String,
+				},
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "foo"},
+					},
+					RangePtr: &hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 2, Column: 1, Byte: 17},
+						End:      hcl.Pos{Line: 2, Column: 3, Byte: 19},
+					},
+					Type: cty.Number,
+				},
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "list"},
+					},
+					RangePtr: &hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 2, Column: 1, Byte: 17},
+						End:      hcl.Pos{Line: 2, Column: 3, Byte: 19},
+					},
+					Type: cty.List(cty.String),
+				},
+			},
+			`attr = 42 + v
+`,
+			hcl.Pos{Line: 1, Column: 14, Byte: 13},
+			lang.CompleteCandidates([]lang.Candidate{
+				{
+					Label:  "var.bar",
+					Detail: "string",
+					Kind:   lang.TraversalCandidateKind,
+					TextEdit: lang.TextEdit{
+						NewText: "var.bar",
+						Snippet: "var.bar",
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 1, Column: 13, Byte: 12},
+							End:      hcl.Pos{Line: 1, Column: 14, Byte: 13},
+						},
+					},
+				},
+				{
+					Label:  "var.foo",
+					Detail: "number",
+					Kind:   lang.TraversalCandidateKind,
+					TextEdit: lang.TextEdit{
+						NewText: "var.foo",
+						Snippet: "var.foo",
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 1, Column: 13, Byte: 12},
+							End:      hcl.Pos{Line: 1, Column: 14, Byte: 13},
+						},
+					},
+				},
+			}),
+		},
+		{
+			"negation",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.AnyExpression{
+						OfType: cty.Bool,
+					},
+				},
+			},
+			reference.Targets{},
+			`attr = !f
+`,
+			hcl.Pos{Line: 1, Column: 10, Byte: 9},
+			lang.CompleteCandidates([]lang.Candidate{
+				{
+					Label:  "false",
+					Detail: "bool",
+					Kind:   lang.BoolCandidateKind,
+					TextEdit: lang.TextEdit{
+						NewText: "false",
+						Snippet: "false",
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 1, Column: 9, Byte: 8},
+							End:      hcl.Pos{Line: 1, Column: 10, Byte: 9},
+						},
+					},
+				},
+			}),
+		},
+		{
+			"unterminated expression with unary op",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.AnyExpression{
+						OfType: cty.Bool,
+					},
+				},
+			},
+			reference.Targets{},
+			`attr = !
+`,
+			hcl.Pos{Line: 1, Column: 9, Byte: 8},
+			lang.CompleteCandidates([]lang.Candidate{
+				{
+					Label:       "element",
+					Detail:      "element(list dynamic, index number) dynamic",
+					Description: lang.Markdown("`element` retrieves a single element from a list."),
+					Kind:        lang.FunctionCandidateKind,
+					TextEdit: lang.TextEdit{
+						NewText: "element()",
+						Snippet: "element(${0})",
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 1, Column: 9, Byte: 8},
+							End:      hcl.Pos{Line: 1, Column: 9, Byte: 8},
+						},
+					},
+				},
+				{
+					Label:       "join",
+					Detail:      "join(separator string, …lists list of string) string",
+					Description: lang.Markdown("`join` produces a string by concatenating together all elements of a given list of strings with the given delimiter."),
+					Kind:        lang.FunctionCandidateKind,
+					TextEdit: lang.TextEdit{
+						NewText: "join()",
+						Snippet: "join(${0})",
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 1, Column: 9, Byte: 8},
+							End:      hcl.Pos{Line: 1, Column: 9, Byte: 8},
+						},
+					},
+				},
+				{
+					Label:       "keys",
+					Detail:      "keys(inputMap dynamic) dynamic",
+					Description: lang.Markdown("`keys` takes a map and returns a list containing the keys from that map."),
+					Kind:        lang.FunctionCandidateKind,
+					TextEdit: lang.TextEdit{
+						NewText: "keys()",
+						Snippet: "keys(${0})",
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 1, Column: 9, Byte: 8},
+							End:      hcl.Pos{Line: 1, Column: 9, Byte: 8},
+						},
+					},
+				},
+				{
+					Label:       "lower",
+					Detail:      "lower(str string) string",
+					Description: lang.Markdown("`lower` converts all cased letters in the given string to lowercase."),
+					Kind:        lang.FunctionCandidateKind,
+					TextEdit: lang.TextEdit{
+						NewText: "lower()",
+						Snippet: "lower(${0})",
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 1, Column: 9, Byte: 8},
+							End:      hcl.Pos{Line: 1, Column: 9, Byte: 8},
+						},
+					},
+				},
+				{
+					Label:  "false",
+					Detail: "bool",
+					Kind:   lang.BoolCandidateKind,
+					TextEdit: lang.TextEdit{
+						NewText: "false",
+						Snippet: "false",
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 1, Column: 9, Byte: 8},
+							End:      hcl.Pos{Line: 1, Column: 9, Byte: 8},
+						},
+					},
+				},
+				{
+					Label:  "true",
+					Detail: "bool",
+					Kind:   lang.BoolCandidateKind,
+					TextEdit: lang.TextEdit{
+						NewText: "true",
+						Snippet: "true",
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 1, Column: 9, Byte: 8},
+							End:      hcl.Pos{Line: 1, Column: 9, Byte: 8},
+						},
+					},
+				},
+			}),
+		},
+		{
+			"unterminated expression with unary op and trailing dot",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.AnyExpression{
+						OfType: cty.Bool,
+					},
+				},
+			},
+			reference.Targets{
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "bar"},
+					},
+					RangePtr: &hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 2, Column: 1, Byte: 17},
+						End:      hcl.Pos{Line: 2, Column: 3, Byte: 19},
+					},
+					Type: cty.Bool,
+				},
+			},
+			`attr = !var.
+`,
+			hcl.Pos{Line: 1, Column: 13, Byte: 12},
+			lang.CompleteCandidates([]lang.Candidate{
+				{
+					Label:  "var.bar",
+					Detail: "bool",
+					Kind:   lang.TraversalCandidateKind,
+					TextEdit: lang.TextEdit{
+						NewText: "var.bar",
+						Snippet: "var.bar",
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 1, Column: 9, Byte: 8},
+							End:      hcl.Pos{Line: 1, Column: 13, Byte: 12},
+						},
+					},
+				},
+			}),
+		},
+		{
+			"unterminated expression with binary op",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.AnyExpression{
+						OfType: cty.Number,
+					},
+				},
+			},
+			reference.Targets{
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "bar"},
+					},
+					RangePtr: &hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 2, Column: 1, Byte: 17},
+						End:      hcl.Pos{Line: 2, Column: 3, Byte: 19},
+					},
+					Type: cty.String,
+				},
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "foo"},
+					},
+					RangePtr: &hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 2, Column: 1, Byte: 17},
+						End:      hcl.Pos{Line: 2, Column: 3, Byte: 19},
+					},
+					Type: cty.Number,
+				},
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "list"},
+					},
+					RangePtr: &hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 2, Column: 1, Byte: 17},
+						End:      hcl.Pos{Line: 2, Column: 3, Byte: 19},
+					},
+					Type: cty.List(cty.String),
+				},
+			},
+			`attr = 42 +
+`,
+			hcl.Pos{Line: 1, Column: 12, Byte: 11},
+			lang.CompleteCandidates([]lang.Candidate{
+				// TODO: See https://github.com/hashicorp/hcl-lang/issues/321
+			}),
+		},
+		{
+			"unterminated expression with binary op and trailing dot",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.AnyExpression{
+						OfType: cty.Number,
+					},
+				},
+			},
+			reference.Targets{
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "bar"},
+					},
+					RangePtr: &hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 2, Column: 1, Byte: 17},
+						End:      hcl.Pos{Line: 2, Column: 3, Byte: 19},
+					},
+					Type: cty.String,
+				},
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "foo"},
+					},
+					RangePtr: &hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 2, Column: 1, Byte: 17},
+						End:      hcl.Pos{Line: 2, Column: 3, Byte: 19},
+					},
+					Type: cty.Number,
+				},
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "list"},
+					},
+					RangePtr: &hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 2, Column: 1, Byte: 17},
+						End:      hcl.Pos{Line: 2, Column: 3, Byte: 19},
+					},
+					Type: cty.List(cty.String),
+				},
+			},
+			`attr = 42 + var.
+`,
+			hcl.Pos{Line: 1, Column: 17, Byte: 16},
+			lang.CompleteCandidates([]lang.Candidate{
+				// TODO: See https://github.com/hashicorp/hcl-lang/issues/321
+			}),
+		},
+		{
+			"unary expression with function",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.AnyExpression{
+						OfType: cty.Bool,
+					},
+				},
+			},
+			reference.Targets{
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "foo"},
+					},
+					RangePtr: &hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 2, Column: 1, Byte: 17},
+						End:      hcl.Pos{Line: 2, Column: 3, Byte: 19},
+					},
+					Type: cty.String,
+				},
+			},
+			`attr = !lower()
+`,
+			hcl.Pos{Line: 1, Column: 15, Byte: 14},
+			lang.CompleteCandidates([]lang.Candidate{
+				{
+					Label:  "var.foo",
+					Detail: "string",
+					Kind:   lang.TraversalCandidateKind,
+					TextEdit: lang.TextEdit{
+						NewText: "var.foo",
+						Snippet: "var.foo",
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 1, Column: 15, Byte: 14},
+							End:      hcl.Pos{Line: 1, Column: 15, Byte: 14},
+						},
+					},
+				},
+				{
+					Label:       "element",
+					Detail:      "element(list dynamic, index number) dynamic",
+					Description: lang.Markdown("`element` retrieves a single element from a list."),
+					Kind:        lang.FunctionCandidateKind,
+					TextEdit: lang.TextEdit{
+						NewText: "element()",
+						Snippet: "element(${0})",
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 1, Column: 15, Byte: 14},
+							End:      hcl.Pos{Line: 1, Column: 15, Byte: 14},
+						},
+					},
+				},
+				{
+					Label:       "join",
+					Detail:      "join(separator string, …lists list of string) string",
+					Description: lang.Markdown("`join` produces a string by concatenating together all elements of a given list of strings with the given delimiter."),
+					Kind:        lang.FunctionCandidateKind,
+					TextEdit: lang.TextEdit{
+						NewText: "join()",
+						Snippet: "join(${0})",
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 1, Column: 15, Byte: 14},
+							End:      hcl.Pos{Line: 1, Column: 15, Byte: 14},
+						},
+					},
+				},
+				{
+					Label:       "keys",
+					Detail:      "keys(inputMap dynamic) dynamic",
+					Description: lang.Markdown("`keys` takes a map and returns a list containing the keys from that map."),
+					Kind:        lang.FunctionCandidateKind,
+					TextEdit: lang.TextEdit{
+						NewText: "keys()",
+						Snippet: "keys(${0})",
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 1, Column: 15, Byte: 14},
+							End:      hcl.Pos{Line: 1, Column: 15, Byte: 14},
+						},
+					},
+				},
+				{
+					Label:       "log",
+					Detail:      "log(num number, base number) number",
+					Description: lang.Markdown("`log` returns the logarithm of a given number in a given base."),
+					Kind:        lang.FunctionCandidateKind,
+					TextEdit: lang.TextEdit{
+						NewText: "log()",
+						Snippet: "log(${0})",
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 1, Column: 15, Byte: 14},
+							End:      hcl.Pos{Line: 1, Column: 15, Byte: 14},
+						},
+					},
+				},
+				{
+					Label:       "lower",
+					Detail:      "lower(str string) string",
+					Description: lang.Markdown("`lower` converts all cased letters in the given string to lowercase."),
+					Kind:        lang.FunctionCandidateKind,
+					TextEdit: lang.TextEdit{
+						NewText: "lower()",
+						Snippet: "lower(${0})",
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 1, Column: 15, Byte: 14},
+							End:      hcl.Pos{Line: 1, Column: 15, Byte: 14},
+						},
+					},
+				},
+			}),
+		},
+		{
+			"unary expression with unterminated function",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.AnyExpression{
+						OfType: cty.Bool,
+					},
+				},
+			},
+			reference.Targets{
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "foo"},
+					},
+					RangePtr: &hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 2, Column: 1, Byte: 17},
+						End:      hcl.Pos{Line: 2, Column: 3, Byte: 19},
+					},
+					Type: cty.String,
+				},
+			},
+			`attr = !lower(
+`,
+			hcl.Pos{Line: 1, Column: 15, Byte: 14},
+			lang.CompleteCandidates([]lang.Candidate{
+				// TODO: See https://github.com/hashicorp/hcl-lang/issues/325
+			}),
+		},
+	}
+
+	for i, tc := range testCases {
+		t.Run(fmt.Sprintf("%2d-%s", i, tc.testName), func(t *testing.T) {
+			bodySchema := &schema.BodySchema{
+				Attributes: tc.attrSchema,
+			}
+
+			f, _ := hclsyntax.ParseConfig([]byte(tc.cfg), "test.tf", hcl.InitialPos)
+			d := testPathDecoder(t, &PathContext{
+				Schema: bodySchema,
+				Files: map[string]*hcl.File{
+					"test.tf": f,
+				},
+				ReferenceTargets: tc.refTargets,
+				Functions:        testFunctionSignatures(),
+			})
+
+			ctx := context.Background()
+			candidates, err := d.CandidatesAtPos(ctx, "test.tf", tc.pos)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			if diff := cmp.Diff(tc.expectedCandidates, candidates); diff != "" {
+				t.Fatalf("unexpected candidates: %s", diff)
+			}
+		})
+	}
+}
