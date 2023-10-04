@@ -97,7 +97,6 @@ func (a Any) SemanticTokens(ctx context.Context) []lang.SemanticToken {
 func (a Any) semanticTokensForNonComplexExpr(ctx context.Context) []lang.SemanticToken {
 	// TODO: Support splat expression https://github.com/hashicorp/terraform-ls/issues/526
 	// TODO: Support for-in-if expression https://github.com/hashicorp/terraform-ls/issues/527
-	// TODO: Support conditional expression https://github.com/hashicorp/terraform-ls/issues/528
 	// TODO: Support complex index expressions https://github.com/hashicorp/terraform-ls/issues/531
 	// TODO: Support relative traversals https://github.com/hashicorp/terraform-ls/issues/532
 
@@ -106,6 +105,10 @@ func (a Any) semanticTokensForNonComplexExpr(ctx context.Context) []lang.Semanti
 	}
 
 	if tokens, ok := a.semanticTokensForTemplateExpr(ctx); ok {
+		return tokens
+	}
+
+	if tokens, ok := a.semanticTokensForConditionalExpr(ctx); ok {
 		return tokens
 	}
 
@@ -218,6 +221,29 @@ func (a Any) semanticTokensForTemplateExpr(ctx context.Context) ([]lang.Semantic
 		}
 		expr := newExpression(a.pathCtx, eType.Wrapped, cons)
 		tokens = append(tokens, expr.SemanticTokens(ctx)...)
+
+		return tokens, true
+	}
+
+	return tokens, false
+}
+
+func (a Any) semanticTokensForConditionalExpr(ctx context.Context) ([]lang.SemanticToken, bool) {
+	tokens := make([]lang.SemanticToken, 0)
+
+	switch eType := a.expr.(type) {
+	case *hclsyntax.ConditionalExpr:
+		tokens = append(tokens, newExpression(a.pathCtx, eType.Condition, schema.AnyExpression{
+			OfType: cty.Bool,
+		}).SemanticTokens(ctx)...)
+		tokens = append(tokens, newExpression(a.pathCtx, eType.TrueResult, schema.AnyExpression{
+			OfType:                  a.cons.OfType,
+			SkipLiteralComplexTypes: a.cons.SkipLiteralComplexTypes,
+		}).SemanticTokens(ctx)...)
+		tokens = append(tokens, newExpression(a.pathCtx, eType.FalseResult, schema.AnyExpression{
+			OfType:                  a.cons.OfType,
+			SkipLiteralComplexTypes: a.cons.SkipLiteralComplexTypes,
+		}).SemanticTokens(ctx)...)
 
 		return tokens, true
 	}

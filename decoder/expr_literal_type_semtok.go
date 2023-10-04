@@ -10,6 +10,7 @@ import (
 	"github.com/hashicorp/hcl-lang/schema"
 	"github.com/hashicorp/hcl/v2/hclsyntax"
 	"github.com/zclconf/go-cty/cty"
+	"github.com/zclconf/go-cty/cty/convert"
 )
 
 func (lt LiteralType) SemanticTokens(ctx context.Context) []lang.SemanticToken {
@@ -47,7 +48,16 @@ func (lt LiteralType) SemanticTokens(ctx context.Context) []lang.SemanticToken {
 			return []lang.SemanticToken{}
 		}
 
-		if !lt.cons.Type.Equals(expr.Val.Type()) {
+		// While interpolation is not allowed/expected in LiteralType
+		// we still assume that expressions are convertible.
+		// This makes it easier to deal with a case where we land here
+		// from inside of AnyExpression.
+		_, err := convert.Convert(expr.Val, typ)
+		if err == nil {
+			// Even if the type is convertible it makes more sense
+			// to report it as the real type prior to conversion.
+			typ = expr.Val.Type()
+		} else {
 			return []lang.SemanticToken{}
 		}
 

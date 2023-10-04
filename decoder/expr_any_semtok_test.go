@@ -2935,3 +2935,278 @@ EOT
 		})
 	}
 }
+
+func TestSemanticTokens_exprAny_conditional(t *testing.T) {
+	testCases := []struct {
+		testName               string
+		attrSchema             map[string]*schema.AttributeSchema
+		refOrigins             reference.Origins
+		refTargets             reference.Targets
+		cfg                    string
+		expectedSemanticTokens []lang.SemanticToken
+	}{
+		{
+			"simple conditional",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.AnyExpression{
+						OfType: cty.String,
+					},
+				},
+			},
+			reference.Origins{},
+			reference.Targets{},
+			`attr = true ? "t" : 422
+`,
+			[]lang.SemanticToken{
+				{
+					Type:      lang.TokenAttrName,
+					Modifiers: lang.SemanticTokenModifiers{},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
+						End:      hcl.Pos{Line: 1, Column: 5, Byte: 4},
+					},
+				},
+				{
+					Type:      lang.TokenBool,
+					Modifiers: lang.SemanticTokenModifiers{},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 1, Column: 8, Byte: 7},
+						End:      hcl.Pos{Line: 1, Column: 12, Byte: 11},
+					},
+				},
+				{
+					Type:      lang.TokenString,
+					Modifiers: lang.SemanticTokenModifiers{},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 1, Column: 15, Byte: 14},
+						End:      hcl.Pos{Line: 1, Column: 18, Byte: 17},
+					},
+				},
+				{
+					Type:      lang.TokenNumber,
+					Modifiers: lang.SemanticTokenModifiers{},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 1, Column: 21, Byte: 20},
+						End:      hcl.Pos{Line: 1, Column: 24, Byte: 23},
+					},
+				},
+			},
+		},
+		{
+			"conditional in template",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.AnyExpression{
+						OfType: cty.String,
+					},
+				},
+			},
+			reference.Origins{},
+			reference.Targets{},
+			`attr = "x${true ? "t" : 422}"
+`,
+			[]lang.SemanticToken{
+				{
+					Type:      lang.TokenAttrName,
+					Modifiers: lang.SemanticTokenModifiers{},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
+						End:      hcl.Pos{Line: 1, Column: 5, Byte: 4},
+					},
+				},
+				{
+					Type:      lang.TokenString,
+					Modifiers: lang.SemanticTokenModifiers{},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 1, Column: 9, Byte: 8},
+						End:      hcl.Pos{Line: 1, Column: 10, Byte: 9},
+					},
+				},
+				{
+					Type:      lang.TokenBool,
+					Modifiers: lang.SemanticTokenModifiers{},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 1, Column: 12, Byte: 11},
+						End:      hcl.Pos{Line: 1, Column: 16, Byte: 15},
+					},
+				},
+				{
+					Type:      lang.TokenString,
+					Modifiers: lang.SemanticTokenModifiers{},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 1, Column: 19, Byte: 18},
+						End:      hcl.Pos{Line: 1, Column: 22, Byte: 21},
+					},
+				},
+				{
+					Type:      lang.TokenNumber,
+					Modifiers: lang.SemanticTokenModifiers{},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 1, Column: 25, Byte: 24},
+						End:      hcl.Pos{Line: 1, Column: 28, Byte: 27},
+					},
+				},
+			},
+		},
+		{
+			"conditional as directive in template",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.AnyExpression{
+						OfType: cty.String,
+					},
+				},
+			},
+			reference.Origins{},
+			reference.Targets{},
+			`attr = "x%{if true}t%{else}422%{endif}"
+`,
+			[]lang.SemanticToken{
+				{
+					Type:      lang.TokenAttrName,
+					Modifiers: lang.SemanticTokenModifiers{},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
+						End:      hcl.Pos{Line: 1, Column: 5, Byte: 4},
+					},
+				},
+				{
+					Type:      lang.TokenString,
+					Modifiers: lang.SemanticTokenModifiers{},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 1, Column: 9, Byte: 8},
+						End:      hcl.Pos{Line: 1, Column: 10, Byte: 9},
+					},
+				},
+				{
+					Type:      lang.TokenBool,
+					Modifiers: lang.SemanticTokenModifiers{},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 1, Column: 15, Byte: 14},
+						End:      hcl.Pos{Line: 1, Column: 19, Byte: 18},
+					},
+				},
+				{
+					Type:      lang.TokenString,
+					Modifiers: lang.SemanticTokenModifiers{},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 1, Column: 20, Byte: 19},
+						End:      hcl.Pos{Line: 1, Column: 21, Byte: 20},
+					},
+				},
+				{
+					Type:      lang.TokenString,
+					Modifiers: lang.SemanticTokenModifiers{},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 1, Column: 28, Byte: 27},
+						End:      hcl.Pos{Line: 1, Column: 31, Byte: 30},
+					},
+				},
+			},
+		},
+		{
+			"conditional as short directive in template",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.AnyExpression{
+						OfType: cty.String,
+					},
+				},
+			},
+			reference.Origins{},
+			reference.Targets{},
+			`attr = "x%{if true}422%{endif}"
+`,
+			[]lang.SemanticToken{
+				{
+					Type:      lang.TokenAttrName,
+					Modifiers: lang.SemanticTokenModifiers{},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
+						End:      hcl.Pos{Line: 1, Column: 5, Byte: 4},
+					},
+				},
+				{
+					Type:      lang.TokenString,
+					Modifiers: lang.SemanticTokenModifiers{},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 1, Column: 9, Byte: 8},
+						End:      hcl.Pos{Line: 1, Column: 10, Byte: 9},
+					},
+				},
+				{
+					Type:      lang.TokenBool,
+					Modifiers: lang.SemanticTokenModifiers{},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 1, Column: 15, Byte: 14},
+						End:      hcl.Pos{Line: 1, Column: 19, Byte: 18},
+					},
+				},
+				{
+					Type:      lang.TokenString,
+					Modifiers: lang.SemanticTokenModifiers{},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 1, Column: 20, Byte: 19},
+						End:      hcl.Pos{Line: 1, Column: 23, Byte: 22},
+					},
+				},
+				{
+					Type:      lang.TokenString,
+					Modifiers: lang.SemanticTokenModifiers{},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 1, Column: 23, Byte: 22},
+						End:      hcl.Pos{Line: 1, Column: 23, Byte: 22},
+					},
+				},
+			},
+		},
+	}
+
+	for i, tc := range testCases {
+		t.Run(fmt.Sprintf("%d-%s", i, tc.testName), func(t *testing.T) {
+			bodySchema := &schema.BodySchema{
+				Attributes: tc.attrSchema,
+			}
+
+			f, _ := hclsyntax.ParseConfig([]byte(tc.cfg), "test.tf", hcl.InitialPos)
+			d := testPathDecoder(t, &PathContext{
+				Schema: bodySchema,
+				Files: map[string]*hcl.File{
+					"test.tf": f,
+				},
+				ReferenceOrigins: tc.refOrigins,
+				ReferenceTargets: tc.refTargets,
+			})
+
+			ctx := context.Background()
+			tokens, err := d.SemanticTokensInFile(ctx, "test.tf")
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			if diff := cmp.Diff(tc.expectedSemanticTokens, tokens); diff != "" {
+				t.Fatalf("unexpected tokens: %s", diff)
+			}
+		})
+	}
+}
