@@ -98,7 +98,6 @@ func (a Any) HoverAtPos(ctx context.Context, pos hcl.Pos) *lang.HoverData {
 func (a Any) hoverNonComplexExprAtPos(ctx context.Context, pos hcl.Pos) *lang.HoverData {
 	// TODO: Support splat expression https://github.com/hashicorp/terraform-ls/issues/526
 	// TODO: Support for-in-if expression https://github.com/hashicorp/terraform-ls/issues/527
-	// TODO: Support conditional expression https://github.com/hashicorp/terraform-ls/issues/528
 	// TODO: Support complex index expressions https://github.com/hashicorp/terraform-ls/issues/531
 	// TODO: Support relative traversals https://github.com/hashicorp/terraform-ls/issues/532
 
@@ -107,6 +106,10 @@ func (a Any) hoverNonComplexExprAtPos(ctx context.Context, pos hcl.Pos) *lang.Ho
 	}
 
 	if hoverData, ok := a.hoverTemplateExprAtPos(ctx, pos); ok {
+		return hoverData
+	}
+
+	if hoverData, ok := a.hoverConditionalExprAtPos(ctx, pos); ok {
 		return hoverData
 	}
 
@@ -222,6 +225,32 @@ func (a Any) hoverTemplateExprAtPos(ctx context.Context, pos hcl.Pos) (*lang.Hov
 		}
 
 		return nil, true
+	}
+
+	return nil, false
+}
+
+func (a Any) hoverConditionalExprAtPos(ctx context.Context, pos hcl.Pos) (*lang.HoverData, bool) {
+	switch eType := a.expr.(type) {
+	case *hclsyntax.ConditionalExpr:
+		if eType.Condition.Range().ContainsPos(pos) {
+			cons := schema.AnyExpression{
+				OfType: cty.Bool,
+			}
+			return newExpression(a.pathCtx, eType.Condition, cons).HoverAtPos(ctx, pos), true
+		}
+		if eType.TrueResult.Range().ContainsPos(pos) {
+			cons := schema.AnyExpression{
+				OfType: cty.DynamicPseudoType,
+			}
+			return newExpression(a.pathCtx, eType.TrueResult, cons).HoverAtPos(ctx, pos), true
+		}
+		if eType.FalseResult.Range().ContainsPos(pos) {
+			cons := schema.AnyExpression{
+				OfType: cty.DynamicPseudoType,
+			}
+			return newExpression(a.pathCtx, eType.FalseResult, cons).HoverAtPos(ctx, pos), true
+		}
 	}
 
 	return nil, false
