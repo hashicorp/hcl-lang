@@ -100,7 +100,6 @@ func (a Any) completeNonComplexExprAtPos(ctx context.Context, pos hcl.Pos) []lan
 
 	// TODO: Support splat expression https://github.com/hashicorp/terraform-ls/issues/526
 	// TODO: Support for-in-if expression https://github.com/hashicorp/terraform-ls/issues/527
-	// TODO: Support conditional expression https://github.com/hashicorp/terraform-ls/issues/528
 	// TODO: Support complex index expressions https://github.com/hashicorp/terraform-ls/issues/531
 	// TODO: Support relative traversals https://github.com/hashicorp/terraform-ls/issues/532
 
@@ -115,6 +114,12 @@ func (a Any) completeNonComplexExprAtPos(ctx context.Context, pos hcl.Pos) []lan
 		return candidates
 	}
 	candidates = append(candidates, templateCandidates...)
+
+	condCandidates, ok := a.completeConditionalExprAtPos(ctx, pos)
+	if !ok {
+		return candidates
+	}
+	candidates = append(candidates, condCandidates...)
 
 	ref := Reference{
 		expr:    a.expr,
@@ -270,6 +275,36 @@ func (a Any) completeTemplateExprAtPos(ctx context.Context, pos hcl.Pos) ([]lang
 		return candidates, false
 	case *hclsyntax.TemplateJoinExpr:
 		// TODO: implement when support for expressions https://github.com/hashicorp/terraform-ls/issues/527 lands
+	}
+
+	return candidates, true
+}
+
+func (a Any) completeConditionalExprAtPos(ctx context.Context, pos hcl.Pos) ([]lang.Candidate, bool) {
+	candidates := make([]lang.Candidate, 0)
+
+	switch eType := a.expr.(type) {
+	case *hclsyntax.ConditionalExpr:
+		if eType.Condition.Range().ContainsPos(pos) || eType.Condition.Range().End.Byte == pos.Byte {
+			cons := schema.AnyExpression{
+				OfType: cty.Bool,
+			}
+			return newExpression(a.pathCtx, eType.Condition, cons).CompletionAtPos(ctx, pos), true
+		}
+		if eType.TrueResult.Range().ContainsPos(pos) || eType.TrueResult.Range().End.Byte == pos.Byte {
+			cons := schema.AnyExpression{
+				OfType: cty.DynamicPseudoType,
+			}
+			return newExpression(a.pathCtx, eType.TrueResult, cons).CompletionAtPos(ctx, pos), true
+		}
+		if eType.FalseResult.Range().ContainsPos(pos) || eType.FalseResult.Range().End.Byte == pos.Byte {
+			cons := schema.AnyExpression{
+				OfType: cty.DynamicPseudoType,
+			}
+			return newExpression(a.pathCtx, eType.FalseResult, cons).CompletionAtPos(ctx, pos), true
+		}
+
+		return candidates, false
 	}
 
 	return candidates, true
