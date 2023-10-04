@@ -117,7 +117,6 @@ func (a Any) ReferenceOrigins(ctx context.Context, allowSelfRefs bool) reference
 func (a Any) refOriginsForNonComplexExpr(ctx context.Context, allowSelfRefs bool) reference.Origins {
 	// TODO: Support splat expression https://github.com/hashicorp/terraform-ls/issues/526
 	// TODO: Support for-in-if expression https://github.com/hashicorp/terraform-ls/issues/527
-	// TODO: Support conditional expression https://github.com/hashicorp/terraform-ls/issues/528
 	// TODO: Support complex index expressions https://github.com/hashicorp/terraform-ls/issues/531
 	// TODO: Support relative traversals https://github.com/hashicorp/terraform-ls/issues/532
 
@@ -126,6 +125,10 @@ func (a Any) refOriginsForNonComplexExpr(ctx context.Context, allowSelfRefs bool
 	}
 
 	if origins, ok := a.refOriginsForTemplateExpr(ctx, allowSelfRefs); ok {
+		return origins
+	}
+
+	if origins, ok := a.refOriginsForConditionalExpr(ctx, allowSelfRefs); ok {
 		return origins
 	}
 
@@ -273,6 +276,45 @@ func (a Any) refOriginsForTemplateExpr(ctx context.Context, allowSelfRefs bool) 
 
 		if e, ok := expr.(ReferenceOriginsExpression); ok {
 			origins = append(origins, e.ReferenceOrigins(ctx, allowSelfRefs)...)
+		}
+
+		return origins, true
+	}
+
+	return origins, false
+}
+
+func (a Any) refOriginsForConditionalExpr(ctx context.Context, allowSelfRefs bool) (reference.Origins, bool) {
+	origins := make(reference.Origins, 0)
+
+	// There is currently no way of decoding conditional expressions in JSON
+	// so we just collect them using the fallback logic assuming "any"
+	// constraint and focus on collecting expressions in HCL with more
+	// accurate constraints below.
+
+	switch eType := a.expr.(type) {
+	case *hclsyntax.ConditionalExpr:
+		condExpr := newExpression(a.pathCtx, eType.Condition, schema.AnyExpression{
+			OfType: cty.Bool,
+		})
+		if expr, ok := condExpr.(ReferenceOriginsExpression); ok {
+			origins = append(origins, expr.ReferenceOrigins(ctx, allowSelfRefs)...)
+		}
+
+		trueExpr := newExpression(a.pathCtx, eType.TrueResult, schema.AnyExpression{
+			OfType:                  a.cons.OfType,
+			SkipLiteralComplexTypes: a.cons.SkipLiteralComplexTypes,
+		})
+		if expr, ok := trueExpr.(ReferenceOriginsExpression); ok {
+			origins = append(origins, expr.ReferenceOrigins(ctx, allowSelfRefs)...)
+		}
+
+		falseExpr := newExpression(a.pathCtx, eType.FalseResult, schema.AnyExpression{
+			OfType:                  a.cons.OfType,
+			SkipLiteralComplexTypes: a.cons.SkipLiteralComplexTypes,
+		})
+		if expr, ok := falseExpr.(ReferenceOriginsExpression); ok {
+			origins = append(origins, expr.ReferenceOrigins(ctx, allowSelfRefs)...)
 		}
 
 		return origins, true

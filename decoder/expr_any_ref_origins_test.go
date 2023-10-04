@@ -1221,3 +1221,459 @@ func TestCollectRefOrigins_exprAny_templates_json(t *testing.T) {
 		})
 	}
 }
+
+func TestCollectRefOrigins_exprAny_conditional_hcl(t *testing.T) {
+	testCases := []struct {
+		testName           string
+		attrSchema         map[string]*schema.AttributeSchema
+		cfg                string
+		expectedRefOrigins reference.Origins
+	}{
+		{
+			"simple conditional",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.AnyExpression{
+						OfType: cty.String,
+					},
+				},
+			},
+			`attr = foo ? bar : baz
+`,
+			reference.Origins{
+				reference.LocalOrigin{
+					Addr: lang.Address{
+						lang.RootStep{Name: "foo"},
+					},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 1, Column: 8, Byte: 7},
+						End:      hcl.Pos{Line: 1, Column: 11, Byte: 10},
+					},
+					Constraints: reference.OriginConstraints{
+						{
+							OfType: cty.Bool,
+						},
+					},
+				},
+				reference.LocalOrigin{
+					Addr: lang.Address{
+						lang.RootStep{Name: "bar"},
+					},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 1, Column: 14, Byte: 13},
+						End:      hcl.Pos{Line: 1, Column: 17, Byte: 16},
+					},
+					Constraints: reference.OriginConstraints{
+						{
+							OfType: cty.String,
+						},
+					},
+				},
+				reference.LocalOrigin{
+					Addr: lang.Address{
+						lang.RootStep{Name: "baz"},
+					},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 1, Column: 20, Byte: 19},
+						End:      hcl.Pos{Line: 1, Column: 23, Byte: 22},
+					},
+					Constraints: reference.OriginConstraints{
+						{
+							OfType: cty.String,
+						},
+					},
+				},
+			},
+		},
+		{
+			"conditional in template",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.AnyExpression{
+						OfType: cty.String,
+					},
+				},
+			},
+			`attr = "x-${foo ? bar : baz}"
+`,
+			reference.Origins{
+				reference.LocalOrigin{
+					Addr: lang.Address{
+						lang.RootStep{Name: "foo"},
+					},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 1, Column: 13, Byte: 12},
+						End:      hcl.Pos{Line: 1, Column: 16, Byte: 15},
+					},
+					Constraints: reference.OriginConstraints{
+						{
+							OfType: cty.Bool,
+						},
+					},
+				},
+				reference.LocalOrigin{
+					Addr: lang.Address{
+						lang.RootStep{Name: "bar"},
+					},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 1, Column: 19, Byte: 18},
+						End:      hcl.Pos{Line: 1, Column: 22, Byte: 21},
+					},
+					Constraints: reference.OriginConstraints{
+						{
+							OfType: cty.String,
+						},
+					},
+				},
+				reference.LocalOrigin{
+					Addr: lang.Address{
+						lang.RootStep{Name: "baz"},
+					},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 1, Column: 25, Byte: 24},
+						End:      hcl.Pos{Line: 1, Column: 28, Byte: 27},
+					},
+					Constraints: reference.OriginConstraints{
+						{
+							OfType: cty.String,
+						},
+					},
+				},
+			},
+		},
+		{
+			"conditional as directive in template",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.AnyExpression{
+						OfType: cty.String,
+					},
+				},
+			},
+			`attr = "x-%{if foo}${bar}%{else}${baz}%{endif}"
+`,
+			reference.Origins{
+				reference.LocalOrigin{
+					Addr: lang.Address{
+						lang.RootStep{Name: "foo"},
+					},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 1, Column: 16, Byte: 15},
+						End:      hcl.Pos{Line: 1, Column: 19, Byte: 18},
+					},
+					Constraints: reference.OriginConstraints{
+						{
+							OfType: cty.Bool,
+						},
+					},
+				},
+				reference.LocalOrigin{
+					Addr: lang.Address{
+						lang.RootStep{Name: "bar"},
+					},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 1, Column: 22, Byte: 21},
+						End:      hcl.Pos{Line: 1, Column: 25, Byte: 24},
+					},
+					Constraints: reference.OriginConstraints{
+						{
+							OfType: cty.String,
+						},
+					},
+				},
+				reference.LocalOrigin{
+					Addr: lang.Address{
+						lang.RootStep{Name: "baz"},
+					},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 1, Column: 35, Byte: 34},
+						End:      hcl.Pos{Line: 1, Column: 38, Byte: 37},
+					},
+					Constraints: reference.OriginConstraints{
+						{
+							OfType: cty.String,
+						},
+					},
+				},
+			},
+		},
+		{
+			"conditional as short directive in template",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.AnyExpression{
+						OfType: cty.String,
+					},
+				},
+			},
+			`attr = "x-%{if foo}${bar}%{endif}"
+`,
+			reference.Origins{
+				reference.LocalOrigin{
+					Addr: lang.Address{
+						lang.RootStep{Name: "foo"},
+					},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 1, Column: 16, Byte: 15},
+						End:      hcl.Pos{Line: 1, Column: 19, Byte: 18},
+					},
+					Constraints: reference.OriginConstraints{
+						{
+							OfType: cty.Bool,
+						},
+					},
+				},
+				reference.LocalOrigin{
+					Addr: lang.Address{
+						lang.RootStep{Name: "bar"},
+					},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 1, Column: 22, Byte: 21},
+						End:      hcl.Pos{Line: 1, Column: 25, Byte: 24},
+					},
+					Constraints: reference.OriginConstraints{
+						{
+							OfType: cty.String,
+						},
+					},
+				},
+			},
+		},
+	}
+
+	for i, tc := range testCases {
+		t.Run(fmt.Sprintf("%d-%s", i, tc.testName), func(t *testing.T) {
+			bodySchema := &schema.BodySchema{
+				Attributes: tc.attrSchema,
+			}
+
+			f, diags := hclsyntax.ParseConfig([]byte(tc.cfg), "test.tf", hcl.InitialPos)
+			if len(diags) > 0 {
+				t.Error(diags)
+			}
+			d := testPathDecoder(t, &PathContext{
+				Schema: bodySchema,
+				Files: map[string]*hcl.File{
+					"test.tf": f,
+				},
+			})
+
+			origins, err := d.CollectReferenceOrigins()
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			if diff := cmp.Diff(tc.expectedRefOrigins, origins, ctydebug.CmpOptions); diff != "" {
+				t.Fatalf("unexpected origins: %s", diff)
+			}
+		})
+	}
+}
+
+func TestCollectRefOrigins_exprAny_conditional_json(t *testing.T) {
+	testCases := []struct {
+		testName           string
+		attrSchema         map[string]*schema.AttributeSchema
+		cfg                string
+		expectedRefOrigins reference.Origins
+	}{
+		{
+			"simple conditional",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.AnyExpression{
+						OfType: cty.String,
+					},
+				},
+			},
+			`{"attr": "${foo ? bar : baz}"}`,
+			reference.Origins{
+				reference.LocalOrigin{
+					Addr: lang.Address{
+						lang.RootStep{Name: "foo"},
+					},
+					Range: hcl.Range{
+						Filename: "test.tf.json",
+						Start:    hcl.Pos{Line: 1, Column: 13, Byte: 12},
+						End:      hcl.Pos{Line: 1, Column: 16, Byte: 15},
+					},
+					Constraints: reference.OriginConstraints{
+						{
+							OfType: cty.DynamicPseudoType,
+						},
+					},
+				},
+				reference.LocalOrigin{
+					Addr: lang.Address{
+						lang.RootStep{Name: "bar"},
+					},
+					Range: hcl.Range{
+						Filename: "test.tf.json",
+						Start:    hcl.Pos{Line: 1, Column: 19, Byte: 18},
+						End:      hcl.Pos{Line: 1, Column: 22, Byte: 21},
+					},
+					Constraints: reference.OriginConstraints{
+						{
+							OfType: cty.DynamicPseudoType,
+						},
+					},
+				},
+				reference.LocalOrigin{
+					Addr: lang.Address{
+						lang.RootStep{Name: "baz"},
+					},
+					Range: hcl.Range{
+						Filename: "test.tf.json",
+						Start:    hcl.Pos{Line: 1, Column: 25, Byte: 24},
+						End:      hcl.Pos{Line: 1, Column: 28, Byte: 27},
+					},
+					Constraints: reference.OriginConstraints{
+						{
+							OfType: cty.DynamicPseudoType,
+						},
+					},
+				},
+			},
+		},
+		{
+			"conditional as directive",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.AnyExpression{
+						OfType: cty.String,
+					},
+				},
+			},
+			`{"attr": "x-%{if foo}${bar}%{else}${baz}%{endif}"}`,
+			reference.Origins{
+				reference.LocalOrigin{
+					Addr: lang.Address{
+						lang.RootStep{Name: "foo"},
+					},
+					Range: hcl.Range{
+						Filename: "test.tf.json",
+						Start:    hcl.Pos{Line: 1, Column: 18, Byte: 17},
+						End:      hcl.Pos{Line: 1, Column: 21, Byte: 20},
+					},
+					Constraints: reference.OriginConstraints{
+						{
+							OfType: cty.DynamicPseudoType,
+						},
+					},
+				},
+				reference.LocalOrigin{
+					Addr: lang.Address{
+						lang.RootStep{Name: "bar"},
+					},
+					Range: hcl.Range{
+						Filename: "test.tf.json",
+						Start:    hcl.Pos{Line: 1, Column: 24, Byte: 23},
+						End:      hcl.Pos{Line: 1, Column: 27, Byte: 26},
+					},
+					Constraints: reference.OriginConstraints{
+						{
+							OfType: cty.DynamicPseudoType,
+						},
+					},
+				},
+				reference.LocalOrigin{
+					Addr: lang.Address{
+						lang.RootStep{Name: "baz"},
+					},
+					Range: hcl.Range{
+						Filename: "test.tf.json",
+						Start:    hcl.Pos{Line: 1, Column: 37, Byte: 36},
+						End:      hcl.Pos{Line: 1, Column: 40, Byte: 39},
+					},
+					Constraints: reference.OriginConstraints{
+						{
+							OfType: cty.DynamicPseudoType,
+						},
+					},
+				},
+			},
+		},
+		{
+			"conditional as short directive",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.AnyExpression{
+						OfType: cty.String,
+					},
+				},
+			},
+			`{"attr": "x-%{if foo}${bar}%{endif}"}`,
+			reference.Origins{
+				reference.LocalOrigin{
+					Addr: lang.Address{
+						lang.RootStep{Name: "foo"},
+					},
+					Range: hcl.Range{
+						Filename: "test.tf.json",
+						Start:    hcl.Pos{Line: 1, Column: 18, Byte: 17},
+						End:      hcl.Pos{Line: 1, Column: 21, Byte: 20},
+					},
+					Constraints: reference.OriginConstraints{
+						{
+							OfType: cty.DynamicPseudoType,
+						},
+					},
+				},
+				reference.LocalOrigin{
+					Addr: lang.Address{
+						lang.RootStep{Name: "bar"},
+					},
+					Range: hcl.Range{
+						Filename: "test.tf.json",
+						Start:    hcl.Pos{Line: 1, Column: 24, Byte: 23},
+						End:      hcl.Pos{Line: 1, Column: 27, Byte: 26},
+					},
+					Constraints: reference.OriginConstraints{
+						{
+							OfType: cty.DynamicPseudoType,
+						},
+					},
+				},
+			},
+		},
+	}
+
+	for i, tc := range testCases {
+		t.Run(fmt.Sprintf("%d-%s", i, tc.testName), func(t *testing.T) {
+			bodySchema := &schema.BodySchema{
+				Attributes: tc.attrSchema,
+			}
+
+			f, diags := json.ParseWithStartPos([]byte(tc.cfg), "test.tf.json", hcl.InitialPos)
+			if len(diags) > 0 {
+				t.Error(diags)
+			}
+			d := testPathDecoder(t, &PathContext{
+				Schema: bodySchema,
+				Files: map[string]*hcl.File{
+					"test.tf.json": f,
+				},
+			})
+
+			origins, err := d.CollectReferenceOrigins()
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			if diff := cmp.Diff(tc.expectedRefOrigins, origins, ctydebug.CmpOptions); diff != "" {
+				t.Fatalf("unexpected origins: %s", diff)
+			}
+		})
+	}
+}
