@@ -27,6 +27,11 @@ type AttributeSchema struct {
 	// expressions are expected for the attribute
 	Constraint Constraint
 
+	// DefaultValue represents default value which applies
+	// if the attribute is not declared (e.g. when looking up
+	// attribute-dependent body).
+	DefaultValue Default
+
 	// IsDepKey describes whether to use this attribute (and its value)
 	// as key when looking up dependent schema
 	IsDepKey bool
@@ -144,6 +149,7 @@ func (as *AttributeSchema) Copy() *AttributeSchema {
 		IsComputed:             as.IsComputed,
 		IsSensitive:            as.IsSensitive,
 		IsDepKey:               as.IsDepKey,
+		DefaultValue:           as.DefaultValue,
 		Description:            as.Description,
 		Address:                as.Address.Copy(),
 		OriginForTarget:        as.OriginForTarget.Copy(),

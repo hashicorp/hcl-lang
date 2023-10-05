@@ -9,6 +9,7 @@ import (
 	"github.com/hashicorp/hcl-lang/schema"
 	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hclsyntax"
+	"github.com/zclconf/go-cty/cty"
 )
 
 type blockSchema struct {
@@ -84,31 +85,41 @@ func dependencyKeysFromBlock(block *hcl.Block, blockSchema blockSchema) schema.D
 
 	for name, attrSchema := range blockSchema.Body.Attributes {
 		if attrSchema.IsDepKey {
+			var value cty.Value
 			attr, ok := content.Attributes[name]
-			if !ok {
-				// dependent attribute not present
-				continue
-			}
-
-			st, ok := attr.Expr.(*hclsyntax.ScopeTraversalExpr)
 			if ok {
-				addr, err := lang.TraversalToAddress(st.AsTraversal())
-				if err != nil {
-					// skip unparsable traversal
+				st, ok := attr.Expr.(*hclsyntax.ScopeTraversalExpr)
+				if ok {
+					addr, err := lang.TraversalToAddress(st.AsTraversal())
+					if err != nil {
+						// skip unparsable traversal
+						continue
+					}
+					dk.Attributes = append(dk.Attributes, schema.AttributeDependent{
+						Name: name,
+						Expr: schema.ExpressionValue{
+							Address: addr,
+						},
+					})
 					continue
 				}
-				dk.Attributes = append(dk.Attributes, schema.AttributeDependent{
-					Name: name,
-					Expr: schema.ExpressionValue{
-						Address: addr,
-					},
-				})
-				continue
-			}
 
-			value, diags := attr.Expr.Value(nil)
-			if len(diags) > 0 && value.IsNull() {
-				// skip attribute if we can't get the value
+				var diags hcl.Diagnostics
+				value, diags = attr.Expr.Value(nil)
+				if len(diags) > 0 && value.IsNull() {
+					// skip attribute if we can't get the value
+					continue
+				}
+			} else if attrSchema.DefaultValue != nil {
+				defaultValue, ok := attrSchema.DefaultValue.(schema.DefaultValue)
+				if !ok {
+					// TODO: DefaultKeyword
+					// TODO: DefaultTypeDeclaration
+					continue
+				}
+				value = defaultValue.Value
+			} else {
+				// dependent attribute not present
 				continue
 			}
 

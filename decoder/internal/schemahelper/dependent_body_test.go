@@ -279,6 +279,7 @@ func TestBodySchema_DependentBodySchema_attributes(t *testing.T) {
 	testCases := []struct {
 		name           string
 		attributes     hclsyntax.Attributes
+		schema         blockSchema
 		expectedSchema *schema.BodySchema
 	}{
 		{
@@ -291,6 +292,7 @@ func TestBodySchema_DependentBodySchema_attributes(t *testing.T) {
 					},
 				},
 			},
+			testSchemaWithAttributes,
 			&schema.BodySchema{
 				Attributes: map[string]*schema.AttributeSchema{
 					"depval_attr": {Constraint: schema.LiteralType{Type: cty.String}},
@@ -307,6 +309,7 @@ func TestBodySchema_DependentBodySchema_attributes(t *testing.T) {
 					},
 				},
 			},
+			testSchemaWithAttributes,
 			&schema.BodySchema{
 				Attributes: map[string]*schema.AttributeSchema{
 					"number_found": {Constraint: schema.LiteralType{Type: cty.Number}},
@@ -326,6 +329,7 @@ func TestBodySchema_DependentBodySchema_attributes(t *testing.T) {
 					},
 				},
 			},
+			testSchemaWithAttributes,
 			&schema.BodySchema{
 				Attributes: map[string]*schema.AttributeSchema{
 					"refbar": {Constraint: schema.LiteralType{Type: cty.Number}},
@@ -348,6 +352,7 @@ func TestBodySchema_DependentBodySchema_attributes(t *testing.T) {
 					},
 				},
 			},
+			testSchemaWithAttributes,
 			&schema.BodySchema{
 				Attributes: map[string]*schema.AttributeSchema{
 					"sortedattr": {Constraint: schema.LiteralType{Type: cty.String}},
@@ -370,9 +375,37 @@ func TestBodySchema_DependentBodySchema_attributes(t *testing.T) {
 					},
 				},
 			},
+			testSchemaWithAttributes,
 			&schema.BodySchema{
 				Attributes: map[string]*schema.AttributeSchema{
 					"unsortedattr": {Constraint: schema.LiteralType{Type: cty.String}},
+				},
+			},
+		},
+		{
+			"attribute with default value only",
+			map[string]*hclsyntax.Attribute{},
+			testSchemaWithAttributesWithDefaultValue,
+			&schema.BodySchema{
+				Attributes: map[string]*schema.AttributeSchema{
+					"defaultattr": {Constraint: schema.LiteralType{Type: cty.String}},
+				},
+			},
+		},
+		{
+			"attribute with default value and explicit value",
+			map[string]*hclsyntax.Attribute{
+				"depattr": {
+					Name: "depattr",
+					Expr: &hclsyntax.LiteralValueExpr{
+						Val: cty.StringVal("pumpkin"),
+					},
+				},
+			},
+			testSchemaWithAttributesWithDefaultValue,
+			&schema.BodySchema{
+				Attributes: map[string]*schema.AttributeSchema{
+					"combinedattr": {Constraint: schema.LiteralType{Type: cty.String}},
 				},
 			},
 		},
@@ -385,9 +418,10 @@ func TestBodySchema_DependentBodySchema_attributes(t *testing.T) {
 					Attributes: tc.attributes,
 				},
 			}
-			bodySchema, _, ok := testSchemaWithAttributes.DependentBodySchema(block)
+			bodySchema, _, ok := tc.schema.DependentBodySchema(block)
 			if !ok {
-				t.Fatal("expected to find body schema for 'depattr' attribute")
+				t.Fatalf("expected to find body schema for given block with %d attributes",
+					len(tc.attributes))
 			}
 			if diff := cmp.Diff(tc.expectedSchema, bodySchema, ctydebug.CmpOptions); diff != "" {
 				t.Fatalf("unexpected body schema: %s", diff)
@@ -615,6 +649,80 @@ var testSchemaWithAttributes = NewBlockSchema(&schema.BlockSchema{
 		}): {
 			Attributes: map[string]*schema.AttributeSchema{
 				"unsortedattr": {Constraint: schema.LiteralType{Type: cty.String}},
+			},
+		},
+	},
+})
+
+var testSchemaWithAttributesWithDefaultValue = NewBlockSchema(&schema.BlockSchema{
+	Labels: []*schema.LabelSchema{
+		{
+			Name: "type",
+		},
+		{
+			Name: "name",
+		},
+	},
+	Body: &schema.BodySchema{
+		Attributes: map[string]*schema.AttributeSchema{
+			"depattr": {
+				Constraint: schema.LiteralType{Type: cty.String},
+				IsDepKey:   true,
+			},
+			"depdefault": {
+				Constraint:   schema.LiteralType{Type: cty.String},
+				IsDepKey:     true,
+				DefaultValue: schema.DefaultValue{Value: cty.StringVal("foobar")},
+			},
+		},
+	},
+	DependentBody: map[schema.SchemaKey]*schema.BodySchema{
+		schema.NewSchemaKey(schema.DependencyKeys{
+			Attributes: []schema.AttributeDependent{
+				{
+					Name: "depattr",
+					Expr: schema.ExpressionValue{
+						Static: cty.StringVal("dep-val"),
+					},
+				},
+			},
+		}): {
+			Attributes: map[string]*schema.AttributeSchema{
+				"depval_attr": {Constraint: schema.LiteralType{Type: cty.String}},
+			},
+		},
+		schema.NewSchemaKey(schema.DependencyKeys{
+			Attributes: []schema.AttributeDependent{
+				{
+					Name: "depdefault",
+					Expr: schema.ExpressionValue{
+						Static: cty.StringVal("foobar"),
+					},
+				},
+			},
+		}): {
+			Attributes: map[string]*schema.AttributeSchema{
+				"defaultattr": {Constraint: schema.LiteralType{Type: cty.String}},
+			},
+		},
+		schema.NewSchemaKey(schema.DependencyKeys{
+			Attributes: []schema.AttributeDependent{
+				{
+					Name: "depattr",
+					Expr: schema.ExpressionValue{
+						Static: cty.StringVal("pumpkin"),
+					},
+				},
+				{
+					Name: "depdefault",
+					Expr: schema.ExpressionValue{
+						Static: cty.StringVal("foobar"),
+					},
+				},
+			},
+		}): {
+			Attributes: map[string]*schema.AttributeSchema{
+				"combinedattr": {Constraint: schema.LiteralType{Type: cty.String}},
 			},
 		},
 	},
