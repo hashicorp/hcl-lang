@@ -4910,6 +4910,216 @@ module "different" {
 				},
 			},
 		},
+		{
+			"empty object",
+			&schema.BodySchema{
+				Attributes: map[string]*schema.AttributeSchema{
+					"attr": {
+						Constraint: schema.LiteralType{Type: cty.DynamicPseudoType},
+						IsOptional: true,
+						Address: &schema.AttributeAddrSchema{
+							Steps: schema.Address{
+								schema.StaticStep{Name: "local"},
+								schema.AttrNameStep{},
+							},
+							ScopeId:    "test",
+							AsExprType: true,
+						},
+					},
+				},
+			},
+			`attr = {}
+`,
+			reference.Targets{
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "local"},
+						lang.AttrStep{Name: "attr"},
+					},
+					ScopeId: "test",
+					RangePtr: &hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
+						End:      hcl.Pos{Line: 1, Column: 10, Byte: 9},
+					},
+					DefRangePtr: &hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
+						End:      hcl.Pos{Line: 1, Column: 5, Byte: 4},
+					},
+					Type:          cty.Object(map[string]cty.Type{}),
+					NestedTargets: reference.Targets{},
+				},
+			},
+		},
+		{
+			"empty tuple",
+			&schema.BodySchema{
+				Attributes: map[string]*schema.AttributeSchema{
+					"attr": {
+						Constraint: schema.LiteralType{Type: cty.DynamicPseudoType},
+						IsOptional: true,
+						Address: &schema.AttributeAddrSchema{
+							Steps: schema.Address{
+								schema.StaticStep{Name: "local"},
+								schema.AttrNameStep{},
+							},
+							ScopeId:    "test",
+							AsExprType: true,
+						},
+					},
+				},
+			},
+			`attr = []
+`,
+			reference.Targets{
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "local"},
+						lang.AttrStep{Name: "attr"},
+					},
+					ScopeId: "test",
+					RangePtr: &hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
+						End:      hcl.Pos{Line: 1, Column: 10, Byte: 9},
+					},
+					DefRangePtr: &hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
+						End:      hcl.Pos{Line: 1, Column: 5, Byte: 4},
+					},
+					Type:          cty.Tuple([]cty.Type{}),
+					NestedTargets: reference.Targets{},
+				},
+			},
+		},
+		{
+			"empty map",
+			&schema.BodySchema{
+				Attributes: map[string]*schema.AttributeSchema{
+					"attr": {
+						Constraint: schema.LiteralType{Type: cty.Map(cty.String)},
+						IsOptional: true,
+						Address: &schema.AttributeAddrSchema{
+							Steps: schema.Address{
+								schema.StaticStep{Name: "local"},
+								schema.AttrNameStep{},
+							},
+							ScopeId:    "test",
+							AsExprType: true,
+						},
+					},
+				},
+			},
+			`attr = {}
+`,
+			reference.Targets{
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "local"},
+						lang.AttrStep{Name: "attr"},
+					},
+					ScopeId: "test",
+					RangePtr: &hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
+						End:      hcl.Pos{Line: 1, Column: 10, Byte: 9},
+					},
+					DefRangePtr: &hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
+						End:      hcl.Pos{Line: 1, Column: 5, Byte: 4},
+					},
+					Type:          cty.Map(cty.String),
+					NestedTargets: reference.Targets{},
+				},
+			},
+		},
+		{
+			"empty list",
+			&schema.BodySchema{
+				Attributes: map[string]*schema.AttributeSchema{
+					"attr": {
+						Constraint: schema.LiteralType{Type: cty.List(cty.String)},
+						IsOptional: true,
+						Address: &schema.AttributeAddrSchema{
+							Steps: schema.Address{
+								schema.StaticStep{Name: "local"},
+								schema.AttrNameStep{},
+							},
+							ScopeId:    "test",
+							AsExprType: true,
+						},
+					},
+				},
+			},
+			`attr = []
+`,
+			reference.Targets{
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "local"},
+						lang.AttrStep{Name: "attr"},
+					},
+					ScopeId: "test",
+					RangePtr: &hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
+						End:      hcl.Pos{Line: 1, Column: 10, Byte: 9},
+					},
+					DefRangePtr: &hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
+						End:      hcl.Pos{Line: 1, Column: 5, Byte: 4},
+					},
+					Type:          cty.List(cty.String),
+					NestedTargets: reference.Targets{},
+				},
+			},
+		},
+		{
+			"empty set",
+			&schema.BodySchema{
+				Attributes: map[string]*schema.AttributeSchema{
+					"attr": {
+						Constraint: schema.LiteralType{Type: cty.Set(cty.String)},
+						IsOptional: true,
+						Address: &schema.AttributeAddrSchema{
+							Steps: schema.Address{
+								schema.StaticStep{Name: "local"},
+								schema.AttrNameStep{},
+							},
+							ScopeId:    "test",
+							AsExprType: true,
+						},
+					},
+				},
+			},
+			`attr = []
+`,
+			reference.Targets{
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "local"},
+						lang.AttrStep{Name: "attr"},
+					},
+					ScopeId: "test",
+					RangePtr: &hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
+						End:      hcl.Pos{Line: 1, Column: 10, Byte: 9},
+					},
+					DefRangePtr: &hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
+						End:      hcl.Pos{Line: 1, Column: 5, Byte: 4},
+					},
+					Type:          cty.Set(cty.String),
+					NestedTargets: reference.Targets{},
+				},
+			},
+		},
 	}
 
 	for i, tc := range testCases {

@@ -26,10 +26,6 @@ func (obj Object) ReferenceTargets(ctx context.Context, targetCtx *TargetContext
 		return reference.Targets{}
 	}
 
-	if len(obj.cons.Attributes) == 0 {
-		return reference.Targets{}
-	}
-
 	for _, item := range items {
 		keyName, _, ok := rawObjectKey(item.Key)
 		if !ok {

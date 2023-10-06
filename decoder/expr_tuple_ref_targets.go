@@ -22,10 +22,6 @@ func (tuple Tuple) ReferenceTargets(ctx context.Context, targetCtx *TargetContex
 		return reference.Targets{}
 	}
 
-	if len(tuple.cons.Elems) == 0 {
-		return reference.Targets{}
-	}
-
 	elemTargets := tuple.collectTupleElemTargets(ctx, targetCtx, elems)
 
 	if targetCtx == nil {
