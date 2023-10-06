@@ -4952,6 +4952,48 @@ module "different" {
 				},
 			},
 		},
+		{
+			"empty tuple",
+			&schema.BodySchema{
+				Attributes: map[string]*schema.AttributeSchema{
+					"attr": {
+						Constraint: schema.LiteralType{Type: cty.DynamicPseudoType},
+						IsOptional: true,
+						Address: &schema.AttributeAddrSchema{
+							Steps: schema.Address{
+								schema.StaticStep{Name: "local"},
+								schema.AttrNameStep{},
+							},
+							ScopeId:    "test",
+							AsExprType: true,
+						},
+					},
+				},
+			},
+			`attr = []
+`,
+			reference.Targets{
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "local"},
+						lang.AttrStep{Name: "attr"},
+					},
+					ScopeId: "test",
+					RangePtr: &hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
+						End:      hcl.Pos{Line: 1, Column: 10, Byte: 9},
+					},
+					DefRangePtr: &hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
+						End:      hcl.Pos{Line: 1, Column: 5, Byte: 4},
+					},
+					Type:          cty.Tuple([]cty.Type{}),
+					NestedTargets: reference.Targets{},
+				},
+			},
+		},
 	}
 
 	for i, tc := range testCases {
