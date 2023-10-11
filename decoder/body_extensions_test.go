@@ -667,7 +667,7 @@ func TestCompletionAtPos_BodySchema_Extensions_ForEach(t *testing.T) {
 					Value: "A meta-argument that accepts a map or a set of strings, and creates an instance for each item in that map or set.\n\n**Note**: A given block cannot use both `count` and `for_each`.",
 					Kind:  lang.MarkdownKind,
 				},
-				Detail: "optional, map of any single type or set of string",
+				Detail: "optional, map of any single type or set of string or object",
 				TextEdit: lang.TextEdit{
 					Range: hcl.Range{
 						Filename: "test.tf",
@@ -1101,6 +1101,20 @@ for_each =
 						Snippet: `[ "${1:value}" ]`,
 					},
 					Kind: lang.SetCandidateKind,
+				},
+				{
+					Label:  "{  }",
+					Detail: "object",
+					TextEdit: lang.TextEdit{
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 2, Column: 12, Byte: 43},
+							End:      hcl.Pos{Line: 2, Column: 12, Byte: 43},
+						},
+						NewText: "{\n}",
+						Snippet: "{\n}",
+					},
+					Kind: lang.ObjectCandidateKind,
 				},
 			}),
 		},

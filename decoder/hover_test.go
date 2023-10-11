@@ -1147,7 +1147,7 @@ func TestDecoder_HoverAtPos_extension_for_each(t *testing.T) {
 			hcl.Pos{Line: 2, Column: 5, Byte: 26},
 			&lang.HoverData{
 				Content: lang.MarkupContent{
-					Value: "**for_each** _optional, map of any single type or set of string_\n\n" +
+					Value: "**for_each** _optional, map of any single type or set of string or object_\n\n" +
 						"A meta-argument that accepts a map or a set of strings, and creates an instance for each item in that map or set.\n\n" +
 						"**Note**: A given block cannot use both `count` and `for_each`.",
 					Kind: lang.MarkdownKind,
