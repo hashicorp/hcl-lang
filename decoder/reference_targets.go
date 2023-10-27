@@ -17,7 +17,6 @@ import (
 	"github.com/hashicorp/hcl/v2/ext/typeexpr"
 	"github.com/hashicorp/hcl/v2/hclsyntax"
 	"github.com/zclconf/go-cty/cty"
-	"github.com/zclconf/go-cty/cty/convert"
 )
 
 type ReferenceTargets []*ReferenceTarget
@@ -466,28 +465,11 @@ func referenceAsTypeOf(block *hcl.Block, rngPtr *hcl.Range, bSchema *schema.Bloc
 
 	if bSchema.Address.AsTypeOf.AttributeExpr != "" {
 		typeDecl, ok := asTypeOfAttrExpr(attrs, bSchema)
-		if !ok && bSchema.Address.AsTypeOf.AttributeValue == "" {
+		if !ok {
 			// nothing to fall back to, exit early
 			return reference.Targets{ref}
 		}
 		ref.Type = typeDecl
-	}
-
-	if bSchema.Address.AsTypeOf.AttributeValue != "" {
-		attr, ok := attrs[bSchema.Address.AsTypeOf.AttributeValue]
-		if !ok {
-			return reference.Targets{ref}
-		}
-		value, diags := attr.Expr.Value(nil)
-		if diags.HasErrors() {
-			return reference.Targets{ref}
-		}
-		val, err := convert.Convert(value, ref.Type)
-		if err != nil {
-			// type does not comply with type constraint
-			return reference.Targets{ref}
-		}
-		ref.Type = val.Type()
 	}
 
 	return reference.Targets{ref}
