@@ -3797,77 +3797,6 @@ provider "test" {
 			},
 		},
 		{
-			"block as data type per attribute - default string",
-			&schema.BodySchema{
-				Blocks: map[string]*schema.BlockSchema{
-					"variable": {
-						Labels: []*schema.LabelSchema{
-							{Name: "name"},
-						},
-						Address: &schema.BlockAddrSchema{
-							Steps: []schema.AddrStep{
-								schema.LabelStep{Index: 0},
-							},
-							AsTypeOf: &schema.BlockAsTypeOf{
-								AttributeValue: "default",
-							},
-						},
-						Type: schema.BlockTypeObject,
-						Body: &schema.BodySchema{
-							Attributes: map[string]*schema.AttributeSchema{
-								"type": {
-									IsOptional: true,
-									Constraint: schema.TypeDeclaration{},
-								},
-								"default": {
-									IsOptional: true,
-									Constraint: schema.LiteralType{Type: cty.DynamicPseudoType},
-								},
-							},
-						},
-					},
-				},
-			},
-			`variable "test" {
-  default = "something"
-}
-`,
-			reference.Targets{
-				{
-					Addr: lang.Address{
-						lang.RootStep{Name: "test"},
-					},
-					Type: cty.String,
-					RangePtr: &hcl.Range{
-						Filename: "test.tf",
-						Start: hcl.Pos{
-							Line:   1,
-							Column: 1,
-							Byte:   0,
-						},
-						End: hcl.Pos{
-							Line:   3,
-							Column: 2,
-							Byte:   43,
-						},
-					},
-					DefRangePtr: &hcl.Range{
-						Filename: "test.tf",
-						Start: hcl.Pos{
-							Line:   1,
-							Column: 1,
-							Byte:   0,
-						},
-						End: hcl.Pos{
-							Line:   1,
-							Column: 16,
-							Byte:   15,
-						},
-					},
-				},
-			},
-		},
-		{
 			"block as data type per attribute - default tuple constant",
 			&schema.BodySchema{
 				Blocks: map[string]*schema.BlockSchema{
@@ -3880,8 +3809,7 @@ provider "test" {
 								schema.LabelStep{Index: 0},
 							},
 							AsTypeOf: &schema.BlockAsTypeOf{
-								AttributeExpr:  "type",
-								AttributeValue: "default",
+								AttributeExpr: "type",
 							},
 						},
 						Type: schema.BlockTypeObject,
@@ -3909,7 +3837,7 @@ provider "test" {
 					Addr: lang.Address{
 						lang.RootStep{Name: "test"},
 					},
-					Type: cty.Tuple([]cty.Type{cty.String}),
+					Type: cty.DynamicPseudoType,
 					RangePtr: &hcl.Range{
 						Filename: "test.tf",
 						Start: hcl.Pos{
@@ -3952,8 +3880,7 @@ provider "test" {
 								schema.LabelStep{Index: 0},
 							},
 							AsTypeOf: &schema.BlockAsTypeOf{
-								AttributeExpr:  "type",
-								AttributeValue: "default",
+								AttributeExpr: "type",
 							},
 						},
 						Type: schema.BlockTypeObject,
@@ -3984,7 +3911,7 @@ provider "test" {
 					Addr: lang.Address{
 						lang.RootStep{Name: "test"},
 					},
-					Type: cty.List(cty.String),
+					Type: cty.List(cty.DynamicPseudoType),
 					RangePtr: &hcl.Range{
 						Filename: "test.tf",
 						Start: hcl.Pos{
@@ -3996,78 +3923,6 @@ provider "test" {
 							Line:   6,
 							Column: 2,
 							Byte:   66,
-						},
-					},
-					DefRangePtr: &hcl.Range{
-						Filename: "test.tf",
-						Start: hcl.Pos{
-							Line:   1,
-							Column: 1,
-							Byte:   0,
-						},
-						End: hcl.Pos{
-							Line:   1,
-							Column: 16,
-							Byte:   15,
-						},
-					},
-				},
-			},
-		},
-		{
-			"block as data type per attribute - both type and default",
-			&schema.BodySchema{
-				Blocks: map[string]*schema.BlockSchema{
-					"variable": {
-						Labels: []*schema.LabelSchema{
-							{Name: "name"},
-						},
-						Address: &schema.BlockAddrSchema{
-							Steps: []schema.AddrStep{
-								schema.LabelStep{Index: 0},
-							},
-							AsTypeOf: &schema.BlockAsTypeOf{
-								AttributeValue: "default",
-							},
-						},
-						Type: schema.BlockTypeObject,
-						Body: &schema.BodySchema{
-							Attributes: map[string]*schema.AttributeSchema{
-								"type": {
-									IsOptional: true,
-									Constraint: schema.TypeDeclaration{},
-								},
-								"default": {
-									IsOptional: true,
-									Constraint: schema.LiteralType{Type: cty.DynamicPseudoType},
-								},
-							},
-						},
-					},
-				},
-			},
-			`variable "test" {
-  type = any
-  default = "something"
-}
-`,
-			reference.Targets{
-				{
-					Addr: lang.Address{
-						lang.RootStep{Name: "test"},
-					},
-					Type: cty.String,
-					RangePtr: &hcl.Range{
-						Filename: "test.tf",
-						Start: hcl.Pos{
-							Line:   1,
-							Column: 1,
-							Byte:   0,
-						},
-						End: hcl.Pos{
-							Line:   4,
-							Column: 2,
-							Byte:   56,
 						},
 					},
 					DefRangePtr: &hcl.Range{

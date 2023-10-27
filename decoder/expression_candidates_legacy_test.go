@@ -2476,8 +2476,7 @@ variable "ccc" {}
 					FriendlyName: "variable",
 					ScopeId:      lang.ScopeId("variable"),
 					AsTypeOf: &schema.BlockAsTypeOf{
-						AttributeExpr:  "type",
-						AttributeValue: "default",
+						AttributeExpr: "type",
 					},
 				},
 			},

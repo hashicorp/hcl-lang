@@ -3696,81 +3696,6 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 			},
 		},
 		{
-			"block as data type per attribute - default string",
-			&schema.BodySchema{
-				Blocks: map[string]*schema.BlockSchema{
-					"variable": {
-						Labels: []*schema.LabelSchema{
-							{Name: "name"},
-						},
-						Address: &schema.BlockAddrSchema{
-							Steps: []schema.AddrStep{
-								schema.LabelStep{Index: 0},
-							},
-							AsTypeOf: &schema.BlockAsTypeOf{
-								AttributeValue: "default",
-							},
-						},
-						Type: schema.BlockTypeObject,
-						Body: &schema.BodySchema{
-							Attributes: map[string]*schema.AttributeSchema{
-								"type": {
-									IsOptional: true,
-									Constraint: schema.TypeDeclaration{},
-								},
-								"default": {
-									IsOptional: true,
-									Constraint: schema.LiteralType{Type: cty.DynamicPseudoType},
-								},
-							},
-						},
-					},
-				},
-			},
-			`{
-  "variable": {
-    "test": {
-      "default": "something"
-    }
-  }
-}
-`,
-			reference.Targets{
-				{
-					Addr: lang.Address{
-						lang.RootStep{Name: "test"},
-					},
-					Type: cty.String,
-					RangePtr: &hcl.Range{
-						Filename: "test.tf.json",
-						Start: hcl.Pos{
-							Line:   3,
-							Column: 13,
-							Byte:   30,
-						},
-						End: hcl.Pos{
-							Line:   5,
-							Column: 6,
-							Byte:   66,
-						},
-					},
-					DefRangePtr: &hcl.Range{
-						Filename: "test.tf.json",
-						Start: hcl.Pos{
-							Line:   3,
-							Column: 13,
-							Byte:   30,
-						},
-						End: hcl.Pos{
-							Line:   3,
-							Column: 14,
-							Byte:   31,
-						},
-					},
-				},
-			},
-		},
-		{
 			"block as data type per attribute - default tuple constant",
 			&schema.BodySchema{
 				Blocks: map[string]*schema.BlockSchema{
@@ -3783,8 +3708,7 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 								schema.LabelStep{Index: 0},
 							},
 							AsTypeOf: &schema.BlockAsTypeOf{
-								AttributeExpr:  "type",
-								AttributeValue: "default",
+								AttributeExpr: "type",
 							},
 						},
 						Type: schema.BlockTypeObject,
@@ -3816,7 +3740,7 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 					Addr: lang.Address{
 						lang.RootStep{Name: "test"},
 					},
-					Type: cty.Tuple([]cty.Type{cty.String}),
+					Type: cty.DynamicPseudoType,
 					RangePtr: &hcl.Range{
 						Filename: "test.tf.json",
 						Start: hcl.Pos{
@@ -3859,8 +3783,7 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 								schema.LabelStep{Index: 0},
 							},
 							AsTypeOf: &schema.BlockAsTypeOf{
-								AttributeExpr:  "type",
-								AttributeValue: "default",
+								AttributeExpr: "type",
 							},
 						},
 						Type: schema.BlockTypeObject,
@@ -3893,7 +3816,7 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 					Addr: lang.Address{
 						lang.RootStep{Name: "test"},
 					},
-					Type: cty.List(cty.String),
+					Type: cty.List(cty.DynamicPseudoType),
 					RangePtr: &hcl.Range{
 						Filename: "test.tf.json",
 						Start: hcl.Pos{
@@ -3905,81 +3828,6 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 							Line:   6,
 							Column: 6,
 							Byte:   91,
-						},
-					},
-					DefRangePtr: &hcl.Range{
-						Filename: "test.tf.json",
-						Start: hcl.Pos{
-							Line:   3,
-							Column: 13,
-							Byte:   30,
-						},
-						End: hcl.Pos{
-							Line:   3,
-							Column: 14,
-							Byte:   31,
-						},
-					},
-				},
-			},
-		},
-		{
-			"block as data type per attribute - both type and default",
-			&schema.BodySchema{
-				Blocks: map[string]*schema.BlockSchema{
-					"variable": {
-						Labels: []*schema.LabelSchema{
-							{Name: "name"},
-						},
-						Address: &schema.BlockAddrSchema{
-							Steps: []schema.AddrStep{
-								schema.LabelStep{Index: 0},
-							},
-							AsTypeOf: &schema.BlockAsTypeOf{
-								AttributeValue: "default",
-							},
-						},
-						Type: schema.BlockTypeObject,
-						Body: &schema.BodySchema{
-							Attributes: map[string]*schema.AttributeSchema{
-								"type": {
-									IsOptional: true,
-									Constraint: schema.TypeDeclaration{},
-								},
-								"default": {
-									IsOptional: true,
-									Constraint: schema.LiteralType{Type: cty.DynamicPseudoType},
-								},
-							},
-						},
-					},
-				},
-			},
-			`{
-  "variable": {
-    "test": {
-      "type": "any",
-      "default": "something"
-    }
-  }
-}`,
-			reference.Targets{
-				{
-					Addr: lang.Address{
-						lang.RootStep{Name: "test"},
-					},
-					Type: cty.String,
-					RangePtr: &hcl.Range{
-						Filename: "test.tf.json",
-						Start: hcl.Pos{
-							Line:   3,
-							Column: 13,
-							Byte:   30,
-						},
-						End: hcl.Pos{
-							Line:   6,
-							Column: 6,
-							Byte:   87,
 						},
 					},
 					DefRangePtr: &hcl.Range{
