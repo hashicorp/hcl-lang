@@ -1651,8 +1651,7 @@ func TestDecoder_HoverAtPos_extensions_references(t *testing.T) {
 							ScopeId:     lang.ScopeId("variable"),
 							AsReference: true,
 							AsTypeOf: &schema.BlockAsTypeOf{
-								AttributeExpr:  "type",
-								AttributeValue: "default",
+								AttributeExpr: "type",
 							},
 						},
 						Labels: []*schema.LabelSchema{
@@ -1719,8 +1718,7 @@ variable "name" {
 							ScopeId:     lang.ScopeId("variable"),
 							AsReference: true,
 							AsTypeOf: &schema.BlockAsTypeOf{
-								AttributeExpr:  "type",
-								AttributeValue: "default",
+								AttributeExpr: "type",
 							},
 						},
 						Labels: []*schema.LabelSchema{

@@ -99,14 +99,6 @@ type BlockAsTypeOf struct {
 	// is addressable as a particular type declared
 	// directly as expression of the attribute
 	AttributeExpr string
-
-	// AttributeValue defines whether the block
-	// is addressable as a type of the attribute value.
-	//
-	// This will be used as a fallback if AttributeExpr
-	// is also defined, or when the attribute defined there
-	// is of cty.DynamicPseudoType.
-	AttributeValue string
 }
 
 func (bas *BlockAddrSchema) Validate() error {
@@ -156,8 +148,7 @@ func (bato *BlockAsTypeOf) Copy() *BlockAsTypeOf {
 	}
 
 	return &BlockAsTypeOf{
-		AttributeExpr:  bato.AttributeExpr,
-		AttributeValue: bato.AttributeValue,
+		AttributeExpr: bato.AttributeExpr,
 	}
 }
 
