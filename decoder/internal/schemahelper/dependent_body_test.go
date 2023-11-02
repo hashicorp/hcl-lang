@@ -430,6 +430,79 @@ func TestBodySchema_DependentBodySchema_attributes(t *testing.T) {
 	}
 }
 
+func TestBodySchema_DependentBodySchema_partialMergeFailure(t *testing.T) {
+	testSchema := NewBlockSchema(&schema.BlockSchema{
+		Labels: []*schema.LabelSchema{
+			{
+				Name:     "type",
+				IsDepKey: true,
+			},
+		},
+		Body: &schema.BodySchema{
+			Attributes: map[string]*schema.AttributeSchema{
+				"count": {
+					Constraint: schema.AnyExpression{OfType: cty.Number},
+				},
+			},
+		},
+		DependentBody: map[schema.SchemaKey]*schema.BodySchema{
+			schema.NewSchemaKey(schema.DependencyKeys{
+				Labels: []schema.LabelDependent{
+					{
+						Index: 0,
+						Value: "terraform_remote_state",
+					},
+				},
+			}): {
+				Attributes: map[string]*schema.AttributeSchema{
+					"first": {
+						Constraint: schema.LiteralType{Type: cty.String},
+					},
+					"backend": {
+						Constraint: schema.AnyExpression{OfType: cty.String},
+						IsDepKey:   true,
+					},
+				},
+			},
+			schema.NewSchemaKey(schema.DependencyKeys{
+				Attributes: []schema.AttributeDependent{
+					{
+						Name: "backend",
+						Expr: schema.ExpressionValue{
+							Static: cty.StringVal("remote"),
+						},
+					},
+				},
+			}): {
+				Attributes: map[string]*schema.AttributeSchema{
+					"second": {Constraint: schema.LiteralType{Type: cty.String}},
+				},
+			},
+		},
+	})
+
+	block := &hcl.Block{
+		Labels: []string{"terraform_remote_state"},
+		Body: &hclsyntax.Body{
+			Attributes: map[string]*hclsyntax.Attribute{
+				"backend": {
+					Name: "backend",
+					Expr: &hclsyntax.ScopeTraversalExpr{
+						Traversal: hcl.Traversal{
+							hcl.TraverseRoot{Name: "referencestep"},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	_, ok := MergeBlockBodySchemas(block, testSchema.BlockSchema)
+	if ok {
+		t.Fatal("expected partially failed dependent body lookup to fail")
+	}
+}
+
 func TestBodySchema_DependentBodySchema_label_notFound(t *testing.T) {
 	block := &hcl.Block{
 		Labels: []string{"test", "mycloud"},

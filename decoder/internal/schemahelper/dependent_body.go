@@ -44,8 +44,12 @@ func (bs blockSchema) DependentBodySchema(block *hcl.Block) (*schema.BodySchema,
 			mergedBlockSchema := NewBlockSchema(bs.Copy())
 			mergedBlockSchema.seenNestedDepKeys = true
 			mergedBlockSchema.Body = depBodySchema
-			if depBodySchema, dks, ok := mergedBlockSchema.DependentBodySchema(block); ok {
-				return depBodySchema, dks, ok
+			if depBodySchema, dks, nestedOk := mergedBlockSchema.DependentBodySchema(block); nestedOk {
+				return depBodySchema, dks, nestedOk
+			} else {
+				// Ensure we report lookup failure overall if we couldn't
+				// lookup nested dependent body
+				ok = false
 			}
 		}
 	}
