@@ -8,7 +8,7 @@ import (
 	"github.com/hashicorp/hcl/v2"
 )
 
-func MergeBlockBodySchemas(block *hcl.Block, blockSchema *schema.BlockSchema) (*schema.BodySchema, bool) {
+func MergeBlockBodySchemas(block *hcl.Block, blockSchema *schema.BlockSchema) (*schema.BodySchema, LookupResult) {
 	mergedSchema := &schema.BodySchema{}
 	if blockSchema.Body != nil {
 		mergedSchema = blockSchema.Body.Copy()
@@ -26,8 +26,8 @@ func MergeBlockBodySchemas(block *hcl.Block, blockSchema *schema.BlockSchema) (*
 		mergedSchema.ImpliedOrigins = make([]schema.ImpliedOrigin, 0)
 	}
 
-	depSchema, depKeys, ok := NewBlockSchema(blockSchema).DependentBodySchema(block)
-	if ok {
+	depSchema, _, result := NewBlockSchema(blockSchema).DependentBodySchema(block)
+	if result == LookupSuccessful || result == LookupPartiallySuccessful {
 		for name, attr := range depSchema.Attributes {
 			if _, exists := mergedSchema.Attributes[name]; !exists {
 				mergedSchema.Attributes[name] = attr
@@ -71,7 +71,7 @@ func MergeBlockBodySchemas(block *hcl.Block, blockSchema *schema.BlockSchema) (*
 		if depSchema.Extensions != nil {
 			mergedSchema.Extensions = depSchema.Extensions.Copy()
 		}
-	} else if !ok && mergedSchema.Extensions != nil && mergedSchema.Extensions.DynamicBlocks && len(mergedSchema.Blocks) > 0 {
+	} else if (result == LookupFailed || result == NoDependentKeys) && mergedSchema.Extensions != nil && mergedSchema.Extensions.DynamicBlocks && len(mergedSchema.Blocks) > 0 {
 		// dynamic blocks are only relevant for dependent schemas,
 		// but we may end up here because the schema is a result
 		// of merged static + dependent schema from previous iteration
@@ -90,10 +90,5 @@ func MergeBlockBodySchemas(block *hcl.Block, blockSchema *schema.BlockSchema) (*
 		mergedSchema.Blocks["dynamic"] = buildDynamicBlockSchema(mergedSchema)
 	}
 
-	expectedDepBody := len(depKeys.Labels) > 0 || len(depKeys.Attributes) > 0
-
-	// report success either if there wasn't any dependent body merging to do
-	// or if the merging was successful
-
-	return mergedSchema, !expectedDepBody || ok
+	return mergedSchema, result
 }

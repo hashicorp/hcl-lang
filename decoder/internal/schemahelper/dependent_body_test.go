@@ -52,8 +52,8 @@ func TestBodySchema_DependentBodySchema_label_basic(t *testing.T) {
 		},
 	}
 
-	bodySchema, _, ok := NewBlockSchema(bSchema).DependentBodySchema(block)
-	if !ok {
+	bodySchema, _, result := NewBlockSchema(bSchema).DependentBodySchema(block)
+	if result != LookupSuccessful {
 		t.Fatal("expected to find body schema for 'theircloud' label")
 	}
 	expectedSchema := &schema.BodySchema{
@@ -104,8 +104,8 @@ func TestBodySchema_DependentBodySchema_mismatchingLabels(t *testing.T) {
 		},
 	}
 
-	_, _, ok := NewBlockSchema(bSchema).DependentBodySchema(block)
-	if ok {
+	_, _, result := NewBlockSchema(bSchema).DependentBodySchema(block)
+	if result != LookupFailed {
 		t.Fatal("expected to not find body schema for mismatching label schema")
 	}
 }
@@ -170,17 +170,17 @@ func TestBodySchema_DependentBodySchema_dependentAttr(t *testing.T) {
 		},
 	}
 
-	bodySchema, _, ok := NewBlockSchema(bSchema).DependentBodySchema(&hcl.Block{
+	bodySchema, _, result := NewBlockSchema(bSchema).DependentBodySchema(&hcl.Block{
 		Labels: []string{"remote_state"},
 	})
-	if !ok {
+	if result != LookupSuccessful {
 		t.Fatal("expected to find body schema for nested dependent schema")
 	}
 	if diff := cmp.Diff(firstDepBody, bodySchema, ctydebug.CmpOptions); diff != "" {
 		t.Fatalf("mismatching body schema: %s", diff)
 	}
 
-	bodySchema, _, ok = NewBlockSchema(bSchema).DependentBodySchema(&hcl.Block{
+	bodySchema, _, result = NewBlockSchema(bSchema).DependentBodySchema(&hcl.Block{
 		Labels: []string{"remote_state"},
 		Body: &hclsyntax.Body{
 			Attributes: hclsyntax.Attributes{
@@ -193,7 +193,7 @@ func TestBodySchema_DependentBodySchema_dependentAttr(t *testing.T) {
 			},
 		},
 	})
-	if !ok {
+	if result != LookupSuccessful {
 		t.Fatal("expected to find body schema for nested dependent schema")
 	}
 	if diff := cmp.Diff(secondDepBody, bodySchema, ctydebug.CmpOptions); diff != "" {
@@ -256,7 +256,7 @@ func TestBodySchema_DependentBodySchema_missingDependentAttr(t *testing.T) {
 		},
 	}
 
-	bodySchema, _, ok := NewBlockSchema(bSchema).DependentBodySchema(&hcl.Block{
+	bodySchema, _, result := NewBlockSchema(bSchema).DependentBodySchema(&hcl.Block{
 		Labels: []string{"remote_state"},
 		Body: &hclsyntax.Body{
 			Attributes: hclsyntax.Attributes{
@@ -267,8 +267,8 @@ func TestBodySchema_DependentBodySchema_missingDependentAttr(t *testing.T) {
 			},
 		},
 	})
-	if !ok {
-		t.Fatal("expected to find first body schema for missing keys")
+	if result != LookupPartiallySuccessful {
+		t.Fatalf("expected to find first body schema for missing keys; reported: %q", result)
 	}
 	if diff := cmp.Diff(firstDepBody, bodySchema, ctydebug.CmpOptions); diff != "" {
 		t.Fatalf("mismatching body schema: %s", diff)
@@ -418,8 +418,8 @@ func TestBodySchema_DependentBodySchema_attributes(t *testing.T) {
 					Attributes: tc.attributes,
 				},
 			}
-			bodySchema, _, ok := tc.schema.DependentBodySchema(block)
-			if !ok {
+			bodySchema, _, result := tc.schema.DependentBodySchema(block)
+			if result != LookupSuccessful {
 				t.Fatalf("expected to find body schema for given block with %d attributes",
 					len(tc.attributes))
 			}
@@ -497,8 +497,8 @@ func TestBodySchema_DependentBodySchema_partialMergeFailure(t *testing.T) {
 		},
 	}
 
-	_, ok := MergeBlockBodySchemas(block, testSchema.BlockSchema)
-	if ok {
+	_, result := MergeBlockBodySchemas(block, testSchema.BlockSchema)
+	if result != LookupPartiallySuccessful {
 		t.Fatal("expected partially failed dependent body lookup to fail")
 	}
 }
@@ -508,8 +508,8 @@ func TestBodySchema_DependentBodySchema_label_notFound(t *testing.T) {
 		Labels: []string{"test", "mycloud"},
 		Body:   hcl.EmptyBody(),
 	}
-	_, _, ok := testSchemaWithLabels.DependentBodySchema(block)
-	if ok {
+	_, _, result := testSchemaWithLabels.DependentBodySchema(block)
+	if result != LookupFailed {
 		t.Fatal("expected not to find body schema for 'mycloud' 2nd label")
 	}
 }
@@ -519,8 +519,8 @@ func TestBodySchema_DependentBodySchema_label_storedUnsorted(t *testing.T) {
 		Labels: []string{"complexcloud", "pumpkin"},
 		Body:   hcl.EmptyBody(),
 	}
-	bodySchema, _, ok := testSchemaWithLabels.DependentBodySchema(block)
-	if !ok {
+	bodySchema, _, result := testSchemaWithLabels.DependentBodySchema(block)
+	if result != LookupSuccessful {
 		t.Fatal("expected to find body schema stored with unsorted keys")
 	}
 	expectedSchema := &schema.BodySchema{
@@ -538,8 +538,8 @@ func TestBodySchema_DependentBodySchema_label_lookupUnsorted(t *testing.T) {
 		Labels: []string{"apple", "crazycloud"},
 		Body:   hcl.EmptyBody(),
 	}
-	_, _, ok := testSchemaWithLabels.DependentBodySchema(block)
-	if ok {
+	_, _, result := testSchemaWithLabels.DependentBodySchema(block)
+	if result != LookupFailed {
 		t.Fatal("expected to not find body schema based on wrongly sorted labels")
 	}
 }
