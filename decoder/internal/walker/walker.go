@@ -88,8 +88,8 @@ func Walk(ctx context.Context, node hclsyntax.Node, nodeSchema schema.Schema, w 
 		var blockBodySchema schema.Schema = nil
 		bSchema, ok := nodeSchema.(*schema.BlockSchema)
 		if ok && bSchema.Body != nil {
-			mergedSchema, ok := schemahelper.MergeBlockBodySchemas(nodeType.AsHCLBlock(), bSchema)
-			if !ok {
+			mergedSchema, result := schemahelper.MergeBlockBodySchemas(nodeType.AsHCLBlock(), bSchema)
+			if result == schemahelper.LookupFailed || result == schemahelper.LookupPartiallySuccessful {
 				ctx = schemacontext.WithUnknownSchema(ctx)
 			}
 			blockBodySchema = mergedSchema

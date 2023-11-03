@@ -46,8 +46,8 @@ func (d *PathDecoder) linksInBody(body *hclsyntax.Body, bodySchema *schema.BodyS
 
 		// Currently only block bodies have links associated
 		if block.Body != nil {
-			depSchema, dk, ok := schemahelper.NewBlockSchema(blockSchema).DependentBodySchema(block.AsHCLBlock())
-			if ok && depSchema.DocsLink != nil {
+			depSchema, dk, result := schemahelper.NewBlockSchema(blockSchema).DependentBodySchema(block.AsHCLBlock())
+			if (result == schemahelper.LookupSuccessful || result == schemahelper.LookupPartiallySuccessful || result == schemahelper.NoDependentKeys) && depSchema.DocsLink != nil {
 				link := depSchema.DocsLink
 				u, err := d.docsURL(link.URL, "documentLink")
 				if err != nil {

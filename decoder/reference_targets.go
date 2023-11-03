@@ -201,8 +201,8 @@ func (d *PathDecoder) decodeReferenceTargetsForBody(body hcl.Body, parentBlock *
 				}
 			}
 
-			depSchema, _, ok := schemahelper.NewBlockSchema(bSchema).DependentBodySchema(blk.Block)
-			if ok {
+			depSchema, _, result := schemahelper.NewBlockSchema(bSchema).DependentBodySchema(blk.Block)
+			if result == schemahelper.LookupSuccessful {
 				fullSchema := depSchema
 				if bSchema.Address.BodyAsData {
 					mergedSchema, _ := schemahelper.MergeBlockBodySchemas(blk.Block, bSchema)

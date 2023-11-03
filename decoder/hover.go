@@ -163,8 +163,8 @@ func (d *PathDecoder) hoverContentForLabel(i int, block *hclsyntax.Block, bSchem
 	labelSchema := bSchema.Labels[i]
 
 	if labelSchema.IsDepKey {
-		bs, _, ok := schemahelper.NewBlockSchema(bSchema).DependentBodySchema(block.AsHCLBlock())
-		if ok {
+		bs, _, result := schemahelper.NewBlockSchema(bSchema).DependentBodySchema(block.AsHCLBlock())
+		if result == schemahelper.LookupSuccessful || result == schemahelper.LookupPartiallySuccessful {
 			content := fmt.Sprintf("`%s`", value)
 			if bs.Detail != "" {
 				content += " " + bs.Detail
