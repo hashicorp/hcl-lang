@@ -76,6 +76,7 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 							Byte:   11,
 						},
 					},
+					NestedTargets: reference.Targets{},
 				},
 			},
 		},

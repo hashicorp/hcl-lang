@@ -286,6 +286,18 @@ func (d *PathDecoder) decodeReferenceTargetsForAttribute(attr *hcl.Attribute, at
 						ParentDefRangePtr: attr.NameRange.Ptr(),
 					}
 				}
+
+				if attrSchema.Address.AsReference {
+					ref := reference.Target{
+						Addr:          attrAddr,
+						ScopeId:       attrSchema.Address.ScopeId,
+						DefRangePtr:   attr.NameRange.Ptr(),
+						RangePtr:      attr.Range.Ptr(),
+						Name:          attrSchema.Address.FriendlyName,
+						NestedTargets: reference.Targets{},
+					}
+					refs = append(refs, ref)
+				}
 			}
 
 			refs = append(refs, eType.ReferenceTargets(ctx, targetCtx)...)
