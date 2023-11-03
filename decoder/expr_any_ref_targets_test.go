@@ -26,6 +26,40 @@ func TestCollectRefTargets_exprAny_hcl(t *testing.T) {
 		expectedRefTargets reference.Targets
 	}{
 		{
+			"undeclared implied as type",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.AnyExpression{OfType: cty.DynamicPseudoType},
+					IsOptional: true,
+					Address: &schema.AttributeAddrSchema{
+						Steps: schema.Address{
+							schema.AttrNameStep{},
+						},
+						AsExprType: true,
+					},
+				},
+			},
+			`attr = null`,
+			reference.Targets{
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "attr"},
+					},
+					RangePtr: &hcl.Range{
+						Filename: "test.hcl",
+						Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
+						End:      hcl.Pos{Line: 1, Column: 12, Byte: 11},
+					},
+					DefRangePtr: &hcl.Range{
+						Filename: "test.hcl",
+						Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
+						End:      hcl.Pos{Line: 1, Column: 5, Byte: 4},
+					},
+					Type: cty.DynamicPseudoType,
+				},
+			},
+		},
+		{
 			"constraint mismatch",
 			map[string]*schema.AttributeSchema{
 				"attr": {
@@ -1829,6 +1863,40 @@ func TestCollectRefTargets_exprAny_json(t *testing.T) {
 		cfg                string
 		expectedRefTargets reference.Targets
 	}{
+		{
+			"undeclared implied as type",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.AnyExpression{OfType: cty.DynamicPseudoType},
+					IsOptional: true,
+					Address: &schema.AttributeAddrSchema{
+						Steps: schema.Address{
+							schema.AttrNameStep{},
+						},
+						AsExprType: true,
+					},
+				},
+			},
+			`{"attr": null}`,
+			reference.Targets{
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "attr"},
+					},
+					RangePtr: &hcl.Range{
+						Filename: "test.hcl.json",
+						Start:    hcl.Pos{Line: 1, Column: 2, Byte: 1},
+						End:      hcl.Pos{Line: 1, Column: 14, Byte: 13},
+					},
+					DefRangePtr: &hcl.Range{
+						Filename: "test.hcl.json",
+						Start:    hcl.Pos{Line: 1, Column: 2, Byte: 1},
+						End:      hcl.Pos{Line: 1, Column: 8, Byte: 7},
+					},
+					Type: cty.DynamicPseudoType,
+				},
+			},
+		},
 		{
 			"constraint mismatch",
 			map[string]*schema.AttributeSchema{

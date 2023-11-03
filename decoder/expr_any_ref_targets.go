@@ -22,7 +22,7 @@ func (a Any) ReferenceTargets(ctx context.Context, targetCtx *TargetContext) ref
 		}
 	}
 
-	if targetCtx == nil || len(targetCtx.ParentAddress) == 0 {
+	if targetCtx == nil || len(targetCtx.ParentAddress) == 0 || !targetCtx.AsExprType {
 		return reference.Targets{}
 	}
 
@@ -34,11 +34,6 @@ func (a Any) ReferenceTargets(ctx context.Context, targetCtx *TargetContext) ref
 			rangePtr = a.expr.Range().Ptr()
 		}
 
-		var refType cty.Type
-		if targetCtx.AsExprType {
-			refType = typ
-		}
-
 		return reference.Targets{
 			{
 				Addr:                   targetCtx.ParentAddress,
@@ -47,7 +42,7 @@ func (a Any) ReferenceTargets(ctx context.Context, targetCtx *TargetContext) ref
 				ScopeId:                targetCtx.ScopeId,
 				RangePtr:               rangePtr,
 				DefRangePtr:            targetCtx.ParentDefRangePtr,
-				Type:                   refType,
+				Type:                   typ,
 			},
 		}
 	}
