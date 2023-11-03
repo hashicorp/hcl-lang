@@ -142,18 +142,5 @@ func (obj Object) wholeObjectReferenceTargets(targetCtx *TargetContext, nestedTa
 		}
 	}
 
-	// type-unaware
-	if targetCtx.AsReference {
-		targets = append(targets, reference.Target{
-			Addr:                   targetCtx.ParentAddress,
-			Name:                   targetCtx.FriendlyName,
-			ScopeId:                targetCtx.ScopeId,
-			DefRangePtr:            targetCtx.ParentDefRangePtr,
-			RangePtr:               rangePtr,
-			NestedTargets:          nestedTargets,
-			LocalAddr:              targetCtx.ParentLocalAddress,
-			TargetableFromRangePtr: targetCtx.TargetableFromRangePtr,
-		})
-	}
 	return targets
 }

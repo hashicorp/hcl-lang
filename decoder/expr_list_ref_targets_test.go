@@ -230,33 +230,8 @@ func TestCollectRefTargets_exprList_hcl(t *testing.T) {
 						Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
 						End:      hcl.Pos{Line: 1, Column: 5, Byte: 4},
 					},
-					ScopeId: lang.ScopeId("test"),
-					NestedTargets: reference.Targets{
-						{
-							Addr: lang.Address{
-								lang.RootStep{Name: "attr"},
-								lang.IndexStep{Key: cty.NumberIntVal(0)},
-							},
-							RangePtr: &hcl.Range{
-								Filename: "test.hcl",
-								Start:    hcl.Pos{Line: 1, Column: 9, Byte: 8},
-								End:      hcl.Pos{Line: 1, Column: 14, Byte: 13},
-							},
-							ScopeId: lang.ScopeId("test"),
-						},
-						{
-							Addr: lang.Address{
-								lang.RootStep{Name: "attr"},
-								lang.IndexStep{Key: cty.NumberIntVal(1)},
-							},
-							RangePtr: &hcl.Range{
-								Filename: "test.hcl",
-								Start:    hcl.Pos{Line: 1, Column: 16, Byte: 15},
-								End:      hcl.Pos{Line: 1, Column: 21, Byte: 20},
-							},
-							ScopeId: lang.ScopeId("test"),
-						},
-					},
+					ScopeId:       lang.ScopeId("test"),
+					NestedTargets: reference.Targets{},
 				},
 			},
 		},
@@ -853,33 +828,8 @@ func TestCollectRefTargets_exprList_json(t *testing.T) {
 						Start:    hcl.Pos{Line: 1, Column: 2, Byte: 1},
 						End:      hcl.Pos{Line: 1, Column: 8, Byte: 7},
 					},
-					ScopeId: lang.ScopeId("test"),
-					NestedTargets: reference.Targets{
-						{
-							Addr: lang.Address{
-								lang.RootStep{Name: "attr"},
-								lang.IndexStep{Key: cty.NumberIntVal(0)},
-							},
-							RangePtr: &hcl.Range{
-								Filename: "test.hcl.json",
-								Start:    hcl.Pos{Line: 1, Column: 11, Byte: 10},
-								End:      hcl.Pos{Line: 1, Column: 16, Byte: 15},
-							},
-							ScopeId: lang.ScopeId("test"),
-						},
-						{
-							Addr: lang.Address{
-								lang.RootStep{Name: "attr"},
-								lang.IndexStep{Key: cty.NumberIntVal(1)},
-							},
-							RangePtr: &hcl.Range{
-								Filename: "test.hcl.json",
-								Start:    hcl.Pos{Line: 1, Column: 18, Byte: 17},
-								End:      hcl.Pos{Line: 1, Column: 23, Byte: 22},
-							},
-							ScopeId: lang.ScopeId("test"),
-						},
-					},
+					ScopeId:       lang.ScopeId("test"),
+					NestedTargets: reference.Targets{},
 				},
 			},
 		},

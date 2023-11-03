@@ -295,33 +295,8 @@ func TestCollectRefTargets_exprLiteralType_hcl(t *testing.T) {
 						Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
 						End:      hcl.Pos{Line: 1, Column: 5, Byte: 4},
 					},
-					ScopeId: lang.ScopeId("test"),
-					NestedTargets: reference.Targets{
-						{
-							Addr: lang.Address{
-								lang.RootStep{Name: "attr"},
-								lang.IndexStep{Key: cty.NumberIntVal(0)},
-							},
-							RangePtr: &hcl.Range{
-								Filename: "test.hcl",
-								Start:    hcl.Pos{Line: 1, Column: 9, Byte: 8},
-								End:      hcl.Pos{Line: 1, Column: 14, Byte: 13},
-							},
-							ScopeId: lang.ScopeId("test"),
-						},
-						{
-							Addr: lang.Address{
-								lang.RootStep{Name: "attr"},
-								lang.IndexStep{Key: cty.NumberIntVal(1)},
-							},
-							RangePtr: &hcl.Range{
-								Filename: "test.hcl",
-								Start:    hcl.Pos{Line: 1, Column: 16, Byte: 15},
-								End:      hcl.Pos{Line: 1, Column: 21, Byte: 20},
-							},
-							ScopeId: lang.ScopeId("test"),
-						},
-					},
+					ScopeId:       lang.ScopeId("test"),
+					NestedTargets: reference.Targets{},
 				},
 			},
 		},
@@ -819,33 +794,8 @@ func TestCollectRefTargets_exprLiteralType_hcl(t *testing.T) {
 						Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
 						End:      hcl.Pos{Line: 1, Column: 5, Byte: 4},
 					},
-					ScopeId: lang.ScopeId("test"),
-					NestedTargets: reference.Targets{
-						{
-							Addr: lang.Address{
-								lang.RootStep{Name: "attr"},
-								lang.IndexStep{Key: cty.NumberIntVal(0)},
-							},
-							RangePtr: &hcl.Range{
-								Filename: "test.hcl",
-								Start:    hcl.Pos{Line: 1, Column: 9, Byte: 8},
-								End:      hcl.Pos{Line: 1, Column: 14, Byte: 13},
-							},
-							ScopeId: lang.ScopeId("test"),
-						},
-						{
-							Addr: lang.Address{
-								lang.RootStep{Name: "attr"},
-								lang.IndexStep{Key: cty.NumberIntVal(1)},
-							},
-							RangePtr: &hcl.Range{
-								Filename: "test.hcl",
-								Start:    hcl.Pos{Line: 1, Column: 16, Byte: 15},
-								End:      hcl.Pos{Line: 1, Column: 21, Byte: 20},
-							},
-							ScopeId: lang.ScopeId("test"),
-						},
-					},
+					ScopeId:       lang.ScopeId("test"),
+					NestedTargets: reference.Targets{},
 				},
 			},
 		},
@@ -1304,42 +1254,7 @@ func TestCollectRefTargets_exprLiteralType_hcl(t *testing.T) {
 						Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
 						End:      hcl.Pos{Line: 1, Column: 5, Byte: 4},
 					},
-					NestedTargets: reference.Targets{
-						{
-							Addr: lang.Address{
-								lang.RootStep{Name: "attr"},
-								lang.AttrStep{Name: "bar"},
-							},
-							ScopeId: lang.ScopeId("test"),
-							RangePtr: &hcl.Range{
-								Filename: "test.hcl",
-								Start:    hcl.Pos{Line: 3, Column: 3, Byte: 25},
-								End:      hcl.Pos{Line: 3, Column: 11, Byte: 33},
-							},
-							DefRangePtr: &hcl.Range{
-								Filename: "test.hcl",
-								Start:    hcl.Pos{Line: 3, Column: 3, Byte: 25},
-								End:      hcl.Pos{Line: 3, Column: 6, Byte: 28},
-							},
-						},
-						{
-							Addr: lang.Address{
-								lang.RootStep{Name: "attr"},
-								lang.AttrStep{Name: "foo"},
-							},
-							ScopeId: lang.ScopeId("test"),
-							RangePtr: &hcl.Range{
-								Filename: "test.hcl",
-								Start:    hcl.Pos{Line: 2, Column: 3, Byte: 11},
-								End:      hcl.Pos{Line: 2, Column: 14, Byte: 22},
-							},
-							DefRangePtr: &hcl.Range{
-								Filename: "test.hcl",
-								Start:    hcl.Pos{Line: 2, Column: 3, Byte: 11},
-								End:      hcl.Pos{Line: 2, Column: 6, Byte: 14},
-							},
-						},
-					},
+					NestedTargets: reference.Targets{},
 				},
 			},
 		},
@@ -1756,42 +1671,7 @@ func TestCollectRefTargets_exprLiteralType_hcl(t *testing.T) {
 						Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
 						End:      hcl.Pos{Line: 1, Column: 5, Byte: 4},
 					},
-					NestedTargets: reference.Targets{
-						{
-							Addr: lang.Address{
-								lang.RootStep{Name: "attr"},
-								lang.IndexStep{Key: cty.StringVal("bar")},
-							},
-							ScopeId: lang.ScopeId("test"),
-							RangePtr: &hcl.Range{
-								Filename: "test.hcl",
-								Start:    hcl.Pos{Line: 3, Column: 3, Byte: 25},
-								End:      hcl.Pos{Line: 3, Column: 11, Byte: 33},
-							},
-							DefRangePtr: &hcl.Range{
-								Filename: "test.hcl",
-								Start:    hcl.Pos{Line: 3, Column: 3, Byte: 25},
-								End:      hcl.Pos{Line: 3, Column: 6, Byte: 28},
-							},
-						},
-						{
-							Addr: lang.Address{
-								lang.RootStep{Name: "attr"},
-								lang.IndexStep{Key: cty.StringVal("foo")},
-							},
-							ScopeId: lang.ScopeId("test"),
-							RangePtr: &hcl.Range{
-								Filename: "test.hcl",
-								Start:    hcl.Pos{Line: 2, Column: 3, Byte: 11},
-								End:      hcl.Pos{Line: 2, Column: 14, Byte: 22},
-							},
-							DefRangePtr: &hcl.Range{
-								Filename: "test.hcl",
-								Start:    hcl.Pos{Line: 2, Column: 3, Byte: 11},
-								End:      hcl.Pos{Line: 2, Column: 6, Byte: 14},
-							},
-						},
-					},
+					NestedTargets: reference.Targets{},
 				},
 			},
 		},
@@ -2201,33 +2081,8 @@ func TestCollectRefTargets_exprLiteralType_json(t *testing.T) {
 						Start:    hcl.Pos{Line: 1, Column: 2, Byte: 1},
 						End:      hcl.Pos{Line: 1, Column: 8, Byte: 7},
 					},
-					ScopeId: lang.ScopeId("test"),
-					NestedTargets: reference.Targets{
-						{
-							Addr: lang.Address{
-								lang.RootStep{Name: "attr"},
-								lang.IndexStep{Key: cty.NumberIntVal(0)},
-							},
-							RangePtr: &hcl.Range{
-								Filename: "test.hcl.json",
-								Start:    hcl.Pos{Line: 1, Column: 11, Byte: 10},
-								End:      hcl.Pos{Line: 1, Column: 16, Byte: 15},
-							},
-							ScopeId: lang.ScopeId("test"),
-						},
-						{
-							Addr: lang.Address{
-								lang.RootStep{Name: "attr"},
-								lang.IndexStep{Key: cty.NumberIntVal(1)},
-							},
-							RangePtr: &hcl.Range{
-								Filename: "test.hcl.json",
-								Start:    hcl.Pos{Line: 1, Column: 18, Byte: 17},
-								End:      hcl.Pos{Line: 1, Column: 23, Byte: 22},
-							},
-							ScopeId: lang.ScopeId("test"),
-						},
-					},
+					ScopeId:       lang.ScopeId("test"),
+					NestedTargets: reference.Targets{},
 				},
 			},
 		},
@@ -2661,33 +2516,8 @@ func TestCollectRefTargets_exprLiteralType_json(t *testing.T) {
 						Start:    hcl.Pos{Line: 1, Column: 2, Byte: 1},
 						End:      hcl.Pos{Line: 1, Column: 8, Byte: 7},
 					},
-					ScopeId: lang.ScopeId("test"),
-					NestedTargets: reference.Targets{
-						{
-							Addr: lang.Address{
-								lang.RootStep{Name: "attr"},
-								lang.IndexStep{Key: cty.NumberIntVal(0)},
-							},
-							RangePtr: &hcl.Range{
-								Filename: "test.hcl.json",
-								Start:    hcl.Pos{Line: 1, Column: 11, Byte: 10},
-								End:      hcl.Pos{Line: 1, Column: 16, Byte: 15},
-							},
-							ScopeId: lang.ScopeId("test"),
-						},
-						{
-							Addr: lang.Address{
-								lang.RootStep{Name: "attr"},
-								lang.IndexStep{Key: cty.NumberIntVal(1)},
-							},
-							RangePtr: &hcl.Range{
-								Filename: "test.hcl.json",
-								Start:    hcl.Pos{Line: 1, Column: 18, Byte: 17},
-								End:      hcl.Pos{Line: 1, Column: 23, Byte: 22},
-							},
-							ScopeId: lang.ScopeId("test"),
-						},
-					},
+					ScopeId:       lang.ScopeId("test"),
+					NestedTargets: reference.Targets{},
 				},
 			},
 		},
@@ -3137,42 +2967,7 @@ func TestCollectRefTargets_exprLiteralType_json(t *testing.T) {
 						Start:    hcl.Pos{Line: 1, Column: 2, Byte: 1},
 						End:      hcl.Pos{Line: 1, Column: 8, Byte: 7},
 					},
-					NestedTargets: reference.Targets{
-						{
-							Addr: lang.Address{
-								lang.RootStep{Name: "attr"},
-								lang.AttrStep{Name: "bar"},
-							},
-							ScopeId: lang.ScopeId("test"),
-							RangePtr: &hcl.Range{
-								Filename: "test.hcl.json",
-								Start:    hcl.Pos{Line: 3, Column: 3, Byte: 29},
-								End:      hcl.Pos{Line: 3, Column: 12, Byte: 38},
-							},
-							DefRangePtr: &hcl.Range{
-								Filename: "test.hcl.json",
-								Start:    hcl.Pos{Line: 3, Column: 3, Byte: 29},
-								End:      hcl.Pos{Line: 3, Column: 8, Byte: 34},
-							},
-						},
-						{
-							Addr: lang.Address{
-								lang.RootStep{Name: "attr"},
-								lang.AttrStep{Name: "foo"},
-							},
-							ScopeId: lang.ScopeId("test"),
-							RangePtr: &hcl.Range{
-								Filename: "test.hcl.json",
-								Start:    hcl.Pos{Line: 2, Column: 3, Byte: 13},
-								End:      hcl.Pos{Line: 2, Column: 15, Byte: 25},
-							},
-							DefRangePtr: &hcl.Range{
-								Filename: "test.hcl.json",
-								Start:    hcl.Pos{Line: 2, Column: 3, Byte: 13},
-								End:      hcl.Pos{Line: 2, Column: 8, Byte: 18},
-							},
-						},
-					},
+					NestedTargets: reference.Targets{},
 				},
 			},
 		},
@@ -3569,42 +3364,7 @@ func TestCollectRefTargets_exprLiteralType_json(t *testing.T) {
 						Start:    hcl.Pos{Line: 1, Column: 2, Byte: 1},
 						End:      hcl.Pos{Line: 1, Column: 8, Byte: 7},
 					},
-					NestedTargets: reference.Targets{
-						{
-							Addr: lang.Address{
-								lang.RootStep{Name: "attr"},
-								lang.IndexStep{Key: cty.StringVal("bar")},
-							},
-							ScopeId: lang.ScopeId("test"),
-							RangePtr: &hcl.Range{
-								Filename: "test.hcl.json",
-								Start:    hcl.Pos{Line: 3, Column: 3, Byte: 29},
-								End:      hcl.Pos{Line: 3, Column: 12, Byte: 38},
-							},
-							DefRangePtr: &hcl.Range{
-								Filename: "test.hcl.json",
-								Start:    hcl.Pos{Line: 3, Column: 3, Byte: 29},
-								End:      hcl.Pos{Line: 3, Column: 8, Byte: 34},
-							},
-						},
-						{
-							Addr: lang.Address{
-								lang.RootStep{Name: "attr"},
-								lang.IndexStep{Key: cty.StringVal("foo")},
-							},
-							ScopeId: lang.ScopeId("test"),
-							RangePtr: &hcl.Range{
-								Filename: "test.hcl.json",
-								Start:    hcl.Pos{Line: 2, Column: 3, Byte: 13},
-								End:      hcl.Pos{Line: 2, Column: 15, Byte: 25},
-							},
-							DefRangePtr: &hcl.Range{
-								Filename: "test.hcl.json",
-								Start:    hcl.Pos{Line: 2, Column: 3, Byte: 13},
-								End:      hcl.Pos{Line: 2, Column: 8, Byte: 18},
-							},
-						},
-					},
+					NestedTargets: reference.Targets{},
 				},
 			},
 		},

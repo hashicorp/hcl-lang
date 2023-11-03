@@ -99,19 +99,5 @@ func (tuple Tuple) wholeTupleReferenceTargets(targetCtx *TargetContext, nestedTa
 		}
 	}
 
-	// type-unaware
-	if targetCtx.AsReference {
-		targets = append(targets, reference.Target{
-			Addr:                   targetCtx.ParentAddress,
-			Name:                   targetCtx.FriendlyName,
-			ScopeId:                targetCtx.ScopeId,
-			RangePtr:               rangePtr,
-			DefRangePtr:            targetCtx.ParentDefRangePtr,
-			NestedTargets:          nestedTargets,
-			LocalAddr:              targetCtx.ParentLocalAddress,
-			TargetableFromRangePtr: targetCtx.TargetableFromRangePtr,
-		})
-	}
-
 	return targets
 }
