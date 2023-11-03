@@ -14,19 +14,21 @@ import (
 
 type MissingRequiredAttribute struct{}
 
-func (v MissingRequiredAttribute) Visit(ctx context.Context, node hclsyntax.Node, nodeSchema schema.Schema) (diags hcl.Diagnostics) {
+func (v MissingRequiredAttribute) Visit(ctx context.Context, node hclsyntax.Node, nodeSchema schema.Schema) (context.Context, hcl.Diagnostics) {
+	var diags hcl.Diagnostics
+
 	body, ok := node.(*hclsyntax.Body)
 	if !ok {
-		return
+		return ctx, diags
 	}
 
 	if nodeSchema == nil {
-		return
+		return ctx, diags
 	}
 
 	bodySchema := nodeSchema.(*schema.BodySchema)
 	if bodySchema.Attributes == nil {
-		return
+		return ctx, diags
 	}
 
 	for name, attr := range bodySchema.Attributes {
@@ -43,5 +45,5 @@ func (v MissingRequiredAttribute) Visit(ctx context.Context, node hclsyntax.Node
 		}
 	}
 
-	return
+	return ctx, diags
 }

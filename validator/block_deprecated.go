@@ -14,14 +14,16 @@ import (
 
 type DeprecatedBlock struct{}
 
-func (v DeprecatedBlock) Visit(ctx context.Context, node hclsyntax.Node, nodeSchema schema.Schema) (diags hcl.Diagnostics) {
+func (v DeprecatedBlock) Visit(ctx context.Context, node hclsyntax.Node, nodeSchema schema.Schema) (context.Context, hcl.Diagnostics) {
+	var diags hcl.Diagnostics
+
 	block, ok := node.(*hclsyntax.Block)
 	if !ok {
-		return
+		return ctx, diags
 	}
 
 	if nodeSchema == nil {
-		return
+		return ctx, diags
 	}
 	blockSchema := nodeSchema.(*schema.BlockSchema)
 	if blockSchema.IsDeprecated {
@@ -33,5 +35,5 @@ func (v DeprecatedBlock) Visit(ctx context.Context, node hclsyntax.Node, nodeSch
 		})
 	}
 
-	return
+	return ctx, diags
 }

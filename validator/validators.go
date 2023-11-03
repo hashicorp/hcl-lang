@@ -12,5 +12,5 @@ import (
 )
 
 type Validator interface {
-	Visit(ctx context.Context, node hclsyntax.Node, nodeSchema schema.Schema) hcl.Diagnostics
+	Visit(ctx context.Context, node hclsyntax.Node, nodeSchema schema.Schema) (context.Context, hcl.Diagnostics)
 }

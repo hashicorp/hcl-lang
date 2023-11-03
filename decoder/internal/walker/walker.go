@@ -14,7 +14,7 @@ import (
 )
 
 type Walker interface {
-	Visit(ctx context.Context, node hclsyntax.Node, nodeSchema schema.Schema) hcl.Diagnostics
+	Visit(ctx context.Context, node hclsyntax.Node, nodeSchema schema.Schema) (context.Context, hcl.Diagnostics)
 }
 
 // Walk walks the given node while providing schema relevant to the node.
@@ -26,8 +26,10 @@ func Walk(ctx context.Context, node hclsyntax.Node, nodeSchema schema.Schema, w 
 
 	switch nodeType := node.(type) {
 	case *hclsyntax.Body:
+		bodyCtx := ctx
 		foundBlocks := make(map[string]uint64)
 		dynamicBlocks := make(map[string]uint64)
+
 		bodySchema, ok := nodeSchema.(*schema.BodySchema)
 		if ok {
 			for _, attr := range nodeType.Attributes {
@@ -47,7 +49,7 @@ func Walk(ctx context.Context, node hclsyntax.Node, nodeSchema schema.Schema, w 
 					attrSchema = schemahelper.ForEachAttributeSchema()
 				}
 
-				diags = diags.Extend(Walk(ctx, attr, attrSchema, w))
+				diags = diags.Extend(Walk(bodyCtx, attr, attrSchema, w))
 			}
 
 			for _, block := range nodeType.Blocks {
@@ -72,30 +74,38 @@ func Walk(ctx context.Context, node hclsyntax.Node, nodeSchema schema.Schema, w 
 					}
 				}
 
-				diags = diags.Extend(Walk(ctx, block, blockSchema, w))
+				diags = diags.Extend(Walk(bodyCtx, block, blockSchema, w))
 			}
 		}
-		ctx = schemacontext.WithFoundBlocks(ctx, foundBlocks)
-		ctx = schemacontext.WithDynamicBlocks(ctx, dynamicBlocks)
 
-		diags = diags.Extend(w.Visit(ctx, node, nodeSchema))
+		bodyCtx = schemacontext.WithFoundBlocks(bodyCtx, foundBlocks)
+		bodyCtx = schemacontext.WithDynamicBlocks(bodyCtx, dynamicBlocks)
+
+		var bodyDiags hcl.Diagnostics
+		_, bodyDiags = w.Visit(bodyCtx, node, nodeSchema)
+		diags = diags.Extend(bodyDiags)
 
 	case *hclsyntax.Attribute:
-		diags = diags.Extend(w.Visit(ctx, node, nodeSchema))
+		var attrDiags hcl.Diagnostics
+		_, attrDiags = w.Visit(ctx, node, nodeSchema)
+		diags = diags.Extend(attrDiags)
 	case *hclsyntax.Block:
-		diags = diags.Extend(w.Visit(ctx, node, nodeSchema))
+		var blockCtx context.Context
+		var blockDiags hcl.Diagnostics
+		blockCtx, blockDiags = w.Visit(ctx, node, nodeSchema)
+		diags = diags.Extend(blockDiags)
 
 		var blockBodySchema schema.Schema = nil
 		bSchema, ok := nodeSchema.(*schema.BlockSchema)
 		if ok && bSchema.Body != nil {
 			mergedSchema, result := schemahelper.MergeBlockBodySchemas(nodeType.AsHCLBlock(), bSchema)
 			if result == schemahelper.LookupFailed || result == schemahelper.LookupPartiallySuccessful {
-				ctx = schemacontext.WithUnknownSchema(ctx)
+				blockCtx = schemacontext.WithUnknownSchema(blockCtx)
 			}
 			blockBodySchema = mergedSchema
 		}
 
-		diags = diags.Extend(Walk(ctx, nodeType.Body, blockBodySchema, w))
+		diags = diags.Extend(Walk(blockCtx, nodeType.Body, blockBodySchema, w))
 
 		// TODO: case hclsyntax.Expression
 	}

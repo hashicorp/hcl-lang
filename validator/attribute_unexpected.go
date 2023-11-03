@@ -15,16 +15,18 @@ import (
 
 type UnexpectedAttribute struct{}
 
-func (v UnexpectedAttribute) Visit(ctx context.Context, node hclsyntax.Node, nodeSchema schema.Schema) (diags hcl.Diagnostics) {
+func (v UnexpectedAttribute) Visit(ctx context.Context, node hclsyntax.Node, nodeSchema schema.Schema) (context.Context, hcl.Diagnostics) {
+	var diags hcl.Diagnostics
+
 	if schemacontext.HasUnknownSchema(ctx) {
 		// Avoid checking for unexpected attributes
 		// if we cannot tell which ones are expected.
-		return
+		return ctx, diags
 	}
 
 	attr, ok := node.(*hclsyntax.Attribute)
 	if !ok {
-		return
+		return ctx, diags
 	}
 
 	if nodeSchema == nil {
@@ -36,5 +38,5 @@ func (v UnexpectedAttribute) Visit(ctx context.Context, node hclsyntax.Node, nod
 		})
 	}
 
-	return
+	return ctx, diags
 }

@@ -15,14 +15,16 @@ import (
 
 type MaxBlocks struct{}
 
-func (v MaxBlocks) Visit(ctx context.Context, node hclsyntax.Node, nodeSchema schema.Schema) (diags hcl.Diagnostics) {
+func (v MaxBlocks) Visit(ctx context.Context, node hclsyntax.Node, nodeSchema schema.Schema) (context.Context, hcl.Diagnostics) {
+	var diags hcl.Diagnostics
+
 	_, ok := node.(*hclsyntax.Body)
 	if !ok {
-		return
+		return ctx, diags
 	}
 
 	if nodeSchema == nil {
-		return
+		return ctx, diags
 	}
 
 	foundBlocks := schemacontext.FoundBlocks(ctx)
@@ -42,5 +44,5 @@ func (v MaxBlocks) Visit(ctx context.Context, node hclsyntax.Node, nodeSchema sc
 		}
 	}
 
-	return
+	return ctx, diags
 }

@@ -70,10 +70,13 @@ type validationWalker struct {
 	validators []validator.Validator
 }
 
-func (vw validationWalker) Visit(ctx context.Context, node hclsyntax.Node, nodeSchema schema.Schema) (diags hcl.Diagnostics) {
+func (vw validationWalker) Visit(ctx context.Context, node hclsyntax.Node, nodeSchema schema.Schema) (context.Context, hcl.Diagnostics) {
+	var diags, vDiags hcl.Diagnostics
+
 	for _, v := range vw.validators {
-		diags = append(diags, v.Visit(ctx, node, nodeSchema)...)
+		ctx, vDiags = v.Visit(ctx, node, nodeSchema)
+		diags = append(diags, vDiags...)
 	}
 
-	return
+	return ctx, diags
 }
