@@ -77,6 +77,7 @@ func TestCollectReferenceTargets_hcl(t *testing.T) {
 							Byte:   8,
 						},
 					},
+					NestedTargets: reference.Targets{},
 				},
 			},
 		},

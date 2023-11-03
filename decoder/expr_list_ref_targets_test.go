@@ -616,7 +616,24 @@ func TestCollectRefTargets_exprList_json(t *testing.T) {
 				},
 			},
 			`{"attr": null}`,
-			reference.Targets{},
+			reference.Targets{
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "attr"},
+					},
+					RangePtr: &hcl.Range{
+						Filename: "test.hcl.json",
+						Start:    hcl.Pos{Line: 1, Column: 2, Byte: 1},
+						End:      hcl.Pos{Line: 1, Column: 14, Byte: 13},
+					},
+					DefRangePtr: &hcl.Range{
+						Filename: "test.hcl.json",
+						Start:    hcl.Pos{Line: 1, Column: 2, Byte: 1},
+						End:      hcl.Pos{Line: 1, Column: 8, Byte: 7},
+					},
+					NestedTargets: reference.Targets{},
+				},
+			},
 		},
 		{
 			"constraint mismatch",
