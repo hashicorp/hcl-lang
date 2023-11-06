@@ -24,6 +24,12 @@ type Walker interface {
 func Walk(ctx context.Context, node hclsyntax.Node, nodeSchema schema.Schema, w Walker) hcl.Diagnostics {
 	var diags hcl.Diagnostics
 
+	blkNestingLvl, ok := schemacontext.BlockNestingLevel(ctx)
+	if !ok {
+		ctx = schemacontext.WithBlockNestingLevel(ctx, 0)
+		blkNestingLvl = 0
+	}
+
 	switch nodeType := node.(type) {
 	case *hclsyntax.Body:
 		bodyCtx := ctx
@@ -105,6 +111,7 @@ func Walk(ctx context.Context, node hclsyntax.Node, nodeSchema schema.Schema, w 
 			blockBodySchema = mergedSchema
 		}
 
+		blockCtx = schemacontext.WithBlockNestingLevel(blockCtx, blkNestingLvl+1)
 		diags = diags.Extend(Walk(blockCtx, nodeType.Body, blockBodySchema, w))
 
 		// TODO: case hclsyntax.Expression
