@@ -774,6 +774,16 @@ wakka = 2
 				"test.tf": {
 					&hcl.Diagnostic{
 						Severity: hcl.DiagError,
+						Summary:  "Unexpected attribute",
+						Detail:   `An attribute named "for_each" is not expected here`,
+						Subject: &hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 3, Column: 6, Byte: 39},
+							End:      hcl.Pos{Line: 3, Column: 19, Byte: 52},
+						},
+					},
+					&hcl.Diagnostic{
+						Severity: hcl.DiagError,
 						Summary:  "Unexpected block",
 						Detail:   `Blocks of type "dynamic" are not expected here`,
 						Subject: &hcl.Range{

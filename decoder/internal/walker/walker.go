@@ -36,10 +36,11 @@ func Walk(ctx context.Context, node hclsyntax.Node, nodeSchema schema.Schema, w 
 		foundBlocks := make(map[string]uint64)
 		dynamicBlocks := make(map[string]uint64)
 
-		bodySchema, ok := nodeSchema.(*schema.BodySchema)
-		if ok {
-			for _, attr := range nodeType.Attributes {
-				var attrSchema schema.Schema = nil
+		bodySchema, bodySchemaOk := nodeSchema.(*schema.BodySchema)
+
+		for _, attr := range nodeType.Attributes {
+			var attrSchema schema.Schema = nil
+			if bodySchemaOk {
 				aSchema, ok := bodySchema.Attributes[attr.Name]
 				if ok {
 					attrSchema = aSchema
@@ -54,12 +55,14 @@ func Walk(ctx context.Context, node hclsyntax.Node, nodeSchema schema.Schema, w 
 				if bodySchema.Extensions != nil && bodySchema.Extensions.ForEach && attr.Name == "for_each" {
 					attrSchema = schemahelper.ForEachAttributeSchema()
 				}
-
-				diags = diags.Extend(Walk(bodyCtx, attr, attrSchema, w))
 			}
 
-			for _, block := range nodeType.Blocks {
-				var blockSchema schema.Schema = nil
+			diags = diags.Extend(Walk(bodyCtx, attr, attrSchema, w))
+		}
+
+		for _, block := range nodeType.Blocks {
+			var blockSchema schema.Schema = nil
+			if bodySchemaOk {
 				bs, ok := bodySchema.Blocks[block.Type]
 				if ok {
 					blockSchema = bs
@@ -79,9 +82,9 @@ func Walk(ctx context.Context, node hclsyntax.Node, nodeSchema schema.Schema, w 
 						dynamicBlocks[label]++
 					}
 				}
-
-				diags = diags.Extend(Walk(bodyCtx, block, blockSchema, w))
 			}
+
+			diags = diags.Extend(Walk(bodyCtx, block, blockSchema, w))
 		}
 
 		bodyCtx = schemacontext.WithFoundBlocks(bodyCtx, foundBlocks)
@@ -98,6 +101,7 @@ func Walk(ctx context.Context, node hclsyntax.Node, nodeSchema schema.Schema, w 
 	case *hclsyntax.Block:
 		var blockCtx context.Context
 		var blockDiags hcl.Diagnostics
+
 		blockCtx, blockDiags = w.Visit(ctx, node, nodeSchema)
 		diags = diags.Extend(blockDiags)
 
