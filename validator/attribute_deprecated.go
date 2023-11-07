@@ -14,14 +14,16 @@ import (
 
 type DeprecatedAttribute struct{}
 
-func (v DeprecatedAttribute) Visit(ctx context.Context, node hclsyntax.Node, nodeSchema schema.Schema) (diags hcl.Diagnostics) {
+func (v DeprecatedAttribute) Visit(ctx context.Context, node hclsyntax.Node, nodeSchema schema.Schema) (context.Context, hcl.Diagnostics) {
+	var diags hcl.Diagnostics
+
 	attr, ok := node.(*hclsyntax.Attribute)
 	if !ok {
-		return
+		return ctx, diags
 	}
 
 	if nodeSchema == nil {
-		return
+		return ctx, diags
 	}
 	attrSchema := nodeSchema.(*schema.AttributeSchema)
 	if attrSchema.IsDeprecated {
@@ -33,5 +35,5 @@ func (v DeprecatedAttribute) Visit(ctx context.Context, node hclsyntax.Node, nod
 		})
 	}
 
-	return
+	return ctx, diags
 }

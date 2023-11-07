@@ -15,16 +15,18 @@ import (
 
 type UnexpectedBlock struct{}
 
-func (v UnexpectedBlock) Visit(ctx context.Context, node hclsyntax.Node, nodeSchema schema.Schema) (diags hcl.Diagnostics) {
+func (v UnexpectedBlock) Visit(ctx context.Context, node hclsyntax.Node, nodeSchema schema.Schema) (context.Context, hcl.Diagnostics) {
+	var diags hcl.Diagnostics
+
 	if schemacontext.HasUnknownSchema(ctx) {
 		// Avoid checking for unexpected blocks
 		// if we cannot tell which ones are expected.
-		return
+		return ctx, diags
 	}
 
 	block, ok := node.(*hclsyntax.Block)
 	if !ok {
-		return
+		return ctx, diags
 	}
 
 	if nodeSchema == nil {
@@ -35,5 +37,5 @@ func (v UnexpectedBlock) Visit(ctx context.Context, node hclsyntax.Node, nodeSch
 			Subject:  block.TypeRange.Ptr(),
 		})
 	}
-	return
+	return ctx, diags
 }

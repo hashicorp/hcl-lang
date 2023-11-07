@@ -15,14 +15,16 @@ import (
 
 type MinBlocks struct{}
 
-func (v MinBlocks) Visit(ctx context.Context, node hclsyntax.Node, nodeSchema schema.Schema) (diags hcl.Diagnostics) {
+func (v MinBlocks) Visit(ctx context.Context, node hclsyntax.Node, nodeSchema schema.Schema) (context.Context, hcl.Diagnostics) {
+	var diags hcl.Diagnostics
+
 	_, ok := node.(*hclsyntax.Body)
 	if !ok {
-		return
+		return ctx, diags
 	}
 
 	if nodeSchema == nil {
-		return
+		return ctx, diags
 	}
 
 	foundBlocks := schemacontext.FoundBlocks(ctx)
@@ -43,7 +45,7 @@ func (v MinBlocks) Visit(ctx context.Context, node hclsyntax.Node, nodeSchema sc
 		}
 	}
 
-	return
+	return ctx, diags
 }
 
 func hasDynamicBlockInBody(bodySchema *schema.BodySchema, dynamicBlocks map[string]uint64, blockName string) bool {

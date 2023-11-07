@@ -8,6 +8,7 @@ import "context"
 type unknownSchemaCtxKey struct{}
 type foundBlocksCtxKey struct{}
 type dynamicBlocksCtxKey struct{}
+type blockNestingLevelCtxKey struct{}
 
 // WithUnknownSchema attaches a flag indicating that the schema being passed
 // is not wholly known.
@@ -41,4 +42,13 @@ func WithDynamicBlocks(ctx context.Context, dynamicBlocks map[string]uint64) con
 
 func DynamicBlocks(ctx context.Context) map[string]uint64 {
 	return ctx.Value(dynamicBlocksCtxKey{}).(map[string]uint64)
+}
+
+func WithBlockNestingLevel(ctx context.Context, nestingLvl uint64) context.Context {
+	return context.WithValue(ctx, blockNestingLevelCtxKey{}, nestingLvl)
+}
+
+func BlockNestingLevel(ctx context.Context) (uint64, bool) {
+	lvl, ok := ctx.Value(blockNestingLevelCtxKey{}).(uint64)
+	return lvl, ok
 }
