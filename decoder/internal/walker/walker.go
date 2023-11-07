@@ -38,6 +38,10 @@ func Walk(ctx context.Context, node hclsyntax.Node, nodeSchema schema.Schema, w 
 
 		bodySchema, bodySchemaOk := nodeSchema.(*schema.BodySchema)
 
+		if !bodySchemaOk {
+			bodyCtx = schemacontext.WithUnknownSchema(bodyCtx)
+		}
+
 		for _, attr := range nodeType.Attributes {
 			var attrSchema schema.Schema = nil
 			if bodySchemaOk {
