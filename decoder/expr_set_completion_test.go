@@ -10,6 +10,7 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/hashicorp/hcl-lang/lang"
+	"github.com/hashicorp/hcl-lang/reference"
 	"github.com/hashicorp/hcl-lang/schema"
 	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hclsyntax"
@@ -633,6 +634,91 @@ func TestCompletionAtPos_exprSet(t *testing.T) {
 				Files: map[string]*hcl.File{
 					"test.tf": f,
 				},
+			})
+
+			ctx := context.Background()
+			candidates, err := d.CandidatesAtPos(ctx, "test.tf", tc.pos)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			if diff := cmp.Diff(tc.expectedCandidates, candidates); diff != "" {
+				t.Logf("position: %#v in config: %s", tc.pos, tc.cfg)
+				t.Fatalf("unexpected candidates: %s", diff)
+			}
+		})
+	}
+}
+
+func TestCompletionAtPos_exprSet_references(t *testing.T) {
+	testCases := []struct {
+		testName           string
+		attrSchema         map[string]*schema.AttributeSchema
+		refTargets         reference.Targets
+		cfg                string
+		pos                hcl.Pos
+		expectedCandidates lang.Candidates
+	}{
+		{
+			"single-line with trailing dot",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.Set{
+						Elem: schema.OneOf{
+							schema.Reference{OfScopeId: lang.ScopeId("variable")},
+						},
+					},
+				},
+			},
+			reference.Targets{
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "bar"},
+					},
+					RangePtr: &hcl.Range{
+						Filename: "variables.tf",
+						Start:    hcl.Pos{Line: 2, Column: 1, Byte: 17},
+						End:      hcl.Pos{Line: 2, Column: 3, Byte: 19},
+					},
+					ScopeId: lang.ScopeId("variable"),
+				},
+			},
+			`attr = [ var. ]
+`,
+			hcl.Pos{Line: 1, Column: 14, Byte: 13},
+			lang.CompleteCandidates([]lang.Candidate{
+				{
+					Label:  "var.bar",
+					Detail: "reference",
+					Kind:   lang.TraversalCandidateKind,
+					TextEdit: lang.TextEdit{
+						NewText: "var.bar",
+						Snippet: "var.bar",
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 1, Column: 10, Byte: 9},
+							End:      hcl.Pos{Line: 1, Column: 14, Byte: 13},
+						},
+					},
+				},
+			}),
+		},
+	}
+
+	for i, tc := range testCases {
+		t.Run(fmt.Sprintf("%2d-%s", i, tc.testName), func(t *testing.T) {
+			bodySchema := &schema.BodySchema{
+				Attributes: tc.attrSchema,
+			}
+
+			f, _ := hclsyntax.ParseConfig([]byte(tc.cfg), "test.tf", hcl.InitialPos)
+			d := testPathDecoder(t, &PathContext{
+				Schema: bodySchema,
+				Files: map[string]*hcl.File{
+					"test.tf": f,
+				},
+				ReferenceTargets: tc.refTargets,
 			})
 
 			ctx := context.Background()
