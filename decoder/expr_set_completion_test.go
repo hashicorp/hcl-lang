@@ -664,9 +664,7 @@ func TestCompletionAtPos_exprSet_references(t *testing.T) {
 			map[string]*schema.AttributeSchema{
 				"attr": {
 					Constraint: schema.Set{
-						Elem: schema.OneOf{
-							schema.Reference{OfScopeId: lang.ScopeId("variable")},
-						},
+						Elem: schema.Reference{OfScopeId: lang.ScopeId("variable")},
 					},
 				},
 			},

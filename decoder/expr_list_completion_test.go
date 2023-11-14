@@ -703,9 +703,7 @@ func TestCompletionAtPos_exprList_references(t *testing.T) {
 			map[string]*schema.AttributeSchema{
 				"attr": {
 					Constraint: schema.List{
-						Elem: schema.OneOf{
-							schema.Reference{OfScopeId: lang.ScopeId("variable")},
-						},
+						Elem: schema.Reference{OfScopeId: lang.ScopeId("variable")},
 					},
 				},
 			},
