@@ -81,6 +81,14 @@ func (set Set) CompletionAtPos(ctx context.Context, pos hcl.Pos) []lang.Candidat
 			if elemExpr.Range().ContainsPos(pos) || elemExpr.Range().End.Byte == pos.Byte {
 				return newExpression(set.pathCtx, elemExpr, set.cons.Elem).CompletionAtPos(ctx, pos)
 			}
+			if pos.Byte-elemExpr.Range().End.Byte == 1 {
+				fileBytes := set.pathCtx.Files[eType.Range().Filename].Bytes
+				trailingRune := fileBytes[elemExpr.Range().End.Byte:pos.Byte][0]
+
+				if trailingRune == '.' {
+					return newExpression(set.pathCtx, elemExpr, set.cons.Elem).CompletionAtPos(ctx, pos)
+				}
+			}
 		}
 
 		expr := newEmptyExpressionAtPos(eType.Range().Filename, pos)
