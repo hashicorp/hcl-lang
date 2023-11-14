@@ -98,6 +98,14 @@ func (tuple Tuple) CompletionAtPos(ctx context.Context, pos hcl.Pos) []lang.Cand
 		if elemExpr.Range().ContainsPos(pos) || elemExpr.Range().End.Byte == pos.Byte {
 			return newExpression(tuple.pathCtx, elemExpr, tuple.cons.Elems[i]).CompletionAtPos(ctx, pos)
 		}
+		if pos.Byte-elemExpr.Range().End.Byte == 1 {
+			fileBytes := tuple.pathCtx.Files[eType.Range().Filename].Bytes
+			trailingRune := fileBytes[elemExpr.Range().End.Byte:pos.Byte][0]
+
+			if trailingRune == '.' {
+				return newExpression(tuple.pathCtx, elemExpr, tuple.cons.Elems[i]).CompletionAtPos(ctx, pos)
+			}
+		}
 		lastElemEndPos = elemExpr.Range().End
 		lastElemIdx = i
 	}
