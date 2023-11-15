@@ -2657,3 +2657,150 @@ func TestSemanticTokens_exprAny_operators(t *testing.T) {
 		})
 	}
 }
+
+func TestSemanticTokens_exprAny_templates(t *testing.T) {
+	testCases := []struct {
+		testName               string
+		attrSchema             map[string]*schema.AttributeSchema
+		refOrigins             reference.Origins
+		refTargets             reference.Targets
+		cfg                    string
+		expectedSemanticTokens []lang.SemanticToken
+	}{
+		{
+			"expression string",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.AnyExpression{
+						OfType: cty.String,
+					},
+				},
+			},
+			reference.Origins{},
+			reference.Targets{},
+			`attr = "foo-${"bar"}-bar"
+`,
+			[]lang.SemanticToken{
+				{
+					Type:      lang.TokenAttrName,
+					Modifiers: lang.SemanticTokenModifiers{},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
+						End:      hcl.Pos{Line: 1, Column: 5, Byte: 4},
+					},
+				},
+				{
+					Type:      lang.TokenString,
+					Modifiers: lang.SemanticTokenModifiers{},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 1, Column: 15, Byte: 14},
+						End:      hcl.Pos{Line: 1, Column: 20, Byte: 19},
+					},
+				},
+			},
+		},
+		{
+			"expression with reference",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.AnyExpression{
+						OfType: cty.String,
+					},
+				},
+			},
+			reference.Origins{
+				reference.LocalOrigin{
+					Addr: lang.Address{
+						lang.RootStep{Name: "local"},
+						lang.AttrStep{Name: "foo"},
+					},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 1, Column: 15, Byte: 14},
+						End:      hcl.Pos{Line: 1, Column: 24, Byte: 23},
+					},
+					Constraints: reference.OriginConstraints{
+						{
+							OfType: cty.String,
+						},
+					},
+				},
+			},
+			reference.Targets{
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "local"},
+						lang.AttrStep{Name: "foo"},
+					},
+					Type: cty.String,
+					RangePtr: &hcl.Range{
+						Filename: "variables.tf",
+						Start:    hcl.Pos{Line: 2, Column: 1, Byte: 17},
+						End:      hcl.Pos{Line: 2, Column: 13, Byte: 29},
+					},
+				},
+			},
+			`attr = "foo-${local.foo}-bar"
+`,
+			[]lang.SemanticToken{
+				{
+					Type:      lang.TokenAttrName,
+					Modifiers: lang.SemanticTokenModifiers{},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
+						End:      hcl.Pos{Line: 1, Column: 5, Byte: 4},
+					},
+				},
+				{
+					Type:      lang.TokenTraversalStep,
+					Modifiers: lang.SemanticTokenModifiers{},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 1, Column: 15, Byte: 14},
+						End:      hcl.Pos{Line: 1, Column: 20, Byte: 19},
+					},
+				},
+				{
+					Type:      lang.TokenTraversalStep,
+					Modifiers: lang.SemanticTokenModifiers{},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 1, Column: 21, Byte: 20},
+						End:      hcl.Pos{Line: 1, Column: 24, Byte: 23},
+					},
+				},
+			},
+		},
+	}
+
+	for i, tc := range testCases {
+		t.Run(fmt.Sprintf("%d-%s", i, tc.testName), func(t *testing.T) {
+			bodySchema := &schema.BodySchema{
+				Attributes: tc.attrSchema,
+			}
+
+			f, _ := hclsyntax.ParseConfig([]byte(tc.cfg), "test.tf", hcl.InitialPos)
+			d := testPathDecoder(t, &PathContext{
+				Schema: bodySchema,
+				Files: map[string]*hcl.File{
+					"test.tf": f,
+				},
+				ReferenceOrigins: tc.refOrigins,
+				ReferenceTargets: tc.refTargets,
+			})
+
+			ctx := context.Background()
+			tokens, err := d.SemanticTokensInFile(ctx, "test.tf")
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			if diff := cmp.Diff(tc.expectedSemanticTokens, tokens); diff != "" {
+				t.Fatalf("unexpected tokens: %s", diff)
+			}
+		})
+	}
+}
