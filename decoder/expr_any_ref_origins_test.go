@@ -1054,3 +1054,170 @@ func TestCollectRefOrigins_exprAny_operators_json(t *testing.T) {
 		})
 	}
 }
+
+func TestCollectRefOrigins_exprAny_templates_hcl(t *testing.T) {
+	testCases := []struct {
+		testName           string
+		attrSchema         map[string]*schema.AttributeSchema
+		cfg                string
+		expectedRefOrigins reference.Origins
+	}{
+		{
+			"template expression",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.AnyExpression{
+						OfType: cty.String,
+					},
+				},
+			},
+			`attr = "${var.foo}_${var.bar}"
+`,
+			reference.Origins{
+				reference.LocalOrigin{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "foo"},
+					},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 1, Column: 11, Byte: 10},
+						End:      hcl.Pos{Line: 1, Column: 18, Byte: 17},
+					},
+					Constraints: reference.OriginConstraints{
+						{
+							OfType: cty.String,
+						},
+					},
+				},
+				reference.LocalOrigin{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "bar"},
+					},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 1, Column: 22, Byte: 21},
+						End:      hcl.Pos{Line: 1, Column: 29, Byte: 28},
+					},
+					Constraints: reference.OriginConstraints{
+						{
+							OfType: cty.String,
+						},
+					},
+				},
+			},
+		},
+	}
+
+	for i, tc := range testCases {
+		t.Run(fmt.Sprintf("%d-%s", i, tc.testName), func(t *testing.T) {
+			bodySchema := &schema.BodySchema{
+				Attributes: tc.attrSchema,
+			}
+
+			f, diags := hclsyntax.ParseConfig([]byte(tc.cfg), "test.tf", hcl.InitialPos)
+			if len(diags) > 0 {
+				t.Error(diags)
+			}
+			d := testPathDecoder(t, &PathContext{
+				Schema: bodySchema,
+				Files: map[string]*hcl.File{
+					"test.tf": f,
+				},
+			})
+
+			origins, err := d.CollectReferenceOrigins()
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			if diff := cmp.Diff(tc.expectedRefOrigins, origins, ctydebug.CmpOptions); diff != "" {
+				t.Fatalf("unexpected origins: %s", diff)
+			}
+		})
+	}
+}
+
+func TestCollectRefOrigins_exprAny_templates_json(t *testing.T) {
+	testCases := []struct {
+		testName           string
+		attrSchema         map[string]*schema.AttributeSchema
+		cfg                string
+		expectedRefOrigins reference.Origins
+	}{
+		{
+			"template expression",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.AnyExpression{
+						OfType: cty.String,
+					},
+				},
+			},
+			`{"attr": "${var.foo}_${var.bar}"}`,
+			reference.Origins{
+				reference.LocalOrigin{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "foo"},
+					},
+					Range: hcl.Range{
+						Filename: "test.tf.json",
+						Start:    hcl.Pos{Line: 1, Column: 13, Byte: 12},
+						End:      hcl.Pos{Line: 1, Column: 20, Byte: 19},
+					},
+					Constraints: reference.OriginConstraints{
+						{
+							OfType: cty.DynamicPseudoType,
+						},
+					},
+				},
+				reference.LocalOrigin{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "bar"},
+					},
+					Range: hcl.Range{
+						Filename: "test.tf.json",
+						Start:    hcl.Pos{Line: 1, Column: 24, Byte: 23},
+						End:      hcl.Pos{Line: 1, Column: 31, Byte: 30},
+					},
+					Constraints: reference.OriginConstraints{
+						{
+							OfType: cty.DynamicPseudoType,
+						},
+					},
+				},
+			},
+		},
+	}
+
+	for i, tc := range testCases {
+		t.Run(fmt.Sprintf("%d-%s", i, tc.testName), func(t *testing.T) {
+			bodySchema := &schema.BodySchema{
+				Attributes: tc.attrSchema,
+			}
+
+			f, diags := json.ParseWithStartPos([]byte(tc.cfg), "test.tf.json", hcl.InitialPos)
+			if len(diags) > 0 {
+				t.Error(diags)
+			}
+			d := testPathDecoder(t, &PathContext{
+				Schema: bodySchema,
+				Files: map[string]*hcl.File{
+					"test.tf.json": f,
+				},
+			})
+
+			origins, err := d.CollectReferenceOrigins()
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			if diff := cmp.Diff(tc.expectedRefOrigins, origins, ctydebug.CmpOptions); diff != "" {
+				t.Fatalf("unexpected origins: %s", diff)
+			}
+		})
+	}
+}
