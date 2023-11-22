@@ -28,17 +28,14 @@ func (lt LiteralType) HoverAtPos(ctx context.Context, pos hcl.Pos) *lang.HoverDa
 	// even if there's no templating involved
 	if typ == cty.String {
 		expr, ok := lt.expr.(*hclsyntax.TemplateExpr)
-		if !ok {
-			return nil
-		}
-		if expr.IsStringLiteral() || isMultilineStringLiteral(expr) {
+		if ok && (expr.IsStringLiteral() || isMultilineStringLiteral(expr)) {
 			return &lang.HoverData{
 				Content: lang.Markdown(fmt.Sprintf(`_%s_`, typ.FriendlyName())),
 				Range:   expr.Range(),
 			}
 		}
-
-		return nil
+		// We may however land here from within AnyExpression, in which case
+		// the embedded string is in fact LiteralValueExpr and it is handled below.
 	}
 
 	if typ.IsPrimitiveType() {
