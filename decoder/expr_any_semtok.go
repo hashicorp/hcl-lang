@@ -95,15 +95,17 @@ func (a Any) SemanticTokens(ctx context.Context) []lang.SemanticToken {
 }
 
 func (a Any) semanticTokensForNonComplexExpr(ctx context.Context) []lang.SemanticToken {
-	// TODO: Support TemplateExpr https://github.com/hashicorp/terraform-ls/issues/522
 	// TODO: Support splat expression https://github.com/hashicorp/terraform-ls/issues/526
 	// TODO: Support for-in-if expression https://github.com/hashicorp/terraform-ls/issues/527
 	// TODO: Support conditional expression https://github.com/hashicorp/terraform-ls/issues/528
-	// TODO: Support operator expresssions https://github.com/hashicorp/terraform-ls/issues/529
 	// TODO: Support complex index expressions https://github.com/hashicorp/terraform-ls/issues/531
 	// TODO: Support relative traversals https://github.com/hashicorp/terraform-ls/issues/532
 
 	if tokens, ok := a.semanticTokensForOperatorExpr(ctx); ok {
+		return tokens
+	}
+
+	if tokens, ok := a.semanticTokensForTemplateExpr(ctx); ok {
 		return tokens
 	}
 
@@ -180,6 +182,42 @@ func (a Any) semanticTokensForOperatorExpr(ctx context.Context) ([]lang.Semantic
 		tokens = append(tokens, newExpression(a.pathCtx, eType.Val, schema.AnyExpression{
 			OfType: opFuncParams[0].Type,
 		}).SemanticTokens(ctx)...)
+
+		return tokens, true
+	}
+
+	return tokens, false
+}
+
+func (a Any) semanticTokensForTemplateExpr(ctx context.Context) ([]lang.SemanticToken, bool) {
+	tokens := make([]lang.SemanticToken, 0)
+
+	switch eType := a.expr.(type) {
+	case *hclsyntax.TemplateExpr:
+		if eType.IsStringLiteral() {
+			cons := schema.LiteralType{
+				Type: cty.String,
+			}
+			expr := newExpression(a.pathCtx, eType, cons)
+			tokens = append(tokens, expr.SemanticTokens(ctx)...)
+			return tokens, true
+		}
+
+		for _, partExpr := range eType.Parts {
+			cons := schema.AnyExpression{
+				OfType: cty.String,
+			}
+			expr := newExpression(a.pathCtx, partExpr, cons)
+			tokens = append(tokens, expr.SemanticTokens(ctx)...)
+		}
+
+		return tokens, true
+	case *hclsyntax.TemplateWrapExpr:
+		cons := schema.AnyExpression{
+			OfType: cty.String,
+		}
+		expr := newExpression(a.pathCtx, eType.Wrapped, cons)
+		tokens = append(tokens, expr.SemanticTokens(ctx)...)
 
 		return tokens, true
 	}

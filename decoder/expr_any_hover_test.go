@@ -316,7 +316,14 @@ TEXT
 			},
 			`attr = "foo${bar}"`,
 			hcl.Pos{Line: 1, Column: 9, Byte: 8},
-			nil,
+			&lang.HoverData{
+				Content: lang.Markdown("_string_"),
+				Range: hcl.Range{
+					Filename: "test.tf",
+					Start:    hcl.Pos{Line: 1, Column: 9, Byte: 8},
+					End:      hcl.Pos{Line: 1, Column: 12, Byte: 11},
+				},
+			},
 		},
 
 		// list
@@ -1591,6 +1598,180 @@ func TestHoverAtPos_exprAny_operators(t *testing.T) {
 				Files: map[string]*hcl.File{
 					"test.tf": f,
 				},
+			})
+
+			ctx := context.Background()
+			hoverData, err := d.HoverAtPos(ctx, "test.tf", tc.pos)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			if diff := cmp.Diff(tc.expectedHoverData, hoverData); diff != "" {
+				t.Fatalf("unexpected hover data: %s", diff)
+			}
+		})
+	}
+}
+
+func TestHoverAtPos_exprAny_templates(t *testing.T) {
+	testCases := []struct {
+		testName          string
+		attrSchema        map[string]*schema.AttributeSchema
+		refOrigins        reference.Origins
+		refTargets        reference.Targets
+		cfg               string
+		pos               hcl.Pos
+		expectedHoverData *lang.HoverData
+	}{
+		{
+			"expression string",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.AnyExpression{
+						OfType: cty.String,
+					},
+				},
+			},
+			reference.Origins{},
+			reference.Targets{},
+			`attr = "foo-${"bar"}-bar"
+`,
+			hcl.Pos{Line: 1, Column: 17, Byte: 16},
+			&lang.HoverData{
+				Content: lang.Markdown("_string_"),
+				Range: hcl.Range{
+					Filename: "test.tf",
+					Start:    hcl.Pos{Line: 1, Column: 15, Byte: 14},
+					End:      hcl.Pos{Line: 1, Column: 20, Byte: 19},
+				},
+			},
+		},
+		{
+			"expression with reference",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.AnyExpression{
+						OfType: cty.String,
+					},
+				},
+			},
+			reference.Origins{
+				reference.LocalOrigin{
+					Addr: lang.Address{
+						lang.RootStep{Name: "local"},
+						lang.AttrStep{Name: "foo"},
+					},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 1, Column: 15, Byte: 14},
+						End:      hcl.Pos{Line: 1, Column: 24, Byte: 23},
+					},
+					Constraints: reference.OriginConstraints{
+						{
+							OfType: cty.String,
+						},
+					},
+				},
+			},
+			reference.Targets{
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "local"},
+						lang.AttrStep{Name: "foo"},
+					},
+					Type: cty.String,
+					RangePtr: &hcl.Range{
+						Filename: "variables.tf",
+						Start:    hcl.Pos{Line: 2, Column: 1, Byte: 17},
+						End:      hcl.Pos{Line: 2, Column: 13, Byte: 29},
+					},
+				},
+			},
+			`attr = "foo-${local.foo}-bar"
+`,
+			hcl.Pos{Line: 1, Column: 17, Byte: 16},
+			&lang.HoverData{
+				Content: lang.Markdown("`local.foo`\n_string_"),
+				Range: hcl.Range{
+					Filename: "test.tf",
+					Start:    hcl.Pos{Line: 1, Column: 15, Byte: 14},
+					End:      hcl.Pos{Line: 1, Column: 24, Byte: 23},
+				},
+			},
+		},
+		{
+			"heredoc with reference",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.AnyExpression{
+						OfType: cty.String,
+					},
+				},
+			},
+			reference.Origins{
+				reference.LocalOrigin{
+					Addr: lang.Address{
+						lang.RootStep{Name: "local"},
+						lang.AttrStep{Name: "foo"},
+					},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 3, Column: 3, Byte: 19},
+						End:      hcl.Pos{Line: 3, Column: 12, Byte: 28},
+					},
+					Constraints: reference.OriginConstraints{
+						{
+							OfType: cty.String,
+						},
+					},
+				},
+			},
+			reference.Targets{
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "local"},
+						lang.AttrStep{Name: "foo"},
+					},
+					Type: cty.String,
+					RangePtr: &hcl.Range{
+						Filename: "variables.tf",
+						Start:    hcl.Pos{Line: 5, Column: 1, Byte: 34},
+						End:      hcl.Pos{Line: 5, Column: 13, Byte: 45},
+					},
+				},
+			},
+			`attr = <<EOT
+foo
+${local.foo}
+bar
+EOT
+`,
+			hcl.Pos{Line: 2, Column: 2, Byte: 14},
+			&lang.HoverData{
+				Content: lang.Markdown("_string_"),
+				Range: hcl.Range{
+					Filename: "test.tf",
+					Start:    hcl.Pos{Line: 2, Column: 1, Byte: 13},
+					End:      hcl.Pos{Line: 3, Column: 1, Byte: 17},
+				},
+			},
+		},
+	}
+
+	for i, tc := range testCases {
+		t.Run(fmt.Sprintf("%d-%s", i, tc.testName), func(t *testing.T) {
+			bodySchema := &schema.BodySchema{
+				Attributes: tc.attrSchema,
+			}
+
+			f, _ := hclsyntax.ParseConfig([]byte(tc.cfg), "test.tf", hcl.InitialPos)
+			d := testPathDecoder(t, &PathContext{
+				Schema: bodySchema,
+				Files: map[string]*hcl.File{
+					"test.tf": f,
+				},
+				ReferenceOrigins: tc.refOrigins,
+				ReferenceTargets: tc.refTargets,
 			})
 
 			ctx := context.Background()

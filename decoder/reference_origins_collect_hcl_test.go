@@ -162,7 +162,7 @@ attr3 = onestep`,
 						lang.RootStep{Name: "onestep"},
 					},
 					Constraints: reference.OriginConstraints{
-						{OfType: cty.DynamicPseudoType},
+						{OfType: cty.String},
 					},
 					Range: hcl.Range{
 						Filename: "test.tf",
@@ -183,7 +183,7 @@ attr3 = onestep`,
 						lang.RootStep{Name: "onestep"},
 					},
 					Constraints: reference.OriginConstraints{
-						{OfType: cty.DynamicPseudoType},
+						{OfType: cty.String},
 					},
 					Range: hcl.Range{
 						Filename: "test.tf",
@@ -206,7 +206,7 @@ attr3 = onestep`,
 						lang.AttrStep{Name: "bar"},
 					},
 					Constraints: reference.OriginConstraints{
-						{OfType: cty.DynamicPseudoType},
+						{OfType: cty.String},
 					},
 					Range: hcl.Range{
 						Filename: "test.tf",

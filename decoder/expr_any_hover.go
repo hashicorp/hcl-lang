@@ -96,7 +96,6 @@ func (a Any) HoverAtPos(ctx context.Context, pos hcl.Pos) *lang.HoverData {
 }
 
 func (a Any) hoverNonComplexExprAtPos(ctx context.Context, pos hcl.Pos) *lang.HoverData {
-	// TODO: Support TemplateExpr https://github.com/hashicorp/terraform-ls/issues/522
 	// TODO: Support splat expression https://github.com/hashicorp/terraform-ls/issues/526
 	// TODO: Support for-in-if expression https://github.com/hashicorp/terraform-ls/issues/527
 	// TODO: Support conditional expression https://github.com/hashicorp/terraform-ls/issues/528
@@ -104,6 +103,10 @@ func (a Any) hoverNonComplexExprAtPos(ctx context.Context, pos hcl.Pos) *lang.Ho
 	// TODO: Support relative traversals https://github.com/hashicorp/terraform-ls/issues/532
 
 	if hoverData, ok := a.hoverOperatorExprAtPos(ctx, pos); ok {
+		return hoverData
+	}
+
+	if hoverData, ok := a.hoverTemplateExprAtPos(ctx, pos); ok {
 		return hoverData
 	}
 
@@ -185,6 +188,37 @@ func (a Any) hoverOperatorExprAtPos(ctx context.Context, pos hcl.Pos) (*lang.Hov
 				OfType: opFuncParams[0].Type,
 			}
 			return newExpression(a.pathCtx, eType.Val, cons).HoverAtPos(ctx, pos), true
+		}
+
+		return nil, true
+	}
+
+	return nil, false
+}
+
+func (a Any) hoverTemplateExprAtPos(ctx context.Context, pos hcl.Pos) (*lang.HoverData, bool) {
+	switch eType := a.expr.(type) {
+	case *hclsyntax.TemplateExpr:
+		if eType.IsStringLiteral() {
+			return nil, false
+		}
+
+		for _, partExpr := range eType.Parts {
+			if partExpr.Range().ContainsPos(pos) {
+				cons := schema.AnyExpression{
+					OfType: cty.String,
+				}
+				return newExpression(a.pathCtx, partExpr, cons).HoverAtPos(ctx, pos), true
+			}
+		}
+
+		return nil, true
+	case *hclsyntax.TemplateWrapExpr:
+		if eType.Wrapped.Range().ContainsPos(pos) {
+			cons := schema.AnyExpression{
+				OfType: cty.String,
+			}
+			return newExpression(a.pathCtx, eType.Wrapped, cons).HoverAtPos(ctx, pos), true
 		}
 
 		return nil, true
