@@ -26,10 +26,7 @@ func (lt LiteralType) SemanticTokens(ctx context.Context) []lang.SemanticToken {
 	// even if there's no templating involved
 	if typ == cty.String {
 		expr, ok := lt.expr.(*hclsyntax.TemplateExpr)
-		if !ok {
-			return []lang.SemanticToken{}
-		}
-		if expr.IsStringLiteral() {
+		if ok && expr.IsStringLiteral() {
 			return []lang.SemanticToken{
 				{
 					Type:      lang.TokenString,
@@ -38,10 +35,10 @@ func (lt LiteralType) SemanticTokens(ctx context.Context) []lang.SemanticToken {
 				},
 			}
 		}
+		// We may however land here from within AnyExpression, in which case
+		// the embedded string is in fact LiteralValueExpr and it is handled below.
 
 		// TODO: consider reporting multiline/HEREDOC notation as a different token
-
-		return []lang.SemanticToken{}
 	}
 
 	if typ.IsPrimitiveType() {
@@ -68,6 +65,16 @@ func (lt LiteralType) SemanticTokens(ctx context.Context) []lang.SemanticToken {
 			return []lang.SemanticToken{
 				{
 					Type:      lang.TokenNumber,
+					Modifiers: lang.SemanticTokenModifiers{},
+					Range:     expr.Range(),
+				},
+			}
+		}
+
+		if typ == cty.String {
+			return []lang.SemanticToken{
+				{
+					Type:      lang.TokenString,
 					Modifiers: lang.SemanticTokenModifiers{},
 					Range:     expr.Range(),
 				},

@@ -195,7 +195,12 @@ func (a Any) semanticTokensForTemplateExpr(ctx context.Context) ([]lang.Semantic
 	switch eType := a.expr.(type) {
 	case *hclsyntax.TemplateExpr:
 		if eType.IsStringLiteral() {
-			return nil, false
+			cons := schema.LiteralType{
+				Type: cty.String,
+			}
+			expr := newExpression(a.pathCtx, eType, cons)
+			tokens = append(tokens, expr.SemanticTokens(ctx)...)
+			return tokens, true
 		}
 
 		for _, partExpr := range eType.Parts {
