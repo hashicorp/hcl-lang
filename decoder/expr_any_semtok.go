@@ -97,7 +97,6 @@ func (a Any) SemanticTokens(ctx context.Context) []lang.SemanticToken {
 func (a Any) semanticTokensForNonComplexExpr(ctx context.Context) []lang.SemanticToken {
 	// TODO: Support splat expression https://github.com/hashicorp/terraform-ls/issues/526
 	// TODO: Support for-in-if expression https://github.com/hashicorp/terraform-ls/issues/527
-	// TODO: Support conditional expression https://github.com/hashicorp/terraform-ls/issues/528
 	// TODO: Support complex index expressions https://github.com/hashicorp/terraform-ls/issues/531
 	// TODO: Support relative traversals https://github.com/hashicorp/terraform-ls/issues/532
 
@@ -106,6 +105,10 @@ func (a Any) semanticTokensForNonComplexExpr(ctx context.Context) []lang.Semanti
 	}
 
 	if tokens, ok := a.semanticTokensForTemplateExpr(ctx); ok {
+		return tokens
+	}
+
+	if tokens, ok := a.semanticTokensForConditionalExpr(ctx); ok {
 		return tokens
 	}
 

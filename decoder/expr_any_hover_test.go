@@ -464,13 +464,13 @@ TEXT
 			map[string]*schema.AttributeSchema{
 				"attr": {
 					Constraint: schema.AnyExpression{
-						OfType: cty.List(cty.String),
+						OfType: cty.List(cty.Number),
 					},
 				},
 			},
 			`attr = [
-  4223,
-  "foobar",
+  true,
+  12345678,
 ]`,
 			hcl.Pos{Line: 2, Column: 6, Byte: 14},
 			nil,
@@ -615,13 +615,13 @@ TEXT
 			map[string]*schema.AttributeSchema{
 				"attr": {
 					Constraint: schema.AnyExpression{
-						OfType: cty.Set(cty.String),
+						OfType: cty.Set(cty.Number),
 					},
 				},
 			},
 			`attr = [
-  42223,
-  "foobar",
+  false,
+  12345678,
 ]`,
 			hcl.Pos{Line: 2, Column: 6, Byte: 14},
 			nil,
@@ -1753,6 +1753,208 @@ EOT
 					Filename: "test.tf",
 					Start:    hcl.Pos{Line: 2, Column: 1, Byte: 13},
 					End:      hcl.Pos{Line: 3, Column: 1, Byte: 17},
+				},
+			},
+		},
+	}
+
+	for i, tc := range testCases {
+		t.Run(fmt.Sprintf("%d-%s", i, tc.testName), func(t *testing.T) {
+			bodySchema := &schema.BodySchema{
+				Attributes: tc.attrSchema,
+			}
+
+			f, _ := hclsyntax.ParseConfig([]byte(tc.cfg), "test.tf", hcl.InitialPos)
+			d := testPathDecoder(t, &PathContext{
+				Schema: bodySchema,
+				Files: map[string]*hcl.File{
+					"test.tf": f,
+				},
+				ReferenceOrigins: tc.refOrigins,
+				ReferenceTargets: tc.refTargets,
+			})
+
+			ctx := context.Background()
+			hoverData, err := d.HoverAtPos(ctx, "test.tf", tc.pos)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			if diff := cmp.Diff(tc.expectedHoverData, hoverData); diff != "" {
+				t.Fatalf("unexpected hover data: %s", diff)
+			}
+		})
+	}
+}
+
+func TestHoverAtPos_exprAny_conditional(t *testing.T) {
+	testCases := []struct {
+		testName          string
+		attrSchema        map[string]*schema.AttributeSchema
+		refOrigins        reference.Origins
+		refTargets        reference.Targets
+		cfg               string
+		pos               hcl.Pos
+		expectedHoverData *lang.HoverData
+	}{
+		{
+			"condition",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.AnyExpression{
+						OfType: cty.String,
+					},
+				},
+			},
+			reference.Origins{},
+			reference.Targets{},
+			`attr = true ? "bar" : "baz"
+`,
+			hcl.Pos{Line: 1, Column: 10, Byte: 9},
+			&lang.HoverData{
+				Content: lang.Markdown("_bool_"),
+				Range: hcl.Range{
+					Filename: "test.tf",
+					Start:    hcl.Pos{Line: 1, Column: 8, Byte: 7},
+					End:      hcl.Pos{Line: 1, Column: 12, Byte: 11},
+				},
+			},
+		},
+		{
+			"true",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.AnyExpression{
+						OfType: cty.String,
+					},
+				},
+			},
+			reference.Origins{},
+			reference.Targets{},
+			`attr = true ? 4223 : "baz"
+`,
+			hcl.Pos{Line: 1, Column: 17, Byte: 16},
+			&lang.HoverData{
+				Content: lang.Markdown("_number_"),
+				Range: hcl.Range{
+					Filename: "test.tf",
+					Start:    hcl.Pos{Line: 1, Column: 15, Byte: 14},
+					End:      hcl.Pos{Line: 1, Column: 19, Byte: 18},
+				},
+			},
+		},
+		{
+			"false",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.AnyExpression{
+						OfType: cty.String,
+					},
+				},
+			},
+			reference.Origins{},
+			reference.Targets{},
+			`attr = true ? 4223 : 5713
+`,
+			hcl.Pos{Line: 1, Column: 24, Byte: 23},
+			&lang.HoverData{
+				Content: lang.Markdown("_number_"),
+				Range: hcl.Range{
+					Filename: "test.tf",
+					Start:    hcl.Pos{Line: 1, Column: 22, Byte: 21},
+					End:      hcl.Pos{Line: 1, Column: 26, Byte: 25},
+				},
+			},
+		},
+		{
+			"condition in template",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.AnyExpression{
+						OfType: cty.String,
+					},
+				},
+			},
+			reference.Origins{},
+			reference.Targets{},
+			`attr = "x${true ? 4223 : 5713}"
+`,
+			hcl.Pos{Line: 1, Column: 14, Byte: 13},
+			&lang.HoverData{
+				Content: lang.Markdown("_bool_"),
+				Range: hcl.Range{
+					Filename: "test.tf",
+					Start:    hcl.Pos{Line: 1, Column: 12, Byte: 11},
+					End:      hcl.Pos{Line: 1, Column: 16, Byte: 15},
+				},
+			},
+		},
+		{
+			"condition as directive in template",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.AnyExpression{
+						OfType: cty.String,
+					},
+				},
+			},
+			reference.Origins{},
+			reference.Targets{},
+			`attr = "x%{if true}4223%{else}5713%{endif}"
+`,
+			hcl.Pos{Line: 1, Column: 17, Byte: 16},
+			&lang.HoverData{
+				Content: lang.Markdown("_bool_"),
+				Range: hcl.Range{
+					Filename: "test.tf",
+					Start:    hcl.Pos{Line: 1, Column: 15, Byte: 14},
+					End:      hcl.Pos{Line: 1, Column: 19, Byte: 18},
+				},
+			},
+		},
+		{
+			"condition as directive in template inside true",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.AnyExpression{
+						OfType: cty.String,
+					},
+				},
+			},
+			reference.Origins{},
+			reference.Targets{},
+			`attr = "x%{if true}4223%{else}5713%{endif}"
+`,
+			hcl.Pos{Line: 1, Column: 22, Byte: 21},
+			&lang.HoverData{
+				Content: lang.Markdown("_string_"),
+				Range: hcl.Range{
+					Filename: "test.tf",
+					Start:    hcl.Pos{Line: 1, Column: 20, Byte: 19},
+					End:      hcl.Pos{Line: 1, Column: 24, Byte: 23},
+				},
+			},
+		},
+		{
+			"condition as directive in template inside false",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.AnyExpression{
+						OfType: cty.String,
+					},
+				},
+			},
+			reference.Origins{},
+			reference.Targets{},
+			`attr = "x%{if true}4223%{else}5713%{endif}"
+`,
+			hcl.Pos{Line: 1, Column: 33, Byte: 32},
+			&lang.HoverData{
+				Content: lang.Markdown("_string_"),
+				Range: hcl.Range{
+					Filename: "test.tf",
+					Start:    hcl.Pos{Line: 1, Column: 31, Byte: 30},
+					End:      hcl.Pos{Line: 1, Column: 35, Byte: 34},
 				},
 			},
 		},

@@ -12,6 +12,7 @@ import (
 	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hclsyntax"
 	"github.com/zclconf/go-cty/cty"
+	"github.com/zclconf/go-cty/cty/convert"
 )
 
 func (lt LiteralType) HoverAtPos(ctx context.Context, pos hcl.Pos) *lang.HoverData {
@@ -44,7 +45,11 @@ func (lt LiteralType) HoverAtPos(ctx context.Context, pos hcl.Pos) *lang.HoverDa
 			return nil
 		}
 
-		if !lt.cons.Type.Equals(expr.Val.Type()) {
+		// While interpolation is not allowed/expected in LiteralType
+		// we still assume that expressions are convertible.
+		// This makes it easier to deal with a case where we land here
+		// from inside of AnyExpression which may be e.g. a TemplateExpr.
+		if _, err := convert.Convert(expr.Val, typ); err != nil {
 			return nil
 		}
 

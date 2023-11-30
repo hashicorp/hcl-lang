@@ -585,13 +585,13 @@ EOT
 			"map literal keys",
 			map[string]*schema.AttributeSchema{
 				"mapkey": {
-					Constraint: schema.LiteralType{Type: cty.Map(cty.String)},
+					Constraint: schema.LiteralType{Type: cty.Map(cty.Number)},
 				},
 			},
 			`mapkey = {
-  bla = "blablah"
-  nada = "yada"
-  wrong = 42
+  bla = 123456789
+  nada = 987654
+  wrong = true
 }
 `,
 			[]lang.SemanticToken{
@@ -629,8 +629,8 @@ EOT
 						},
 					},
 				},
-				{ // "blablah"
-					Type:      lang.TokenString,
+				{ // 123456789
+					Type:      lang.TokenNumber,
 					Modifiers: []lang.SemanticTokenModifier{},
 					Range: hcl.Range{
 						Filename: "test.tf",
@@ -663,8 +663,8 @@ EOT
 						},
 					},
 				},
-				{ // "yada"
-					Type:      lang.TokenString,
+				{ // 987654
+					Type:      lang.TokenNumber,
 					Modifiers: []lang.SemanticTokenModifier{},
 					Range: hcl.Range{
 						Filename: "test.tf",
@@ -705,14 +705,14 @@ EOT
 				"mapkey": {
 					Constraint: schema.Map{
 						Name: "special map",
-						Elem: schema.LiteralType{Type: cty.String},
+						Elem: schema.LiteralType{Type: cty.Number},
 					},
 				},
 			},
 			`mapkey = {
-  bla = "blablah"
-  nada = "yada"
-  wrong = 42
+  bla = 123456789
+  nada = 987654
+  wrong = true
 }
 `,
 			[]lang.SemanticToken{
@@ -750,8 +750,8 @@ EOT
 						},
 					},
 				},
-				{ // "blablah"
-					Type:      lang.TokenString,
+				{ // 123456789
+					Type:      lang.TokenNumber,
 					Modifiers: []lang.SemanticTokenModifier{},
 					Range: hcl.Range{
 						Filename: "test.tf",
@@ -784,8 +784,8 @@ EOT
 						},
 					},
 				},
-				{ // "yada"
-					Type:      lang.TokenString,
+				{ // 987654
+					Type:      lang.TokenNumber,
 					Modifiers: []lang.SemanticTokenModifier{},
 					Range: hcl.Range{
 						Filename: "test.tf",
@@ -906,11 +906,11 @@ EOT
 			map[string]*schema.AttributeSchema{
 				"attr": {
 					Constraint: schema.List{
-						Elem: schema.LiteralType{Type: cty.String},
+						Elem: schema.LiteralType{Type: cty.Number},
 					},
 				},
 			},
-			`attr = [ "one", 42, "two" ]
+			`attr = [ 12345, true, 42 ]
 `,
 			[]lang.SemanticToken{
 				{ // attr
@@ -930,8 +930,8 @@ EOT
 						},
 					},
 				},
-				{ // "one"
-					Type:      lang.TokenString,
+				{ // 12345
+					Type:      lang.TokenNumber,
 					Modifiers: []lang.SemanticTokenModifier{},
 					Range: hcl.Range{
 						Filename: "test.tf",
@@ -947,20 +947,20 @@ EOT
 						},
 					},
 				},
-				{ // "two"
-					Type:      lang.TokenString,
+				{ // 42
+					Type:      lang.TokenNumber,
 					Modifiers: []lang.SemanticTokenModifier{},
 					Range: hcl.Range{
 						Filename: "test.tf",
 						Start: hcl.Pos{
 							Line:   1,
-							Column: 21,
-							Byte:   20,
+							Column: 23,
+							Byte:   22,
 						},
 						End: hcl.Pos{
 							Line:   1,
-							Column: 26,
-							Byte:   25,
+							Column: 25,
+							Byte:   24,
 						},
 					},
 				},
@@ -971,11 +971,11 @@ EOT
 			map[string]*schema.AttributeSchema{
 				"attr": {
 					Constraint: schema.Set{
-						Elem: schema.LiteralType{Type: cty.String},
+						Elem: schema.LiteralType{Type: cty.Number},
 					},
 				},
 			},
-			`attr = [ "one", 42, "two" ]
+			`attr = [ 12345, true, 42 ]
 `,
 			[]lang.SemanticToken{
 				{ // attr
@@ -995,8 +995,8 @@ EOT
 						},
 					},
 				},
-				{ // "one"
-					Type:      lang.TokenString,
+				{ // 12345
+					Type:      lang.TokenNumber,
 					Modifiers: []lang.SemanticTokenModifier{},
 					Range: hcl.Range{
 						Filename: "test.tf",
@@ -1012,20 +1012,20 @@ EOT
 						},
 					},
 				},
-				{ // "two"
-					Type:      lang.TokenString,
+				{ // 42
+					Type:      lang.TokenNumber,
 					Modifiers: []lang.SemanticTokenModifier{},
 					Range: hcl.Range{
 						Filename: "test.tf",
 						Start: hcl.Pos{
 							Line:   1,
-							Column: 21,
-							Byte:   20,
+							Column: 23,
+							Byte:   22,
 						},
 						End: hcl.Pos{
 							Line:   1,
-							Column: 26,
-							Byte:   25,
+							Column: 25,
+							Byte:   24,
 						},
 					},
 				},
@@ -1164,10 +1164,10 @@ EOT
 			"tuple as list",
 			map[string]*schema.AttributeSchema{
 				"attr": {
-					Constraint: schema.LiteralType{Type: cty.List(cty.String)},
+					Constraint: schema.LiteralType{Type: cty.List(cty.Number)},
 				},
 			},
-			`attr = [ "one", 42, "two" ]
+			`attr = [ 12345, true, 42 ]
 `,
 			[]lang.SemanticToken{
 				{ // attr
@@ -1187,8 +1187,8 @@ EOT
 						},
 					},
 				},
-				{ // "one"
-					Type:      lang.TokenString,
+				{ // 12345
+					Type:      lang.TokenNumber,
 					Modifiers: []lang.SemanticTokenModifier{},
 					Range: hcl.Range{
 						Filename: "test.tf",
@@ -1204,20 +1204,20 @@ EOT
 						},
 					},
 				},
-				{ // "two"
-					Type:      lang.TokenString,
+				{ // 42
+					Type:      lang.TokenNumber,
 					Modifiers: []lang.SemanticTokenModifier{},
 					Range: hcl.Range{
 						Filename: "test.tf",
 						Start: hcl.Pos{
 							Line:   1,
-							Column: 21,
-							Byte:   20,
+							Column: 23,
+							Byte:   22,
 						},
 						End: hcl.Pos{
 							Line:   1,
-							Column: 26,
-							Byte:   25,
+							Column: 25,
+							Byte:   24,
 						},
 					},
 				},
@@ -1295,10 +1295,10 @@ EOT
 			"tuple as set",
 			map[string]*schema.AttributeSchema{
 				"attr": {
-					Constraint: schema.LiteralType{Type: cty.Set(cty.String)},
+					Constraint: schema.LiteralType{Type: cty.Set(cty.Number)},
 				},
 			},
-			`attr = [ "one", 42, "two" ]
+			`attr = [ 12345, true, 42 ]
 `,
 			[]lang.SemanticToken{
 				{ // attr
@@ -1318,8 +1318,8 @@ EOT
 						},
 					},
 				},
-				{ // "one"
-					Type:      lang.TokenString,
+				{ // 12345
+					Type:      lang.TokenNumber,
 					Modifiers: []lang.SemanticTokenModifier{},
 					Range: hcl.Range{
 						Filename: "test.tf",
@@ -1335,20 +1335,20 @@ EOT
 						},
 					},
 				},
-				{ // "two"
-					Type:      lang.TokenString,
+				{ // 42
+					Type:      lang.TokenNumber,
 					Modifiers: []lang.SemanticTokenModifier{},
 					Range: hcl.Range{
 						Filename: "test.tf",
 						Start: hcl.Pos{
 							Line:   1,
-							Column: 21,
-							Byte:   20,
+							Column: 23,
+							Byte:   22,
 						},
 						End: hcl.Pos{
 							Line:   1,
-							Column: 26,
-							Byte:   25,
+							Column: 25,
+							Byte:   24,
 						},
 					},
 				},

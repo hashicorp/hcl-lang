@@ -100,7 +100,6 @@ func (a Any) completeNonComplexExprAtPos(ctx context.Context, pos hcl.Pos) []lan
 
 	// TODO: Support splat expression https://github.com/hashicorp/terraform-ls/issues/526
 	// TODO: Support for-in-if expression https://github.com/hashicorp/terraform-ls/issues/527
-	// TODO: Support conditional expression https://github.com/hashicorp/terraform-ls/issues/528
 	// TODO: Support complex index expressions https://github.com/hashicorp/terraform-ls/issues/531
 	// TODO: Support relative traversals https://github.com/hashicorp/terraform-ls/issues/532
 
@@ -115,6 +114,12 @@ func (a Any) completeNonComplexExprAtPos(ctx context.Context, pos hcl.Pos) []lan
 		return candidates
 	}
 	candidates = append(candidates, templateCandidates...)
+
+	condCandidates, ok := a.completeConditionalExprAtPos(ctx, pos)
+	if !ok {
+		return candidates
+	}
+	candidates = append(candidates, condCandidates...)
 
 	ref := Reference{
 		expr:    a.expr,

@@ -303,13 +303,13 @@ TEXT
 			map[string]*schema.AttributeSchema{
 				"attr": {
 					Constraint: schema.LiteralType{
-						Type: cty.List(cty.String),
+						Type: cty.List(cty.Number),
 					},
 				},
 			},
 			`attr = [
-  4223,
-  "foobar",
+  true,
+  12345678,
 ]`,
 			hcl.Pos{Line: 2, Column: 6, Byte: 14},
 			nil,
@@ -454,13 +454,13 @@ TEXT
 			map[string]*schema.AttributeSchema{
 				"attr": {
 					Constraint: schema.LiteralType{
-						Type: cty.Set(cty.String),
+						Type: cty.Set(cty.Number),
 					},
 				},
 			},
 			`attr = [
-  42223,
-  "foobar",
+  false,
+  12345678,
 ]`,
 			hcl.Pos{Line: 2, Column: 6, Byte: 14},
 			nil,
