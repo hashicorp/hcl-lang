@@ -227,26 +227,3 @@ func (a Any) semanticTokensForTemplateExpr(ctx context.Context) ([]lang.Semantic
 
 	return tokens, false
 }
-
-func (a Any) semanticTokensForConditionalExpr(ctx context.Context) ([]lang.SemanticToken, bool) {
-	tokens := make([]lang.SemanticToken, 0)
-
-	switch eType := a.expr.(type) {
-	case *hclsyntax.ConditionalExpr:
-		tokens = append(tokens, newExpression(a.pathCtx, eType.Condition, schema.AnyExpression{
-			OfType: cty.Bool,
-		}).SemanticTokens(ctx)...)
-		tokens = append(tokens, newExpression(a.pathCtx, eType.TrueResult, schema.AnyExpression{
-			OfType:                  a.cons.OfType,
-			SkipLiteralComplexTypes: a.cons.SkipLiteralComplexTypes,
-		}).SemanticTokens(ctx)...)
-		tokens = append(tokens, newExpression(a.pathCtx, eType.FalseResult, schema.AnyExpression{
-			OfType:                  a.cons.OfType,
-			SkipLiteralComplexTypes: a.cons.SkipLiteralComplexTypes,
-		}).SemanticTokens(ctx)...)
-
-		return tokens, true
-	}
-
-	return tokens, false
-}

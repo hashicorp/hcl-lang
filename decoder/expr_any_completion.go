@@ -279,33 +279,3 @@ func (a Any) completeTemplateExprAtPos(ctx context.Context, pos hcl.Pos) ([]lang
 
 	return candidates, true
 }
-
-func (a Any) completeConditionalExprAtPos(ctx context.Context, pos hcl.Pos) ([]lang.Candidate, bool) {
-	candidates := make([]lang.Candidate, 0)
-
-	switch eType := a.expr.(type) {
-	case *hclsyntax.ConditionalExpr:
-		if eType.Condition.Range().ContainsPos(pos) || eType.Condition.Range().End.Byte == pos.Byte {
-			cons := schema.AnyExpression{
-				OfType: cty.Bool,
-			}
-			return newExpression(a.pathCtx, eType.Condition, cons).CompletionAtPos(ctx, pos), true
-		}
-		if eType.TrueResult.Range().ContainsPos(pos) || eType.TrueResult.Range().End.Byte == pos.Byte {
-			cons := schema.AnyExpression{
-				OfType: cty.DynamicPseudoType,
-			}
-			return newExpression(a.pathCtx, eType.TrueResult, cons).CompletionAtPos(ctx, pos), true
-		}
-		if eType.FalseResult.Range().ContainsPos(pos) || eType.FalseResult.Range().End.Byte == pos.Byte {
-			cons := schema.AnyExpression{
-				OfType: cty.DynamicPseudoType,
-			}
-			return newExpression(a.pathCtx, eType.FalseResult, cons).CompletionAtPos(ctx, pos), true
-		}
-
-		return candidates, false
-	}
-
-	return candidates, true
-}

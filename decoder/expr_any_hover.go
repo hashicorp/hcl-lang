@@ -229,29 +229,3 @@ func (a Any) hoverTemplateExprAtPos(ctx context.Context, pos hcl.Pos) (*lang.Hov
 
 	return nil, false
 }
-
-func (a Any) hoverConditionalExprAtPos(ctx context.Context, pos hcl.Pos) (*lang.HoverData, bool) {
-	switch eType := a.expr.(type) {
-	case *hclsyntax.ConditionalExpr:
-		if eType.Condition.Range().ContainsPos(pos) {
-			cons := schema.AnyExpression{
-				OfType: cty.Bool,
-			}
-			return newExpression(a.pathCtx, eType.Condition, cons).HoverAtPos(ctx, pos), true
-		}
-		if eType.TrueResult.Range().ContainsPos(pos) {
-			cons := schema.AnyExpression{
-				OfType: cty.DynamicPseudoType,
-			}
-			return newExpression(a.pathCtx, eType.TrueResult, cons).HoverAtPos(ctx, pos), true
-		}
-		if eType.FalseResult.Range().ContainsPos(pos) {
-			cons := schema.AnyExpression{
-				OfType: cty.DynamicPseudoType,
-			}
-			return newExpression(a.pathCtx, eType.FalseResult, cons).HoverAtPos(ctx, pos), true
-		}
-	}
-
-	return nil, false
-}
