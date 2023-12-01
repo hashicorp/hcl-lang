@@ -40,6 +40,7 @@ func (v MissingRequiredAttribute) Visit(ctx context.Context, node hclsyntax.Node
 					Summary:  fmt.Sprintf("Required attribute %q not specified", name),
 					Detail:   fmt.Sprintf("An attribute named %q is required here", name),
 					Subject:  body.SrcRange.Ptr(),
+					// TODO: Extra: Code + attribute schema
 				})
 			}
 		}

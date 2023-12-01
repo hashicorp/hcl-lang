@@ -26,6 +26,8 @@ type DecoderContext struct {
 	// which will be executed in the exact order they're declared
 	CodeLenses []lang.CodeLensFunc
 
+	CodeActions []lang.CodeActionImpl
+
 	// CompletionHooks represents a map of available hooks for completion.
 	// One can register new hooks by adding an entry to this map. Inside the
 	// attribute schema, one can refer to the hooks map key to enable the hook
