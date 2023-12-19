@@ -90,7 +90,7 @@ func TestSemanticTokens_exprTypeDeclaration(t *testing.T) {
 					},
 				},
 				{
-					Type:      lang.TokenTypeCapsule,
+					Type:      lang.TokenTypeComplex,
 					Modifiers: lang.SemanticTokenModifiers{},
 					Range: hcl.Range{
 						Filename: "test.tf",
@@ -128,7 +128,7 @@ func TestSemanticTokens_exprTypeDeclaration(t *testing.T) {
 					},
 				},
 				{
-					Type:      lang.TokenTypeCapsule,
+					Type:      lang.TokenTypeComplex,
 					Modifiers: lang.SemanticTokenModifiers{},
 					Range: hcl.Range{
 						Filename: "test.tf",
@@ -187,7 +187,7 @@ func TestSemanticTokens_exprTypeDeclaration(t *testing.T) {
 					},
 				},
 				{
-					Type:      lang.TokenTypeCapsule,
+					Type:      lang.TokenTypeComplex,
 					Modifiers: lang.SemanticTokenModifiers{},
 					Range: hcl.Range{
 						Filename: "test.tf",
@@ -258,7 +258,7 @@ func TestSemanticTokens_exprTypeDeclaration(t *testing.T) {
 					},
 				},
 				{
-					Type:      lang.TokenTypeCapsule,
+					Type:      lang.TokenTypeComplex,
 					Modifiers: lang.SemanticTokenModifiers{},
 					Range: hcl.Range{
 						Filename: "test.tf",
@@ -276,7 +276,7 @@ func TestSemanticTokens_exprTypeDeclaration(t *testing.T) {
 					},
 				},
 				{
-					Type:      lang.TokenTypeCapsule,
+					Type:      lang.TokenTypeComplex,
 					Modifiers: lang.SemanticTokenModifiers{},
 					Range: hcl.Range{
 						Filename: "test.tf",
@@ -303,7 +303,7 @@ func TestSemanticTokens_exprTypeDeclaration(t *testing.T) {
 					},
 				},
 				{
-					Type:      lang.TokenTypeCapsule,
+					Type:      lang.TokenTypeComplex,
 					Modifiers: lang.SemanticTokenModifiers{},
 					Range: hcl.Range{
 						Start:    hcl.Pos{Line: 3, Column: 9, Byte: 45},
@@ -339,7 +339,7 @@ func TestSemanticTokens_exprTypeDeclaration(t *testing.T) {
 					},
 				},
 				{
-					Type:      lang.TokenTypeCapsule,
+					Type:      lang.TokenTypeComplex,
 					Modifiers: lang.SemanticTokenModifiers{},
 					Range: hcl.Range{
 						Filename: "test.tf",

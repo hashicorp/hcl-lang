@@ -31,7 +31,7 @@ func (td TypeDeclaration) SemanticTokens(ctx context.Context) []lang.SemanticTok
 			tokens := make([]lang.SemanticToken, 0)
 
 			tokens = append(tokens, lang.SemanticToken{
-				Type:      lang.TokenTypeCapsule,
+				Type:      lang.TokenTypeComplex,
 				Modifiers: []lang.SemanticTokenModifier{},
 				Range:     eType.NameRange,
 			})
@@ -67,7 +67,7 @@ func (td TypeDeclaration) SemanticTokens(ctx context.Context) []lang.SemanticTok
 func (td TypeDeclaration) objectSemanticTokens(ctx context.Context, funcExpr *hclsyntax.FunctionCallExpr) []lang.SemanticToken {
 	tokens := make([]lang.SemanticToken, 0)
 	tokens = append(tokens, lang.SemanticToken{
-		Type:      lang.TokenTypeCapsule,
+		Type:      lang.TokenTypeComplex,
 		Modifiers: []lang.SemanticTokenModifier{},
 		Range:     funcExpr.NameRange,
 	})
@@ -107,7 +107,7 @@ func (td TypeDeclaration) objectSemanticTokens(ctx context.Context, funcExpr *hc
 func (td TypeDeclaration) tupleSemanticTokens(ctx context.Context, funcExpr *hclsyntax.FunctionCallExpr) []lang.SemanticToken {
 	tokens := make([]lang.SemanticToken, 0)
 	tokens = append(tokens, lang.SemanticToken{
-		Type:      lang.TokenTypeCapsule,
+		Type:      lang.TokenTypeComplex,
 		Modifiers: []lang.SemanticTokenModifier{},
 		Range:     funcExpr.NameRange,
 	})

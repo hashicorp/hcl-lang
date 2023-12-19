@@ -2161,7 +2161,7 @@ func TestLegacyDecoder_SemanticTokensInFile_typeDeclaration(t *testing.T) {
 					},
 				},
 				{
-					Type:      lang.TokenTypeCapsule,
+					Type:      lang.TokenTypeComplex,
 					Modifiers: []lang.SemanticTokenModifier{},
 					Range: hcl.Range{
 						Filename: "test.tf",
@@ -2253,7 +2253,7 @@ func TestLegacyDecoder_SemanticTokensInFile_typeDeclaration(t *testing.T) {
 					},
 				},
 				{
-					Type:      lang.TokenTypeCapsule,
+					Type:      lang.TokenTypeComplex,
 					Modifiers: []lang.SemanticTokenModifier{},
 					Range: hcl.Range{
 						Filename: "test.tf",

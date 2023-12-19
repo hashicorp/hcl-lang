@@ -256,7 +256,7 @@ func (d *PathDecoder) tokensForExpression(ctx context.Context, expr hclsyntax.Ex
 		_, ok := constraints.TypeDeclarationExpr()
 		if ok && isComplexTypeDeclaration(eType.Name) {
 			tokens = append(tokens, lang.SemanticToken{
-				Type:      lang.TokenTypeCapsule,
+				Type:      lang.TokenTypeComplex,
 				Modifiers: []lang.SemanticTokenModifier{},
 				Range:     eType.NameRange,
 			})
