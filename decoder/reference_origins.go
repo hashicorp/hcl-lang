@@ -33,19 +33,21 @@ func (d *Decoder) ReferenceOriginsTargetingPos(path lang.Path, file string, pos 
 	}
 
 	for _, target := range targets {
-		paths := d.pathReader.Paths(ctx)
-		for _, p := range paths {
-			pathCtx, err := d.pathReader.PathContext(p)
-			if err != nil {
-				continue
-			}
+		for _, languageID := range d.pathReader.LanguageIDs() {
+			paths := d.pathReader.Paths(ctx, languageID)
+			for _, p := range paths {
+				pathCtx, err := d.pathReader.PathContext(p)
+				if err != nil {
+					continue
+				}
 
-			rawOrigins := pathCtx.ReferenceOrigins.Match(p, target, path)
-			for _, origin := range rawOrigins {
-				origins = append(origins, ReferenceOrigin{
-					Path:  p,
-					Range: origin.OriginRange(),
-				})
+				rawOrigins := pathCtx.ReferenceOrigins.Match(p, target, path)
+				for _, origin := range rawOrigins {
+					origins = append(origins, ReferenceOrigin{
+						Path:  p,
+						Range: origin.OriginRange(),
+					})
+				}
 			}
 		}
 	}

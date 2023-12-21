@@ -56,17 +56,19 @@ func (d *PathDecoder) symbolsInFile(filename string) ([]Symbol, error) {
 func (d *Decoder) Symbols(ctx context.Context, query string) ([]Symbol, error) {
 	symbols := make([]Symbol, 0)
 
-	for _, path := range d.pathReader.Paths(ctx) {
-		pathDecoder, err := d.Path(path)
-		if err != nil {
-			continue
-		}
-		dirSymbols, err := pathDecoder.symbols(query)
-		if err != nil {
-			continue
-		}
+	for _, languageID := range d.pathReader.LanguageIDs() {
+		for _, path := range d.pathReader.Paths(ctx, languageID) {
+			pathDecoder, err := d.Path(path)
+			if err != nil {
+				continue
+			}
+			dirSymbols, err := pathDecoder.symbols(query)
+			if err != nil {
+				continue
+			}
 
-		symbols = append(symbols, dirSymbols...)
+			symbols = append(symbols, dirSymbols...)
+		}
 	}
 
 	return symbols, nil

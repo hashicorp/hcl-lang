@@ -11,7 +11,8 @@ import (
 )
 
 type PathReader interface {
-	Paths(ctx context.Context) []lang.Path
+	Paths(ctx context.Context, languageID string) []lang.Path
+	LanguageIDs() []string
 	PathContext(path lang.Path) (*PathContext, error)
 }
 
