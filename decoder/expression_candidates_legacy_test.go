@@ -1425,7 +1425,7 @@ func TestLegacyDecoder_CandidateAtPos_expressions(t *testing.T) {
 				},
 			})
 
-			candidates, err := d.CandidatesAtPos(ctx, "test.tf", tc.pos)
+			candidates, err := d.CompletionAtPos(ctx, "test.tf", tc.pos)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -2432,7 +2432,7 @@ another_block "meh" {
 
 			dirReader.paths[testDir].ReferenceTargets = append(dirReader.paths[testDir].ReferenceTargets, refTargets...)
 
-			candidates, err := d.CandidatesAtPos(ctx, "test.tf", tc.pos)
+			candidates, err := d.CompletionAtPos(ctx, "test.tf", tc.pos)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -2559,7 +2559,7 @@ variable "ccc" {}
 
 	dirReader.paths[testDir].ReferenceTargets = refTargets
 
-	candidates, err := d.CandidatesAtPos(ctx, "test2.tf", hcl.Pos{
+	candidates, err := d.CompletionAtPos(ctx, "test2.tf", hcl.Pos{
 		Line:   1,
 		Column: 9,
 		Byte:   8,
@@ -2784,7 +2784,7 @@ func TestLegacyDecoder_CandidateAtPos_expressions_Hooks(t *testing.T) {
 				d.decoderCtx.CompletionHooks[n] = h
 			}
 
-			candidates, err := d.CandidatesAtPos(ctx, "test.tf", tc.pos)
+			candidates, err := d.CompletionAtPos(ctx, "test.tf", tc.pos)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -2843,7 +2843,7 @@ func TestLegacyDecoder_CandidateAtPos_maxCandidates(t *testing.T) {
 		return candidates, nil
 	}
 
-	candidates, err := d.CandidatesAtPos(ctx, "test.tf", hcl.Pos{Line: 1, Column: 8, Byte: 7})
+	candidates, err := d.CompletionAtPos(ctx, "test.tf", hcl.Pos{Line: 1, Column: 8, Byte: 7})
 	if err != nil {
 		t.Fatal(err)
 	}

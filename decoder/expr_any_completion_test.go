@@ -808,7 +808,7 @@ func TestCompletionAtPos_exprAny_functions(t *testing.T) {
 			})
 
 			ctx := context.Background()
-			candidates, err := d.CandidatesAtPos(ctx, "test.tf", tc.pos)
+			candidates, err := d.CompletionAtPos(ctx, "test.tf", tc.pos)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -1093,7 +1093,7 @@ func TestCompletionAtPos_exprAny_combinedExpressions(t *testing.T) {
 			})
 
 			ctx := context.Background()
-			candidates, err := d.CandidatesAtPos(ctx, "test.tf", tc.pos)
+			candidates, err := d.CompletionAtPos(ctx, "test.tf", tc.pos)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -2366,7 +2366,7 @@ func TestCompletionAtPos_exprAny_literalTypes(t *testing.T) {
 			})
 
 			ctx := context.Background()
-			candidates, err := d.CandidatesAtPos(ctx, "test.tf", tc.pos)
+			candidates, err := d.CompletionAtPos(ctx, "test.tf", tc.pos)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -2658,7 +2658,7 @@ func TestCompletionAtPos_exprAny_references(t *testing.T) {
 			})
 
 			ctx := context.Background()
-			candidates, err := d.CandidatesAtPos(ctx, "test.tf", tc.pos)
+			candidates, err := d.CompletionAtPos(ctx, "test.tf", tc.pos)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -2815,7 +2815,7 @@ func TestCompletionAtPos_exprAny_skipComplex(t *testing.T) {
 			})
 
 			ctx := context.Background()
-			candidates, err := d.CandidatesAtPos(ctx, "test.tf", tc.pos)
+			candidates, err := d.CompletionAtPos(ctx, "test.tf", tc.pos)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -3414,7 +3414,7 @@ func TestCompletionAtPos_exprAny_operators(t *testing.T) {
 			})
 
 			ctx := context.Background()
-			candidates, err := d.CandidatesAtPos(ctx, "test.tf", tc.pos)
+			candidates, err := d.CompletionAtPos(ctx, "test.tf", tc.pos)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -4344,7 +4344,7 @@ EOT
 			})
 
 			ctx := context.Background()
-			candidates, err := d.CandidatesAtPos(ctx, "test.tf", tc.pos)
+			candidates, err := d.CompletionAtPos(ctx, "test.tf", tc.pos)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -4696,7 +4696,7 @@ func TestCompletionAtPos_exprAny_conditional(t *testing.T) {
 			})
 
 			ctx := context.Background()
-			candidates, err := d.CandidatesAtPos(ctx, "test.tf", tc.pos)
+			candidates, err := d.CompletionAtPos(ctx, "test.tf", tc.pos)
 			if err != nil {
 				t.Fatal(err)
 			}

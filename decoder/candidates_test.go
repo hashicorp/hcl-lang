@@ -20,7 +20,7 @@ import (
 	"github.com/zclconf/go-cty/cty"
 )
 
-func TestDecoder_CandidatesAtPos_noSchema(t *testing.T) {
+func TestDecoder_CompletionAtPos_noSchema(t *testing.T) {
 	ctx := context.Background()
 	f, pDiags := hclsyntax.ParseConfig(testConfig, "test.tf", hcl.InitialPos)
 	if len(pDiags) > 0 {
@@ -33,14 +33,14 @@ func TestDecoder_CandidatesAtPos_noSchema(t *testing.T) {
 		},
 	})
 
-	_, err := d.CandidatesAtPos(ctx, "test.tf", hcl.InitialPos)
+	_, err := d.CompletionAtPos(ctx, "test.tf", hcl.InitialPos)
 	noSchemaErr := &NoSchemaError{}
 	if !errors.As(err, &noSchemaErr) {
 		t.Fatal("expected NoSchemaError for no schema")
 	}
 }
 
-func TestDecoder_CandidatesAtPos_emptyBody(t *testing.T) {
+func TestDecoder_CompletionAtPos_emptyBody(t *testing.T) {
 	ctx := context.Background()
 	f := &hcl.File{
 		Body: hcl.EmptyBody(),
@@ -52,14 +52,14 @@ func TestDecoder_CandidatesAtPos_emptyBody(t *testing.T) {
 		},
 	})
 
-	_, err := d.CandidatesAtPos(ctx, "test.tf", hcl.InitialPos)
+	_, err := d.CompletionAtPos(ctx, "test.tf", hcl.InitialPos)
 	unknownFormatErr := &UnknownFileFormatError{}
 	if !errors.As(err, &unknownFormatErr) {
 		t.Fatal("expected UnknownFileFormatError for empty body")
 	}
 }
 
-func TestDecoder_CandidatesAtPos_json(t *testing.T) {
+func TestDecoder_CompletionAtPos_json(t *testing.T) {
 	ctx := context.Background()
 	f, pDiags := json.Parse([]byte(`{
 	"customblock": {
@@ -76,14 +76,14 @@ func TestDecoder_CandidatesAtPos_json(t *testing.T) {
 		},
 	})
 
-	_, err := d.CandidatesAtPos(ctx, "test.tf.json", hcl.InitialPos)
+	_, err := d.CompletionAtPos(ctx, "test.tf.json", hcl.InitialPos)
 	unknownFormatErr := &UnknownFileFormatError{}
 	if !errors.As(err, &unknownFormatErr) {
 		t.Fatal("expected UnknownFileFormatError for JSON body")
 	}
 }
 
-func TestDecoder_CandidatesAtPos_unknownBlock(t *testing.T) {
+func TestDecoder_CompletionAtPos_unknownBlock(t *testing.T) {
 	ctx := context.Background()
 	resourceLabelSchema := []*schema.LabelSchema{
 		{Name: "type"},
@@ -118,7 +118,7 @@ func TestDecoder_CandidatesAtPos_unknownBlock(t *testing.T) {
 		},
 	})
 
-	_, err := d.CandidatesAtPos(ctx, "test.tf", hcl.Pos{
+	_, err := d.CompletionAtPos(ctx, "test.tf", hcl.Pos{
 		Line:   2,
 		Column: 1,
 		Byte:   23,
@@ -131,7 +131,7 @@ func TestDecoder_CandidatesAtPos_unknownBlock(t *testing.T) {
 	}
 }
 
-func TestDecoder_CandidatesAtPos_nilBodySchema(t *testing.T) {
+func TestDecoder_CompletionAtPos_nilBodySchema(t *testing.T) {
 	ctx := context.Background()
 	testCases := []struct {
 		name               string
@@ -286,7 +286,7 @@ func TestDecoder_CandidatesAtPos_nilBodySchema(t *testing.T) {
 				},
 			})
 
-			candidates, err := d.CandidatesAtPos(ctx, "test.tf", tc.pos)
+			candidates, err := d.CompletionAtPos(ctx, "test.tf", tc.pos)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -298,7 +298,7 @@ func TestDecoder_CandidatesAtPos_nilBodySchema(t *testing.T) {
 	}
 }
 
-func TestDecoder_CandidatesAtPos_prefixNearEOF(t *testing.T) {
+func TestDecoder_CompletionAtPos_prefixNearEOF(t *testing.T) {
 	ctx := context.Background()
 	resourceLabelSchema := []*schema.LabelSchema{
 		{Name: "type"},
@@ -327,7 +327,7 @@ func TestDecoder_CandidatesAtPos_prefixNearEOF(t *testing.T) {
 		},
 	})
 
-	candidates, err := d.CandidatesAtPos(ctx, "test.tf", hcl.Pos{
+	candidates, err := d.CompletionAtPos(ctx, "test.tf", hcl.Pos{
 		Line:   1,
 		Column: 4,
 		Byte:   3,
@@ -364,7 +364,7 @@ func TestDecoder_CandidatesAtPos_prefixNearEOF(t *testing.T) {
 	}
 }
 
-func TestDecoder_CandidatesAtPos_invalidBlockPositions(t *testing.T) {
+func TestDecoder_CompletionAtPos_invalidBlockPositions(t *testing.T) {
 	ctx := context.Background()
 	resourceLabelSchema := []*schema.LabelSchema{
 		{Name: "type"},
@@ -430,7 +430,7 @@ func TestDecoder_CandidatesAtPos_invalidBlockPositions(t *testing.T) {
 
 	for i, tc := range testCases {
 		t.Run(fmt.Sprintf("%d-%s", i, tc.name), func(t *testing.T) {
-			_, err := d.CandidatesAtPos(ctx, "test.tf", tc.pos)
+			_, err := d.CompletionAtPos(ctx, "test.tf", tc.pos)
 			if err == nil {
 				t.Fatal("expected error")
 			}
@@ -441,7 +441,7 @@ func TestDecoder_CandidatesAtPos_invalidBlockPositions(t *testing.T) {
 	}
 }
 
-func TestDecoder_CandidatesAtPos_rightHandSide(t *testing.T) {
+func TestDecoder_CompletionAtPos_rightHandSide(t *testing.T) {
 	ctx := context.Background()
 	resourceLabelSchema := []*schema.LabelSchema{
 		{Name: "type"},
@@ -474,7 +474,7 @@ func TestDecoder_CandidatesAtPos_rightHandSide(t *testing.T) {
 		},
 	})
 
-	candidates, err := d.CandidatesAtPos(ctx, "test.tf", hcl.Pos{
+	candidates, err := d.CompletionAtPos(ctx, "test.tf", hcl.Pos{
 		Line:   2,
 		Column: 13,
 		Byte:   28,
@@ -488,7 +488,7 @@ func TestDecoder_CandidatesAtPos_rightHandSide(t *testing.T) {
 	}
 }
 
-func TestDecoder_CandidatesAtPos_rightHandSideInString(t *testing.T) {
+func TestDecoder_CompletionAtPos_rightHandSideInString(t *testing.T) {
 	ctx := context.Background()
 	resourceLabelSchema := []*schema.LabelSchema{
 		{Name: "type"},
@@ -521,7 +521,7 @@ func TestDecoder_CandidatesAtPos_rightHandSideInString(t *testing.T) {
 		},
 	})
 
-	candidates, err := d.CandidatesAtPos(ctx, "test.tf", hcl.Pos{
+	candidates, err := d.CompletionAtPos(ctx, "test.tf", hcl.Pos{
 		Line:   2,
 		Column: 15,
 		Byte:   30,
@@ -535,7 +535,7 @@ func TestDecoder_CandidatesAtPos_rightHandSideInString(t *testing.T) {
 	}
 }
 
-func TestDecoder_CandidatesAtPos_endOfLabel(t *testing.T) {
+func TestDecoder_CompletionAtPos_endOfLabel(t *testing.T) {
 	ctx := context.Background()
 	blockSchema := &schema.BlockSchema{
 		Labels: []*schema.LabelSchema{
@@ -583,7 +583,7 @@ func TestDecoder_CandidatesAtPos_endOfLabel(t *testing.T) {
 		},
 	})
 
-	candidates, err := d.CandidatesAtPos(ctx, "test.tf", hcl.Pos{
+	candidates, err := d.CompletionAtPos(ctx, "test.tf", hcl.Pos{
 		Line:   1,
 		Column: 12,
 		Byte:   11,
@@ -640,7 +640,7 @@ func TestDecoder_CandidatesAtPos_endOfLabel(t *testing.T) {
 	}
 }
 
-func TestDecoder_CandidatesAtPos_nonCompletableLabel(t *testing.T) {
+func TestDecoder_CompletionAtPos_nonCompletableLabel(t *testing.T) {
 	ctx := context.Background()
 	blockSchema := &schema.BlockSchema{
 		Labels: []*schema.LabelSchema{
@@ -677,7 +677,7 @@ func TestDecoder_CandidatesAtPos_nonCompletableLabel(t *testing.T) {
 		},
 	})
 
-	candidates, err := d.CandidatesAtPos(ctx, "test.tf", hcl.Pos{
+	candidates, err := d.CompletionAtPos(ctx, "test.tf", hcl.Pos{
 		Line:   1,
 		Column: 10,
 		Byte:   9,
@@ -691,7 +691,7 @@ func TestDecoder_CandidatesAtPos_nonCompletableLabel(t *testing.T) {
 	}
 }
 
-func TestDecoder_CandidatesAtPos_zeroByteContent(t *testing.T) {
+func TestDecoder_CompletionAtPos_zeroByteContent(t *testing.T) {
 	ctx := context.Background()
 	resourceLabelSchema := []*schema.LabelSchema{
 		{Name: "type", IsDepKey: true, Completable: true},
@@ -723,7 +723,7 @@ func TestDecoder_CandidatesAtPos_zeroByteContent(t *testing.T) {
 		},
 	})
 
-	candidates, err := d.CandidatesAtPos(ctx, "test.tf", hcl.InitialPos)
+	candidates, err := d.CompletionAtPos(ctx, "test.tf", hcl.InitialPos)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -749,7 +749,7 @@ func TestDecoder_CandidatesAtPos_zeroByteContent(t *testing.T) {
 	}
 }
 
-func TestDecoder_CandidatesAtPos_endOfFilePos(t *testing.T) {
+func TestDecoder_CompletionAtPos_endOfFilePos(t *testing.T) {
 	ctx := context.Background()
 	resourceLabelSchema := []*schema.LabelSchema{
 		{Name: "type", IsDepKey: true, Completable: true},
@@ -786,7 +786,7 @@ func TestDecoder_CandidatesAtPos_endOfFilePos(t *testing.T) {
 		},
 	})
 
-	candidates, err := d.CandidatesAtPos(ctx, "test.tf", hcl.Pos{Line: 4, Column: 1, Byte: 52})
+	candidates, err := d.CompletionAtPos(ctx, "test.tf", hcl.Pos{Line: 4, Column: 1, Byte: 52})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -815,7 +815,7 @@ func TestDecoder_CandidatesAtPos_endOfFilePos(t *testing.T) {
 	}
 }
 
-func TestDecoder_CandidatesAtPos_emptyLabel(t *testing.T) {
+func TestDecoder_CompletionAtPos_emptyLabel(t *testing.T) {
 	ctx := context.Background()
 	resourceLabelSchema := []*schema.LabelSchema{
 		{Name: "type", IsDepKey: true, Completable: true},
@@ -874,7 +874,7 @@ func TestDecoder_CandidatesAtPos_emptyLabel(t *testing.T) {
 		},
 	})
 
-	candidates, err := d.CandidatesAtPos(ctx, "test.tf", hcl.Pos{Line: 1, Column: 11, Byte: 10})
+	candidates, err := d.CompletionAtPos(ctx, "test.tf", hcl.Pos{Line: 1, Column: 11, Byte: 10})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -911,7 +911,7 @@ func TestDecoder_CandidatesAtPos_emptyLabel(t *testing.T) {
 	}
 }
 
-func TestDecoder_CandidatesAtPos_emptyLabel_duplicateDepKeys(t *testing.T) {
+func TestDecoder_CompletionAtPos_emptyLabel_duplicateDepKeys(t *testing.T) {
 	ctx := context.Background()
 	resourceLabelSchema := []*schema.LabelSchema{
 		{Name: "type", IsDepKey: true, Completable: true},
@@ -981,7 +981,7 @@ func TestDecoder_CandidatesAtPos_emptyLabel_duplicateDepKeys(t *testing.T) {
 		},
 	})
 
-	candidates, err := d.CandidatesAtPos(ctx, "test.tf", hcl.Pos{Line: 1, Column: 11, Byte: 10})
+	candidates, err := d.CompletionAtPos(ctx, "test.tf", hcl.Pos{Line: 1, Column: 11, Byte: 10})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1005,7 +1005,7 @@ func TestDecoder_CandidatesAtPos_emptyLabel_duplicateDepKeys(t *testing.T) {
 	}
 }
 
-func TestDecoder_CandidatesAtPos_basic(t *testing.T) {
+func TestDecoder_CompletionAtPos_basic(t *testing.T) {
 	ctx := context.Background()
 	resourceLabelSchema := []*schema.LabelSchema{
 		{Name: "type", IsDepKey: true, Completable: true},
@@ -1311,7 +1311,7 @@ resource "random_resource" "test" {
 
 	for i, tc := range testCases {
 		t.Run(fmt.Sprintf("%d-%s", i, tc.name), func(t *testing.T) {
-			candidates, err := d.CandidatesAtPos(ctx, "test.tf", tc.pos)
+			candidates, err := d.CompletionAtPos(ctx, "test.tf", tc.pos)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -1325,7 +1325,7 @@ resource "random_resource" "test" {
 	}
 }
 
-func TestDecoder_CandidatesAtPos_AnyAttribute(t *testing.T) {
+func TestDecoder_CompletionAtPos_AnyAttribute(t *testing.T) {
 	ctx := context.Background()
 	providersSchema := &schema.BlockSchema{
 		Body: &schema.BodySchema{
@@ -1365,7 +1365,7 @@ func TestDecoder_CandidatesAtPos_AnyAttribute(t *testing.T) {
 	d.PrefillRequiredFields = true
 
 	pos := hcl.Pos{Line: 2, Column: 1, Byte: 21}
-	candidates, err := d.CandidatesAtPos(ctx, "test.tf", pos)
+	candidates, err := d.CompletionAtPos(ctx, "test.tf", pos)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1392,7 +1392,7 @@ func TestDecoder_CandidatesAtPos_AnyAttribute(t *testing.T) {
 	}
 }
 
-func TestDecoder_CandidatesAtPos_multipleTypes(t *testing.T) {
+func TestDecoder_CompletionAtPos_multipleTypes(t *testing.T) {
 	ctx := context.Background()
 	resourceLabelSchema := []*schema.LabelSchema{
 		{Name: "type", IsDepKey: true, Completable: true},
@@ -1438,7 +1438,7 @@ func TestDecoder_CandidatesAtPos_multipleTypes(t *testing.T) {
 	})
 
 	pos := hcl.Pos{Line: 2, Column: 1, Byte: 38}
-	candidates, err := d.CandidatesAtPos(ctx, "test.tf", pos)
+	candidates, err := d.CompletionAtPos(ctx, "test.tf", pos)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1465,7 +1465,7 @@ func TestDecoder_CandidatesAtPos_multipleTypes(t *testing.T) {
 	}
 }
 
-func TestDecoder_CandidatesAtPos_incompleteAttrOrBlock(t *testing.T) {
+func TestDecoder_CompletionAtPos_incompleteAttrOrBlock(t *testing.T) {
 	ctx := context.Background()
 	resourceLabelSchema := []*schema.LabelSchema{
 		{Name: "type"},
@@ -1554,7 +1554,7 @@ resource "any" "ref" {
 				},
 			})
 
-			candidates, err := d.CandidatesAtPos(ctx, "test.tf", tc.pos)
+			candidates, err := d.CompletionAtPos(ctx, "test.tf", tc.pos)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -1568,7 +1568,7 @@ resource "any" "ref" {
 	}
 }
 
-func TestDecoder_CandidatesAtPos_incompleteLabel(t *testing.T) {
+func TestDecoder_CompletionAtPos_incompleteLabel(t *testing.T) {
 	ctx := context.Background()
 	resourceLabelSchema := []*schema.LabelSchema{
 		{Name: "type"},
@@ -1672,7 +1672,7 @@ resource "any" "ref" {
 				},
 			})
 
-			candidates, err := d.CandidatesAtPos(ctx, "test.tf", tc.pos)
+			candidates, err := d.CompletionAtPos(ctx, "test.tf", tc.pos)
 			if err != nil {
 				t.Fatal(err)
 			}

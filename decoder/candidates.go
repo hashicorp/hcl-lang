@@ -14,11 +14,11 @@ import (
 	"github.com/hashicorp/hcl/v2/hclsyntax"
 )
 
-// CandidatesAtPos returns completion candidates for a given position in a file
+// CompletionAtPos returns completion candidates for a given position in a file
 //
 // Schema is required in order to return any candidates and method will return
 // error if there isn't one.
-func (d *PathDecoder) CandidatesAtPos(ctx context.Context, filename string, pos hcl.Pos) (lang.Candidates, error) {
+func (d *PathDecoder) CompletionAtPos(ctx context.Context, filename string, pos hcl.Pos) (lang.Candidates, error) {
 	f, err := d.fileByName(filename)
 	if err != nil {
 		return lang.ZeroCandidates(), err
@@ -44,10 +44,10 @@ func (d *PathDecoder) CandidatesAtPos(ctx context.Context, filename string, pos 
 
 	ctx = schema.WithPrefillRequiredFields(ctx, d.PrefillRequiredFields)
 
-	return d.candidatesAtPos(ctx, rootBody, outerBodyRng, d.pathCtx.Schema, pos)
+	return d.completionAtPos(ctx, rootBody, outerBodyRng, d.pathCtx.Schema, pos)
 }
 
-func (d *PathDecoder) candidatesAtPos(ctx context.Context, body *hclsyntax.Body, outerBodyRng hcl.Range, bodySchema *schema.BodySchema, pos hcl.Pos) (lang.Candidates, error) {
+func (d *PathDecoder) completionAtPos(ctx context.Context, body *hclsyntax.Body, outerBodyRng hcl.Range, bodySchema *schema.BodySchema, pos hcl.Pos) (lang.Candidates, error) {
 	if bodySchema == nil {
 		return lang.ZeroCandidates(), nil
 	}
@@ -144,7 +144,7 @@ func (d *PathDecoder) candidatesAtPos(ctx context.Context, body *hclsyntax.Body,
 
 			if block.Body != nil && block.Body.Range().ContainsPos(pos) {
 				mergedSchema, _ := schemahelper.MergeBlockBodySchemas(block.AsHCLBlock(), blockSchema)
-				return d.candidatesAtPos(ctx, block.Body, outerBodyRng, mergedSchema, pos)
+				return d.completionAtPos(ctx, block.Body, outerBodyRng, mergedSchema, pos)
 			}
 		}
 	}
