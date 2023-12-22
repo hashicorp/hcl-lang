@@ -13,8 +13,6 @@ import (
 	"github.com/hashicorp/hcl-lang/reference"
 	"github.com/hashicorp/hcl-lang/schema"
 	"github.com/hashicorp/hcl/v2"
-	"github.com/hashicorp/hcl/v2/hclsyntax"
-	"github.com/zclconf/go-cty/cty"
 )
 
 func (d *Decoder) ReferenceOriginsTargetingPos(path lang.Path, file string, pos hcl.Pos) ReferenceOrigins {
@@ -175,13 +173,9 @@ func (d *PathDecoder) referenceOriginsInBody(body hcl.Body, bodySchema *schema.B
 		if bodySchema.Extensions != nil && bodySchema.Extensions.SelfRefs {
 			allowSelfRefs = true
 		}
-		if aSchema.Constraint != nil {
-			expr := d.newExpression(attr.Expr, aSchema.Constraint)
-			if eType, ok := expr.(ReferenceOriginsExpression); ok {
-				origins = append(origins, eType.ReferenceOrigins(ctx, allowSelfRefs)...)
-			}
-		} else {
-			origins = append(origins, d.legacyFindOriginsInExpression(attr.Expr, aSchema.Expr, allowSelfRefs)...)
+		expr := d.newExpression(attr.Expr, aSchema.Constraint)
+		if eType, ok := expr.(ReferenceOriginsExpression); ok {
+			origins = append(origins, eType.ReferenceOrigins(ctx, allowSelfRefs)...)
 		}
 	}
 
@@ -201,101 +195,4 @@ func (d *PathDecoder) referenceOriginsInBody(body hcl.Body, bodySchema *schema.B
 	}
 
 	return origins, impliedOrigins
-}
-
-func (d *PathDecoder) legacyFindOriginsInExpression(expr hcl.Expression, ec schema.ExprConstraints, allowSelfRefs bool) reference.Origins {
-	origins := make(reference.Origins, 0)
-
-	switch eType := expr.(type) {
-	case *hclsyntax.TupleConsExpr:
-		le, ok := ExprConstraints(ec).ListExpr()
-		if ok {
-			for _, elemExpr := range eType.ExprList() {
-				origins = append(origins, d.legacyFindOriginsInExpression(elemExpr, le.Elem, allowSelfRefs)...)
-			}
-			break
-		}
-
-		se, ok := ExprConstraints(ec).SetExpr()
-		if ok {
-			for _, elemExpr := range eType.ExprList() {
-				origins = append(origins, d.legacyFindOriginsInExpression(elemExpr, se.Elem, allowSelfRefs)...)
-			}
-			break
-		}
-
-		tue, ok := ExprConstraints(ec).TupleExpr()
-		if ok {
-			for i, elemExpr := range eType.ExprList() {
-				if len(tue.Elems) < i+1 {
-					break
-				}
-				origins = append(origins, d.legacyFindOriginsInExpression(elemExpr, tue.Elems[i], allowSelfRefs)...)
-			}
-		}
-	case *hclsyntax.ObjectConsExpr:
-		oe, ok := ExprConstraints(ec).ObjectExpr()
-		if ok {
-			for _, item := range eType.Items {
-				key, _ := item.KeyExpr.Value(nil)
-				if key.IsNull() || !key.IsWhollyKnown() || key.Type() != cty.String {
-					// skip items keys that can't be interpolated
-					// without further context
-					continue
-				}
-
-				attr, ok := oe.Attributes[key.AsString()]
-				if !ok {
-					// skip unknown attribute
-					continue
-				}
-
-				origins = append(origins, d.legacyFindOriginsInExpression(item.ValueExpr, attr.Expr, allowSelfRefs)...)
-			}
-		}
-
-		me, ok := ExprConstraints(ec).MapExpr()
-		if ok {
-			for _, item := range eType.Items {
-				origins = append(origins, d.legacyFindOriginsInExpression(item.ValueExpr, me.Elem, allowSelfRefs)...)
-			}
-		}
-	case *hclsyntax.AnonSymbolExpr,
-		*hclsyntax.BinaryOpExpr,
-		*hclsyntax.ConditionalExpr,
-		*hclsyntax.ForExpr,
-		*hclsyntax.FunctionCallExpr,
-		*hclsyntax.IndexExpr,
-		*hclsyntax.ParenthesesExpr,
-		*hclsyntax.RelativeTraversalExpr,
-		*hclsyntax.ScopeTraversalExpr,
-		*hclsyntax.SplatExpr,
-		*hclsyntax.TemplateExpr,
-		*hclsyntax.TemplateJoinExpr,
-		*hclsyntax.TemplateWrapExpr,
-		*hclsyntax.UnaryOpExpr:
-
-		// Constraints detected here may be inaccurate, but close enough
-		// to be more useful for relevant completion than no constraints.
-		// TODO: Review this when we support all expression types and nesting
-		// see https://github.com/hashicorp/terraform-ls/issues/496
-		tes, ok := ExprConstraints(ec).TraversalExprs()
-		if ok {
-			origins = append(origins, reference.LegacyTraversalsToLocalOrigins(expr.Variables(), tes, allowSelfRefs)...)
-		}
-	case *hclsyntax.LiteralValueExpr:
-		// String constant may also be a traversal in some cases, but currently not recognized
-		// TODO: https://github.com/hashicorp/terraform-ls/issues/674
-	default:
-		// Given that all hclsyntax.* expressions are listed above
-		// this should only apply to (unexported) json.* expressions
-		// for which we return no constraints as upstream doesn't provide
-		// any way to map the schema to individual traversals.
-		// This may result in less accurate decoding where even origins
-		// which do not actually conform to the constraints are recognized.
-		// TODO: https://github.com/hashicorp/terraform-ls/issues/675
-		origins = append(origins, reference.LegacyTraversalsToLocalOrigins(expr.Variables(), schema.TraversalExprs{}, allowSelfRefs)...)
-	}
-
-	return origins
 }
