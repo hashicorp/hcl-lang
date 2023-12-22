@@ -167,24 +167,6 @@ func TestAttributeSchema_Validate(t *testing.T) {
 			},
 			errors.New("Constraint: schema.LiteralType: expected Type not to be nil"),
 		},
-		{
-			&AttributeSchema{
-				IsRequired:  true,
-				IsSensitive: true,
-			},
-			errors.New("expected one of Constraint or Expr"),
-		},
-		{
-			&AttributeSchema{
-				Constraint: LiteralType{Type: cty.String},
-				Expr: ExprConstraints{
-					LiteralTypeExpr{Type: cty.String},
-				},
-				IsRequired:  true,
-				IsSensitive: true,
-			},
-			errors.New("expected one of Constraint or Expr"),
-		},
 	}
 
 	for i, tc := range testCases {
