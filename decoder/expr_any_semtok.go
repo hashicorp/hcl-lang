@@ -191,39 +191,3 @@ func (a Any) semanticTokensForOperatorExpr(ctx context.Context) ([]lang.Semantic
 
 	return tokens, false
 }
-
-func (a Any) semanticTokensForTemplateExpr(ctx context.Context) ([]lang.SemanticToken, bool) {
-	tokens := make([]lang.SemanticToken, 0)
-
-	switch eType := a.expr.(type) {
-	case *hclsyntax.TemplateExpr:
-		if eType.IsStringLiteral() {
-			cons := schema.LiteralType{
-				Type: cty.String,
-			}
-			expr := newExpression(a.pathCtx, eType, cons)
-			tokens = append(tokens, expr.SemanticTokens(ctx)...)
-			return tokens, true
-		}
-
-		for _, partExpr := range eType.Parts {
-			cons := schema.AnyExpression{
-				OfType: cty.String,
-			}
-			expr := newExpression(a.pathCtx, partExpr, cons)
-			tokens = append(tokens, expr.SemanticTokens(ctx)...)
-		}
-
-		return tokens, true
-	case *hclsyntax.TemplateWrapExpr:
-		cons := schema.AnyExpression{
-			OfType: cty.String,
-		}
-		expr := newExpression(a.pathCtx, eType.Wrapped, cons)
-		tokens = append(tokens, expr.SemanticTokens(ctx)...)
-
-		return tokens, true
-	}
-
-	return tokens, false
-}

@@ -198,34 +198,3 @@ func (a Any) hoverOperatorExprAtPos(ctx context.Context, pos hcl.Pos) (*lang.Hov
 
 	return nil, false
 }
-
-func (a Any) hoverTemplateExprAtPos(ctx context.Context, pos hcl.Pos) (*lang.HoverData, bool) {
-	switch eType := a.expr.(type) {
-	case *hclsyntax.TemplateExpr:
-		if eType.IsStringLiteral() {
-			return nil, false
-		}
-
-		for _, partExpr := range eType.Parts {
-			if partExpr.Range().ContainsPos(pos) {
-				cons := schema.AnyExpression{
-					OfType: cty.String,
-				}
-				return newExpression(a.pathCtx, partExpr, cons).HoverAtPos(ctx, pos), true
-			}
-		}
-
-		return nil, true
-	case *hclsyntax.TemplateWrapExpr:
-		if eType.Wrapped.Range().ContainsPos(pos) {
-			cons := schema.AnyExpression{
-				OfType: cty.String,
-			}
-			return newExpression(a.pathCtx, eType.Wrapped, cons).HoverAtPos(ctx, pos), true
-		}
-
-		return nil, true
-	}
-
-	return nil, false
-}
