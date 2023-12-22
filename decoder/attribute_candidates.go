@@ -18,14 +18,9 @@ import (
 func attributeSchemaToCandidate(ctx context.Context, name string, attr *schema.AttributeSchema, rng hcl.Range) lang.Candidate {
 	var snippet string
 	var triggerSuggest bool
-	if attr.Constraint != nil {
-		cData := attr.Constraint.EmptyCompletionData(ctx, 1, 0)
-		snippet = fmt.Sprintf("%s = %s", name, cData.Snippet)
-		triggerSuggest = cData.TriggerSuggest
-	} else {
-		snippet = snippetForAttribute(name, attr)
-		triggerSuggest = triggerSuggestForExprConstraints(attr.Expr)
-	}
+	cData := attr.Constraint.EmptyCompletionData(ctx, 1, 0)
+	snippet = fmt.Sprintf("%s = %s", name, cData.Snippet)
+	triggerSuggest = cData.TriggerSuggest
 
 	return lang.Candidate{
 		Label:        name,
@@ -55,22 +50,13 @@ func detailForAttribute(attr *schema.AttributeSchema) string {
 		details = append(details, "sensitive")
 	}
 
-	var friendlyName string
-	if attr.Constraint != nil {
-		friendlyName = attr.Constraint.FriendlyName()
-	} else {
-		friendlyName = attr.Expr.FriendlyName()
-	}
+	friendlyName := attr.Constraint.FriendlyName()
 
 	if friendlyName != "" {
 		details = append(details, friendlyName)
 	}
 
 	return strings.Join(details[:], ", ")
-}
-
-func snippetForAttribute(name string, attr *schema.AttributeSchema) string {
-	return fmt.Sprintf("%s = %s", name, snippetForExprContraints(1, attr.Expr))
 }
 
 func sortedObjectAttrNames(obj cty.Type) []string {
