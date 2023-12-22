@@ -60,16 +60,16 @@ func (d *PathDecoder) completionAtPos(ctx context.Context, body *hclsyntax.Body,
 				ctx = schema.WithActiveSelfRefs(ctx)
 			}
 			if bodySchema.Extensions != nil && bodySchema.Extensions.Count && attr.Name == "count" {
-				return d.attrValueCandidatesAtPos(ctx, attr, schemahelper.CountAttributeSchema(), outerBodyRng, pos)
+				return d.attrValueCompletionAtPos(ctx, attr, schemahelper.CountAttributeSchema(), outerBodyRng, pos)
 			}
 			if bodySchema.Extensions != nil && bodySchema.Extensions.ForEach && attr.Name == "for_each" {
-				return d.attrValueCandidatesAtPos(ctx, attr, schemahelper.ForEachAttributeSchema(), outerBodyRng, pos)
+				return d.attrValueCompletionAtPos(ctx, attr, schemahelper.ForEachAttributeSchema(), outerBodyRng, pos)
 			}
 			if aSchema, ok := bodySchema.Attributes[attr.Name]; ok {
-				return d.attrValueCandidatesAtPos(ctx, attr, aSchema, outerBodyRng, pos)
+				return d.attrValueCompletionAtPos(ctx, attr, aSchema, outerBodyRng, pos)
 			}
 			if bodySchema.AnyAttribute != nil {
-				return d.attrValueCandidatesAtPos(ctx, attr, bodySchema.AnyAttribute, outerBodyRng, pos)
+				return d.attrValueCompletionAtPos(ctx, attr, bodySchema.AnyAttribute, outerBodyRng, pos)
 			}
 
 			return lang.ZeroCandidates(), nil
