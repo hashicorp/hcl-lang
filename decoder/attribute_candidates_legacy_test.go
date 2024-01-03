@@ -284,7 +284,7 @@ func TestLegacyDecoder_CompletionAtPos_EmptyCompletionData(t *testing.T) {
 			d.PrefillRequiredFields = true
 
 			ctx := context.Background()
-			candidates, err := d.CandidatesAtPos(ctx, "test.tf", hcl.InitialPos)
+			candidates, err := d.CompletionAtPos(ctx, "test.tf", hcl.InitialPos)
 			if err != nil {
 				t.Fatal(err)
 			}

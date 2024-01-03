@@ -48,7 +48,7 @@ func TestDecoder_CandidateAtPos_incompleteAttributes(t *testing.T) {
 	})
 	d.maxCandidates = 1
 
-	candidates, err := d.CandidatesAtPos(ctx, "test.tf", hcl.Pos{
+	candidates, err := d.CompletionAtPos(ctx, "test.tf", hcl.Pos{
 		Line:   2,
 		Column: 7,
 		Byte:   29,
@@ -119,7 +119,7 @@ func TestDecoder_CandidateAtPos_computedAttributes(t *testing.T) {
 		},
 	})
 
-	candidates, err := d.CandidatesAtPos(ctx, "test.tf", hcl.Pos{
+	candidates, err := d.CompletionAtPos(ctx, "test.tf", hcl.Pos{
 		Line:   2,
 		Column: 7,
 		Byte:   29,
@@ -193,7 +193,7 @@ func TestDecoder_CandidateAtPos_incompleteBlocks(t *testing.T) {
 	})
 	d.maxCandidates = 1
 
-	candidates, err := d.CandidatesAtPos(ctx, "test.tf", hcl.Pos{
+	candidates, err := d.CompletionAtPos(ctx, "test.tf", hcl.Pos{
 		Line:   3,
 		Column: 8,
 		Byte:   42,
@@ -269,7 +269,7 @@ func TestDecoder_CandidateAtPos_duplicateNames(t *testing.T) {
 	})
 	d.PrefillRequiredFields = true
 
-	candidates, err := d.CandidatesAtPos(ctx, "test.tf", hcl.InitialPos)
+	candidates, err := d.CompletionAtPos(ctx, "test.tf", hcl.InitialPos)
 	if err != nil {
 		t.Fatal(err)
 	}

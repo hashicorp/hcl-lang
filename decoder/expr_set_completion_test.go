@@ -637,7 +637,7 @@ func TestCompletionAtPos_exprSet(t *testing.T) {
 			})
 
 			ctx := context.Background()
-			candidates, err := d.CandidatesAtPos(ctx, "test.tf", tc.pos)
+			candidates, err := d.CompletionAtPos(ctx, "test.tf", tc.pos)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -720,7 +720,7 @@ func TestCompletionAtPos_exprSet_references(t *testing.T) {
 			})
 
 			ctx := context.Background()
-			candidates, err := d.CandidatesAtPos(ctx, "test.tf", tc.pos)
+			candidates, err := d.CompletionAtPos(ctx, "test.tf", tc.pos)
 			if err != nil {
 				t.Fatal(err)
 			}

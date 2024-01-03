@@ -69,7 +69,7 @@ func TestDecoder_CandidateAtPos_incompleteLabels(t *testing.T) {
 	})
 	d.maxCandidates = 1
 
-	candidates, err := d.CandidatesAtPos(ctx, "test.tf", hcl.Pos{
+	candidates, err := d.CompletionAtPos(ctx, "test.tf", hcl.Pos{
 		Line:   1,
 		Column: 14,
 		Byte:   13,
@@ -108,7 +108,7 @@ func TestDecoder_CandidateAtPos_incompleteLabels(t *testing.T) {
 	}
 }
 
-func TestCandidatesAtPos_prefillRequiredFields(t *testing.T) {
+func TestCompletionAtPos_prefillRequiredFields(t *testing.T) {
 	ctx := context.Background()
 	startingConfig := "resource \"\" {\n}"
 	startingPos := hcl.Pos{
@@ -620,7 +620,7 @@ func TestCandidatesAtPos_prefillRequiredFields(t *testing.T) {
 			d.maxCandidates = 1
 			d.PrefillRequiredFields = tt.prefill
 
-			got, err := d.CandidatesAtPos(ctx, "test.tf", startingPos)
+			got, err := d.CompletionAtPos(ctx, "test.tf", startingPos)
 			if err != nil {
 				t.Fatal(err)
 			}

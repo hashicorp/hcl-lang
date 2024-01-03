@@ -617,7 +617,7 @@ variable "test" {
 				ReferenceTargets: tc.referenceTargets,
 			})
 
-			candidates, err := d.CandidatesAtPos(ctx, "test.tf", tc.pos)
+			candidates, err := d.CompletionAtPos(ctx, "test.tf", tc.pos)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -1132,7 +1132,7 @@ for_each =
 				ReferenceTargets: tc.referenceTargets,
 			})
 
-			candidates, err := d.CandidatesAtPos(ctx, "test.tf", tc.pos)
+			candidates, err := d.CompletionAtPos(ctx, "test.tf", tc.pos)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -1651,7 +1651,7 @@ func TestCompletionAtPos_BodySchema_Extensions_SelfRef(t *testing.T) {
 				ReferenceTargets: targets,
 			})
 
-			candidates, err := d.CandidatesAtPos(ctx, "test.tf", tc.pos)
+			candidates, err := d.CompletionAtPos(ctx, "test.tf", tc.pos)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -2701,7 +2701,7 @@ resource "aws_elastic_beanstalk_environment" "example" {
 				},
 			})
 
-			candidates, err := d.CandidatesAtPos(ctx, "test.tf", tc.pos)
+			candidates, err := d.CompletionAtPos(ctx, "test.tf", tc.pos)
 
 			if err != nil {
 				if tc.expectedErr != "" && err.Error() != tc.expectedErr {
