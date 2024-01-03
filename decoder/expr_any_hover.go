@@ -10,8 +10,6 @@ import (
 	"github.com/hashicorp/hcl-lang/schema"
 	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hclsyntax"
-	"github.com/zclconf/go-cty/cty"
-	"github.com/zclconf/go-cty/cty/convert"
 )
 
 func (a Any) HoverAtPos(ctx context.Context, pos hcl.Pos) *lang.HoverData {
@@ -139,93 +137,4 @@ func (a Any) hoverNonComplexExprAtPos(ctx context.Context, pos hcl.Pos) *lang.Ho
 		pathCtx: a.pathCtx,
 	}
 	return lt.HoverAtPos(ctx, pos)
-}
-
-func (a Any) hoverOperatorExprAtPos(ctx context.Context, pos hcl.Pos) (*lang.HoverData, bool) {
-	switch eType := a.expr.(type) {
-	case *hclsyntax.BinaryOpExpr:
-		opReturnType := eType.Op.Type
-
-		// Check if such an operation is even allowed within the constraint
-		if _, err := convert.Convert(cty.UnknownVal(opReturnType), a.cons.OfType); err != nil {
-			return nil, true
-		}
-
-		opFuncParams := eType.Op.Impl.Params()
-		if len(opFuncParams) != 2 {
-			// This should never happen if HCL implementation is correct
-			return nil, true
-		}
-
-		if eType.LHS.Range().ContainsPos(pos) {
-			cons := schema.AnyExpression{
-				OfType: opFuncParams[0].Type,
-			}
-			return newExpression(a.pathCtx, eType.LHS, cons).HoverAtPos(ctx, pos), true
-		}
-		if eType.RHS.Range().ContainsPos(pos) {
-			cons := schema.AnyExpression{
-				OfType: opFuncParams[1].Type,
-			}
-			return newExpression(a.pathCtx, eType.RHS, cons).HoverAtPos(ctx, pos), true
-		}
-
-		return nil, true
-
-	case *hclsyntax.UnaryOpExpr:
-		opReturnType := eType.Op.Type
-
-		// Check if such an operation is even allowed within the constraint
-		if _, err := convert.Convert(cty.UnknownVal(opReturnType), a.cons.OfType); err != nil {
-			return nil, true
-		}
-
-		opFuncParams := eType.Op.Impl.Params()
-		if len(opFuncParams) != 1 {
-			// This should never happen if HCL implementation is correct
-			return nil, true
-		}
-
-		if eType.Val.Range().ContainsPos(pos) {
-			cons := schema.AnyExpression{
-				OfType: opFuncParams[0].Type,
-			}
-			return newExpression(a.pathCtx, eType.Val, cons).HoverAtPos(ctx, pos), true
-		}
-
-		return nil, true
-	}
-
-	return nil, false
-}
-
-func (a Any) hoverTemplateExprAtPos(ctx context.Context, pos hcl.Pos) (*lang.HoverData, bool) {
-	switch eType := a.expr.(type) {
-	case *hclsyntax.TemplateExpr:
-		if eType.IsStringLiteral() {
-			return nil, false
-		}
-
-		for _, partExpr := range eType.Parts {
-			if partExpr.Range().ContainsPos(pos) {
-				cons := schema.AnyExpression{
-					OfType: cty.String,
-				}
-				return newExpression(a.pathCtx, partExpr, cons).HoverAtPos(ctx, pos), true
-			}
-		}
-
-		return nil, true
-	case *hclsyntax.TemplateWrapExpr:
-		if eType.Wrapped.Range().ContainsPos(pos) {
-			cons := schema.AnyExpression{
-				OfType: cty.String,
-			}
-			return newExpression(a.pathCtx, eType.Wrapped, cons).HoverAtPos(ctx, pos), true
-		}
-
-		return nil, true
-	}
-
-	return nil, false
 }

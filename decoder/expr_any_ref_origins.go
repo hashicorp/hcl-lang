@@ -11,7 +11,6 @@ import (
 	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hclsyntax"
 	"github.com/zclconf/go-cty/cty"
-	"github.com/zclconf/go-cty/cty/convert"
 )
 
 func (a Any) ReferenceOrigins(ctx context.Context, allowSelfRefs bool) reference.Origins {
@@ -179,107 +178,4 @@ func (a Any) refOriginsForNonComplexExpr(ctx context.Context, allowSelfRefs bool
 		}
 	}
 	return origins
-}
-
-func (a Any) refOriginsForOperatorExpr(ctx context.Context, allowSelfRefs bool) (reference.Origins, bool) {
-	origins := make(reference.Origins, 0)
-
-	// There is currently no way of decoding operator expressions in JSON
-	// so we just collect them using the fallback logic assuming "any"
-	// constraint and focus on collecting expressions in HCL with more
-	// accurate constraints below.
-
-	switch eType := a.expr.(type) {
-	case *hclsyntax.BinaryOpExpr:
-		opReturnType := eType.Op.Type
-
-		// Check if such an operation is even allowed within the constraint
-		if _, err := convert.Convert(cty.UnknownVal(opReturnType), a.cons.OfType); err != nil {
-			return origins, true
-		}
-
-		opFuncParams := eType.Op.Impl.Params()
-		if len(opFuncParams) != 2 {
-			// This should never happen if HCL implementation is correct
-			return origins, true
-		}
-
-		leftExpr := newExpression(a.pathCtx, eType.LHS, schema.AnyExpression{
-			OfType: opFuncParams[0].Type,
-		})
-		if expr, ok := leftExpr.(ReferenceOriginsExpression); ok {
-			origins = append(origins, expr.ReferenceOrigins(ctx, allowSelfRefs)...)
-		}
-
-		rightExpr := newExpression(a.pathCtx, eType.RHS, schema.AnyExpression{
-			OfType: opFuncParams[1].Type,
-		})
-		if expr, ok := rightExpr.(ReferenceOriginsExpression); ok {
-			origins = append(origins, expr.ReferenceOrigins(ctx, allowSelfRefs)...)
-		}
-
-		return origins, true
-
-	case *hclsyntax.UnaryOpExpr:
-		opReturnType := eType.Op.Type
-
-		// Check if such an operation is even allowed within the constraint
-		if _, err := convert.Convert(cty.UnknownVal(opReturnType), a.cons.OfType); err != nil {
-			return origins, true
-		}
-
-		opFuncParams := eType.Op.Impl.Params()
-		if len(opFuncParams) != 1 {
-			// This should never happen if HCL implementation is correct
-			return origins, true
-		}
-
-		expr := newExpression(a.pathCtx, eType.Val, schema.AnyExpression{
-			OfType: opFuncParams[0].Type,
-		})
-		if expr, ok := expr.(ReferenceOriginsExpression); ok {
-			origins = append(origins, expr.ReferenceOrigins(ctx, allowSelfRefs)...)
-		}
-
-		return origins, true
-	}
-
-	return origins, false
-}
-
-func (a Any) refOriginsForTemplateExpr(ctx context.Context, allowSelfRefs bool) (reference.Origins, bool) {
-	origins := make(reference.Origins, 0)
-
-	switch eType := a.expr.(type) {
-	case *hclsyntax.TemplateExpr:
-		if eType.IsStringLiteral() {
-			return nil, false
-		}
-
-		for _, partExpr := range eType.Parts {
-			cons := schema.AnyExpression{
-				OfType: cty.String,
-			}
-			expr := newExpression(a.pathCtx, partExpr, cons)
-
-			if e, ok := expr.(ReferenceOriginsExpression); ok {
-				origins = append(origins, e.ReferenceOrigins(ctx, allowSelfRefs)...)
-			}
-		}
-
-		return origins, true
-	case *hclsyntax.TemplateWrapExpr:
-		cons := schema.AnyExpression{
-			OfType: cty.String,
-		}
-		expr := newExpression(a.pathCtx, eType.Wrapped, cons)
-
-		if e, ok := expr.(ReferenceOriginsExpression); ok {
-			origins = append(origins, e.ReferenceOrigins(ctx, allowSelfRefs)...)
-		}
-
-		return origins, true
-	}
-
-	return origins, false
 }

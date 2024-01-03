@@ -9,8 +9,6 @@ import (
 	"github.com/hashicorp/hcl-lang/lang"
 	"github.com/hashicorp/hcl-lang/schema"
 	"github.com/hashicorp/hcl/v2/hclsyntax"
-	"github.com/zclconf/go-cty/cty"
-	"github.com/zclconf/go-cty/cty/convert"
 )
 
 func (a Any) SemanticTokens(ctx context.Context) []lang.SemanticToken {
@@ -138,92 +136,4 @@ func (a Any) semanticTokensForNonComplexExpr(ctx context.Context) []lang.Semanti
 		pathCtx: a.pathCtx,
 	}
 	return lt.SemanticTokens(ctx)
-}
-
-func (a Any) semanticTokensForOperatorExpr(ctx context.Context) ([]lang.SemanticToken, bool) {
-	tokens := make([]lang.SemanticToken, 0)
-
-	switch eType := a.expr.(type) {
-	case *hclsyntax.BinaryOpExpr:
-		opReturnType := eType.Op.Type
-
-		// Check if such an operation is even allowed within the constraint
-		if _, err := convert.Convert(cty.UnknownVal(opReturnType), a.cons.OfType); err != nil {
-			return tokens, true
-		}
-
-		opFuncParams := eType.Op.Impl.Params()
-		if len(opFuncParams) != 2 {
-			// This should never happen if HCL implementation is correct
-			return tokens, true
-		}
-
-		tokens = append(tokens, newExpression(a.pathCtx, eType.LHS, schema.AnyExpression{
-			OfType: opFuncParams[0].Type,
-		}).SemanticTokens(ctx)...)
-
-		tokens = append(tokens, newExpression(a.pathCtx, eType.RHS, schema.AnyExpression{
-			OfType: opFuncParams[1].Type,
-		}).SemanticTokens(ctx)...)
-
-		return tokens, true
-
-	case *hclsyntax.UnaryOpExpr:
-		opReturnType := eType.Op.Type
-
-		// Check if such an operation is even allowed within the constraint
-		if _, err := convert.Convert(cty.UnknownVal(opReturnType), a.cons.OfType); err != nil {
-			return tokens, true
-		}
-
-		opFuncParams := eType.Op.Impl.Params()
-		if len(opFuncParams) != 1 {
-			// This should never happen if HCL implementation is correct
-			return tokens, true
-		}
-
-		tokens = append(tokens, newExpression(a.pathCtx, eType.Val, schema.AnyExpression{
-			OfType: opFuncParams[0].Type,
-		}).SemanticTokens(ctx)...)
-
-		return tokens, true
-	}
-
-	return tokens, false
-}
-
-func (a Any) semanticTokensForTemplateExpr(ctx context.Context) ([]lang.SemanticToken, bool) {
-	tokens := make([]lang.SemanticToken, 0)
-
-	switch eType := a.expr.(type) {
-	case *hclsyntax.TemplateExpr:
-		if eType.IsStringLiteral() {
-			cons := schema.LiteralType{
-				Type: cty.String,
-			}
-			expr := newExpression(a.pathCtx, eType, cons)
-			tokens = append(tokens, expr.SemanticTokens(ctx)...)
-			return tokens, true
-		}
-
-		for _, partExpr := range eType.Parts {
-			cons := schema.AnyExpression{
-				OfType: cty.String,
-			}
-			expr := newExpression(a.pathCtx, partExpr, cons)
-			tokens = append(tokens, expr.SemanticTokens(ctx)...)
-		}
-
-		return tokens, true
-	case *hclsyntax.TemplateWrapExpr:
-		cons := schema.AnyExpression{
-			OfType: cty.String,
-		}
-		expr := newExpression(a.pathCtx, eType.Wrapped, cons)
-		tokens = append(tokens, expr.SemanticTokens(ctx)...)
-
-		return tokens, true
-	}
-
-	return tokens, false
 }
