@@ -19,10 +19,6 @@ type AttributeSchema struct {
 	IsComputed   bool
 	IsSensitive  bool
 
-	// Expr represents expression constraints e.g. what types of
-	// expressions are expected for the attribute
-	Expr ExprConstraints
-
 	// Constraint represents expression constraint e.g. what types of
 	// expressions are expected for the attribute
 	Constraint Constraint
@@ -118,20 +114,11 @@ func (as *AttributeSchema) Validate() error {
 		}
 	}
 
-	if (as.Constraint == nil && len(as.Expr) == 0) ||
-		(as.Constraint != nil && len(as.Expr) > 0) {
-		return errors.New("expected one of Constraint or Expr")
-	}
-
-	if as.Constraint != nil {
-		if con, ok := as.Constraint.(Validatable); ok {
-			err := con.Validate()
-			if err != nil {
-				return fmt.Errorf("Constraint: %T: %s", as.Constraint, err)
-			}
+	if con, ok := as.Constraint.(Validatable); ok {
+		err := con.Validate()
+		if err != nil {
+			return fmt.Errorf("Constraint: %T: %s", as.Constraint, err)
 		}
-	} else {
-		return as.Expr.Validate()
 	}
 
 	return nil
@@ -155,12 +142,7 @@ func (as *AttributeSchema) Copy() *AttributeSchema {
 		OriginForTarget:        as.OriginForTarget.Copy(),
 		SemanticTokenModifiers: as.SemanticTokenModifiers.Copy(),
 		CompletionHooks:        as.CompletionHooks.Copy(),
-	}
-
-	if as.Constraint != nil {
-		newAs.Constraint = as.Constraint.Copy()
-	} else {
-		newAs.Expr = as.Expr.Copy()
+		Constraint:             as.Constraint.Copy(),
 	}
 
 	return newAs

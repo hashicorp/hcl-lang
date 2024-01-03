@@ -167,15 +167,11 @@ func requiredFieldsSnippet(bodySchema *schema.BodySchema, placeholder int, inden
 		}
 
 		var snippet string
-		if attr.Constraint != nil {
-			// We already know we want to do pre-filling at this point
-			// We could plumb through the context here, but it saves us
-			// an argument in multiple functions above.
-			ctx := schema.WithPrefillRequiredFields(context.Background(), true)
-			snippet = attr.Constraint.EmptyCompletionData(ctx, placeholder, indentCount).Snippet
-		} else {
-			snippet = snippetForExprContraint(uint(placeholder), attr.Expr)
-		}
+		// We already know we want to do pre-filling at this point
+		// We could plumb through the context here, but it saves us
+		// an argument in multiple functions above.
+		ctx := schema.WithPrefillRequiredFields(context.Background(), true)
+		snippet = attr.Constraint.EmptyCompletionData(ctx, placeholder, indentCount).Snippet
 		snippetText += fmt.Sprintf("%s%s = %s", indent, attrName, snippet)
 
 		// attrCount is used to tell if we are at the end of the list of attributes

@@ -145,10 +145,6 @@ func (target Target) MatchesConstraint(ref schema.Reference) bool {
 	return target.MatchesScopeId(ref.OfScopeId) && target.IsConvertibleToType(ref.OfType)
 }
 
-func (ref Target) LegacyMatchesConstraint(te schema.TraversalExpr) bool {
-	return ref.MatchesScopeId(te.OfScopeId) && ref.IsConvertibleToType(te.OfType)
-}
-
 func (ref Target) MatchesScopeId(scopeId lang.ScopeId) bool {
 	return scopeId == "" || ref.ScopeId == scopeId
 }

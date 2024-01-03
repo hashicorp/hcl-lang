@@ -76,18 +76,6 @@ func (w refTargetDeepWalker) walk(refTargets Targets) {
 	}
 }
 
-func (refs Targets) LegacyMatchWalk(ctx context.Context, te schema.TraversalExpr, prefix string, outermostBodyRng, originRng hcl.Range, f TargetWalkFunc) {
-	for _, ref := range refs {
-		if legacyLocalTargetMatches(ctx, ref, te, prefix, outermostBodyRng, originRng) ||
-			legacyAbsTargetMatches(ctx, ref, te, prefix, outermostBodyRng, originRng) {
-			f(ref)
-			continue
-		}
-
-		ref.NestedTargets.LegacyMatchWalk(ctx, te, prefix, outermostBodyRng, originRng, f)
-	}
-}
-
 func (targets Targets) MatchWalk(ctx context.Context, ref schema.Reference, prefix string, outermostBodyRng, originRng hcl.Range, f TargetWalkFunc) {
 	for _, target := range targets {
 		if localTargetMatches(ctx, target, ref, prefix, outermostBodyRng, originRng) ||
@@ -173,61 +161,6 @@ func (targets Targets) containsMatch(ctx context.Context, ref schema.Reference, 
 	return false
 }
 
-func legacyLocalTargetMatches(ctx context.Context, target Target, te schema.TraversalExpr, prefix string, outermostBodyRng, originRng hcl.Range) bool {
-	if len(target.LocalAddr) > 0 && strings.HasPrefix(target.LocalAddr.String(), prefix) {
-		// reject self references if not enabled
-		if !schema.ActiveSelfRefsFromContext(ctx) && target.LocalAddr[0].String() == "self" {
-			return false
-		}
-
-		hasNestedMatches := target.NestedTargets.legacyContainsMatch(ctx, te, prefix, outermostBodyRng, originRng)
-
-		// Avoid suggesting cyclical reference to the same attribute
-		// unless it has nested matches - i.e. still consider reference
-		// to the outside block/body as valid.
-		//
-		// For example, block { foo = self } where "self" refers to the "block"
-		// is considered valid. The use case this is important for is
-		// Terraform's self references inside nested block such as "connection".
-		if target.RangePtr != nil && !hasNestedMatches {
-			if rangeOverlaps(*target.RangePtr, originRng) {
-				return false
-			}
-			// We compare line in case the (incomplete) attribute
-			// ends w/ whitespace which wouldn't be included in the range
-			if target.RangePtr.Filename == originRng.Filename &&
-				target.RangePtr.End.Line == originRng.Start.Line {
-				return false
-			}
-		}
-
-		// Reject origins which are outside the targetable range
-		if target.TargetableFromRangePtr != nil && !rangeOverlaps(*target.TargetableFromRangePtr, originRng) {
-			return false
-		}
-
-		if target.LegacyMatchesConstraint(te) || hasNestedMatches {
-			return true
-		}
-	}
-
-	return false
-}
-
-func legacyAbsTargetMatches(ctx context.Context, target Target, te schema.TraversalExpr, prefix string, outermostBodyRng, originRng hcl.Range) bool {
-	if len(target.Addr) > 0 && strings.HasPrefix(target.Addr.String(), prefix) {
-		// Reject references to block's own fields from within the body
-		if referenceTargetIsInRange(target, outermostBodyRng) {
-			return false
-		}
-
-		if target.LegacyMatchesConstraint(te) || target.NestedTargets.legacyContainsMatch(ctx, te, prefix, outermostBodyRng, originRng) {
-			return true
-		}
-	}
-	return false
-}
-
 func referenceTargetIsInRange(target Target, bodyRange hcl.Range) bool {
 	return target.RangePtr != nil &&
 		bodyRange.Filename == target.RangePtr.Filename &&
@@ -239,24 +172,6 @@ func posEqual(pos, other hcl.Pos) bool {
 	return pos.Line == other.Line &&
 		pos.Column == other.Column &&
 		pos.Byte == other.Byte
-}
-
-func (refs Targets) legacyContainsMatch(ctx context.Context, te schema.TraversalExpr, prefix string, outermostBodyRng, originRng hcl.Range) bool {
-	for _, ref := range refs {
-		if legacyLocalTargetMatches(ctx, ref, te, prefix, outermostBodyRng, originRng) {
-			return true
-		}
-		if legacyAbsTargetMatches(ctx, ref, te, prefix, outermostBodyRng, originRng) {
-			return true
-		}
-
-		if len(ref.NestedTargets) > 0 {
-			if match := ref.NestedTargets.legacyContainsMatch(ctx, te, prefix, outermostBodyRng, originRng); match {
-				return true
-			}
-		}
-	}
-	return false
 }
 
 func (refs Targets) Match(origin MatchableOrigin) (Targets, bool) {

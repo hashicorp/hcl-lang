@@ -15,7 +15,6 @@ import (
 	"github.com/hashicorp/hcl-lang/schema"
 	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/ext/typeexpr"
-	"github.com/hashicorp/hcl/v2/hclsyntax"
 	"github.com/zclconf/go-cty/cty"
 )
 
@@ -269,189 +268,37 @@ func (d *PathDecoder) decodeReferenceTargetsForAttribute(attr *hcl.Attribute, at
 
 	ctx := context.Background()
 
-	if attrSchema.Constraint != nil {
-		expr := d.newExpression(attr.Expr, attrSchema.Constraint)
-		if eType, ok := expr.(ReferenceTargetsExpression); ok {
-			var targetCtx *TargetContext
-			if attrSchema.Address != nil {
-				attrAddr, ok := resolveAttributeAddress(attr, attrSchema.Address.Steps)
-				if ok && (attrSchema.Address.AsExprType || attrSchema.Address.AsReference) {
-					targetCtx = &TargetContext{
-						FriendlyName:      attrSchema.Address.FriendlyName,
-						ScopeId:           attrSchema.Address.ScopeId,
-						AsExprType:        attrSchema.Address.AsExprType,
-						AsReference:       attrSchema.Address.AsReference,
-						ParentAddress:     attrAddr,
-						ParentRangePtr:    attr.Range.Ptr(),
-						ParentDefRangePtr: attr.NameRange.Ptr(),
-					}
-				}
-
-				if attrSchema.Address.AsReference {
-					ref := reference.Target{
-						Addr:          attrAddr,
-						ScopeId:       attrSchema.Address.ScopeId,
-						DefRangePtr:   attr.NameRange.Ptr(),
-						RangePtr:      attr.Range.Ptr(),
-						Name:          attrSchema.Address.FriendlyName,
-						NestedTargets: reference.Targets{},
-					}
-					refs = append(refs, ref)
-				}
-			}
-
-			refs = append(refs, eType.ReferenceTargets(ctx, targetCtx)...)
-		}
-	} else {
+	expr := d.newExpression(attr.Expr, attrSchema.Constraint)
+	if eType, ok := expr.(ReferenceTargetsExpression); ok {
+		var targetCtx *TargetContext
 		if attrSchema.Address != nil {
 			attrAddr, ok := resolveAttributeAddress(attr, attrSchema.Address.Steps)
-			if ok {
-				if attrSchema.Address.AsReference {
-					ref := reference.Target{
-						Addr:        attrAddr,
-						ScopeId:     attrSchema.Address.ScopeId,
-						DefRangePtr: &attr.NameRange,
-						RangePtr:    attr.Range.Ptr(),
-						Name:        attrSchema.Address.FriendlyName,
-					}
-					refs = append(refs, ref)
-				}
-
-				if attrSchema.Address.AsExprType {
-					t, ok := exprConstraintToDataType(attrSchema.Expr)
-					if ok {
-						if t == cty.DynamicPseudoType && attr.Expr != nil {
-							// attempt to make the type more specific
-							exprVal, diags := attr.Expr.Value(nil)
-							if !diags.HasErrors() {
-								t = exprVal.Type()
-							}
-						}
-
-						scopeId := attrSchema.Address.ScopeId
-
-						ref := reference.Target{
-							Addr:        attrAddr,
-							Type:        t,
-							ScopeId:     scopeId,
-							DefRangePtr: attr.NameRange.Ptr(),
-							RangePtr:    attr.Range.Ptr(),
-							Name:        attrSchema.Address.FriendlyName,
-						}
-
-						if attr.Expr != nil && !t.IsPrimitiveType() {
-							ref.NestedTargets = make(reference.Targets, 0)
-							ref.NestedTargets = append(ref.NestedTargets, decodeReferenceTargetsForComplexTypeExpr(attrAddr, attr.Expr, t, scopeId)...)
-						}
-
-						refs = append(refs, ref)
-					}
+			if ok && (attrSchema.Address.AsExprType || attrSchema.Address.AsReference) {
+				targetCtx = &TargetContext{
+					FriendlyName:      attrSchema.Address.FriendlyName,
+					ScopeId:           attrSchema.Address.ScopeId,
+					AsExprType:        attrSchema.Address.AsExprType,
+					AsReference:       attrSchema.Address.AsReference,
+					ParentAddress:     attrAddr,
+					ParentRangePtr:    attr.Range.Ptr(),
+					ParentDefRangePtr: attr.NameRange.Ptr(),
 				}
 			}
-		}
 
-		ec := ExprConstraints(attrSchema.Expr)
-		refs = append(refs, referenceTargetsForExpr(attr.Expr, ec)...)
-	}
-
-	return refs
-}
-
-func decodeReferenceTargetsForComplexTypeExpr(addr lang.Address, expr hcl.Expression, t cty.Type, scopeId lang.ScopeId) reference.Targets {
-	refs := make(reference.Targets, 0)
-
-	if expr == nil {
-		return refs
-	}
-
-	// Nested expressions are not addressable in JSON yet
-	// as accessing expression in JSON generally requires
-	// some upstream HCL changes.
-	// TODO: See https: //github.com/hashicorp/terraform-ls/issues/675
-	switch e := expr.(type) {
-	case *hclsyntax.TupleConsExpr:
-		if t.IsListType() {
-			for i, item := range e.Exprs {
-				elemAddr := append(addr.Copy(), lang.IndexStep{Key: cty.NumberIntVal(int64(i))})
-				elemType := t.ElementType()
-
+			if attrSchema.Address.AsReference {
 				ref := reference.Target{
-					Addr:     elemAddr,
-					Type:     elemType,
-					ScopeId:  scopeId,
-					RangePtr: item.Range().Ptr(),
+					Addr:          attrAddr,
+					ScopeId:       attrSchema.Address.ScopeId,
+					DefRangePtr:   attr.NameRange.Ptr(),
+					RangePtr:      attr.Range.Ptr(),
+					Name:          attrSchema.Address.FriendlyName,
+					NestedTargets: reference.Targets{},
 				}
-				if !elemType.IsPrimitiveType() {
-					ref.NestedTargets = make(reference.Targets, 0)
-					ref.NestedTargets = append(ref.NestedTargets, decodeReferenceTargetsForComplexTypeExpr(elemAddr, item, elemType, scopeId)...)
-				}
-
 				refs = append(refs, ref)
 			}
 		}
-	case *hclsyntax.ObjectConsExpr:
-		if t.IsObjectType() {
-			for _, item := range e.Items {
-				key, _ := item.KeyExpr.Value(nil)
-				if key.IsNull() || !key.IsWhollyKnown() || key.Type() != cty.String {
-					// skip items keys that can't be interpolated
-					// without further context
-					continue
-				}
-				attrType, ok := t.AttributeTypes()[key.AsString()]
-				if !ok {
-					continue
-				}
-				attrAddr := append(addr.Copy(), lang.AttrStep{Name: key.AsString()})
-				rng := hcl.RangeBetween(item.KeyExpr.Range(), item.ValueExpr.Range())
 
-				ref := reference.Target{
-					Addr:        attrAddr,
-					Type:        attrType,
-					ScopeId:     scopeId,
-					DefRangePtr: item.KeyExpr.Range().Ptr(),
-					RangePtr:    rng.Ptr(),
-				}
-				if !attrType.IsPrimitiveType() {
-					ref.NestedTargets = make(reference.Targets, 0)
-					ref.NestedTargets = append(ref.NestedTargets, decodeReferenceTargetsForComplexTypeExpr(attrAddr, item.ValueExpr, attrType, scopeId)...)
-				}
-
-				refs = append(refs, ref)
-			}
-		}
-		if t.IsMapType() {
-			for _, item := range e.Items {
-				key, _ := item.KeyExpr.Value(nil)
-				if key.IsNull() || !key.IsWhollyKnown() || key.Type() != cty.String {
-					// skip items keys that can't be interpolated
-					// without further context
-					continue
-				}
-				elemTypePtr := t.MapElementType()
-				if elemTypePtr == nil {
-					continue
-				}
-				elemType := *elemTypePtr
-
-				elemAddr := append(addr.Copy(), lang.IndexStep{Key: key})
-				rng := hcl.RangeBetween(item.KeyExpr.Range(), item.ValueExpr.Range())
-
-				ref := reference.Target{
-					Addr:        elemAddr,
-					Type:        elemType,
-					ScopeId:     scopeId,
-					DefRangePtr: item.KeyExpr.Range().Ptr(),
-					RangePtr:    rng.Ptr(),
-				}
-				if !elemType.IsPrimitiveType() {
-					ref.NestedTargets = make(reference.Targets, 0)
-					ref.NestedTargets = append(ref.NestedTargets, decodeReferenceTargetsForComplexTypeExpr(elemAddr, item.ValueExpr, elemType, scopeId)...)
-				}
-
-				refs = append(refs, ref)
-			}
-		}
+		refs = append(refs, eType.ReferenceTargets(ctx, targetCtx)...)
 	}
 
 	return refs
@@ -495,17 +342,9 @@ func asTypeOfAttrExpr(attrs hcl.Attributes, bSchema *schema.BlockSchema) (cty.Ty
 	}
 
 	aSchema := bSchema.Body.Attributes[attrName]
-	if aSchema.Constraint != nil {
-		_, ok := aSchema.Constraint.(schema.TypeDeclaration)
-		if !ok {
-			return cty.DynamicPseudoType, false
-		}
-	} else {
-		ec := ExprConstraints(aSchema.Expr)
-		_, ok = ec.TypeDeclarationExpr()
-		if !ok {
-			return cty.DynamicPseudoType, false
-		}
+	_, ok = aSchema.Constraint.(schema.TypeDeclaration)
+	if !ok {
+		return cty.DynamicPseudoType, false
 	}
 
 	// TODO: TypeConstraintWithDefaults
@@ -517,152 +356,6 @@ func asTypeOfAttrExpr(attrs hcl.Attributes, bSchema *schema.BlockSchema) (cty.Ty
 	return typeDecl, true
 }
 
-func exprConstraintToDataType(expr schema.ExprConstraints) (cty.Type, bool) {
-	ec := ExprConstraints(expr)
-
-	lt, ok := ec.LiteralType()
-	if ok {
-		return lt, true
-	}
-
-	le, ok := ec.ListExpr()
-	if ok {
-		elemType, elemOk := exprConstraintToDataType(le.Elem)
-		if elemOk {
-			return cty.List(elemType), true
-		}
-	}
-
-	se, ok := ec.SetExpr()
-	if ok {
-		elemType, elemOk := exprConstraintToDataType(se.Elem)
-		if elemOk {
-			return cty.Set(elemType), true
-		}
-	}
-
-	te, ok := ec.TupleExpr()
-	if ok {
-		elems := make([]cty.Type, len(te.Elems))
-		elemsOk := true
-		for i, elem := range te.Elems {
-			elemType, ok := exprConstraintToDataType(elem)
-			if ok {
-				elems[i] = elemType
-			} else {
-				elemsOk = false
-				break
-			}
-		}
-		if elemsOk {
-			return cty.Tuple(elems), true
-		}
-	}
-
-	oe, ok := ec.ObjectExpr()
-	if ok {
-		attributes := make(map[string]cty.Type, 0)
-		for name, attr := range oe.Attributes {
-			attrType, ok := exprConstraintToDataType(attr.Expr)
-			if ok {
-				attributes[name] = attrType
-			}
-		}
-		return cty.Object(attributes), true
-	}
-
-	me, ok := ec.MapExpr()
-	if ok {
-		elemType, elemOk := exprConstraintToDataType(me.Elem)
-		if elemOk {
-			return cty.Map(elemType), true
-		}
-	}
-
-	return cty.NilType, false
-}
-
-func referenceTargetsForExpr(expr hcl.Expression, ec ExprConstraints) reference.Targets {
-	refs := make(reference.Targets, 0)
-
-	switch e := expr.(type) {
-	// TODO: Support all expression types (list/set/map literals)
-	case *hclsyntax.ScopeTraversalExpr:
-		tes, ok := ec.TraversalExprs()
-		if !ok {
-			// unknown traversal
-			return reference.Targets{}
-		}
-
-		addr, err := lang.TraversalToAddress(e.AsTraversal())
-		if err != nil {
-			return reference.Targets{}
-		}
-
-		for _, te := range tes {
-			if te.Address == nil {
-				// skip traversals which are not addressable by themselves
-				continue
-			}
-
-			refs = append(refs, reference.Target{
-				Addr:     addr,
-				ScopeId:  te.Address.ScopeId,
-				RangePtr: e.SrcRange.Ptr(),
-				Name:     te.Name,
-			})
-		}
-	case *hclsyntax.ObjectConsExpr:
-		oe, ok := ec.ObjectExpr()
-		if ok {
-			for _, item := range e.Items {
-				key, _ := item.KeyExpr.Value(nil)
-				if key.IsNull() || !key.IsWhollyKnown() || key.Type() != cty.String {
-					// skip items keys that can't be interpolated
-					// without further context
-					continue
-				}
-				attr, ok := oe.Attributes[key.AsString()]
-				if !ok {
-					continue
-				}
-
-				refs = append(refs, referenceTargetsForExpr(item.ValueExpr, ExprConstraints(attr.Expr))...)
-			}
-		}
-		me, ok := ec.MapExpr()
-		if ok {
-			for _, item := range e.Items {
-				refs = append(refs, referenceTargetsForExpr(item.ValueExpr, ExprConstraints(me.Elem))...)
-			}
-		}
-	case *hclsyntax.TupleConsExpr:
-		le, ok := ec.ListExpr()
-		if ok {
-			for _, itemExpr := range e.Exprs {
-				refs = append(refs, referenceTargetsForExpr(itemExpr, ExprConstraints(le.Elem))...)
-			}
-		}
-		se, ok := ec.SetExpr()
-		if ok {
-			for _, itemExpr := range e.Exprs {
-				refs = append(refs, referenceTargetsForExpr(itemExpr, ExprConstraints(se.Elem))...)
-			}
-		}
-		te, ok := ec.TupleExpr()
-		if ok {
-			for i, itemExpr := range e.Exprs {
-				if i >= len(te.Elems) {
-					break
-				}
-				refs = append(refs, referenceTargetsForExpr(itemExpr, ExprConstraints(te.Elems[i]))...)
-			}
-		}
-	}
-
-	return refs
-}
-
 func bodySchemaAsAttrTypes(bodySchema *schema.BodySchema) map[string]cty.Type {
 	attrTypes := make(map[string]cty.Type, 0)
 
@@ -671,22 +364,15 @@ func bodySchemaAsAttrTypes(bodySchema *schema.BodySchema) map[string]cty.Type {
 	}
 
 	for name, attr := range bodySchema.Attributes {
-		if attr.Constraint != nil {
-			cons, ok := attr.Constraint.(schema.TypeAwareConstraint)
-			if !ok {
-				continue
-			}
-			typ, ok := cons.ConstraintType()
-			if !ok {
-				continue
-			}
-			attrTypes[name] = typ
-		} else {
-			attrType, ok := exprConstraintToDataType(attr.Expr)
-			if ok {
-				attrTypes[name] = attrType
-			}
+		cons, ok := attr.Constraint.(schema.TypeAwareConstraint)
+		if !ok {
+			continue
 		}
+		typ, ok := cons.ConstraintType()
+		if !ok {
+			continue
+		}
+		attrTypes[name] = typ
 	}
 
 	for name, block := range bodySchema.Blocks {
@@ -710,37 +396,28 @@ func (d *PathDecoder) collectInferredReferenceTargetsForBody(addr lang.Address, 
 
 	for name, aSchema := range bodySchema.Attributes {
 		var attrType cty.Type
-		if aSchema.Constraint != nil {
-			cons, ok := aSchema.Constraint.(schema.TypeAwareConstraint)
+		cons, ok := aSchema.Constraint.(schema.TypeAwareConstraint)
+		if ok {
+			typ, ok := cons.ConstraintType()
 			if ok {
-				typ, ok := cons.ConstraintType()
+				attrType = typ
+			}
+		}
+
+		rawAttr, ok := rawAttributes[name]
+		if ok {
+			// try to infer type if attribute is declared
+			expr, ok := newExpression(d.pathCtx, rawAttr.Expr, aSchema.Constraint).(CanInferTypeExpression)
+			if ok {
+				typ, ok := expr.InferType()
 				if ok {
 					attrType = typ
 				}
 			}
+		}
 
-			rawAttr, ok := rawAttributes[name]
-			if ok {
-				// try to infer type if attribute is declared
-				expr, ok := newExpression(d.pathCtx, rawAttr.Expr, aSchema.Constraint).(CanInferTypeExpression)
-				if ok {
-					typ, ok := expr.InferType()
-					if ok {
-						attrType = typ
-					}
-				}
-			}
-
-			if attrType == cty.NilType {
-				continue
-			}
-		} else {
-			var ok bool
-			attrType, ok = exprConstraintToDataType(aSchema.Expr)
-			if !ok {
-				// unknown type
-				continue
-			}
+		if attrType == cty.NilType {
+			continue
 		}
 
 		attrAddr := append(addr.Copy(), lang.AttrStep{Name: name})
@@ -780,21 +457,13 @@ func (d *PathDecoder) collectInferredReferenceTargetsForBody(addr lang.Address, 
 			attrExpr = attr.Expr
 		}
 
-		if aSchema.Constraint != nil {
-			if attrExpr == nil {
-				attrExpr = newEmptyExpressionAtPos(body.MissingItemRange().Filename, body.MissingItemRange().Start)
-			}
-			expr, ok := newExpression(d.pathCtx, attrExpr, aSchema.Constraint).(ReferenceTargetsExpression)
-			if ok {
-				ctx := context.Background()
-				refs = append(refs, expr.ReferenceTargets(ctx, targetCtx)...)
-			}
-		} else {
-			if attrExpr != nil && !attrType.IsPrimitiveType() {
-				legacyRef.NestedTargets = make(reference.Targets, 0)
-				legacyRef.NestedTargets = append(legacyRef.NestedTargets, decodeReferenceTargetsForComplexTypeExpr(attrAddr, attrExpr, attrType, bAddrSchema.ScopeId)...)
-			}
-			refs = append(refs, legacyRef)
+		if attrExpr == nil {
+			attrExpr = newEmptyExpressionAtPos(body.MissingItemRange().Filename, body.MissingItemRange().Start)
+		}
+		expr, ok := newExpression(d.pathCtx, attrExpr, aSchema.Constraint).(ReferenceTargetsExpression)
+		if ok {
+			ctx := context.Background()
+			refs = append(refs, expr.ReferenceTargets(ctx, targetCtx)...)
 		}
 	}
 

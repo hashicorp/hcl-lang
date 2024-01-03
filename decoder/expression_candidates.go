@@ -27,156 +27,19 @@ func (d *PathDecoder) attrValueCandidatesAtPos(ctx context.Context, attr *hclsyn
 	}
 	count := len(candidates.List)
 
-	if schema.Constraint != nil {
-		if uint(count) < d.maxCandidates {
-			expr := d.newExpression(attr.Expr, schema.Constraint)
-			for _, candidate := range expr.CompletionAtPos(ctx, pos) {
-				if uint(count) >= d.maxCandidates {
-					return candidates, nil
-				}
-
-				candidates.List = append(candidates.List, candidate)
-				count++
+	if uint(count) < d.maxCandidates {
+		expr := d.newExpression(attr.Expr, schema.Constraint)
+		for _, candidate := range expr.CompletionAtPos(ctx, pos) {
+			if uint(count) >= d.maxCandidates {
+				return candidates, nil
 			}
-		}
-	} else {
-		constraints, editRng := constraintsAtPos(attr.Expr, ExprConstraints(schema.Expr), pos)
 
-		if len(constraints) > 0 && uint(count) < d.maxCandidates {
-			prefixRng := editRng
-			prefixRng.End = pos
-
-			for _, cons := range constraints {
-				if uint(count) >= d.maxCandidates {
-					return candidates, nil
-				}
-
-				candidates.List = append(candidates.List, d.constraintToCandidates(ctx, cons, attr, outerBodyRng, prefixRng, editRng)...)
-				count++
-			}
+			candidates.List = append(candidates.List, candidate)
+			count++
 		}
 	}
 
 	return candidates, nil
-}
-
-func constraintsAtPos(expr hcl.Expression, constraints ExprConstraints, pos hcl.Pos) (ExprConstraints, hcl.Range) {
-	// TODO: Support middle-of-expression completion
-
-	// Ideally the edit range should always match the expression range
-	// but expression range in many cases includes the last newline character
-	// so we'd have to reinsert that character in the text edit.
-	// More importantly LSP does not support multi-line text edits.
-	// Overall this is not an issue (yet) as we don't support more complex
-	// completion in nested expressions
-
-	switch eType := expr.(type) {
-	case *hclsyntax.LiteralValueExpr:
-		if !eType.Val.IsWhollyKnown() {
-			return constraints, hcl.Range{
-				Start:    eType.Range().Start,
-				End:      eType.Range().Start,
-				Filename: eType.Range().Filename,
-			}
-		}
-	case *hclsyntax.ScopeTraversalExpr:
-		matchedConstraints := make(ExprConstraints, 0)
-		ke, ok := constraints.KeywordExpr()
-		if ok {
-			matchedConstraints = append(matchedConstraints, ke)
-		}
-		tes, ok := constraints.TraversalExprs()
-		if ok {
-			matchedConstraints = append(matchedConstraints, tes.AsConstraints()...)
-		}
-
-		if len(matchedConstraints) > 0 {
-			endPos := eType.Range().End
-			if pos.Byte-endPos.Byte == 1 {
-				endPos = pos
-			}
-			return matchedConstraints, hcl.Range{
-				Filename: eType.Range().Filename,
-				Start:    eType.Range().Start,
-				End:      endPos,
-			}
-		}
-	case *hclsyntax.TupleConsExpr:
-		rng := eType.Range()
-		tupleConsBody := hcl.Range{
-			Start: hcl.Pos{
-				Line:   rng.Start.Line,
-				Column: rng.Start.Column + 1,
-				Byte:   rng.Start.Byte + 1,
-			},
-			End: hcl.Pos{
-				Line:   rng.End.Line,
-				Column: rng.End.Column - 1,
-				Byte:   rng.End.Byte - 1,
-			},
-			Filename: rng.Filename,
-		}
-
-		se, ok := constraints.SetExpr()
-		if ok && len(eType.Exprs) == 0 && tupleConsBody.ContainsPos(pos) {
-			return ExprConstraints(se.Elem), hcl.Range{
-				Start:    pos,
-				End:      pos,
-				Filename: eType.Range().Filename,
-			}
-		}
-		le, ok := constraints.ListExpr()
-		if ok && len(eType.Exprs) == 0 && tupleConsBody.ContainsPos(pos) {
-			return ExprConstraints(le.Elem), hcl.Range{
-				Start:    pos,
-				End:      pos,
-				Filename: eType.Range().Filename,
-			}
-		}
-		te, ok := constraints.TupleExpr()
-		if ok && len(eType.Exprs) == 0 && tupleConsBody.ContainsPos(pos) {
-			return ExprConstraints(te.Elems[0]), hcl.Range{
-				Start:    pos,
-				End:      pos,
-				Filename: eType.Range().Filename,
-			}
-		}
-	case *hclsyntax.ObjectConsExpr:
-		oe, ok := constraints.ObjectExpr()
-		if ok {
-			undeclaredAttributes := oe.Attributes
-			for _, item := range eType.Items {
-				key, _ := item.KeyExpr.Value(nil)
-				if key.IsNull() || !key.IsWhollyKnown() || key.Type() != cty.String {
-					// skip items keys that can't be interpolated
-					// without further context
-					continue
-				}
-				attr, ok := oe.Attributes[key.AsString()]
-				if !ok {
-					// unknown attribute
-					continue
-				}
-				delete(undeclaredAttributes, key.AsString())
-
-				itemRng := hcl.RangeBetween(item.KeyExpr.Range(), item.ValueExpr.Range())
-				if item.ValueExpr.Range().ContainsPos(pos) {
-					return constraintsAtPos(item.ValueExpr, ExprConstraints(attr.Expr), pos)
-				} else if itemRng.ContainsPos(pos) {
-					// middle of attribute name or equal sign
-					return ExprConstraints{}, expr.Range()
-				}
-			}
-
-			return ExprConstraints{undeclaredAttributes}, hcl.Range{
-				Start:    pos,
-				End:      pos,
-				Filename: eType.Range().Filename,
-			}
-		}
-	}
-
-	return ExprConstraints{}, expr.Range()
 }
 
 type pathKey struct{}
@@ -241,24 +104,15 @@ func isMultilineTemplateExpr(expr hclsyntax.Expression) bool {
 
 func (d *PathDecoder) candidatesFromHooks(ctx context.Context, attr *hclsyntax.Attribute, aSchema *schema.AttributeSchema, outerBodyRng hcl.Range, pos hcl.Pos) []lang.Candidate {
 	candidates := make([]lang.Candidate, 0)
-	if aSchema.Constraint != nil {
-		con, ok := aSchema.Constraint.(schema.TypeAwareConstraint)
-		if !ok {
-			// Return early as we only support string values for now
-			return candidates
-		}
-		typ, ok := con.ConstraintType()
-		if !ok || typ != cty.String {
-			// Return early as we only support string values for now
-			return candidates
-		}
-	} else {
-		expr := ExprConstraints(aSchema.Expr)
-		exprType, ok := expr.LiteralType()
-		if !ok && exprType != cty.String {
-			// Return early as we only support string values for now
-			return candidates
-		}
+	con, ok := aSchema.Constraint.(schema.TypeAwareConstraint)
+	if !ok {
+		// Return early as we only support string values for now
+		return candidates
+	}
+	typ, ok := con.ConstraintType()
+	if !ok || typ != cty.String {
+		// Return early as we only support string values for now
+		return candidates
 	}
 
 	editRng := attr.Expr.Range()
@@ -313,217 +167,11 @@ func (d *PathDecoder) candidatesFromHooks(ctx context.Context, attr *hclsyntax.A
 	return candidates
 }
 
-func (d *PathDecoder) constraintToCandidates(ctx context.Context, constraint schema.ExprConstraint, attr *hclsyntax.Attribute, outerBodyRng, prefixRng, editRng hcl.Range) []lang.Candidate {
-	candidates := make([]lang.Candidate, 0)
-
-	switch c := constraint.(type) {
-	case schema.LiteralTypeExpr:
-		candidates = append(candidates, typeToCandidates(c.Type, editRng)...)
-	case schema.LegacyLiteralValue:
-		if c, ok := valueToCandidate(c.Val, c.Description, c.IsDeprecated, editRng); ok {
-			candidates = append(candidates, c)
-		}
-	case schema.KeywordExpr:
-		candidates = append(candidates, lang.Candidate{
-			Label:       c.Keyword,
-			Detail:      c.FriendlyName(),
-			Description: c.Description,
-			Kind:        lang.KeywordCandidateKind,
-			TextEdit: lang.TextEdit{
-				NewText: c.Keyword,
-				Snippet: c.Keyword,
-				Range:   editRng,
-			},
-		})
-	case schema.TraversalExpr:
-		candidates = append(candidates, d.candidatesForTraversalConstraint(ctx, c, outerBodyRng, prefixRng, editRng)...)
-	case schema.ListExpr:
-		candidates = append(candidates, lang.Candidate{
-			Label:       fmt.Sprintf(`[ %s ]`, labelsForConstraints(c.Elem)),
-			Detail:      c.FriendlyName(),
-			Description: c.Description,
-			Kind:        lang.ListCandidateKind,
-			TextEdit: lang.TextEdit{
-				NewText: `[ ]`,
-				Snippet: `[ ${0} ]`,
-				Range:   editRng,
-			},
-			TriggerSuggest: triggerSuggestForExprConstraints(c.Elem),
-		})
-	case schema.SetExpr:
-		candidates = append(candidates, lang.Candidate{
-			Label:       fmt.Sprintf(`[ %s ]`, labelsForConstraints(c.Elem)),
-			Detail:      c.FriendlyName(),
-			Description: c.Description,
-			Kind:        lang.SetCandidateKind,
-			TextEdit: lang.TextEdit{
-				NewText: `[ ]`,
-				Snippet: `[ ${0} ]`,
-				Range:   editRng,
-			},
-			TriggerSuggest: triggerSuggestForExprConstraints(c.Elem),
-		})
-	case schema.TupleExpr:
-		triggerSuggest := false
-		if len(c.Elems) > 0 {
-			triggerSuggest = triggerSuggestForExprConstraints(c.Elems[0])
-		}
-		candidates = append(candidates, lang.Candidate{
-			Label:       fmt.Sprintf(`[ %s ]`, labelsForConstraints(c.Elems[0])),
-			Detail:      c.FriendlyName(),
-			Description: c.Description,
-			Kind:        lang.TupleCandidateKind,
-			TextEdit: lang.TextEdit{
-				NewText: `[ ]`,
-				Snippet: `[ ${0} ]`,
-				Range:   editRng,
-			},
-			TriggerSuggest: triggerSuggest,
-		})
-	case schema.MapExpr:
-		candidates = append(candidates, lang.Candidate{
-			Label:       fmt.Sprintf(`{ key = %s }`, labelsForConstraints(c.Elem)),
-			Detail:      c.FriendlyName(),
-			Description: c.Description,
-			Kind:        lang.MapCandidateKind,
-			TextEdit: lang.TextEdit{
-				NewText: fmt.Sprintf("{\n  name = %s\n}",
-					newTextForConstraints(c.Elem, true)),
-				Snippet: fmt.Sprintf("{\n  ${1:name} = %s\n}",
-					snippetForConstraints(1, c.Elem, true)),
-				Range: editRng,
-			},
-			TriggerSuggest: triggerSuggestForExprConstraints(c.Elem),
-		})
-	case schema.ObjectExpr:
-		candidates = append(candidates, lang.Candidate{
-			Label:       `{ }`,
-			Detail:      c.FriendlyName(),
-			Description: c.Description,
-			Kind:        lang.ObjectCandidateKind,
-			TextEdit: lang.TextEdit{
-				NewText: "{\n  \n}",
-				Snippet: "{\n  ${1}\n}",
-				Range:   editRng,
-			},
-			TriggerSuggest: len(c.Attributes) > 0,
-		})
-	case schema.ObjectExprAttributes:
-		attrNames := sortedObjectExprAttrNames(c)
-		for _, name := range attrNames {
-			attr := c[name]
-			candidates = append(candidates, lang.Candidate{
-				Label:        name,
-				Detail:       detailForAttribute(attr),
-				IsDeprecated: attr.IsDeprecated,
-				Description:  attr.Description,
-				Kind:         lang.AttributeCandidateKind,
-				TextEdit: lang.TextEdit{
-					NewText: fmt.Sprintf("%s = %s", name, newTextForConstraints(attr.Expr, true)),
-					Snippet: fmt.Sprintf("%s = %s", name, snippetForConstraints(1, attr.Expr, true)),
-					Range:   editRng,
-				},
-			})
-		}
-	case schema.TypeDeclarationExpr:
-		for _, t := range []string{
-			"bool",
-			"number",
-			"string",
-			"list()",
-			"set()",
-			"tuple()",
-			"map()",
-			"object({})",
-		} {
-			candidates = append(candidates, lang.Candidate{
-				Label:  t,
-				Detail: t,
-				Kind:   lang.AttributeCandidateKind,
-				TextEdit: lang.TextEdit{
-					NewText: t,
-					Snippet: snippetForTypeDeclaration(t),
-					Range:   editRng,
-				},
-			})
-		}
-	}
-
-	return candidates
-}
-
-func (d *PathDecoder) candidatesForTraversalConstraint(ctx context.Context, tc schema.TraversalExpr, outermostBodyRng, prefixRng, editRng hcl.Range) []lang.Candidate {
-	candidates := make([]lang.Candidate, 0)
-
-	if d.pathCtx.ReferenceTargets == nil {
-		return candidates
-	}
-
-	if tc.Address != nil {
-		// no candidates if traversal itself is addressable
-		return candidates
-	}
-
-	prefix, _ := d.bytesFromRange(prefixRng)
-
-	d.pathCtx.ReferenceTargets.LegacyMatchWalk(ctx, tc, string(prefix), outermostBodyRng, editRng, func(target reference.Target) error {
-		address := target.Address(ctx, editRng.Start).String()
-
-		candidates = append(candidates, lang.Candidate{
-			Label:       address,
-			Detail:      target.FriendlyName(),
-			Description: target.Description,
-			Kind:        lang.TraversalCandidateKind,
-			TextEdit: lang.TextEdit{
-				NewText: address,
-				Snippet: address,
-				Range:   editRng,
-			},
-		})
-		return nil
-	})
-
-	return candidates
-}
-
 func referenceTargetIsInRange(target reference.Target, bodyRange hcl.Range) bool {
 	return target.RangePtr != nil &&
 		bodyRange.Filename == target.RangePtr.Filename &&
 		(bodyRange.ContainsPos(target.RangePtr.Start) ||
 			posEqual(bodyRange.End, target.RangePtr.End))
-}
-
-func newTextForConstraints(cons schema.ExprConstraints, isNested bool) string {
-	for _, constraint := range cons {
-		switch c := constraint.(type) {
-		case schema.LiteralTypeExpr:
-			return newTextForLiteralType(c.Type)
-		case schema.LegacyLiteralValue:
-			return newTextForLiteralValue(c.Val)
-		case schema.KeywordExpr:
-			return c.Keyword
-		case schema.ListExpr:
-			if isNested {
-				return "[  ]"
-			}
-			return fmt.Sprintf("[\n  %s\n]", newTextForConstraints(c.Elem, true))
-		case schema.SetExpr:
-			if isNested {
-				return "[  ]"
-			}
-			return fmt.Sprintf("[\n  %s\n]", newTextForConstraints(c.Elem, true))
-		case schema.TupleExpr:
-			if isNested {
-				return "[  ]"
-			}
-			return fmt.Sprintf("[\n  %s\n]", newTextForConstraints(c.Elems[0], true))
-		case schema.MapExpr:
-			return fmt.Sprintf("{\n  %s\n}", newTextForConstraints(c.Elem, true))
-		case schema.ObjectExpr:
-			return "{\n  \n}"
-		}
-	}
-	return ""
 }
 
 func snippetForTypeDeclaration(td string) string {
@@ -541,39 +189,6 @@ func snippetForTypeDeclaration(td string) string {
 	default:
 		return td
 	}
-}
-
-func snippetForConstraints(placeholder uint, cons schema.ExprConstraints, isNested bool) string {
-	for _, constraint := range cons {
-		switch c := constraint.(type) {
-		case schema.LiteralTypeExpr:
-			return snippetForLiteralType(placeholder, c.Type)
-		case schema.LegacyLiteralValue:
-			return snippetForLiteralValue(placeholder, c.Val)
-		case schema.KeywordExpr:
-			return fmt.Sprintf("${%d:%s}", placeholder, c.Keyword)
-		case schema.ListExpr:
-			if isNested {
-				return fmt.Sprintf("[ ${%d} ]", placeholder+1)
-			}
-			return fmt.Sprintf("[\n  %s\n]", snippetForConstraints(placeholder+1, c.Elem, true))
-		case schema.SetExpr:
-			if isNested {
-				return fmt.Sprintf("[ ${%d} ]", placeholder+1)
-			}
-			return fmt.Sprintf("[\n  %s\n]", snippetForConstraints(placeholder+1, c.Elem, true))
-		case schema.TupleExpr:
-			if isNested {
-				return fmt.Sprintf("[ ${%d} ]", placeholder+1)
-			}
-			return fmt.Sprintf("[\n  %s\n]", snippetForConstraints(placeholder+1, c.Elems[0], true))
-		case schema.MapExpr:
-			return fmt.Sprintf("{\n  %s\n}", snippetForConstraints(placeholder+1, c.Elem, true))
-		case schema.ObjectExpr:
-			return fmt.Sprintf("{\n  ${%d}\n}", placeholder+1)
-		}
-	}
-	return ""
 }
 
 type labelSet []string
@@ -600,31 +215,6 @@ func (ls labelSet) HasLabel(label string) bool {
 		}
 	}
 	return false
-}
-
-func labelsForConstraints(cons schema.ExprConstraints) labelSet {
-	ls := make(labelSet, 0)
-
-	for _, constraint := range cons {
-		switch c := constraint.(type) {
-		case schema.LiteralTypeExpr:
-			ls = ls.AddLabelIfNotPresent(labelForLiteralType(c.Type))
-		case schema.LegacyLiteralValue:
-			continue
-		case schema.KeywordExpr:
-			ls = ls.AddLabelIfNotPresent(c.FriendlyName())
-		case schema.TraversalExpr:
-			ls = ls.AddLabelIfNotPresent(c.FriendlyName())
-		case schema.ListExpr:
-			ls = ls.AddLabelIfNotPresent(fmt.Sprintf("[ %s ]", labelsForConstraints(c.Elem)))
-		case schema.SetExpr:
-			ls = ls.AddLabelIfNotPresent(fmt.Sprintf("[ %s ]", labelsForConstraints(c.Elem)))
-		case schema.TupleExpr:
-			ls = ls.AddLabelIfNotPresent(fmt.Sprintf("[ %s ]", labelsForConstraints(c.Elems[0])))
-		}
-	}
-
-	return ls
 }
 
 func typeToCandidates(ofType cty.Type, editRng hcl.Range) []lang.Candidate {
@@ -728,130 +318,6 @@ func candidateKindForType(t cty.Type) lang.CandidateKind {
 	}
 
 	return lang.NilCandidateKind
-}
-
-func triggerSuggestForExprConstraints(ec schema.ExprConstraints) bool {
-	if len(ec) > 0 {
-		expr := ec[0]
-		switch et := expr.(type) {
-		case schema.LiteralTypeExpr:
-			if et.Type == cty.Bool {
-				return true
-			}
-		case schema.LegacyLiteralValue:
-			if len(ec) > 1 {
-				return true
-			}
-		case schema.KeywordExpr:
-			return true
-		case schema.TraversalExpr:
-			return true
-		case schema.ListExpr:
-			return triggerSuggestForExprConstraints(et.Elem)
-		case schema.SetExpr:
-			return triggerSuggestForExprConstraints(et.Elem)
-		case schema.TupleExpr:
-			if len(et.Elems) > 0 {
-				return triggerSuggestForExprConstraints(et.Elems[0])
-			}
-		case schema.MapExpr:
-			return triggerSuggestForExprConstraints(et.Elem)
-		case schema.ObjectExpr:
-			if len(et.Attributes) > 0 {
-				return true
-			}
-		}
-	}
-	return false
-}
-
-func snippetForExprContraints(placeholder uint, ec schema.ExprConstraints) string {
-	if len(ec) > 0 {
-		expr := ec[0]
-
-		switch et := expr.(type) {
-		case schema.LiteralTypeExpr:
-			return snippetForLiteralType(placeholder, et.Type)
-		case schema.LegacyLiteralValue:
-			if len(ec) == 1 {
-				return snippetForLiteralValue(placeholder, et.Val)
-			}
-			return ""
-		case schema.ListExpr:
-			ec := ExprConstraints(et.Elem)
-			if ec.HasKeywordsOnly() {
-				return "[ ${0} ]"
-			}
-			return "[\n  ${0}\n]"
-		case schema.SetExpr:
-			ec := ExprConstraints(et.Elem)
-			if ec.HasKeywordsOnly() {
-				return "[ ${0} ]"
-			}
-			return "[\n  ${0}\n]"
-		case schema.TupleExpr:
-			// TODO: multiple constraints?
-			ec := ExprConstraints(et.Elems[0])
-			if ec.HasKeywordsOnly() {
-				return "[ ${0} ]"
-			}
-			return "[\n  ${0}\n]"
-		case schema.MapExpr:
-			return fmt.Sprintf("{\n  ${%d:name} = %s\n }",
-				placeholder,
-				snippetForExprContraints(placeholder+1, et.Elem))
-		case schema.ObjectExpr:
-			return fmt.Sprintf("{\n  ${%d}\n }", placeholder+1)
-		}
-		return ""
-	}
-	return ""
-}
-
-func snippetForExprContraint(placeholder uint, ec schema.ExprConstraints) string {
-	e := ExprConstraints(ec)
-
-	// TODO: implement rest of these
-	if t, ok := e.LiteralType(); ok {
-		return snippetForLiteralType(placeholder, t)
-	}
-	// case schema.LegacyLiteralValue:
-	// 	if len(ec) == 1 {
-	// 		return snippetForLiteralValue(placeholder, et.Val)
-	// 	}
-	// 	return ""
-	if t, ok := e.ListExpr(); ok {
-		ec := ExprConstraints(t.Elem)
-		if ec.HasKeywordsOnly() {
-			return "[ ${0} ]"
-		}
-		return "[\n  ${0}\n]"
-	}
-	if t, ok := e.SetExpr(); ok {
-		ec := ExprConstraints(t.Elem)
-		if ec.HasKeywordsOnly() {
-			return "[ ${0} ]"
-		}
-		return "[\n  ${0}\n]"
-	}
-	if t, ok := e.TupleExpr(); ok {
-		// TODO: multiple constraints?
-		ec := ExprConstraints(t.Elems[0])
-		if ec.HasKeywordsOnly() {
-			return "[ ${0} ]"
-		}
-		return "[\n  ${0}\n]"
-	}
-	if t, ok := e.MapExpr(); ok {
-		return fmt.Sprintf("{\n  ${%d:name} = %s\n }",
-			placeholder,
-			snippetForExprContraints(placeholder+1, t.Elem))
-	}
-	if _, ok := e.ObjectExpr(); ok {
-		return fmt.Sprintf("{\n  ${%d}\n }", placeholder+1)
-	}
-
-	return ""
 }
 
 type snippetGenerator struct {
