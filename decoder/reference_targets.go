@@ -421,15 +421,6 @@ func (d *PathDecoder) collectInferredReferenceTargetsForBody(addr lang.Address, 
 		}
 
 		attrAddr := append(addr.Copy(), lang.AttrStep{Name: name})
-
-		legacyRef := reference.Target{
-			Addr:        attrAddr,
-			ScopeId:     bAddrSchema.ScopeId,
-			Type:        attrType,
-			Description: aSchema.Description,
-			RangePtr:    body.MissingItemRange().Ptr(),
-		}
-
 		targetCtx := &TargetContext{
 			ParentAddress: attrAddr,
 			ScopeId:       bAddrSchema.ScopeId,
@@ -440,19 +431,13 @@ func (d *PathDecoder) collectInferredReferenceTargetsForBody(addr lang.Address, 
 			localAddr := make(lang.Address, len(selfRefAddr))
 			copy(localAddr, selfRefAddr)
 			localAddr = append(localAddr, lang.AttrStep{Name: name})
-
-			legacyRef.LocalAddr = localAddr
-			legacyRef.TargetableFromRangePtr = selfRefBodyRangePtr.Ptr()
-
 			targetCtx.ParentLocalAddress = localAddr
 			targetCtx.TargetableFromRangePtr = selfRefBodyRangePtr.Ptr()
 		}
 
 		var attrExpr hcl.Expression
 		if attr, ok := content.Attributes[name]; ok {
-			legacyRef.RangePtr = attr.Range.Ptr()
 			targetCtx.ParentRangePtr = attr.Range.Ptr()
-			legacyRef.DefRangePtr = attr.NameRange.Ptr()
 			targetCtx.ParentDefRangePtr = attr.NameRange.Ptr()
 			attrExpr = attr.Expr
 		}
