@@ -1129,6 +1129,7 @@ listener "https" {
 					Addr: lang.Address{
 						lang.RootStep{Name: "aws"},
 					},
+					LocalAddr: lang.Address{},
 					Type: cty.Object(map[string]cty.Type{
 						"attr":      cty.Number,
 						"name":      cty.String,
@@ -2064,6 +2065,7 @@ provider "test" {
 						lang.RootStep{Name: "root"},
 						lang.AttrStep{Name: "aws"},
 					},
+					LocalAddr: lang.Address{},
 					RangePtr: &hcl.Range{
 						Filename: "test.tf",
 						Start: hcl.Pos{
@@ -2309,6 +2311,7 @@ provider "test" {
 						lang.RootStep{Name: "root"},
 						lang.AttrStep{Name: "aws"},
 					},
+					LocalAddr: lang.Address{},
 					RangePtr: &hcl.Range{
 						Filename: "test.tf",
 						Start: hcl.Pos{
@@ -2698,6 +2701,7 @@ provider "test" {
 						lang.RootStep{Name: "root"},
 						lang.AttrStep{Name: "aws"},
 					},
+					LocalAddr: lang.Address{},
 					RangePtr: &hcl.Range{
 						Filename: "test.tf",
 						Start: hcl.Pos{
@@ -2860,6 +2864,7 @@ provider "test" {
 						lang.RootStep{Name: "root"},
 						lang.AttrStep{Name: "aws"},
 					},
+					LocalAddr: lang.Address{},
 					RangePtr: &hcl.Range{
 						Filename: "test.tf",
 						Start: hcl.Pos{
@@ -3251,6 +3256,7 @@ provider "test" {
 						lang.RootStep{Name: "lb"},
 						lang.AttrStep{Name: "aws"},
 					},
+					LocalAddr: lang.Address{},
 					RangePtr: &hcl.Range{
 						Filename: "test.tf",
 						Start: hcl.Pos{
@@ -4614,6 +4620,7 @@ module "different" {
 					Addr: lang.Address{
 						lang.RootStep{Name: "blk"},
 					},
+					LocalAddr: lang.Address{},
 					RangePtr: &hcl.Range{
 						Filename: "test.tf",
 						Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
