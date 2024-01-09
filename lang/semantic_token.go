@@ -30,7 +30,7 @@ const (
 	TokenObjectKey     SemanticTokenType = "hcl-objectKey"
 	TokenMapKey        SemanticTokenType = "hcl-mapKey"
 	TokenKeyword       SemanticTokenType = "hcl-keyword"
-	TokenTraversalStep SemanticTokenType = "hcl-traversalStep"
+	TokenReferenceStep SemanticTokenType = "hcl-referenceStep"
 	TokenTypeComplex   SemanticTokenType = "hcl-typeComplex"
 	TokenTypePrimitive SemanticTokenType = "hcl-typePrimitive"
 	TokenFunctionName  SemanticTokenType = "hcl-functionName"
@@ -46,7 +46,7 @@ var SupportedSemanticTokenTypes = SemanticTokenTypes{
 	TokenObjectKey,
 	TokenMapKey,
 	TokenKeyword,
-	TokenTraversalStep,
+	TokenReferenceStep,
 	TokenTypeComplex,
 	TokenTypePrimitive,
 	TokenFunctionName,

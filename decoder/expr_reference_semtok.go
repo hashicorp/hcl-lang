@@ -54,14 +54,14 @@ func semanticTokensForTraversal(traversal hcl.Traversal) []lang.SemanticToken {
 		switch ts := t.(type) {
 		case hcl.TraverseRoot:
 			tokens = append(tokens, lang.SemanticToken{
-				Type:      lang.TokenTraversalStep,
+				Type:      lang.TokenReferenceStep,
 				Modifiers: []lang.SemanticTokenModifier{},
 				Range:     t.SourceRange(),
 			})
 		case hcl.TraverseAttr:
 			rng := t.SourceRange()
 			tokens = append(tokens, lang.SemanticToken{
-				Type:      lang.TokenTraversalStep,
+				Type:      lang.TokenReferenceStep,
 				Modifiers: []lang.SemanticTokenModifier{},
 				Range: hcl.Range{
 					Filename: rng.Filename,
