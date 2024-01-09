@@ -804,7 +804,7 @@ func TestCompletionAtPos_exprTuple_references(t *testing.T) {
 				{
 					Label:  "var.bar",
 					Detail: "reference",
-					Kind:   lang.TraversalCandidateKind,
+					Kind:   lang.ReferenceCandidateKind,
 					TextEdit: lang.TextEdit{
 						NewText: "var.bar",
 						Snippet: "var.bar",

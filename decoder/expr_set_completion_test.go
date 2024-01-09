@@ -689,7 +689,7 @@ func TestCompletionAtPos_exprSet_references(t *testing.T) {
 				{
 					Label:  "var.bar",
 					Detail: "reference",
-					Kind:   lang.TraversalCandidateKind,
+					Kind:   lang.ReferenceCandidateKind,
 					TextEdit: lang.TextEdit{
 						NewText: "var.bar",
 						Snippet: "var.bar",

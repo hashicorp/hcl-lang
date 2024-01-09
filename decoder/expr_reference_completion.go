@@ -51,7 +51,7 @@ func (ref Reference) CompletionAtPos(ctx context.Context, pos hcl.Pos) []lang.Ca
 				Label:       address,
 				Detail:      target.FriendlyName(),
 				Description: target.Description,
-				Kind:        lang.TraversalCandidateKind,
+				Kind:        lang.ReferenceCandidateKind,
 				TextEdit: lang.TextEdit{
 					NewText: address,
 					Snippet: address,
@@ -89,7 +89,7 @@ func (ref Reference) CompletionAtPos(ctx context.Context, pos hcl.Pos) []lang.Ca
 			Label:       address,
 			Detail:      target.FriendlyName(),
 			Description: target.Description,
-			Kind:        lang.TraversalCandidateKind,
+			Kind:        lang.ReferenceCandidateKind,
 			TextEdit: lang.TextEdit{
 				NewText: address,
 				Snippet: address,

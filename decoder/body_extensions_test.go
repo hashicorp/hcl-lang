@@ -346,7 +346,7 @@ func TestCompletionAtPos_BodySchema_Extensions_Count(t *testing.T) {
 						NewText: "count.index",
 						Snippet: "count.index",
 					},
-					Kind: lang.TraversalCandidateKind,
+					Kind: lang.ReferenceCandidateKind,
 				},
 			}),
 		},
@@ -518,7 +518,7 @@ func TestCompletionAtPos_BodySchema_Extensions_Count(t *testing.T) {
 						NewText: "count.index",
 						Snippet: "count.index",
 					},
-					Kind: lang.TraversalCandidateKind,
+					Kind: lang.ReferenceCandidateKind,
 				},
 			}),
 		},
@@ -599,7 +599,7 @@ variable "test" {
 						NewText: "var.test",
 						Snippet: "var.test",
 					},
-					Kind: lang.TraversalCandidateKind,
+					Kind: lang.ReferenceCandidateKind,
 				},
 			}),
 		},
@@ -779,7 +779,7 @@ thing =
 				{
 					Label:  "each.key",
 					Detail: "string",
-					Kind:   lang.TraversalCandidateKind,
+					Kind:   lang.ReferenceCandidateKind,
 					Description: lang.MarkupContent{
 						Value: "The map key (or set member) corresponding to this instance",
 						Kind:  lang.MarkdownKind,
@@ -797,7 +797,7 @@ thing =
 				{
 					Label:  "each.value",
 					Detail: "dynamic",
-					Kind:   lang.TraversalCandidateKind,
+					Kind:   lang.ReferenceCandidateKind,
 					Description: lang.MarkupContent{
 						Value: "The map value corresponding to this instance. (If a set was provided, this is the same as `each.key`.)",
 						Kind:  lang.MarkdownKind,
@@ -1009,7 +1009,7 @@ foo {
 				{
 					Label:  "each.key",
 					Detail: "string",
-					Kind:   lang.TraversalCandidateKind,
+					Kind:   lang.ReferenceCandidateKind,
 					Description: lang.MarkupContent{
 						Value: "The map key (or set member) corresponding to this instance",
 						Kind:  lang.MarkdownKind,
@@ -1027,7 +1027,7 @@ foo {
 				{
 					Label:  "each.value",
 					Detail: "dynamic",
-					Kind:   lang.TraversalCandidateKind,
+					Kind:   lang.ReferenceCandidateKind,
 					Description: lang.MarkupContent{
 						Value: "The map value corresponding to this instance. (If a set was provided, this is the same as `each.key`.)",
 						Kind:  lang.MarkdownKind,
@@ -1307,7 +1307,7 @@ func TestCompletionAtPos_BodySchema_Extensions_SelfRef(t *testing.T) {
 						NewText: "self",
 						Snippet: "self",
 					},
-					Kind: lang.TraversalCandidateKind,
+					Kind: lang.ReferenceCandidateKind,
 				},
 			}),
 		},
@@ -1525,7 +1525,7 @@ func TestCompletionAtPos_BodySchema_Extensions_SelfRef(t *testing.T) {
 						NewText: "self.cpu_count",
 						Snippet: "self.cpu_count",
 					},
-					Kind: lang.TraversalCandidateKind,
+					Kind: lang.ReferenceCandidateKind,
 				},
 			}),
 		},
@@ -1623,7 +1623,7 @@ func TestCompletionAtPos_BodySchema_Extensions_SelfRef(t *testing.T) {
 						NewText: "self",
 						Snippet: "self",
 					},
-					Kind: lang.TraversalCandidateKind,
+					Kind: lang.ReferenceCandidateKind,
 				},
 			}),
 		},

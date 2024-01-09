@@ -21,11 +21,11 @@ func _() {
 	_ = x[SetCandidateKind-10]
 	_ = x[StringCandidateKind-11]
 	_ = x[TupleCandidateKind-12]
-	_ = x[TraversalCandidateKind-13]
+	_ = x[ReferenceCandidateKind-13]
 	_ = x[FunctionCandidateKind-14]
 }
 
-const _CandidateKind_name = "NilCandidateKindAttributeCandidateKindBlockCandidateKindLabelCandidateKindBoolCandidateKindKeywordCandidateKindListCandidateKindMapCandidateKindNumberCandidateKindObjectCandidateKindSetCandidateKindStringCandidateKindTupleCandidateKindTraversalCandidateKindFunctionCandidateKind"
+const _CandidateKind_name = "NilCandidateKindAttributeCandidateKindBlockCandidateKindLabelCandidateKindBoolCandidateKindKeywordCandidateKindListCandidateKindMapCandidateKindNumberCandidateKindObjectCandidateKindSetCandidateKindStringCandidateKindTupleCandidateKindReferenceCandidateKindFunctionCandidateKind"
 
 var _CandidateKind_index = [...]uint16{0, 16, 38, 56, 74, 91, 111, 128, 144, 163, 182, 198, 217, 235, 257, 278}
 

@@ -285,7 +285,7 @@ func TestCompletionAtPos_exprAny_functions(t *testing.T) {
 				{
 					Label:  "foo.bar",
 					Detail: "string",
-					Kind:   lang.TraversalCandidateKind,
+					Kind:   lang.ReferenceCandidateKind,
 					TextEdit: lang.TextEdit{
 						NewText: "foo.bar",
 						Snippet: "foo.bar",
@@ -433,7 +433,7 @@ func TestCompletionAtPos_exprAny_functions(t *testing.T) {
 				{
 					Label:  "var.lst",
 					Detail: "list of string",
-					Kind:   lang.TraversalCandidateKind,
+					Kind:   lang.ReferenceCandidateKind,
 					TextEdit: lang.TextEdit{
 						Range: hcl.Range{
 							Filename: "test.tf",
@@ -491,7 +491,7 @@ func TestCompletionAtPos_exprAny_functions(t *testing.T) {
 				{
 					Label:  "var.obj",
 					Detail: "list of string",
-					Kind:   lang.TraversalCandidateKind,
+					Kind:   lang.ReferenceCandidateKind,
 					TextEdit: lang.TextEdit{
 						Range: hcl.Range{
 							Filename: "test.tf",
@@ -549,7 +549,7 @@ func TestCompletionAtPos_exprAny_functions(t *testing.T) {
 				{
 					Label:  `var.map["foo"]`,
 					Detail: "string",
-					Kind:   lang.TraversalCandidateKind,
+					Kind:   lang.ReferenceCandidateKind,
 					TextEdit: lang.TextEdit{
 						Range: hcl.Range{
 							Filename: "test.tf",
@@ -863,7 +863,7 @@ func TestCompletionAtPos_exprAny_combinedExpressions(t *testing.T) {
 				{
 					Label:  "local.foo",
 					Detail: "bool",
-					Kind:   lang.TraversalCandidateKind,
+					Kind:   lang.ReferenceCandidateKind,
 					TextEdit: lang.TextEdit{
 						NewText: "local.foo",
 						Snippet: "local.foo",
@@ -1033,7 +1033,7 @@ func TestCompletionAtPos_exprAny_combinedExpressions(t *testing.T) {
 				{
 					Label:  "toot.noot",
 					Detail: "bool",
-					Kind:   lang.TraversalCandidateKind,
+					Kind:   lang.ReferenceCandidateKind,
 					TextEdit: lang.TextEdit{
 						NewText: "toot.noot",
 						Snippet: "toot.noot",
@@ -2425,7 +2425,7 @@ func TestCompletionAtPos_exprAny_references(t *testing.T) {
 				{
 					Label:  "local.foo",
 					Detail: "string",
-					Kind:   lang.TraversalCandidateKind,
+					Kind:   lang.ReferenceCandidateKind,
 					TextEdit: lang.TextEdit{
 						NewText: "local.foo",
 						Snippet: "local.foo",
@@ -2439,7 +2439,7 @@ func TestCompletionAtPos_exprAny_references(t *testing.T) {
 				{
 					Label:  "local.baz",
 					Detail: "number",
-					Kind:   lang.TraversalCandidateKind,
+					Kind:   lang.ReferenceCandidateKind,
 					TextEdit: lang.TextEdit{
 						NewText: "local.baz",
 						Snippet: "local.baz",
@@ -2490,7 +2490,7 @@ func TestCompletionAtPos_exprAny_references(t *testing.T) {
 				{
 					Label:  "local.bar",
 					Detail: "number",
-					Kind:   lang.TraversalCandidateKind,
+					Kind:   lang.ReferenceCandidateKind,
 					TextEdit: lang.TextEdit{
 						NewText: "local.bar",
 						Snippet: "local.bar",
@@ -2541,7 +2541,7 @@ func TestCompletionAtPos_exprAny_references(t *testing.T) {
 				{
 					Label:  "local.foo",
 					Detail: "string",
-					Kind:   lang.TraversalCandidateKind,
+					Kind:   lang.ReferenceCandidateKind,
 					TextEdit: lang.TextEdit{
 						NewText: "local.foo",
 						Snippet: "local.foo",
@@ -2592,7 +2592,7 @@ func TestCompletionAtPos_exprAny_references(t *testing.T) {
 				{
 					Label:  "local.foo",
 					Detail: "string",
-					Kind:   lang.TraversalCandidateKind,
+					Kind:   lang.ReferenceCandidateKind,
 					TextEdit: lang.TextEdit{
 						NewText: "local.foo",
 						Snippet: "local.foo",
@@ -2935,7 +2935,7 @@ func TestCompletionAtPos_exprAny_operators(t *testing.T) {
 				{
 					Label:  "var.bar",
 					Detail: "string",
-					Kind:   lang.TraversalCandidateKind,
+					Kind:   lang.ReferenceCandidateKind,
 					TextEdit: lang.TextEdit{
 						NewText: "var.bar",
 						Snippet: "var.bar",
@@ -2949,7 +2949,7 @@ func TestCompletionAtPos_exprAny_operators(t *testing.T) {
 				{
 					Label:  "var.foo",
 					Detail: "number",
-					Kind:   lang.TraversalCandidateKind,
+					Kind:   lang.ReferenceCandidateKind,
 					TextEdit: lang.TextEdit{
 						NewText: "var.foo",
 						Snippet: "var.foo",
@@ -3126,7 +3126,7 @@ func TestCompletionAtPos_exprAny_operators(t *testing.T) {
 				{
 					Label:  "var.bar",
 					Detail: "bool",
-					Kind:   lang.TraversalCandidateKind,
+					Kind:   lang.ReferenceCandidateKind,
 					TextEdit: lang.TextEdit{
 						NewText: "var.bar",
 						Snippet: "var.bar",
@@ -3277,7 +3277,7 @@ func TestCompletionAtPos_exprAny_operators(t *testing.T) {
 				{
 					Label:  "var.foo",
 					Detail: "string",
-					Kind:   lang.TraversalCandidateKind,
+					Kind:   lang.ReferenceCandidateKind,
 					TextEdit: lang.TextEdit{
 						NewText: "var.foo",
 						Snippet: "var.foo",
@@ -3465,7 +3465,7 @@ func TestCompletionAtPos_exprAny_template(t *testing.T) {
 				{
 					Label:  "var.bar",
 					Detail: "string",
-					Kind:   lang.TraversalCandidateKind,
+					Kind:   lang.ReferenceCandidateKind,
 					TextEdit: lang.TextEdit{
 						NewText: "var.bar",
 						Snippet: "var.bar",
@@ -3586,7 +3586,7 @@ EOT
 				{
 					Label:  "var.bar",
 					Detail: "string",
-					Kind:   lang.TraversalCandidateKind,
+					Kind:   lang.ReferenceCandidateKind,
 					TextEdit: lang.TextEdit{
 						NewText: "var.bar",
 						Snippet: "var.bar",
@@ -3793,7 +3793,7 @@ EOT
 				{
 					Label:  "var.bar",
 					Detail: "string",
-					Kind:   lang.TraversalCandidateKind,
+					Kind:   lang.ReferenceCandidateKind,
 					TextEdit: lang.TextEdit{
 						NewText: "var.bar",
 						Snippet: "var.bar",
@@ -3911,7 +3911,7 @@ EOT
 				{
 					Label:  "var.bar",
 					Detail: "string",
-					Kind:   lang.TraversalCandidateKind,
+					Kind:   lang.ReferenceCandidateKind,
 					TextEdit: lang.TextEdit{
 						NewText: "var.bar",
 						Snippet: "var.bar",
@@ -3954,7 +3954,7 @@ EOT
 				{
 					Label:  "var.bar",
 					Detail: "string",
-					Kind:   lang.TraversalCandidateKind,
+					Kind:   lang.ReferenceCandidateKind,
 					TextEdit: lang.TextEdit{
 						NewText: "var.bar",
 						Snippet: "var.bar",
@@ -3997,7 +3997,7 @@ EOT
 				{
 					Label:  "var.bar",
 					Detail: "string",
-					Kind:   lang.TraversalCandidateKind,
+					Kind:   lang.ReferenceCandidateKind,
 					TextEdit: lang.TextEdit{
 						NewText: "var.bar",
 						Snippet: "var.bar",
@@ -4115,7 +4115,7 @@ EOT
 				{
 					Label:  "var.bar",
 					Detail: "string",
-					Kind:   lang.TraversalCandidateKind,
+					Kind:   lang.ReferenceCandidateKind,
 					TextEdit: lang.TextEdit{
 						NewText: "var.bar",
 						Snippet: "var.bar",
@@ -4236,7 +4236,7 @@ EOT
 				{
 					Label:  "var.bar",
 					Detail: "string",
-					Kind:   lang.TraversalCandidateKind,
+					Kind:   lang.ReferenceCandidateKind,
 					TextEdit: lang.TextEdit{
 						NewText: "var.bar",
 						Snippet: "var.bar",
@@ -4415,7 +4415,7 @@ func TestCompletionAtPos_exprAny_conditional(t *testing.T) {
 						NewText: "var.foo",
 						Snippet: "var.foo",
 					},
-					Kind: lang.TraversalCandidateKind,
+					Kind: lang.ReferenceCandidateKind,
 				},
 			}),
 		},
@@ -4469,7 +4469,7 @@ func TestCompletionAtPos_exprAny_conditional(t *testing.T) {
 						NewText: "var.bar",
 						Snippet: "var.bar",
 					},
-					Kind: lang.TraversalCandidateKind,
+					Kind: lang.ReferenceCandidateKind,
 				},
 				{
 					Label:  "var.foo",
@@ -4483,7 +4483,7 @@ func TestCompletionAtPos_exprAny_conditional(t *testing.T) {
 						NewText: "var.foo",
 						Snippet: "var.foo",
 					},
-					Kind: lang.TraversalCandidateKind,
+					Kind: lang.ReferenceCandidateKind,
 				},
 			}),
 		},
@@ -4537,7 +4537,7 @@ func TestCompletionAtPos_exprAny_conditional(t *testing.T) {
 						NewText: "var.bar",
 						Snippet: "var.bar",
 					},
-					Kind: lang.TraversalCandidateKind,
+					Kind: lang.ReferenceCandidateKind,
 				},
 				{
 					Label:  "var.foo",
@@ -4551,7 +4551,7 @@ func TestCompletionAtPos_exprAny_conditional(t *testing.T) {
 						NewText: "var.foo",
 						Snippet: "var.foo",
 					},
-					Kind: lang.TraversalCandidateKind,
+					Kind: lang.ReferenceCandidateKind,
 				},
 			}),
 		},
@@ -4605,7 +4605,7 @@ func TestCompletionAtPos_exprAny_conditional(t *testing.T) {
 						NewText: "var.bar",
 						Snippet: "var.bar",
 					},
-					Kind: lang.TraversalCandidateKind,
+					Kind: lang.ReferenceCandidateKind,
 				},
 				{
 					Label:  "var.foo",
@@ -4619,7 +4619,7 @@ func TestCompletionAtPos_exprAny_conditional(t *testing.T) {
 						NewText: "var.foo",
 						Snippet: "var.foo",
 					},
-					Kind: lang.TraversalCandidateKind,
+					Kind: lang.ReferenceCandidateKind,
 				},
 			}),
 		},
@@ -4673,7 +4673,7 @@ func TestCompletionAtPos_exprAny_conditional(t *testing.T) {
 						NewText: "var.foo",
 						Snippet: "var.foo",
 					},
-					Kind: lang.TraversalCandidateKind,
+					Kind: lang.ReferenceCandidateKind,
 				},
 			}),
 		},
