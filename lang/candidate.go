@@ -25,7 +25,7 @@ const (
 	SetCandidateKind
 	StringCandidateKind
 	TupleCandidateKind
-	TraversalCandidateKind
+	ReferenceCandidateKind
 	FunctionCandidateKind
 )
 

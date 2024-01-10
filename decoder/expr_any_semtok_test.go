@@ -2285,7 +2285,7 @@ foo = "noot"
 					},
 				},
 				{
-					Type:      lang.TokenTraversalStep,
+					Type:      lang.TokenReferenceStep,
 					Modifiers: lang.SemanticTokenModifiers{},
 					Range: hcl.Range{
 						Filename: "test.tf",
@@ -2294,7 +2294,7 @@ foo = "noot"
 					},
 				},
 				{
-					Type:      lang.TokenTraversalStep,
+					Type:      lang.TokenReferenceStep,
 					Modifiers: lang.SemanticTokenModifiers{},
 					Range: hcl.Range{
 						Filename: "test.tf",
@@ -2361,7 +2361,7 @@ foo = "noot"
 					},
 				},
 				{
-					Type:      lang.TokenTraversalStep,
+					Type:      lang.TokenReferenceStep,
 					Modifiers: lang.SemanticTokenModifiers{},
 					Range: hcl.Range{
 						Filename: "test.tf",
@@ -2370,7 +2370,7 @@ foo = "noot"
 					},
 				},
 				{
-					Type:      lang.TokenTraversalStep,
+					Type:      lang.TokenReferenceStep,
 					Modifiers: lang.SemanticTokenModifiers{},
 					Range: hcl.Range{
 						Filename: "test.tf",
@@ -2446,7 +2446,7 @@ foo = "noot"
 					},
 				},
 				{
-					Type:      lang.TokenTraversalStep,
+					Type:      lang.TokenReferenceStep,
 					Modifiers: lang.SemanticTokenModifiers{},
 					Range: hcl.Range{
 						Filename: "test.tf",
@@ -2455,7 +2455,7 @@ foo = "noot"
 					},
 				},
 				{
-					Type:      lang.TokenTraversalStep,
+					Type:      lang.TokenReferenceStep,
 					Modifiers: lang.SemanticTokenModifiers{},
 					Range: hcl.Range{
 						Filename: "test.tf",
@@ -2782,7 +2782,7 @@ func TestSemanticTokens_exprAny_templates(t *testing.T) {
 					},
 				},
 				{
-					Type:      lang.TokenTraversalStep,
+					Type:      lang.TokenReferenceStep,
 					Modifiers: lang.SemanticTokenModifiers{},
 					Range: hcl.Range{
 						Filename: "test.tf",
@@ -2791,7 +2791,7 @@ func TestSemanticTokens_exprAny_templates(t *testing.T) {
 					},
 				},
 				{
-					Type:      lang.TokenTraversalStep,
+					Type:      lang.TokenReferenceStep,
 					Modifiers: lang.SemanticTokenModifiers{},
 					Range: hcl.Range{
 						Filename: "test.tf",
@@ -2877,7 +2877,7 @@ EOT
 					},
 				},
 				{
-					Type:      lang.TokenTraversalStep,
+					Type:      lang.TokenReferenceStep,
 					Modifiers: lang.SemanticTokenModifiers{},
 					Range: hcl.Range{
 						Filename: "test.tf",
@@ -2886,7 +2886,7 @@ EOT
 					},
 				},
 				{
-					Type:      lang.TokenTraversalStep,
+					Type:      lang.TokenReferenceStep,
 					Modifiers: lang.SemanticTokenModifiers{},
 					Range: hcl.Range{
 						Filename: "test.tf",

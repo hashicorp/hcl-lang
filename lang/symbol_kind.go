@@ -33,8 +33,8 @@ func (ObjectConsExprKind) isSymbolExprKindSigil() exprKindSigil {
 	return exprKindSigil{}
 }
 
-type TraversalExprKind struct{}
+type ReferenceExprKind struct{}
 
-func (TraversalExprKind) isSymbolExprKindSigil() exprKindSigil {
+func (ReferenceExprKind) isSymbolExprKindSigil() exprKindSigil {
 	return exprKindSigil{}
 }

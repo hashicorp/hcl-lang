@@ -343,7 +343,7 @@ resource "aws_instance" "test" {
 				},
 				&AttributeSymbol{
 					AttrName: "random_kw",
-					ExprKind: lang.TraversalExprKind{},
+					ExprKind: lang.ReferenceExprKind{},
 					path:     lang.Path{Path: dirPath},
 					rng: hcl.Range{
 						Filename: "test.tf",
@@ -441,7 +441,7 @@ resource "aws_instance" "test" {
 					nestedSymbols: []Symbol{
 						&ExprSymbol{
 							ExprName: "0",
-							ExprKind: lang.TraversalExprKind{},
+							ExprKind: lang.ReferenceExprKind{},
 							path:     lang.Path{Path: dirPath},
 							rng: hcl.Range{
 								Filename: "test.tf",
@@ -501,7 +501,7 @@ resource "aws_instance" "test" {
 					nestedSymbols: []Symbol{
 						&ExprSymbol{
 							ExprName: "num",
-							ExprKind: lang.TraversalExprKind{},
+							ExprKind: lang.ReferenceExprKind{},
 							path:     lang.Path{Path: dirPath},
 							rng: hcl.Range{
 								Filename: "test.tf",
@@ -522,7 +522,7 @@ resource "aws_instance" "test" {
 				},
 				&AttributeSymbol{
 					AttrName: "random_kw",
-					ExprKind: lang.TraversalExprKind{},
+					ExprKind: lang.ReferenceExprKind{},
 					path:     lang.Path{Path: dirPath},
 					rng: hcl.Range{
 						Filename: "test.tf",

@@ -1056,7 +1056,7 @@ resource "aws_instance" "app_server" {
 			},
 		},
 		{ // count
-			Type:      lang.TokenTraversalStep,
+			Type:      lang.TokenReferenceStep,
 			Modifiers: lang.SemanticTokenModifiers{},
 			Range: hcl.Range{
 				Filename: "test.tf",
@@ -1073,7 +1073,7 @@ resource "aws_instance" "app_server" {
 			},
 		},
 		{ // index
-			Type:      lang.TokenTraversalStep,
+			Type:      lang.TokenReferenceStep,
 			Modifiers: lang.SemanticTokenModifiers{},
 			Range: hcl.Range{
 				Filename: "test.tf",
@@ -1306,7 +1306,7 @@ resource "aws_instance" "app_server" {
 			},
 		},
 		{ // count
-			Type:      lang.TokenTraversalStep,
+			Type:      lang.TokenReferenceStep,
 			Modifiers: lang.SemanticTokenModifiers{},
 			Range: hcl.Range{
 				Filename: "test.tf",
@@ -1323,7 +1323,7 @@ resource "aws_instance" "app_server" {
 			},
 		},
 		{ // index
-			Type:      lang.TokenTraversalStep,
+			Type:      lang.TokenReferenceStep,
 			Modifiers: lang.SemanticTokenModifiers{},
 			Range: hcl.Range{
 				Filename: "test.tf",
@@ -1703,7 +1703,7 @@ resource "foobar" "name" {
 			},
 		},
 		{ // count
-			Type:      lang.TokenTraversalStep,
+			Type:      lang.TokenReferenceStep,
 			Modifiers: lang.SemanticTokenModifiers{},
 			Range: hcl.Range{
 				Filename: "test.tf",
@@ -1720,7 +1720,7 @@ resource "foobar" "name" {
 			},
 		},
 		{ // index
-			Type:      lang.TokenTraversalStep,
+			Type:      lang.TokenReferenceStep,
 			Modifiers: lang.SemanticTokenModifiers{},
 			Range: hcl.Range{
 				Filename: "test.tf",
@@ -1891,7 +1891,7 @@ resource "foobar" "name" {
 			},
 		},
 		{ // each
-			Type:      lang.TokenTraversalStep,
+			Type:      lang.TokenReferenceStep,
 			Modifiers: lang.SemanticTokenModifiers{},
 			Range: hcl.Range{
 				Filename: "test.tf",
@@ -1900,7 +1900,7 @@ resource "foobar" "name" {
 			},
 		},
 		{ // key
-			Type:      lang.TokenTraversalStep,
+			Type:      lang.TokenReferenceStep,
 			Modifiers: lang.SemanticTokenModifiers{},
 			Range: hcl.Range{
 				Filename: "test.tf",
@@ -1918,7 +1918,7 @@ resource "foobar" "name" {
 			},
 		},
 		{ // each
-			Type:      lang.TokenTraversalStep,
+			Type:      lang.TokenReferenceStep,
 			Modifiers: lang.SemanticTokenModifiers{},
 			Range: hcl.Range{
 				Filename: "test.tf",
@@ -1927,7 +1927,7 @@ resource "foobar" "name" {
 			},
 		},
 		{ // value
-			Type:      lang.TokenTraversalStep,
+			Type:      lang.TokenReferenceStep,
 			Modifiers: lang.SemanticTokenModifiers{},
 			Range: hcl.Range{
 				Filename: "test.tf",

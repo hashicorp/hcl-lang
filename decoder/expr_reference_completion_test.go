@@ -64,7 +64,7 @@ func TestCompletionAtPos_exprReference(t *testing.T) {
 				{
 					Label:  "local.foo",
 					Detail: "string",
-					Kind:   lang.TraversalCandidateKind,
+					Kind:   lang.ReferenceCandidateKind,
 					TextEdit: lang.TextEdit{
 						NewText: "local.foo",
 						Snippet: "local.foo",
@@ -78,7 +78,7 @@ func TestCompletionAtPos_exprReference(t *testing.T) {
 				{
 					Label:  "local.baz",
 					Detail: "number",
-					Kind:   lang.TraversalCandidateKind,
+					Kind:   lang.ReferenceCandidateKind,
 					TextEdit: lang.TextEdit{
 						NewText: "local.baz",
 						Snippet: "local.baz",
@@ -129,7 +129,7 @@ func TestCompletionAtPos_exprReference(t *testing.T) {
 				{
 					Label:  "local.bar",
 					Detail: "number",
-					Kind:   lang.TraversalCandidateKind,
+					Kind:   lang.ReferenceCandidateKind,
 					TextEdit: lang.TextEdit{
 						NewText: "local.bar",
 						Snippet: "local.bar",
@@ -180,7 +180,7 @@ func TestCompletionAtPos_exprReference(t *testing.T) {
 				{
 					Label:  "local.foo",
 					Detail: "string",
-					Kind:   lang.TraversalCandidateKind,
+					Kind:   lang.ReferenceCandidateKind,
 					TextEdit: lang.TextEdit{
 						NewText: "local.foo",
 						Snippet: "local.foo",
@@ -231,7 +231,7 @@ func TestCompletionAtPos_exprReference(t *testing.T) {
 				{
 					Label:  "local.foo",
 					Detail: "string",
-					Kind:   lang.TraversalCandidateKind,
+					Kind:   lang.ReferenceCandidateKind,
 					TextEdit: lang.TextEdit{
 						NewText: "local.foo",
 						Snippet: "local.foo",

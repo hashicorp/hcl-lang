@@ -180,7 +180,7 @@ foo = "noot"
 					},
 				},
 				{
-					Type:      lang.TokenTraversalStep,
+					Type:      lang.TokenReferenceStep,
 					Modifiers: lang.SemanticTokenModifiers{},
 					Range: hcl.Range{
 						Filename: "test.tf",
@@ -189,7 +189,7 @@ foo = "noot"
 					},
 				},
 				{
-					Type:      lang.TokenTraversalStep,
+					Type:      lang.TokenReferenceStep,
 					Modifiers: lang.SemanticTokenModifiers{},
 					Range: hcl.Range{
 						Filename: "test.tf",
@@ -256,7 +256,7 @@ foo = "noot"
 					},
 				},
 				{
-					Type:      lang.TokenTraversalStep,
+					Type:      lang.TokenReferenceStep,
 					Modifiers: lang.SemanticTokenModifiers{},
 					Range: hcl.Range{
 						Filename: "test.tf",
@@ -265,7 +265,7 @@ foo = "noot"
 					},
 				},
 				{
-					Type:      lang.TokenTraversalStep,
+					Type:      lang.TokenReferenceStep,
 					Modifiers: lang.SemanticTokenModifiers{},
 					Range: hcl.Range{
 						Filename: "test.tf",
@@ -341,7 +341,7 @@ foo = "noot"
 					},
 				},
 				{
-					Type:      lang.TokenTraversalStep,
+					Type:      lang.TokenReferenceStep,
 					Modifiers: lang.SemanticTokenModifiers{},
 					Range: hcl.Range{
 						Filename: "test.tf",
@@ -350,7 +350,7 @@ foo = "noot"
 					},
 				},
 				{
-					Type:      lang.TokenTraversalStep,
+					Type:      lang.TokenReferenceStep,
 					Modifiers: lang.SemanticTokenModifiers{},
 					Range: hcl.Range{
 						Filename: "test.tf",
@@ -428,7 +428,7 @@ foo = "noot"
 					},
 				},
 				{
-					Type:      lang.TokenTraversalStep,
+					Type:      lang.TokenReferenceStep,
 					Modifiers: lang.SemanticTokenModifiers{},
 					Range: hcl.Range{
 						Filename: "test.tf",
@@ -437,7 +437,7 @@ foo = "noot"
 					},
 				},
 				{
-					Type:      lang.TokenTraversalStep,
+					Type:      lang.TokenReferenceStep,
 					Modifiers: lang.SemanticTokenModifiers{},
 					Range: hcl.Range{
 						Filename: "test.tf",

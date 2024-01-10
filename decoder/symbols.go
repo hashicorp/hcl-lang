@@ -140,7 +140,7 @@ func (d *PathDecoder) symbolsForBody(body hcl.Body, bodySchema *schema.BodySchem
 func symbolExprKind(expr hcl.Expression) lang.SymbolExprKind {
 	switch e := expr.(type) {
 	case *hclsyntax.ScopeTraversalExpr:
-		return lang.TraversalExprKind{}
+		return lang.ReferenceExprKind{}
 	case *hclsyntax.LiteralValueExpr:
 		// String constant may also be a traversal in some cases, but currently not recognized
 		// TODO: https://github.com/hashicorp/terraform-ls/issues/674
