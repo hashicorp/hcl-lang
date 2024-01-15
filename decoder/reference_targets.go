@@ -181,8 +181,15 @@ func (d *PathDecoder) decodeReferenceTargetsForBody(body hcl.Body, parentBlock *
 			}
 
 			if bSchema.Address.InferBody && bSchema.Body != nil {
+				var localAddr lang.Address
+				if bSchema.Address.BodySelfRef {
+					localAddr = lang.Address{
+						lang.RootStep{Name: "self"},
+					}
+					bodyRef.TargetableFromRangePtr = blk.Range.Ptr()
+				}
 				bodyRef.NestedTargets = append(bodyRef.NestedTargets,
-					d.collectInferredReferenceTargetsForBody(addr, bSchema.Address, blk.Body, bSchema.Body, nil, lang.Address{})...)
+					d.collectInferredReferenceTargetsForBody(addr, bSchema.Address, blk.Body, bSchema.Body, nil, localAddr)...)
 			}
 
 			bodyRef.Type = bodyToDataType(bSchema.Type, bSchema.Body)
@@ -383,13 +390,18 @@ func bodySchemaAsAttrTypes(bodySchema *schema.BodySchema) map[string]cty.Type {
 }
 
 func (d *PathDecoder) collectInferredReferenceTargetsForBody(addr lang.Address, bAddrSchema *schema.BlockAddrSchema, body hcl.Body, bodySchema *schema.BodySchema, selfRefBodyRangePtr *hcl.Range, selfRefAddr lang.Address) reference.Targets {
-	refs := make(reference.Targets, 0)
-
-	content := ast.DecodeBody(body, bodySchema)
-	// We don't get body range for JSON here
-	// TODO? calculate or implement upstream
-	if bAddrSchema.DependentBodySelfRef && content.RangePtr != nil && selfRefBodyRangePtr == nil {
-		selfRefBodyRangePtr = content.RangePtr
+	var (
+		refs             = make(reference.Targets, 0)
+		collectLocalAddr = false
+		content          = ast.DecodeBody(body, bodySchema)
+	)
+	if bAddrSchema.DependentBodySelfRef || bAddrSchema.BodySelfRef {
+		if selfRefBodyRangePtr == nil {
+			// We don't get body range for JSON here
+			// TODO? calculate or implement upstream
+			selfRefBodyRangePtr = content.RangePtr
+		}
+		collectLocalAddr = selfRefBodyRangePtr != nil
 	}
 
 	rawAttributes, _ := body.JustAttributes()
@@ -427,7 +439,7 @@ func (d *PathDecoder) collectInferredReferenceTargetsForBody(addr lang.Address, 
 			AsExprType:    true,
 		}
 
-		if bAddrSchema.DependentBodySelfRef && selfRefBodyRangePtr != nil {
+		if collectLocalAddr {
 			localAddr := append(selfRefAddr.Copy(), lang.AttrStep{Name: name})
 			targetCtx.ParentLocalAddress = localAddr
 			targetCtx.TargetableFromRangePtr = selfRefBodyRangePtr.Ptr()
@@ -466,7 +478,7 @@ func (d *PathDecoder) collectInferredReferenceTargetsForBody(addr lang.Address, 
 			DefRangePtr: blk.DefRange.Ptr(),
 			RangePtr:    blk.Range.Ptr(),
 		}
-		if bAddrSchema.DependentBodySelfRef && selfRefBodyRangePtr != nil {
+		if collectLocalAddr {
 			blockRef.LocalAddr = append(selfRefAddr.Copy(), lang.AttrStep{Name: bType})
 			blockRef.TargetableFromRangePtr = selfRefBodyRangePtr.Ptr()
 		}
@@ -488,7 +500,7 @@ func (d *PathDecoder) collectInferredReferenceTargetsForBody(addr lang.Address, 
 			Description: bCollection.Schema.Description,
 			RangePtr:    body.MissingItemRange().Ptr(),
 		}
-		if bAddrSchema.DependentBodySelfRef && selfRefBodyRangePtr != nil {
+		if collectLocalAddr {
 			blockRef.LocalAddr = append(selfRefAddr.Copy(), lang.AttrStep{Name: bType})
 			blockRef.TargetableFromRangePtr = selfRefBodyRangePtr.Ptr()
 		}
@@ -508,7 +520,7 @@ func (d *PathDecoder) collectInferredReferenceTargetsForBody(addr lang.Address, 
 				RangePtr:    b.Range.Ptr(),
 			}
 
-			if bAddrSchema.DependentBodySelfRef && selfRefBodyRangePtr != nil {
+			if collectLocalAddr {
 				elemRef.LocalAddr = append(blockRef.LocalAddr.Copy(), lang.IndexStep{
 					Key: cty.NumberIntVal(int64(i)),
 				})
@@ -551,7 +563,7 @@ func (d *PathDecoder) collectInferredReferenceTargetsForBody(addr lang.Address, 
 			Description: bCollection.Schema.Description,
 			RangePtr:    body.MissingItemRange().Ptr(),
 		}
-		if bAddrSchema.DependentBodySelfRef && selfRefBodyRangePtr != nil {
+		if collectLocalAddr {
 			blockRef.LocalAddr = append(selfRefAddr.Copy(), lang.AttrStep{Name: bType})
 			blockRef.TargetableFromRangePtr = selfRefBodyRangePtr.Ptr()
 		}
@@ -586,7 +598,7 @@ func (d *PathDecoder) collectInferredReferenceTargetsForBody(addr lang.Address, 
 			Description: bCollection.Schema.Description,
 			RangePtr:    body.MissingItemRange().Ptr(),
 		}
-		if bAddrSchema.DependentBodySelfRef && selfRefBodyRangePtr != nil {
+		if collectLocalAddr {
 			blockRef.LocalAddr = append(selfRefAddr.Copy(), lang.AttrStep{Name: bType})
 			blockRef.TargetableFromRangePtr = selfRefBodyRangePtr.Ptr()
 		}
@@ -607,7 +619,7 @@ func (d *PathDecoder) collectInferredReferenceTargetsForBody(addr lang.Address, 
 				RangePtr:    b.Range.Ptr(),
 				DefRangePtr: b.DefRange.Ptr(),
 			}
-			if bAddrSchema.DependentBodySelfRef && selfRefBodyRangePtr != nil {
+			if collectLocalAddr {
 				elemRef.LocalAddr = append(blockRef.LocalAddr.Copy(), lang.IndexStep{
 					Key: cty.StringVal(b.Labels[0]),
 				})

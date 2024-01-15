@@ -1627,6 +1627,148 @@ func TestCompletionAtPos_BodySchema_Extensions_SelfRef(t *testing.T) {
 				},
 			}),
 		},
+		{
+			"regular block with selfref enabled",
+			&schema.BodySchema{
+				Blocks: map[string]*schema.BlockSchema{
+					"foo": {
+						Labels: []*schema.LabelSchema{
+							{Name: "name"},
+						},
+						Address: &schema.BlockAddrSchema{
+							BodyAsData:  true,
+							InferBody:   true,
+							BodySelfRef: true,
+							Steps: []schema.AddrStep{
+								schema.StaticStep{Name: "foo"},
+								schema.LabelStep{Index: 0},
+							},
+						},
+						Body: &schema.BodySchema{
+							Attributes: map[string]*schema.AttributeSchema{
+								"static": {
+									IsOptional: true,
+									Constraint: schema.OneOf{
+										schema.Reference{
+											OfType: cty.Number,
+										},
+										schema.LiteralType{
+											Type: cty.Number,
+										},
+									},
+								},
+								"fox": {
+									IsOptional: true,
+									Constraint: schema.OneOf{
+										schema.Reference{
+											OfType: cty.Number,
+										},
+										schema.LiteralType{
+											Type: cty.Number,
+										},
+									},
+								},
+							},
+							Extensions: &schema.BodyExtensions{
+								SelfRefs: true,
+							},
+						},
+					},
+				},
+			},
+			`foo "bar" {
+  static = 4
+  fox = 
+}`,
+			hcl.Pos{Line: 3, Column: 14, Byte: 33},
+			lang.CompleteCandidates([]lang.Candidate{
+				{
+					Label:  "self.static",
+					Detail: "number",
+					TextEdit: lang.TextEdit{
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 3, Column: 14, Byte: 33},
+							End:      hcl.Pos{Line: 3, Column: 14, Byte: 33},
+						},
+						NewText: "self.static",
+						Snippet: "self.static",
+					},
+					Kind: lang.ReferenceCandidateKind,
+				},
+			}),
+		},
+		{
+			"regular block with selfref enabled - prefix",
+			&schema.BodySchema{
+				Blocks: map[string]*schema.BlockSchema{
+					"foo": {
+						Labels: []*schema.LabelSchema{
+							{Name: "name"},
+						},
+						Address: &schema.BlockAddrSchema{
+							BodyAsData:  true,
+							InferBody:   true,
+							BodySelfRef: true,
+							Steps: []schema.AddrStep{
+								schema.StaticStep{Name: "foo"},
+								schema.LabelStep{Index: 0},
+							},
+						},
+						Body: &schema.BodySchema{
+							Attributes: map[string]*schema.AttributeSchema{
+								"static": {
+									IsOptional: true,
+									Constraint: schema.OneOf{
+										schema.Reference{
+											OfType: cty.Number,
+										},
+										schema.LiteralType{
+											Type: cty.Number,
+										},
+									},
+								},
+								"fox": {
+									IsOptional: true,
+									Constraint: schema.OneOf{
+										schema.Reference{
+											OfType: cty.Number,
+										},
+										schema.LiteralType{
+											Type: cty.Number,
+										},
+									},
+								},
+							},
+							Extensions: &schema.BodyExtensions{
+								SelfRefs: true,
+							},
+						},
+					},
+				},
+			},
+			`foo "bar" {
+  static = 4
+  fox = self.
+}`,
+			hcl.Pos{Line: 3, Column: 14, Byte: 38},
+			lang.CompleteCandidates([]lang.Candidate{
+				{
+					Label:  "self.static",
+					Detail: "number",
+					TextEdit: lang.TextEdit{
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 3, Column: 9, Byte: 33},
+							End:      hcl.Pos{Line: 3, Column: 14, Byte: 38},
+						},
+						NewText: "self.static",
+						Snippet: "self.static",
+					},
+					Kind: lang.ReferenceCandidateKind,
+				},
+			}),
+		},
 	}
 
 	for i, tc := range testCases {
