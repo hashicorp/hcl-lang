@@ -1110,7 +1110,6 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 					Addr: lang.Address{
 						lang.RootStep{Name: "aws"},
 					},
-					LocalAddr: lang.Address{},
 					Type: cty.Object(map[string]cty.Type{
 						"attr":      cty.Number,
 						"name":      cty.String,
@@ -1946,7 +1945,6 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 						lang.RootStep{Name: "root"},
 						lang.AttrStep{Name: "aws"},
 					},
-					LocalAddr: lang.Address{},
 					RangePtr: &hcl.Range{
 						Filename: "test.tf.json",
 						Start: hcl.Pos{
@@ -2196,7 +2194,6 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 						lang.RootStep{Name: "root"},
 						lang.AttrStep{Name: "aws"},
 					},
-					LocalAddr: lang.Address{},
 					RangePtr: &hcl.Range{
 						Filename: "test.tf.json",
 						Start: hcl.Pos{
@@ -2590,7 +2587,6 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 						lang.RootStep{Name: "root"},
 						lang.AttrStep{Name: "aws"},
 					},
-					LocalAddr: lang.Address{},
 					RangePtr: &hcl.Range{
 						Filename: "test.tf.json",
 						Start: hcl.Pos{
@@ -2757,7 +2753,6 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 						lang.RootStep{Name: "root"},
 						lang.AttrStep{Name: "aws"},
 					},
-					LocalAddr: lang.Address{},
 					RangePtr: &hcl.Range{
 						Filename: "test.tf.json",
 						Start: hcl.Pos{
@@ -3155,7 +3150,6 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 						lang.RootStep{Name: "lb"},
 						lang.AttrStep{Name: "aws"},
 					},
-					LocalAddr: lang.Address{},
 					RangePtr: &hcl.Range{
 						Filename: "test.tf.json",
 						Start: hcl.Pos{

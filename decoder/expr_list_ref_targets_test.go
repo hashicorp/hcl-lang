@@ -403,7 +403,6 @@ func TestCollectRefTargets_exprList_implied_hcl(t *testing.T) {
 					Addr: lang.Address{
 						lang.RootStep{Name: "blk"},
 					},
-					LocalAddr: lang.Address{},
 					RangePtr: &hcl.Range{
 						Filename: "test.hcl",
 						Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
@@ -465,7 +464,6 @@ func TestCollectRefTargets_exprList_implied_hcl(t *testing.T) {
 					Addr: lang.Address{
 						lang.RootStep{Name: "blk"},
 					},
-					LocalAddr: lang.Address{},
 					RangePtr: &hcl.Range{
 						Filename: "test.hcl",
 						Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
@@ -1019,7 +1017,6 @@ func TestCollectRefTargets_exprList_implied_json(t *testing.T) {
 					Addr: lang.Address{
 						lang.RootStep{Name: "blk"},
 					},
-					LocalAddr: lang.Address{},
 					RangePtr: &hcl.Range{
 						Filename: "test.hcl.json",
 						Start:    hcl.Pos{Line: 1, Column: 9, Byte: 8},
@@ -1081,7 +1078,6 @@ func TestCollectRefTargets_exprList_implied_json(t *testing.T) {
 					Addr: lang.Address{
 						lang.RootStep{Name: "blk"},
 					},
-					LocalAddr: lang.Address{},
 					RangePtr: &hcl.Range{
 						Filename: "test.hcl.json",
 						Start:    hcl.Pos{Line: 1, Column: 9, Byte: 8},
