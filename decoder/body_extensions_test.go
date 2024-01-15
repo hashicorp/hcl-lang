@@ -1683,18 +1683,18 @@ func TestCompletionAtPos_BodySchema_Extensions_SelfRef(t *testing.T) {
 			hcl.Pos{Line: 3, Column: 14, Byte: 33},
 			lang.CompleteCandidates([]lang.Candidate{
 				{
-					Label:  "self",
-					Detail: "object",
+					Label:  "self.static",
+					Detail: "number",
 					TextEdit: lang.TextEdit{
 						Range: hcl.Range{
 							Filename: "test.tf",
 							Start:    hcl.Pos{Line: 3, Column: 14, Byte: 33},
 							End:      hcl.Pos{Line: 3, Column: 14, Byte: 33},
 						},
-						NewText: "self",
-						Snippet: "self",
+						NewText: "self.static",
+						Snippet: "self.static",
 					},
-					Kind: lang.TraversalCandidateKind,
+					Kind: lang.ReferenceCandidateKind,
 				},
 			}),
 		},
@@ -1765,7 +1765,7 @@ func TestCompletionAtPos_BodySchema_Extensions_SelfRef(t *testing.T) {
 						NewText: "self.static",
 						Snippet: "self.static",
 					},
-					Kind: lang.TraversalCandidateKind,
+					Kind: lang.ReferenceCandidateKind,
 				},
 			}),
 		},
