@@ -143,5 +143,7 @@ func (a Any) completeNonComplexExprAtPos(ctx context.Context, pos hcl.Pos) []lan
 	}
 	candidates = append(candidates, lt.CompletionAtPos(ctx, pos)...)
 
+	candidates = append(candidates, a.complexIndex(ctx, pos)...)
+
 	return candidates
 }
