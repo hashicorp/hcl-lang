@@ -181,17 +181,15 @@ func (d *PathDecoder) decodeReferenceTargetsForBody(body hcl.Body, parentBlock *
 			}
 
 			if bSchema.Address.InferBody && bSchema.Body != nil {
+				var localAddr lang.Address
 				if bSchema.Address.BodySelfRef {
-					bodyRef.LocalAddr = lang.Address{
+					localAddr = lang.Address{
 						lang.RootStep{Name: "self"},
 					}
 					bodyRef.TargetableFromRangePtr = blk.Range.Ptr()
-				} else {
-					bodyRef.LocalAddr = lang.Address{}
 				}
-
 				bodyRef.NestedTargets = append(bodyRef.NestedTargets,
-					d.collectInferredReferenceTargetsForBody(addr, bSchema.Address, blk.Body, bSchema.Body, nil, bodyRef.LocalAddr)...)
+					d.collectInferredReferenceTargetsForBody(addr, bSchema.Address, blk.Body, bSchema.Body, nil, localAddr)...)
 			}
 
 			bodyRef.Type = bodyToDataType(bSchema.Type, bSchema.Body)
@@ -393,9 +391,9 @@ func bodySchemaAsAttrTypes(bodySchema *schema.BodySchema) map[string]cty.Type {
 
 func (d *PathDecoder) collectInferredReferenceTargetsForBody(addr lang.Address, bAddrSchema *schema.BlockAddrSchema, body hcl.Body, bodySchema *schema.BodySchema, selfRefBodyRangePtr *hcl.Range, selfRefAddr lang.Address) reference.Targets {
 	var (
-		refs         = make(reference.Targets, 0)
-		hasLocalAddr = false
-		content      = ast.DecodeBody(body, bodySchema)
+		refs             = make(reference.Targets, 0)
+		collectLocalAddr = false
+		content          = ast.DecodeBody(body, bodySchema)
 	)
 	if bAddrSchema.DependentBodySelfRef || bAddrSchema.BodySelfRef {
 		if selfRefBodyRangePtr == nil {
@@ -403,7 +401,7 @@ func (d *PathDecoder) collectInferredReferenceTargetsForBody(addr lang.Address, 
 			// TODO? calculate or implement upstream
 			selfRefBodyRangePtr = content.RangePtr
 		}
-		hasLocalAddr = selfRefBodyRangePtr != nil
+		collectLocalAddr = selfRefBodyRangePtr != nil
 	}
 
 	rawAttributes, _ := body.JustAttributes()
@@ -441,7 +439,7 @@ func (d *PathDecoder) collectInferredReferenceTargetsForBody(addr lang.Address, 
 			AsExprType:    true,
 		}
 
-		if hasLocalAddr {
+		if collectLocalAddr {
 			localAddr := append(selfRefAddr.Copy(), lang.AttrStep{Name: name})
 			targetCtx.ParentLocalAddress = localAddr
 			targetCtx.TargetableFromRangePtr = selfRefBodyRangePtr.Ptr()
@@ -480,7 +478,7 @@ func (d *PathDecoder) collectInferredReferenceTargetsForBody(addr lang.Address, 
 			DefRangePtr: blk.DefRange.Ptr(),
 			RangePtr:    blk.Range.Ptr(),
 		}
-		if hasLocalAddr {
+		if collectLocalAddr {
 			blockRef.LocalAddr = append(selfRefAddr.Copy(), lang.AttrStep{Name: bType})
 			blockRef.TargetableFromRangePtr = selfRefBodyRangePtr.Ptr()
 		}
@@ -502,7 +500,7 @@ func (d *PathDecoder) collectInferredReferenceTargetsForBody(addr lang.Address, 
 			Description: bCollection.Schema.Description,
 			RangePtr:    body.MissingItemRange().Ptr(),
 		}
-		if hasLocalAddr {
+		if collectLocalAddr {
 			blockRef.LocalAddr = append(selfRefAddr.Copy(), lang.AttrStep{Name: bType})
 			blockRef.TargetableFromRangePtr = selfRefBodyRangePtr.Ptr()
 		}
@@ -522,7 +520,7 @@ func (d *PathDecoder) collectInferredReferenceTargetsForBody(addr lang.Address, 
 				RangePtr:    b.Range.Ptr(),
 			}
 
-			if hasLocalAddr {
+			if collectLocalAddr {
 				elemRef.LocalAddr = append(blockRef.LocalAddr.Copy(), lang.IndexStep{
 					Key: cty.NumberIntVal(int64(i)),
 				})
@@ -565,7 +563,7 @@ func (d *PathDecoder) collectInferredReferenceTargetsForBody(addr lang.Address, 
 			Description: bCollection.Schema.Description,
 			RangePtr:    body.MissingItemRange().Ptr(),
 		}
-		if hasLocalAddr {
+		if collectLocalAddr {
 			blockRef.LocalAddr = append(selfRefAddr.Copy(), lang.AttrStep{Name: bType})
 			blockRef.TargetableFromRangePtr = selfRefBodyRangePtr.Ptr()
 		}
@@ -600,7 +598,7 @@ func (d *PathDecoder) collectInferredReferenceTargetsForBody(addr lang.Address, 
 			Description: bCollection.Schema.Description,
 			RangePtr:    body.MissingItemRange().Ptr(),
 		}
-		if hasLocalAddr {
+		if collectLocalAddr {
 			blockRef.LocalAddr = append(selfRefAddr.Copy(), lang.AttrStep{Name: bType})
 			blockRef.TargetableFromRangePtr = selfRefBodyRangePtr.Ptr()
 		}
@@ -621,7 +619,7 @@ func (d *PathDecoder) collectInferredReferenceTargetsForBody(addr lang.Address, 
 				RangePtr:    b.Range.Ptr(),
 				DefRangePtr: b.DefRange.Ptr(),
 			}
-			if hasLocalAddr {
+			if collectLocalAddr {
 				elemRef.LocalAddr = append(blockRef.LocalAddr.Copy(), lang.IndexStep{
 					Key: cty.StringVal(b.Labels[0]),
 				})
