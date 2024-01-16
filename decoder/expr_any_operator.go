@@ -272,6 +272,10 @@ func (a Any) semanticTokensForOperatorExpr(ctx context.Context) ([]lang.Semantic
 		}).SemanticTokens(ctx)...)
 
 		return tokens, true
+
+	case *hclsyntax.ParenthesesExpr:
+		tokens = append(tokens, newExpression(a.pathCtx, eType.Expression, a.cons).SemanticTokens(ctx)...)
+		return tokens, true
 	}
 
 	return tokens, false
