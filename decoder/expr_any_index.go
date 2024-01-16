@@ -51,3 +51,16 @@ func (a Any) complexIndex(ctx context.Context, pos hcl.Pos) []lang.Candidate {
 
 	return candidates
 }
+
+func (a Any) hoverIndexExprAtPos(ctx context.Context, pos hcl.Pos) (*lang.HoverData, bool) {
+	if eType, ok := a.expr.(*hclsyntax.IndexExpr); ok {
+		if eType.Key.Range().ContainsPos(pos) {
+			cons := schema.AnyExpression{
+				OfType: cty.String, // TODO improve type (could be int)
+			}
+			return newExpression(a.pathCtx, eType.Key, cons).HoverAtPos(ctx, pos), true
+		}
+	}
+
+	return nil, false
+}

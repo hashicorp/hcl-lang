@@ -111,6 +111,10 @@ func (a Any) hoverNonComplexExprAtPos(ctx context.Context, pos hcl.Pos) *lang.Ho
 		return hoverData
 	}
 
+	if hoverData, ok := a.hoverIndexExprAtPos(ctx, pos); ok {
+		return hoverData
+	}
+
 	ref := Reference{
 		expr:    a.expr,
 		cons:    schema.Reference{OfType: a.cons.OfType},
