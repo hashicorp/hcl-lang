@@ -87,6 +87,11 @@ func (a Any) completeOperatorExprAtPos(ctx context.Context, pos hcl.Pos) ([]lang
 		}
 
 		return candidates, false
+
+	case *hclsyntax.ParenthesesExpr:
+		if eType.Expression.Range().ContainsPos(pos) || eType.Expression.Range().End.Byte == pos.Byte {
+			return newExpression(a.pathCtx, eType.Expression, a.cons).CompletionAtPos(ctx, pos), true
+		}
 	}
 
 	return candidates, true
