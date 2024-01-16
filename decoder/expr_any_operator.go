@@ -150,6 +150,10 @@ func (a Any) hoverOperatorExprAtPos(ctx context.Context, pos hcl.Pos) (*lang.Hov
 		}
 
 		return nil, true
+	case *hclsyntax.ParenthesesExpr:
+		if eType.Expression.Range().ContainsPos(pos) {
+			return newExpression(a.pathCtx, eType.Expression, a.cons).HoverAtPos(ctx, pos), true
+		}
 	}
 
 	return nil, false
