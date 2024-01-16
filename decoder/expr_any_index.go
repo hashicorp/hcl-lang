@@ -64,3 +64,14 @@ func (a Any) hoverIndexExprAtPos(ctx context.Context, pos hcl.Pos) (*lang.HoverD
 
 	return nil, false
 }
+
+func (a Any) semanticTokensForIndexExpr(ctx context.Context) ([]lang.SemanticToken, bool) {
+	if eType, ok := a.expr.(*hclsyntax.IndexExpr); ok {
+		cons := schema.AnyExpression{
+			OfType: cty.String, // TODO improve type (could be int)
+		}
+		return newExpression(a.pathCtx, eType.Key, cons).SemanticTokens(ctx), true
+	}
+
+	return nil, false
+}

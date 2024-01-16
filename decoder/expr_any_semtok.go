@@ -110,6 +110,10 @@ func (a Any) semanticTokensForNonComplexExpr(ctx context.Context) []lang.Semanti
 		return tokens
 	}
 
+	if tokens, ok := a.semanticTokensForIndexExpr(ctx); ok {
+		return tokens
+	}
+
 	ref := Reference{
 		expr:    a.expr,
 		cons:    schema.Reference{OfType: a.cons.OfType},
