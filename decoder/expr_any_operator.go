@@ -220,6 +220,13 @@ func (a Any) refOriginsForOperatorExpr(ctx context.Context, allowSelfRefs bool) 
 		}
 
 		return origins, true
+	case *hclsyntax.ParenthesesExpr:
+		expr := newExpression(a.pathCtx, eType.Expression, a.cons)
+		if expr, ok := expr.(ReferenceOriginsExpression); ok {
+			origins = append(origins, expr.ReferenceOrigins(ctx, allowSelfRefs)...)
+		}
+
+		return origins, true
 	}
 
 	return origins, false

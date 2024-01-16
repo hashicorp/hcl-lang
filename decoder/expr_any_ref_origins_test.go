@@ -869,6 +869,90 @@ func TestCollectRefOrigins_exprAny_operators_hcl(t *testing.T) {
 	}
 }
 
+func TestCollectRefOrigins_exprAny_parenthesis_hcl(t *testing.T) {
+	testCases := []struct {
+		testName           string
+		attrSchema         map[string]*schema.AttributeSchema
+		cfg                string
+		expectedRefOrigins reference.Origins
+	}{
+		{
+			"basic",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.AnyExpression{
+						OfType: cty.Number,
+					},
+				},
+			},
+			`attr = (var.foo + var.bar)
+`,
+			reference.Origins{
+				reference.LocalOrigin{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "foo"},
+					},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 1, Column: 9, Byte: 8},
+						End:      hcl.Pos{Line: 1, Column: 16, Byte: 15},
+					},
+					Constraints: reference.OriginConstraints{
+						{
+							OfType: cty.Number,
+						},
+					},
+				},
+				reference.LocalOrigin{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "bar"},
+					},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 1, Column: 19, Byte: 18},
+						End:      hcl.Pos{Line: 1, Column: 26, Byte: 25},
+					},
+					Constraints: reference.OriginConstraints{
+						{
+							OfType: cty.Number,
+						},
+					},
+				},
+			},
+		},
+	}
+
+	for i, tc := range testCases {
+		t.Run(fmt.Sprintf("%d-%s", i, tc.testName), func(t *testing.T) {
+			bodySchema := &schema.BodySchema{
+				Attributes: tc.attrSchema,
+			}
+
+			f, diags := hclsyntax.ParseConfig([]byte(tc.cfg), "test.tf", hcl.InitialPos)
+			if len(diags) > 0 {
+				t.Error(diags)
+			}
+			d := testPathDecoder(t, &PathContext{
+				Schema: bodySchema,
+				Files: map[string]*hcl.File{
+					"test.tf": f,
+				},
+			})
+
+			origins, err := d.CollectReferenceOrigins()
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			if diff := cmp.Diff(tc.expectedRefOrigins, origins, ctydebug.CmpOptions); diff != "" {
+				t.Fatalf("unexpected origins: %s", diff)
+			}
+		})
+	}
+}
+
 func TestCollectRefOrigins_exprAny_operators_json(t *testing.T) {
 	testCases := []struct {
 		testName           string
