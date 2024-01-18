@@ -89,6 +89,7 @@ func (a Any) ReferenceOrigins(ctx context.Context, allowSelfRefs bool) reference
 				Elem: schema.AnyExpression{
 					OfType: typ.ElementType(),
 				},
+				AllowInterpolatedKeys: true,
 			},
 		}
 		return m.ReferenceOrigins(ctx, allowSelfRefs)
