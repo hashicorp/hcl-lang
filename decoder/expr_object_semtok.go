@@ -7,7 +7,9 @@ import (
 	"context"
 
 	"github.com/hashicorp/hcl-lang/lang"
+	"github.com/hashicorp/hcl-lang/schema"
 	"github.com/hashicorp/hcl/v2/hclsyntax"
+	"github.com/zclconf/go-cty/cty"
 )
 
 func (obj Object) SemanticTokens(ctx context.Context) []lang.SemanticToken {
@@ -23,27 +25,40 @@ func (obj Object) SemanticTokens(ctx context.Context) []lang.SemanticToken {
 	tokens := make([]lang.SemanticToken, 0)
 
 	for _, item := range eType.Items {
-		attrName, _, ok := rawObjectKey(item.KeyExpr)
-		if !ok {
-			// invalid expression
-			continue
+		attrName, _, isRawKey := rawObjectKey(item.KeyExpr)
+
+		var aSchema *schema.AttributeSchema
+		var isKnownAttr bool
+		if isRawKey {
+			aSchema, isKnownAttr = obj.cons.Attributes[attrName]
 		}
 
-		aSchema, ok := obj.cons.Attributes[attrName]
-		if !ok {
-			// skip unknown attribute
-			continue
+		keyExpr, ok := item.KeyExpr.(*hclsyntax.ObjectConsKeyExpr)
+		if ok && obj.cons.AllowInterpolatedAttrName {
+			parensExpr, ok := keyExpr.Wrapped.(*hclsyntax.ParenthesesExpr)
+			if ok {
+				keyCons := schema.AnyExpression{
+					OfType: cty.String,
+				}
+				kExpr := newExpression(obj.pathCtx, parensExpr, keyCons)
+				tokens = append(tokens, kExpr.SemanticTokens(ctx)...)
+			}
 		}
 
-		tokens = append(tokens, lang.SemanticToken{
-			Type:      lang.TokenObjectKey,
-			Modifiers: lang.SemanticTokenModifiers{},
-			// TODO: Consider not reporting the quotes?
-			Range: item.KeyExpr.Range(),
-		})
+		if isKnownAttr {
+			tokens = append(tokens, lang.SemanticToken{
+				Type:      lang.TokenObjectKey,
+				Modifiers: lang.SemanticTokenModifiers{},
+				// TODO: Consider not reporting the quotes?
+				Range: item.KeyExpr.Range(),
+			})
+		}
 
-		expr := newExpression(obj.pathCtx, item.ValueExpr, aSchema.Constraint)
-		tokens = append(tokens, expr.SemanticTokens(ctx)...)
+		if isKnownAttr {
+			expr := newExpression(obj.pathCtx, item.ValueExpr, aSchema.Constraint)
+			tokens = append(tokens, expr.SemanticTokens(ctx)...)
+			continue
+		}
 	}
 
 	return tokens

@@ -2878,6 +2878,81 @@ func TestSemanticTokens_exprAny_parenthesis(t *testing.T) {
 				},
 			},
 		},
+		{
+			"reference as object attribute name",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.AnyExpression{
+						OfType: cty.Object(map[string]cty.Type{
+							"bar": cty.String,
+						}),
+					},
+				},
+			},
+			reference.Origins{
+				reference.LocalOrigin{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "foo"},
+					},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 2, Column: 4, Byte: 12},
+						End:      hcl.Pos{Line: 2, Column: 11, Byte: 19},
+					},
+					Constraints: reference.OriginConstraints{
+						{OfType: cty.String},
+					},
+				},
+			},
+			reference.Targets{
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "foo"},
+					},
+					Type: cty.String,
+					RangePtr: &hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 3, Column: 1, Byte: 31},
+						End:      hcl.Pos{Line: 3, Column: 2, Byte: 32},
+					},
+				},
+			},
+			`attr = {
+  (var.foo) = "foo"
+}
+`,
+			[]lang.SemanticToken{
+				{
+					Type:      lang.TokenAttrName,
+					Modifiers: lang.SemanticTokenModifiers{},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
+						End:      hcl.Pos{Line: 1, Column: 5, Byte: 4},
+					},
+				},
+				{
+					Type:      lang.TokenReferenceStep,
+					Modifiers: lang.SemanticTokenModifiers{},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 2, Column: 4, Byte: 12},
+						End:      hcl.Pos{Line: 2, Column: 7, Byte: 15},
+					},
+				},
+				{
+					Type:      lang.TokenReferenceStep,
+					Modifiers: lang.SemanticTokenModifiers{},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 2, Column: 8, Byte: 16},
+						End:      hcl.Pos{Line: 2, Column: 11, Byte: 19},
+					},
+				},
+			},
+		},
 	}
 	for i, tc := range testCases {
 		t.Run(fmt.Sprintf("%d-%s", i, tc.testName), func(t *testing.T) {
