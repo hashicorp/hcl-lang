@@ -1617,6 +1617,8 @@ func TestHoverAtPos_exprAny_parenthesis(t *testing.T) {
 	testCases := []struct {
 		testName          string
 		attrSchema        map[string]*schema.AttributeSchema
+		refTargets        reference.Targets
+		refOrigins        reference.Origins
 		cfg               string
 		pos               hcl.Pos
 		expectedHoverData *lang.HoverData
@@ -1630,6 +1632,8 @@ func TestHoverAtPos_exprAny_parenthesis(t *testing.T) {
 					},
 				},
 			},
+			reference.Targets{},
+			reference.Origins{},
 			`attr = (42+3)*2
 `,
 			hcl.Pos{Line: 1, Column: 10, Byte: 9},
@@ -1651,6 +1655,8 @@ func TestHoverAtPos_exprAny_parenthesis(t *testing.T) {
 					},
 				},
 			},
+			reference.Targets{},
+			reference.Origins{},
 			`attr = (true || false) && true
 `,
 			hcl.Pos{Line: 1, Column: 11, Byte: 10},
@@ -1672,10 +1678,60 @@ func TestHoverAtPos_exprAny_parenthesis(t *testing.T) {
 					},
 				},
 			},
+			reference.Targets{},
+			reference.Origins{},
 			`attr = (true || false) && true
 `,
 			hcl.Pos{Line: 1, Column: 11, Byte: 10},
 			nil,
+		},
+		{
+			"reference as map key",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.AnyExpression{
+						OfType: cty.Map(cty.String),
+					},
+				},
+			},
+			reference.Targets{
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "foo"},
+					},
+					Type: cty.String,
+				},
+			},
+			reference.Origins{
+				reference.LocalOrigin{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "foo"},
+					},
+					Constraints: reference.OriginConstraints{
+						{OfType: cty.String},
+					},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 2, Column: 4, Byte: 12},
+						End:      hcl.Pos{Line: 2, Column: 11, Byte: 19},
+					},
+				},
+			},
+			`attr = {
+  (var.foo) = "foo"
+}
+`,
+			hcl.Pos{Line: 2, Column: 7, Byte: 15},
+			&lang.HoverData{
+				Content: lang.Markdown("`var.foo`\n_string_"),
+				Range: hcl.Range{
+					Filename: "test.tf",
+					Start:    hcl.Pos{Line: 2, Column: 4, Byte: 12},
+					End:      hcl.Pos{Line: 2, Column: 11, Byte: 19},
+				},
+			},
 		},
 	}
 	for i, tc := range testCases {
@@ -1686,7 +1742,9 @@ func TestHoverAtPos_exprAny_parenthesis(t *testing.T) {
 
 			f, _ := hclsyntax.ParseConfig([]byte(tc.cfg), "test.tf", hcl.InitialPos)
 			d := testPathDecoder(t, &PathContext{
-				Schema: bodySchema,
+				Schema:           bodySchema,
+				ReferenceTargets: tc.refTargets,
+				ReferenceOrigins: tc.refOrigins,
 				Files: map[string]*hcl.File{
 					"test.tf": f,
 				},
