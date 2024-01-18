@@ -127,8 +127,9 @@ func newExpression(pathContext *PathContext, expr hcl.Expression, cons schema.Co
 		}
 	case schema.LiteralValue:
 		return LiteralValue{
-			expr: expr,
-			cons: c,
+			expr:    expr,
+			cons:    c,
+			pathCtx: pathContext,
 		}
 	case schema.TypeDeclaration:
 		return TypeDeclaration{
