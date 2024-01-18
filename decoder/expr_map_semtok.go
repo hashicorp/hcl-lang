@@ -7,7 +7,9 @@ import (
 	"context"
 
 	"github.com/hashicorp/hcl-lang/lang"
+	"github.com/hashicorp/hcl-lang/schema"
 	"github.com/hashicorp/hcl/v2/hclsyntax"
+	"github.com/zclconf/go-cty/cty"
 )
 
 func (m Map) SemanticTokens(ctx context.Context) []lang.SemanticToken {
@@ -23,18 +25,33 @@ func (m Map) SemanticTokens(ctx context.Context) []lang.SemanticToken {
 	tokens := make([]lang.SemanticToken, 0)
 
 	for _, item := range eType.Items {
-		_, _, ok := rawObjectKey(item.KeyExpr)
-		if !ok {
+		_, _, isRawKey := rawObjectKey(item.KeyExpr)
+		if isRawKey {
+			tokens = append(tokens, lang.SemanticToken{
+				Type:      lang.TokenMapKey,
+				Modifiers: lang.SemanticTokenModifiers{},
+				Range:     item.KeyExpr.Range(),
+			})
+
+			vExpr := newExpression(m.pathCtx, item.ValueExpr, m.cons.Elem)
+			tokens = append(tokens, vExpr.SemanticTokens(ctx)...)
 			continue
 		}
-		tokens = append(tokens, lang.SemanticToken{
-			Type:      lang.TokenMapKey,
-			Modifiers: lang.SemanticTokenModifiers{},
-			Range:     item.KeyExpr.Range(),
-		})
 
-		expr := newExpression(m.pathCtx, item.ValueExpr, m.cons.Elem)
-		tokens = append(tokens, expr.SemanticTokens(ctx)...)
+		keyExpr, ok := item.KeyExpr.(*hclsyntax.ObjectConsKeyExpr)
+		if ok && m.cons.AllowInterpolatedKeys {
+			parensExpr, ok := keyExpr.Wrapped.(*hclsyntax.ParenthesesExpr)
+			if ok {
+				keyCons := schema.AnyExpression{
+					OfType: cty.String,
+				}
+				kExpr := newExpression(m.pathCtx, parensExpr, keyCons)
+				tokens = append(tokens, kExpr.SemanticTokens(ctx)...)
+
+				vExpr := newExpression(m.pathCtx, item.ValueExpr, m.cons.Elem)
+				tokens = append(tokens, vExpr.SemanticTokens(ctx)...)
+			}
+		}
 	}
 
 	return tokens

@@ -73,6 +73,7 @@ func (a Any) SemanticTokens(ctx context.Context) []lang.SemanticToken {
 			Elem: schema.AnyExpression{
 				OfType: typ.ElementType(),
 			},
+			AllowInterpolatedKeys: true,
 		}
 		return newExpression(a.pathCtx, expr, cons).SemanticTokens(ctx)
 	}

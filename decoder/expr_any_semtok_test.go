@@ -2662,6 +2662,8 @@ func TestSemanticTokens_exprAny_parenthesis(t *testing.T) {
 	testCases := []struct {
 		testName               string
 		attrSchema             map[string]*schema.AttributeSchema
+		refOrigins             reference.Origins
+		refTargets             reference.Targets
 		cfg                    string
 		expectedSemanticTokens []lang.SemanticToken
 	}{
@@ -2674,6 +2676,8 @@ func TestSemanticTokens_exprAny_parenthesis(t *testing.T) {
 					},
 				},
 			},
+			reference.Origins{},
+			reference.Targets{},
 			`attr = (42 + 43)*2
 `,
 			[]lang.SemanticToken{
@@ -2724,6 +2728,8 @@ func TestSemanticTokens_exprAny_parenthesis(t *testing.T) {
 					},
 				},
 			},
+			reference.Origins{},
+			reference.Targets{},
 			`attr = (true || false) && true
 `,
 			[]lang.SemanticToken{
@@ -2774,6 +2780,8 @@ func TestSemanticTokens_exprAny_parenthesis(t *testing.T) {
 					},
 				},
 			},
+			reference.Origins{},
+			reference.Targets{},
 			`attr = (true || false) && true
 `,
 			[]lang.SemanticToken{
@@ -2784,6 +2792,88 @@ func TestSemanticTokens_exprAny_parenthesis(t *testing.T) {
 						Filename: "test.tf",
 						Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
 						End:      hcl.Pos{Line: 1, Column: 5, Byte: 4},
+					},
+				},
+			},
+		},
+		{
+			"reference as map key",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.AnyExpression{
+						OfType: cty.Map(cty.String),
+					},
+				},
+			},
+			reference.Origins{
+				reference.LocalOrigin{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "foo"},
+					},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 2, Column: 4, Byte: 12},
+						End:      hcl.Pos{Line: 2, Column: 11, Byte: 19},
+					},
+					Constraints: reference.OriginConstraints{
+						{OfType: cty.String},
+					},
+				},
+			},
+			reference.Targets{
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "foo"},
+					},
+					Type: cty.String,
+					RangePtr: &hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 3, Column: 1, Byte: 31},
+						End:      hcl.Pos{Line: 3, Column: 2, Byte: 32},
+					},
+				},
+			},
+			`attr = {
+  (var.foo) = "foo"
+}
+`,
+			[]lang.SemanticToken{
+				{
+					Type:      lang.TokenAttrName,
+					Modifiers: lang.SemanticTokenModifiers{},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
+						End:      hcl.Pos{Line: 1, Column: 5, Byte: 4},
+					},
+				},
+				{
+					Type:      lang.TokenReferenceStep,
+					Modifiers: lang.SemanticTokenModifiers{},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 2, Column: 4, Byte: 12},
+						End:      hcl.Pos{Line: 2, Column: 7, Byte: 15},
+					},
+				},
+				{
+					Type:      lang.TokenReferenceStep,
+					Modifiers: lang.SemanticTokenModifiers{},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 2, Column: 8, Byte: 16},
+						End:      hcl.Pos{Line: 2, Column: 11, Byte: 19},
+					},
+				},
+				{
+					Type:      lang.TokenString,
+					Modifiers: lang.SemanticTokenModifiers{},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 2, Column: 15, Byte: 23},
+						End:      hcl.Pos{Line: 2, Column: 20, Byte: 28},
 					},
 				},
 			},
@@ -2801,6 +2891,8 @@ func TestSemanticTokens_exprAny_parenthesis(t *testing.T) {
 				Files: map[string]*hcl.File{
 					"test.tf": f,
 				},
+				ReferenceOrigins: tc.refOrigins,
+				ReferenceTargets: tc.refTargets,
 			})
 
 			ctx := context.Background()
