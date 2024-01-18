@@ -11,6 +11,7 @@ import (
 	"github.com/hashicorp/hcl-lang/schema"
 	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hclsyntax"
+	"github.com/zclconf/go-cty/cty"
 )
 
 func (obj Object) HoverAtPos(ctx context.Context, pos hcl.Pos) *lang.HoverData {
@@ -20,28 +21,39 @@ func (obj Object) HoverAtPos(ctx context.Context, pos hcl.Pos) *lang.HoverData {
 	}
 
 	for _, item := range eType.Items {
-		attrName, _, ok := rawObjectKey(item.KeyExpr)
-		if !ok {
-			continue
-		}
+		attrName, _, isRawKey := rawObjectKey(item.KeyExpr)
 
-		aSchema, ok := obj.cons.Attributes[attrName]
-		if !ok {
-			// unknown attribute
-			continue
+		var aSchema *schema.AttributeSchema
+		var isKnownAttr bool
+		if isRawKey {
+			aSchema, isKnownAttr = obj.cons.Attributes[attrName]
 		}
 
 		if item.KeyExpr.Range().ContainsPos(pos) {
-			itemRng := hcl.RangeBetween(item.KeyExpr.Range(), item.ValueExpr.Range())
-			content := hoverContentForAttribute(attrName, aSchema)
+			// handle any interpolation if it is allowed
+			keyExpr, ok := item.KeyExpr.(*hclsyntax.ObjectConsKeyExpr)
+			if ok && obj.cons.AllowInterpolatedAttrName {
+				parensExpr, ok := keyExpr.Wrapped.(*hclsyntax.ParenthesesExpr)
+				if ok {
+					keyCons := schema.AnyExpression{
+						OfType: cty.String,
+					}
+					return newExpression(obj.pathCtx, parensExpr, keyCons).HoverAtPos(ctx, pos)
+				}
+			}
 
-			return &lang.HoverData{
-				Content: content,
-				Range:   itemRng,
+			if isKnownAttr {
+				itemRng := hcl.RangeBetween(item.KeyExpr.Range(), item.ValueExpr.Range())
+				content := hoverContentForAttribute(attrName, aSchema)
+
+				return &lang.HoverData{
+					Content: content,
+					Range:   itemRng,
+				}
 			}
 		}
 
-		if item.ValueExpr.Range().ContainsPos(pos) {
+		if isKnownAttr && item.ValueExpr.Range().ContainsPos(pos) {
 			expr := newExpression(obj.pathCtx, item.ValueExpr, aSchema.Constraint)
 			return expr.HoverAtPos(ctx, pos)
 		}

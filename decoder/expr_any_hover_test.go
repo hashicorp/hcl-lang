@@ -1733,6 +1733,56 @@ func TestHoverAtPos_exprAny_parenthesis(t *testing.T) {
 				},
 			},
 		},
+		{
+			"reference as object attribute name",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.AnyExpression{
+						OfType: cty.Object(map[string]cty.Type{
+							"bar": cty.String,
+						}),
+					},
+				},
+			},
+			reference.Targets{
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "foo"},
+					},
+					Type: cty.String,
+				},
+			},
+			reference.Origins{
+				reference.LocalOrigin{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "foo"},
+					},
+					Constraints: reference.OriginConstraints{
+						{OfType: cty.String},
+					},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 2, Column: 4, Byte: 12},
+						End:      hcl.Pos{Line: 2, Column: 11, Byte: 19},
+					},
+				},
+			},
+			`attr = {
+  (var.foo) = "foo"
+}
+`,
+			hcl.Pos{Line: 2, Column: 7, Byte: 15},
+			&lang.HoverData{
+				Content: lang.Markdown("`var.foo`\n_string_"),
+				Range: hcl.Range{
+					Filename: "test.tf",
+					Start:    hcl.Pos{Line: 2, Column: 4, Byte: 12},
+					End:      hcl.Pos{Line: 2, Column: 11, Byte: 19},
+				},
+			},
+		},
 	}
 	for i, tc := range testCases {
 		t.Run(fmt.Sprintf("%d-%s", i, tc.testName), func(t *testing.T) {
