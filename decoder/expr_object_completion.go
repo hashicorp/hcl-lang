@@ -14,6 +14,7 @@ import (
 	"github.com/hashicorp/hcl-lang/schema"
 	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hclsyntax"
+	"github.com/zclconf/go-cty/cty"
 )
 
 type declaredAttributes map[string]hcl.Range
@@ -81,13 +82,11 @@ func (obj Object) CompletionAtPos(ctx context.Context, pos hcl.Pos) []lang.Candi
 			return []lang.Candidate{}
 		}
 
-		attrName, attrRange, ok := rawObjectKey(item.KeyExpr)
-		if !ok {
-			continue
+		attrName, attrRange, isRawName := rawObjectKey(item.KeyExpr)
+		if isRawName {
+			// collect all declared attributes
+			declared[attrName] = hcl.RangeBetween(item.KeyExpr.Range(), item.ValueExpr.Range())
 		}
-
-		// collect all declared attributes
-		declared[attrName] = hcl.RangeBetween(item.KeyExpr.Range(), item.ValueExpr.Range())
 
 		if nextItemRange != nil {
 			continue
@@ -106,18 +105,33 @@ func (obj Object) CompletionAtPos(ctx context.Context, pos hcl.Pos) []lang.Candi
 		recoveryPos = item.ValueExpr.Range().End
 
 		if item.KeyExpr.Range().ContainsPos(pos) {
-			prefix := ""
-
-			// if we're before start of the attribute
-			// it means the attribute is likely quoted
-			if pos.Byte >= attrRange.Start.Byte {
-				prefixLen := pos.Byte - attrRange.Start.Byte
-				prefix = attrName[0:prefixLen]
+			// handle any interpolation if it is allowed
+			keyExpr, ok := item.KeyExpr.(*hclsyntax.ObjectConsKeyExpr)
+			if ok && obj.cons.AllowInterpolatedAttrName {
+				parensExpr, ok := keyExpr.Wrapped.(*hclsyntax.ParenthesesExpr)
+				if ok {
+					keyCons := schema.AnyExpression{
+						OfType: cty.String,
+					}
+					return newExpression(obj.pathCtx, parensExpr, keyCons).CompletionAtPos(ctx, pos)
+				}
 			}
 
-			editRange := hcl.RangeBetween(item.KeyExpr.Range(), item.ValueExpr.Range())
+			if isRawName {
+				prefix := ""
+				// if we're before start of the attribute
+				// it means the attribute is likely quoted
+				if pos.Byte >= attrRange.Start.Byte {
+					prefixLen := pos.Byte - attrRange.Start.Byte
+					prefix = attrName[0:prefixLen]
+				}
 
-			return objectAttributesToCandidates(ctx, prefix, obj.cons.Attributes, declared, editRange)
+				editRange := hcl.RangeBetween(item.KeyExpr.Range(), item.ValueExpr.Range())
+
+				return objectAttributesToCandidates(ctx, prefix, obj.cons.Attributes, declared, editRange)
+			}
+
+			return []lang.Candidate{}
 		}
 		if item.ValueExpr.Range().ContainsPos(pos) || item.ValueExpr.Range().End.Byte == pos.Byte {
 			aSchema, ok := obj.cons.Attributes[attrName]
@@ -168,6 +182,15 @@ func (obj Object) CompletionAtPos(ctx context.Context, pos hcl.Pos) []lang.Candi
 	trimmedBytes = bytes.TrimLeftFunc(trimmedBytes, func(r rune) bool {
 		return isObjectItemTerminatingRune(r) || unicode.IsSpace(r)
 	})
+
+	// parenthesis implies interpolated attribute name
+	if trimmedBytes[len(trimmedBytes)-1] == '(' && obj.cons.AllowInterpolatedAttrName {
+		emptyExpr := newEmptyExpressionAtPos(eType.Range().Filename, pos)
+		attrNameCons := schema.AnyExpression{
+			OfType: cty.String,
+		}
+		return newExpression(obj.pathCtx, emptyExpr, attrNameCons).CompletionAtPos(ctx, pos)
+	}
 
 	// if last byte is =, then it's incomplete attribute
 	if len(trimmedBytes) > 0 && trimmedBytes[len(trimmedBytes)-1] == '=' {
