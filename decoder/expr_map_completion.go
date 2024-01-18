@@ -9,8 +9,10 @@ import (
 	"fmt"
 
 	"github.com/hashicorp/hcl-lang/lang"
+	"github.com/hashicorp/hcl-lang/schema"
 	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hclsyntax"
+	"github.com/zclconf/go-cty/cty"
 )
 
 func (m Map) CompletionAtPos(ctx context.Context, pos hcl.Pos) []lang.Candidate {
@@ -135,6 +137,18 @@ func (m Map) CompletionAtPos(ctx context.Context, pos hcl.Pos) []lang.Candidate 
 			recoveryPos = item.ValueExpr.Range().End
 
 			if item.KeyExpr.Range().ContainsPos(pos) {
+				// handle any interpolation if it is allowed
+				keyExpr, ok := item.KeyExpr.(*hclsyntax.ObjectConsKeyExpr)
+				if ok && m.cons.AllowInterpolatedKeys {
+					parensExpr, ok := keyExpr.Wrapped.(*hclsyntax.ParenthesesExpr)
+					if ok {
+						keyCons := schema.AnyExpression{
+							OfType: cty.String,
+						}
+						return newExpression(m.pathCtx, parensExpr, keyCons).CompletionAtPos(ctx, pos)
+					}
+				}
+
 				return []lang.Candidate{}
 			}
 			if item.ValueExpr.Range().ContainsPos(pos) || item.ValueExpr.Range().End.Byte == pos.Byte {
@@ -160,6 +174,15 @@ func (m Map) CompletionAtPos(ctx context.Context, pos hcl.Pos) []lang.Candidate 
 			return []lang.Candidate{
 				mapItemCandidate,
 			}
+		}
+
+		// parenthesis implies interpolated map key
+		if trimmedBytes[len(trimmedBytes)-1] == '(' && m.cons.AllowInterpolatedKeys {
+			emptyExpr := newEmptyExpressionAtPos(eType.Range().Filename, pos)
+			keyCons := schema.AnyExpression{
+				OfType: cty.String,
+			}
+			return newExpression(m.pathCtx, emptyExpr, keyCons).CompletionAtPos(ctx, pos)
 		}
 
 		// if last byte is =, then it's incomplete attribute
