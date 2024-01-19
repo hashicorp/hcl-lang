@@ -2658,6 +2658,164 @@ func TestSemanticTokens_exprAny_operators(t *testing.T) {
 	}
 }
 
+func TestSemanticTokens_exprAny_parenthesis(t *testing.T) {
+	testCases := []struct {
+		testName               string
+		attrSchema             map[string]*schema.AttributeSchema
+		cfg                    string
+		expectedSemanticTokens []lang.SemanticToken
+	}{
+		{
+			"numbers in parenthesis",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.AnyExpression{
+						OfType: cty.Number,
+					},
+				},
+			},
+			`attr = (42 + 43)*2
+`,
+			[]lang.SemanticToken{
+				{
+					Type:      lang.TokenAttrName,
+					Modifiers: lang.SemanticTokenModifiers{},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
+						End:      hcl.Pos{Line: 1, Column: 5, Byte: 4},
+					},
+				},
+				{
+					Type:      lang.TokenNumber,
+					Modifiers: lang.SemanticTokenModifiers{},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 1, Column: 9, Byte: 8},
+						End:      hcl.Pos{Line: 1, Column: 11, Byte: 10},
+					},
+				},
+				{
+					Type:      lang.TokenNumber,
+					Modifiers: lang.SemanticTokenModifiers{},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 1, Column: 14, Byte: 13},
+						End:      hcl.Pos{Line: 1, Column: 16, Byte: 15},
+					},
+				},
+				{
+					Type:      lang.TokenNumber,
+					Modifiers: lang.SemanticTokenModifiers{},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 1, Column: 18, Byte: 17},
+						End:      hcl.Pos{Line: 1, Column: 19, Byte: 18},
+					},
+				},
+			},
+		},
+		{
+			"bool in parenthesis",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.AnyExpression{
+						OfType: cty.Bool,
+					},
+				},
+			},
+			`attr = (true || false) && true
+`,
+			[]lang.SemanticToken{
+				{
+					Type:      lang.TokenAttrName,
+					Modifiers: lang.SemanticTokenModifiers{},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
+						End:      hcl.Pos{Line: 1, Column: 5, Byte: 4},
+					},
+				},
+				{
+					Type:      lang.TokenBool,
+					Modifiers: lang.SemanticTokenModifiers{},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 1, Column: 9, Byte: 8},
+						End:      hcl.Pos{Line: 1, Column: 13, Byte: 12},
+					},
+				},
+				{
+					Type:      lang.TokenBool,
+					Modifiers: lang.SemanticTokenModifiers{},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 1, Column: 17, Byte: 16},
+						End:      hcl.Pos{Line: 1, Column: 22, Byte: 21},
+					},
+				},
+				{
+					Type:      lang.TokenBool,
+					Modifiers: lang.SemanticTokenModifiers{},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 1, Column: 27, Byte: 26},
+						End:      hcl.Pos{Line: 1, Column: 31, Byte: 30},
+					},
+				},
+			},
+		},
+		{
+			"mismatched constraints",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.AnyExpression{
+						OfType: cty.Number,
+					},
+				},
+			},
+			`attr = (true || false) && true
+`,
+			[]lang.SemanticToken{
+				{
+					Type:      lang.TokenAttrName,
+					Modifiers: lang.SemanticTokenModifiers{},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
+						End:      hcl.Pos{Line: 1, Column: 5, Byte: 4},
+					},
+				},
+			},
+		},
+	}
+	for i, tc := range testCases {
+		t.Run(fmt.Sprintf("%d-%s", i, tc.testName), func(t *testing.T) {
+			bodySchema := &schema.BodySchema{
+				Attributes: tc.attrSchema,
+			}
+
+			f, _ := hclsyntax.ParseConfig([]byte(tc.cfg), "test.tf", hcl.InitialPos)
+			d := testPathDecoder(t, &PathContext{
+				Schema: bodySchema,
+				Files: map[string]*hcl.File{
+					"test.tf": f,
+				},
+			})
+
+			ctx := context.Background()
+			tokens, err := d.SemanticTokensInFile(ctx, "test.tf")
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			if diff := cmp.Diff(tc.expectedSemanticTokens, tokens); diff != "" {
+				t.Fatalf("unexpected tokens: %s", diff)
+			}
+		})
+	}
+}
+
 func TestSemanticTokens_exprAny_templates(t *testing.T) {
 	testCases := []struct {
 		testName               string

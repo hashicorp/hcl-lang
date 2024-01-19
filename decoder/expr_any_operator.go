@@ -87,6 +87,11 @@ func (a Any) completeOperatorExprAtPos(ctx context.Context, pos hcl.Pos) ([]lang
 		}
 
 		return candidates, false
+
+	case *hclsyntax.ParenthesesExpr:
+		if eType.Expression.Range().ContainsPos(pos) || eType.Expression.Range().End.Byte == pos.Byte {
+			return newExpression(a.pathCtx, eType.Expression, a.cons).CompletionAtPos(ctx, pos), true
+		}
 	}
 
 	return candidates, true
@@ -145,6 +150,10 @@ func (a Any) hoverOperatorExprAtPos(ctx context.Context, pos hcl.Pos) (*lang.Hov
 		}
 
 		return nil, true
+	case *hclsyntax.ParenthesesExpr:
+		if eType.Expression.Range().ContainsPos(pos) {
+			return newExpression(a.pathCtx, eType.Expression, a.cons).HoverAtPos(ctx, pos), true
+		}
 	}
 
 	return nil, false
@@ -211,6 +220,13 @@ func (a Any) refOriginsForOperatorExpr(ctx context.Context, allowSelfRefs bool) 
 		}
 
 		return origins, true
+	case *hclsyntax.ParenthesesExpr:
+		expr := newExpression(a.pathCtx, eType.Expression, a.cons)
+		if expr, ok := expr.(ReferenceOriginsExpression); ok {
+			origins = append(origins, expr.ReferenceOrigins(ctx, allowSelfRefs)...)
+		}
+
+		return origins, true
 	}
 
 	return origins, false
@@ -262,6 +278,10 @@ func (a Any) semanticTokensForOperatorExpr(ctx context.Context) ([]lang.Semantic
 			OfType: opFuncParams[0].Type,
 		}).SemanticTokens(ctx)...)
 
+		return tokens, true
+
+	case *hclsyntax.ParenthesesExpr:
+		tokens = append(tokens, newExpression(a.pathCtx, eType.Expression, a.cons).SemanticTokens(ctx)...)
 		return tokens, true
 	}
 

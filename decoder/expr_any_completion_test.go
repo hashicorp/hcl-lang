@@ -3426,6 +3426,219 @@ func TestCompletionAtPos_exprAny_operators(t *testing.T) {
 	}
 }
 
+func TestCompletionAtPos_exprAny_parentheses(t *testing.T) {
+	testCases := []struct {
+		testName           string
+		attrSchema         map[string]*schema.AttributeSchema
+		refTargets         reference.Targets
+		cfg                string
+		pos                hcl.Pos
+		expectedCandidates lang.Candidates
+	}{
+		{
+			"empty bool parentheses",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.AnyExpression{
+						OfType: cty.Bool,
+					},
+				},
+			},
+			reference.Targets{},
+			`attr = ()
+`,
+			hcl.Pos{Line: 1, Column: 9, Byte: 8},
+			lang.CompleteCandidates([]lang.Candidate{
+				{
+					Label:  "false",
+					Detail: "bool",
+					Kind:   lang.BoolCandidateKind,
+					TextEdit: lang.TextEdit{
+						NewText: "false",
+						Snippet: "false",
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 1, Column: 9, Byte: 8},
+							End:      hcl.Pos{Line: 1, Column: 9, Byte: 8},
+						},
+					},
+				},
+				{
+					Label:  "true",
+					Detail: "bool",
+					Kind:   lang.BoolCandidateKind,
+					TextEdit: lang.TextEdit{
+						NewText: "true",
+						Snippet: "true",
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 1, Column: 9, Byte: 8},
+							End:      hcl.Pos{Line: 1, Column: 9, Byte: 8},
+						},
+					},
+				},
+			}),
+		},
+		{
+			"empty number parentheses",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.AnyExpression{
+						OfType: cty.Number,
+					},
+				},
+			},
+			reference.Targets{
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "foo"},
+					},
+					Type: cty.Number,
+				},
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "bar"},
+					},
+					Type: cty.Bool,
+				},
+			},
+			`attr = ()
+`,
+			hcl.Pos{Line: 1, Column: 9, Byte: 8},
+			lang.CompleteCandidates([]lang.Candidate{
+				{
+					Label:  "var.foo",
+					Detail: "number",
+					Kind:   lang.ReferenceCandidateKind,
+					TextEdit: lang.TextEdit{
+						NewText: "var.foo",
+						Snippet: "var.foo",
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 1, Column: 9, Byte: 8},
+							End:      hcl.Pos{Line: 1, Column: 9, Byte: 8},
+						},
+					},
+				},
+			}),
+		},
+		{
+			"unterminated empty parentheses",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.AnyExpression{
+						OfType: cty.Bool,
+					},
+				},
+			},
+			reference.Targets{},
+			`attr = (
+`,
+			hcl.Pos{Line: 1, Column: 9, Byte: 8},
+			lang.CompleteCandidates([]lang.Candidate{
+				// TODO: See https://github.com/hashicorp/hcl/issues/649
+			}),
+		},
+		{
+			"parentheses with prefix",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.AnyExpression{
+						OfType: cty.Bool,
+					},
+				},
+			},
+			reference.Targets{},
+			`attr = (t)
+`,
+			hcl.Pos{Line: 1, Column: 10, Byte: 9},
+			lang.CompleteCandidates([]lang.Candidate{
+				{
+					Label:  "true",
+					Detail: "bool",
+					Kind:   lang.BoolCandidateKind,
+					TextEdit: lang.TextEdit{
+						NewText: "true",
+						Snippet: "true",
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 1, Column: 9, Byte: 8},
+							End:      hcl.Pos{Line: 1, Column: 10, Byte: 9},
+						},
+					},
+				},
+			}),
+		},
+		{
+			"parentheses with prefix with trailing dot",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.AnyExpression{
+						OfType: cty.Bool,
+					},
+				},
+			},
+			reference.Targets{
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "foo"},
+					},
+					Type: cty.Bool,
+				},
+			},
+			`attr = (var.)
+`,
+			hcl.Pos{Line: 1, Column: 13, Byte: 12},
+			lang.CompleteCandidates([]lang.Candidate{
+				{
+					Label:  "var.foo",
+					Detail: "bool",
+					Kind:   lang.ReferenceCandidateKind,
+					TextEdit: lang.TextEdit{
+						NewText: "var.foo",
+						Snippet: "var.foo",
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 1, Column: 9, Byte: 8},
+							End:      hcl.Pos{Line: 1, Column: 13, Byte: 12},
+						},
+					},
+				},
+			}),
+		},
+	}
+
+	for i, tc := range testCases {
+		t.Run(fmt.Sprintf("%2d-%s", i, tc.testName), func(t *testing.T) {
+			bodySchema := &schema.BodySchema{
+				Attributes: tc.attrSchema,
+			}
+
+			f, _ := hclsyntax.ParseConfig([]byte(tc.cfg), "test.tf", hcl.InitialPos)
+			d := testPathDecoder(t, &PathContext{
+				Schema: bodySchema,
+				Files: map[string]*hcl.File{
+					"test.tf": f,
+				},
+				ReferenceTargets: tc.refTargets,
+			})
+
+			ctx := context.Background()
+			candidates, err := d.CompletionAtPos(ctx, "test.tf", tc.pos)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			if diff := cmp.Diff(tc.expectedCandidates, candidates); diff != "" {
+				t.Fatalf("unexpected candidates: %s", diff)
+			}
+		})
+	}
+}
+
 func TestCompletionAtPos_exprAny_template(t *testing.T) {
 	testCases := []struct {
 		testName           string
