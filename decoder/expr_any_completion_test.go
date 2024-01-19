@@ -524,7 +524,7 @@ func TestCompletionAtPos_exprAny_functions(t *testing.T) {
 						Start:    hcl.Pos{Line: 2, Column: 5, Byte: 27},
 						End:      hcl.Pos{Line: 2, Column: 15, Byte: 37},
 					},
-					Type: cty.List(cty.String),
+					Type: cty.Map(cty.String),
 					NestedTargets: reference.Targets{
 						{
 							Addr: lang.Address{
@@ -558,6 +558,95 @@ func TestCompletionAtPos_exprAny_functions(t *testing.T) {
 						},
 						NewText: `var.map["foo"]`,
 						Snippet: `var.map["foo"]`,
+					},
+				},
+				{
+					Label:  `var.map`,
+					Detail: "map of string",
+					Kind:   lang.ReferenceCandidateKind,
+					TextEdit: lang.TextEdit{
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 1, Column: 22, Byte: 21},
+							End:      hcl.Pos{Line: 1, Column: 22, Byte: 21},
+						},
+						NewText: `var.map`,
+						Snippet: `var.map`,
+					},
+				},
+				{
+					Label:       "element",
+					Detail:      "element(list dynamic, index number) dynamic",
+					Description: lang.Markdown("`element` retrieves a single element from a list."),
+					Kind:        lang.FunctionCandidateKind,
+					TextEdit: lang.TextEdit{
+						NewText: "element()",
+						Snippet: "element(${0})",
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 1, Column: 22, Byte: 21},
+							End:      hcl.Pos{Line: 1, Column: 22, Byte: 21},
+						},
+					},
+				},
+				{
+					Label:       "join",
+					Detail:      "join(separator string, …lists list of string) string",
+					Description: lang.Markdown("`join` produces a string by concatenating together all elements of a given list of strings with the given delimiter."),
+					Kind:        lang.FunctionCandidateKind,
+					TextEdit: lang.TextEdit{
+						NewText: "join()",
+						Snippet: "join(${0})",
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 1, Column: 22, Byte: 21},
+							End:      hcl.Pos{Line: 1, Column: 22, Byte: 21},
+						},
+					},
+				},
+				{
+					Label:       "keys",
+					Detail:      "keys(inputMap dynamic) dynamic",
+					Description: lang.Markdown("`keys` takes a map and returns a list containing the keys from that map."),
+					Kind:        lang.FunctionCandidateKind,
+					TextEdit: lang.TextEdit{
+						NewText: "keys()",
+						Snippet: "keys(${0})",
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 1, Column: 22, Byte: 21},
+							End:      hcl.Pos{Line: 1, Column: 22, Byte: 21},
+						},
+					},
+				},
+				{
+					Label:       "log",
+					Detail:      "log(num number, base number) number",
+					Description: lang.Markdown("`log` returns the logarithm of a given number in a given base."),
+					Kind:        lang.FunctionCandidateKind,
+					TextEdit: lang.TextEdit{
+						NewText: "log()",
+						Snippet: "log(${0})",
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 1, Column: 22, Byte: 21},
+							End:      hcl.Pos{Line: 1, Column: 22, Byte: 21},
+						},
+					},
+				},
+				{
+					Label:       "lower",
+					Detail:      "lower(str string) string",
+					Description: lang.Markdown("`lower` converts all cased letters in the given string to lowercase."),
+					Kind:        lang.FunctionCandidateKind,
+					TextEdit: lang.TextEdit{
+						NewText: "lower()",
+						Snippet: "lower(${0})",
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 1, Column: 22, Byte: 21},
+							End:      hcl.Pos{Line: 1, Column: 22, Byte: 21},
+						},
 					},
 				},
 			}),
