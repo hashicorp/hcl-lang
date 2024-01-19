@@ -107,7 +107,7 @@ func (obj Object) CompletionAtPos(ctx context.Context, pos hcl.Pos) []lang.Candi
 		if item.KeyExpr.Range().ContainsPos(pos) {
 			// handle any interpolation if it is allowed
 			keyExpr, ok := item.KeyExpr.(*hclsyntax.ObjectConsKeyExpr)
-			if ok && obj.cons.AllowInterpolatedAttrName {
+			if ok && obj.cons.AllowInterpolatedKeys {
 				parensExpr, ok := keyExpr.Wrapped.(*hclsyntax.ParenthesesExpr)
 				if ok {
 					keyCons := schema.AnyExpression{
@@ -184,7 +184,7 @@ func (obj Object) CompletionAtPos(ctx context.Context, pos hcl.Pos) []lang.Candi
 	})
 
 	// parenthesis implies interpolated attribute name
-	if trimmedBytes[len(trimmedBytes)-1] == '(' && obj.cons.AllowInterpolatedAttrName {
+	if trimmedBytes[len(trimmedBytes)-1] == '(' && obj.cons.AllowInterpolatedKeys {
 		emptyExpr := newEmptyExpressionAtPos(eType.Range().Filename, pos)
 		attrNameCons := schema.AnyExpression{
 			OfType: cty.String,

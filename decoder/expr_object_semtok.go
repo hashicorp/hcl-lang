@@ -34,7 +34,7 @@ func (obj Object) SemanticTokens(ctx context.Context) []lang.SemanticToken {
 		}
 
 		keyExpr, ok := item.KeyExpr.(*hclsyntax.ObjectConsKeyExpr)
-		if ok && obj.cons.AllowInterpolatedAttrName {
+		if ok && obj.cons.AllowInterpolatedKeys {
 			parensExpr, ok := keyExpr.Wrapped.(*hclsyntax.ParenthesesExpr)
 			if ok {
 				keyCons := schema.AnyExpression{

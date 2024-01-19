@@ -26,9 +26,9 @@ type Object struct {
 	// Description defines description of the whole object (affects hover)
 	Description lang.MarkupContent
 
-	// AllowInterpolatedAttrName determines whether the attribute names can be
+	// AllowInterpolatedKeys determines whether the attribute names can be
 	// interpolated (true) or static (literal strings only).
-	AllowInterpolatedAttrName bool
+	AllowInterpolatedKeys bool
 }
 
 type ObjectAttributes map[string]*AttributeSchema
@@ -46,10 +46,10 @@ func (o Object) FriendlyName() string {
 
 func (o Object) Copy() Constraint {
 	return Object{
-		Attributes:                o.Attributes.Copy(),
-		Name:                      o.Name,
-		Description:               o.Description,
-		AllowInterpolatedAttrName: o.AllowInterpolatedAttrName,
+		Attributes:            o.Attributes.Copy(),
+		Name:                  o.Name,
+		Description:           o.Description,
+		AllowInterpolatedKeys: o.AllowInterpolatedKeys,
 	}
 }
 

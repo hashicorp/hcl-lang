@@ -32,7 +32,7 @@ func (obj Object) HoverAtPos(ctx context.Context, pos hcl.Pos) *lang.HoverData {
 		if item.KeyExpr.Range().ContainsPos(pos) {
 			// handle any interpolation if it is allowed
 			keyExpr, ok := item.KeyExpr.(*hclsyntax.ObjectConsKeyExpr)
-			if ok && obj.cons.AllowInterpolatedAttrName {
+			if ok && obj.cons.AllowInterpolatedKeys {
 				parensExpr, ok := keyExpr.Wrapped.(*hclsyntax.ParenthesesExpr)
 				if ok {
 					keyCons := schema.AnyExpression{

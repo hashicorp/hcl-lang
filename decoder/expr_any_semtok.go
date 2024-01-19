@@ -85,8 +85,8 @@ func (a Any) SemanticTokens(ctx context.Context) []lang.SemanticToken {
 		}
 
 		cons := schema.Object{
-			Attributes:                ctyObjectToObjectAttributes(typ),
-			AllowInterpolatedAttrName: true,
+			Attributes:            ctyObjectToObjectAttributes(typ),
+			AllowInterpolatedKeys: true,
 		}
 		return newExpression(a.pathCtx, expr, cons).SemanticTokens(ctx)
 	}

@@ -105,8 +105,8 @@ func (a Any) ReferenceOrigins(ctx context.Context, allowSelfRefs bool) reference
 			expr:    a.expr,
 			pathCtx: a.pathCtx,
 			cons: schema.Object{
-				Attributes:                ctyObjectToObjectAttributes(typ),
-				AllowInterpolatedAttrName: true,
+				Attributes:            ctyObjectToObjectAttributes(typ),
+				AllowInterpolatedKeys: true,
 			},
 		}
 		return obj.ReferenceOrigins(ctx, allowSelfRefs)
