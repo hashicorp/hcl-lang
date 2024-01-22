@@ -30,6 +30,10 @@ type Map struct {
 
 	// MaxItems defines maximum number of items (affects completion)
 	MaxItems uint64
+
+	// AllowInterpolatedKeys determines whether the key names can be
+	// interpolated (true) or static (literal strings only).
+	AllowInterpolatedKeys bool
 }
 
 func (Map) isConstraintImpl() constraintSigil {
@@ -52,11 +56,12 @@ func (m Map) Copy() Constraint {
 		elem = m.Elem.Copy()
 	}
 	return Map{
-		Elem:        elem,
-		Name:        m.Name,
-		Description: m.Description,
-		MinItems:    m.MinItems,
-		MaxItems:    m.MaxItems,
+		Elem:                  elem,
+		Name:                  m.Name,
+		Description:           m.Description,
+		MinItems:              m.MinItems,
+		MaxItems:              m.MaxItems,
+		AllowInterpolatedKeys: m.AllowInterpolatedKeys,
 	}
 }
 

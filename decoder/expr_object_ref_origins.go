@@ -7,7 +7,10 @@ import (
 	"context"
 
 	"github.com/hashicorp/hcl-lang/reference"
+	"github.com/hashicorp/hcl-lang/schema"
 	"github.com/hashicorp/hcl/v2"
+	"github.com/hashicorp/hcl/v2/hclsyntax"
+	"github.com/zclconf/go-cty/cty"
 )
 
 func (obj Object) ReferenceOrigins(ctx context.Context, allowSelfRefs bool) reference.Origins {
@@ -23,21 +26,33 @@ func (obj Object) ReferenceOrigins(ctx context.Context, allowSelfRefs bool) refe
 	origins := make(reference.Origins, 0)
 
 	for _, item := range items {
-		attrName, _, ok := rawObjectKey(item.Key)
-		if !ok {
-			continue
+		attrName, _, isRawKey := rawObjectKey(item.Key)
+
+		var aSchema *schema.AttributeSchema
+		var isKnownAttr bool
+		if isRawKey {
+			aSchema, isKnownAttr = obj.cons.Attributes[attrName]
 		}
 
-		aSchema, ok := obj.cons.Attributes[attrName]
-		if !ok {
-			// skip unknown attribute
-			continue
+		keyExpr, ok := item.Key.(*hclsyntax.ObjectConsKeyExpr)
+		if ok {
+			parensExpr, ok := keyExpr.Wrapped.(*hclsyntax.ParenthesesExpr)
+			if ok {
+				keyCons := schema.AnyExpression{
+					OfType: cty.String,
+				}
+				kExpr := newExpression(obj.pathCtx, parensExpr, keyCons)
+				if expr, ok := kExpr.(ReferenceOriginsExpression); ok {
+					origins = append(origins, expr.ReferenceOrigins(ctx, allowSelfRefs)...)
+				}
+			}
 		}
 
-		expr := newExpression(obj.pathCtx, item.Value, aSchema.Constraint)
-
-		if elemExpr, ok := expr.(ReferenceOriginsExpression); ok {
-			origins = append(origins, elemExpr.ReferenceOrigins(ctx, allowSelfRefs)...)
+		if isKnownAttr {
+			expr := newExpression(obj.pathCtx, item.Value, aSchema.Constraint)
+			if elemExpr, ok := expr.(ReferenceOriginsExpression); ok {
+				origins = append(origins, elemExpr.ReferenceOrigins(ctx, allowSelfRefs)...)
+			}
 		}
 	}
 

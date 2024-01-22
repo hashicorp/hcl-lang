@@ -8,8 +8,10 @@ import (
 	"fmt"
 
 	"github.com/hashicorp/hcl-lang/lang"
+	"github.com/hashicorp/hcl-lang/schema"
 	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hclsyntax"
+	"github.com/zclconf/go-cty/cty"
 )
 
 func (m Map) HoverAtPos(ctx context.Context, pos hcl.Pos) *lang.HoverData {
@@ -20,7 +22,17 @@ func (m Map) HoverAtPos(ctx context.Context, pos hcl.Pos) *lang.HoverData {
 
 	for _, item := range eType.Items {
 		if item.KeyExpr.Range().ContainsPos(pos) {
-			// no hover for map keys
+			keyExpr, ok := item.KeyExpr.(*hclsyntax.ObjectConsKeyExpr)
+			if ok && m.cons.AllowInterpolatedKeys {
+				parensExpr, ok := keyExpr.Wrapped.(*hclsyntax.ParenthesesExpr)
+				if ok {
+					keyCons := schema.AnyExpression{
+						OfType: cty.String,
+					}
+					expr := newExpression(m.pathCtx, parensExpr, keyCons)
+					return expr.HoverAtPos(ctx, pos)
+				}
+			}
 			return nil
 		}
 

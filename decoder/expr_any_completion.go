@@ -74,7 +74,9 @@ func (a Any) CompletionAtPos(ctx context.Context, pos hcl.Pos) []lang.Candidate 
 			Elem: schema.AnyExpression{
 				OfType: typ.ElementType(),
 			},
+			AllowInterpolatedKeys: true,
 		}
+
 		return newExpression(a.pathCtx, expr, cons).CompletionAtPos(ctx, pos)
 	}
 
@@ -85,7 +87,8 @@ func (a Any) CompletionAtPos(ctx context.Context, pos hcl.Pos) []lang.Candidate 
 		}
 
 		cons := schema.Object{
-			Attributes: ctyObjectToObjectAttributes(typ),
+			Attributes:            ctyObjectToObjectAttributes(typ),
+			AllowInterpolatedKeys: true,
 		}
 		return newExpression(a.pathCtx, expr, cons).CompletionAtPos(ctx, pos)
 	}

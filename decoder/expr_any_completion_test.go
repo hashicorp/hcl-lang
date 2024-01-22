@@ -3698,6 +3698,278 @@ func TestCompletionAtPos_exprAny_parentheses(t *testing.T) {
 				},
 			}),
 		},
+		{
+			"empty parentheses as map key",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.AnyExpression{
+						OfType: cty.Map(cty.String),
+					},
+				},
+			},
+			reference.Targets{
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "foo"},
+					},
+					Type: cty.String,
+				},
+			},
+			`attr = {
+  () = "foo"
+}
+`,
+			hcl.Pos{Line: 2, Column: 4, Byte: 12},
+			lang.CompleteCandidates([]lang.Candidate{
+				{
+					Label:  "var.foo",
+					Detail: "string",
+					Kind:   lang.ReferenceCandidateKind,
+					TextEdit: lang.TextEdit{
+						NewText: "var.foo",
+						Snippet: "var.foo",
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 2, Column: 4, Byte: 12},
+							End:      hcl.Pos{Line: 2, Column: 4, Byte: 12},
+						},
+					},
+				},
+			}),
+		},
+		{
+			"parentheses with prefix as map key",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.AnyExpression{
+						OfType: cty.Map(cty.String),
+					},
+				},
+			},
+			reference.Targets{
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "foo"},
+					},
+					Type: cty.String,
+				},
+			},
+			`attr = {
+  (var) = "foo"
+}
+`,
+			hcl.Pos{Line: 2, Column: 7, Byte: 15},
+			lang.CompleteCandidates([]lang.Candidate{
+				{
+					Label:  "var.foo",
+					Detail: "string",
+					Kind:   lang.ReferenceCandidateKind,
+					TextEdit: lang.TextEdit{
+						NewText: "var.foo",
+						Snippet: "var.foo",
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 2, Column: 4, Byte: 12},
+							End:      hcl.Pos{Line: 2, Column: 7, Byte: 15},
+						},
+					},
+				},
+			}),
+		},
+		{
+			"empty parentheses as map key in static map",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.Map{
+						Elem: schema.LiteralType{Type: cty.String},
+					},
+				},
+			},
+			reference.Targets{
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "foo"},
+					},
+					Type: cty.String,
+				},
+			},
+			`attr = {
+  () = "foo"
+}
+`,
+			hcl.Pos{Line: 2, Column: 4, Byte: 12},
+			lang.CompleteCandidates([]lang.Candidate{}),
+		},
+		{
+			"parentheses with prefix as map key in static map",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.Map{
+						Elem: schema.LiteralType{Type: cty.String},
+					},
+				},
+			},
+			reference.Targets{
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "foo"},
+					},
+					Type: cty.String,
+				},
+			},
+			`attr = {
+  (var) = "foo"
+}
+`,
+			hcl.Pos{Line: 2, Column: 7, Byte: 15},
+			lang.CompleteCandidates([]lang.Candidate{}),
+		},
+		{
+			"empty parentheses as object attribute name",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.AnyExpression{
+						OfType: cty.Object(map[string]cty.Type{
+							"bar": cty.String,
+						}),
+					},
+				},
+			},
+			reference.Targets{
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "foo"},
+					},
+					Type: cty.String,
+				},
+			},
+			`attr = {
+  () = "foo"
+}
+`,
+			hcl.Pos{Line: 2, Column: 4, Byte: 12},
+			lang.CompleteCandidates([]lang.Candidate{
+				{
+					Label:  "var.foo",
+					Detail: "string",
+					Kind:   lang.ReferenceCandidateKind,
+					TextEdit: lang.TextEdit{
+						NewText: "var.foo",
+						Snippet: "var.foo",
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 2, Column: 4, Byte: 12},
+							End:      hcl.Pos{Line: 2, Column: 4, Byte: 12},
+						},
+					},
+				},
+			}),
+		},
+		{
+			"parentheses with prefix as object attribute name",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.AnyExpression{
+						OfType: cty.Object(map[string]cty.Type{
+							"bar": cty.String,
+						}),
+					},
+				},
+			},
+			reference.Targets{
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "foo"},
+					},
+					Type: cty.String,
+				},
+			},
+			`attr = {
+  (var) = "foo"
+}
+`,
+			hcl.Pos{Line: 2, Column: 7, Byte: 15},
+			lang.CompleteCandidates([]lang.Candidate{
+				{
+					Label:  "var.foo",
+					Detail: "string",
+					Kind:   lang.ReferenceCandidateKind,
+					TextEdit: lang.TextEdit{
+						NewText: "var.foo",
+						Snippet: "var.foo",
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 2, Column: 4, Byte: 12},
+							End:      hcl.Pos{Line: 2, Column: 7, Byte: 15},
+						},
+					},
+				},
+			}),
+		},
+		{
+			"empty parentheses as object attribute name in static object",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.Object{
+						Attributes: schema.ObjectAttributes{
+							"foo": &schema.AttributeSchema{
+								Constraint: schema.LiteralType{Type: cty.String},
+							},
+						},
+					},
+				},
+			},
+			reference.Targets{
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "foo"},
+					},
+					Type: cty.String,
+				},
+			},
+			`attr = {
+  () = "foo"
+}
+`,
+			hcl.Pos{Line: 2, Column: 4, Byte: 12},
+			lang.CompleteCandidates([]lang.Candidate{}),
+		},
+		{
+			"parentheses with prefix as map key in static map",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.Object{
+						Attributes: schema.ObjectAttributes{
+							"foo": &schema.AttributeSchema{
+								Constraint: schema.LiteralType{Type: cty.String},
+							},
+						},
+					},
+				},
+			},
+			reference.Targets{
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "foo"},
+					},
+					Type: cty.String,
+				},
+			},
+			`attr = {
+  (var) = "foo"
+}
+`,
+			hcl.Pos{Line: 2, Column: 7, Byte: 15},
+			lang.CompleteCandidates([]lang.Candidate{}),
+		},
 	}
 
 	for i, tc := range testCases {

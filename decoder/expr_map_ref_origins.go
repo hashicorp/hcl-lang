@@ -7,7 +7,10 @@ import (
 	"context"
 
 	"github.com/hashicorp/hcl-lang/reference"
+	"github.com/hashicorp/hcl-lang/schema"
 	"github.com/hashicorp/hcl/v2"
+	"github.com/hashicorp/hcl/v2/hclsyntax"
+	"github.com/zclconf/go-cty/cty"
 )
 
 func (m Map) ReferenceOrigins(ctx context.Context, allowSelfRefs bool) reference.Origins {
@@ -23,10 +26,23 @@ func (m Map) ReferenceOrigins(ctx context.Context, allowSelfRefs bool) reference
 	origins := make(reference.Origins, 0)
 
 	for _, item := range items {
-		expr := newExpression(m.pathCtx, item.Value, m.cons.Elem)
+		keyExpr, ok := item.Key.(*hclsyntax.ObjectConsKeyExpr)
+		if ok {
+			parensExpr, ok := keyExpr.Wrapped.(*hclsyntax.ParenthesesExpr)
+			if ok {
+				keyCons := schema.AnyExpression{
+					OfType: cty.String,
+				}
+				kExpr := newExpression(m.pathCtx, parensExpr, keyCons)
+				if expr, ok := kExpr.(ReferenceOriginsExpression); ok {
+					origins = append(origins, expr.ReferenceOrigins(ctx, allowSelfRefs)...)
+				}
+			}
+		}
 
-		if elemExpr, ok := expr.(ReferenceOriginsExpression); ok {
-			origins = append(origins, elemExpr.ReferenceOrigins(ctx, allowSelfRefs)...)
+		valExpr := newExpression(m.pathCtx, item.Value, m.cons.Elem)
+		if expr, ok := valExpr.(ReferenceOriginsExpression); ok {
+			origins = append(origins, expr.ReferenceOrigins(ctx, allowSelfRefs)...)
 		}
 	}
 

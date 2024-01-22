@@ -74,6 +74,7 @@ func (a Any) HoverAtPos(ctx context.Context, pos hcl.Pos) *lang.HoverData {
 			Elem: schema.AnyExpression{
 				OfType: typ.ElementType(),
 			},
+			AllowInterpolatedKeys: true,
 		}
 		return newExpression(a.pathCtx, expr, cons).HoverAtPos(ctx, pos)
 	}
@@ -85,7 +86,8 @@ func (a Any) HoverAtPos(ctx context.Context, pos hcl.Pos) *lang.HoverData {
 		}
 
 		cons := schema.Object{
-			Attributes: ctyObjectToObjectAttributes(typ),
+			Attributes:            ctyObjectToObjectAttributes(typ),
+			AllowInterpolatedKeys: true,
 		}
 		return newExpression(a.pathCtx, expr, cons).HoverAtPos(ctx, pos)
 	}
