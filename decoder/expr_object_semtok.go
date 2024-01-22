@@ -52,12 +52,9 @@ func (obj Object) SemanticTokens(ctx context.Context) []lang.SemanticToken {
 				// TODO: Consider not reporting the quotes?
 				Range: item.KeyExpr.Range(),
 			})
-		}
 
-		if isKnownAttr {
 			expr := newExpression(obj.pathCtx, item.ValueExpr, aSchema.Constraint)
 			tokens = append(tokens, expr.SemanticTokens(ctx)...)
-			continue
 		}
 	}
 
