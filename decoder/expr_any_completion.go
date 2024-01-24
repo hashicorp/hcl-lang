@@ -100,7 +100,6 @@ func (a Any) completeNonComplexExprAtPos(ctx context.Context, pos hcl.Pos) []lan
 	candidates := make([]lang.Candidate, 0)
 
 	// TODO: Support splat expression https://github.com/hashicorp/terraform-ls/issues/526
-	// TODO: Support for-in-if expression https://github.com/hashicorp/terraform-ls/issues/527
 	// TODO: Support relative traversals https://github.com/hashicorp/terraform-ls/issues/532
 
 	opCandidates, ok := a.completeOperatorExprAtPos(ctx, pos)
@@ -120,6 +119,12 @@ func (a Any) completeNonComplexExprAtPos(ctx context.Context, pos hcl.Pos) []lan
 		return candidates
 	}
 	candidates = append(candidates, condCandidates...)
+
+	forCandidates, ok := a.completeForExprAtPos(ctx, pos)
+	if !ok {
+		return candidates
+	}
+	candidates = append(candidates, forCandidates...)
 
 	ref := Reference{
 		expr:    a.expr,
