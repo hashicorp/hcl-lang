@@ -62,6 +62,54 @@ func (a Any) completeForExprAtPos(ctx context.Context, pos hcl.Pos) ([]lang.Cand
 	return candidates, true
 }
 
+func (a Any) hoverForExprAtPos(ctx context.Context, pos hcl.Pos) (*lang.HoverData, bool) {
+	switch eType := a.expr.(type) {
+	case *hclsyntax.ForExpr:
+		if !isTypeIterable(a.cons.OfType) {
+			return nil, false
+		}
+
+		// TODO: eType.KeyVarExpr.Range() to display key type
+
+		// TODO: eType.ValVarExpr.Range() to display value type
+
+		if eType.CollExpr.Range().ContainsPos(pos) {
+			return newExpression(a.pathCtx, eType.CollExpr, a.cons).HoverAtPos(ctx, pos), true
+		}
+
+		if eType.KeyExpr != nil && eType.KeyExpr.Range().ContainsPos(pos) {
+			typ, ok := iterableKeyType(a.cons.OfType)
+			if !ok {
+				return nil, false
+			}
+			cons := schema.AnyExpression{
+				OfType: typ,
+			}
+			return newExpression(a.pathCtx, eType.KeyExpr, cons).HoverAtPos(ctx, pos), true
+		}
+
+		if eType.ValExpr.Range().ContainsPos(pos) {
+			typ, ok := iterableValueType(a.cons.OfType)
+			if !ok {
+				return nil, false
+			}
+			cons := schema.AnyExpression{
+				OfType: typ,
+			}
+			return newExpression(a.pathCtx, eType.ValExpr, cons).HoverAtPos(ctx, pos), true
+		}
+
+		if eType.CondExpr != nil && eType.CondExpr.Range().ContainsPos(pos) {
+			cons := schema.AnyExpression{
+				OfType: cty.Bool,
+			}
+			return newExpression(a.pathCtx, eType.CondExpr, cons).HoverAtPos(ctx, pos), true
+		}
+	}
+
+	return nil, false
+}
+
 func isTypeIterable(typ cty.Type) bool {
 	if typ == cty.DynamicPseudoType {
 		return true

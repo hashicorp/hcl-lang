@@ -97,7 +97,6 @@ func (a Any) HoverAtPos(ctx context.Context, pos hcl.Pos) *lang.HoverData {
 
 func (a Any) hoverNonComplexExprAtPos(ctx context.Context, pos hcl.Pos) *lang.HoverData {
 	// TODO: Support splat expression https://github.com/hashicorp/terraform-ls/issues/526
-	// TODO: Support for-in-if expression https://github.com/hashicorp/terraform-ls/issues/527
 	// TODO: Support relative traversals https://github.com/hashicorp/terraform-ls/issues/532
 
 	if hoverData, ok := a.hoverOperatorExprAtPos(ctx, pos); ok {
@@ -109,6 +108,10 @@ func (a Any) hoverNonComplexExprAtPos(ctx context.Context, pos hcl.Pos) *lang.Ho
 	}
 
 	if hoverData, ok := a.hoverConditionalExprAtPos(ctx, pos); ok {
+		return hoverData
+	}
+
+	if hoverData, ok := a.hoverForExprAtPos(ctx, pos); ok {
 		return hoverData
 	}
 
