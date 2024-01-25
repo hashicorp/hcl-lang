@@ -7,6 +7,7 @@ import (
 	"context"
 
 	"github.com/hashicorp/hcl-lang/lang"
+	"github.com/hashicorp/hcl-lang/reference"
 	"github.com/hashicorp/hcl-lang/schema"
 	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hclsyntax"
@@ -155,6 +156,67 @@ func (a Any) semanticTokensForForExpr(ctx context.Context) ([]lang.SemanticToken
 	}
 
 	return tokens, false
+}
+
+func (a Any) refOriginsForForExpr(ctx context.Context, allowSelfRefs bool) (reference.Origins, bool) {
+	origins := make(reference.Origins, 0)
+
+	// There is currently no way of decoding for expressions in JSON
+	// so we just collect them using the fallback logic assuming "any"
+	// constraint and focus on collecting expressions in HCL with more
+	// accurate constraints below.
+
+	switch eType := a.expr.(type) {
+	case *hclsyntax.ForExpr:
+		if !isTypeIterable(a.cons.OfType) {
+			return nil, false
+		}
+
+		// TODO: eType.KeyVarExpr.Range() to collect key as origin
+		// TODO: eType.ValVarExpr.Range() to collect value as origin
+
+		if collExpr, ok := newExpression(a.pathCtx, eType.CollExpr, a.cons).(ReferenceOriginsExpression); ok {
+			origins = append(origins, collExpr.ReferenceOrigins(ctx, allowSelfRefs)...)
+		}
+
+		if eType.KeyExpr != nil {
+			typ, ok := iterableKeyType(a.cons.OfType)
+			if !ok {
+				return nil, false
+			}
+			cons := schema.AnyExpression{
+				OfType: typ,
+			}
+			if keyExpr, ok := newExpression(a.pathCtx, eType.KeyExpr, cons).(ReferenceOriginsExpression); ok {
+				origins = append(origins, keyExpr.ReferenceOrigins(ctx, allowSelfRefs)...)
+			}
+		}
+
+		typ, ok := iterableValueType(a.cons.OfType)
+		if !ok {
+			return nil, false
+		}
+		cons := schema.AnyExpression{
+			OfType: typ,
+		}
+		if valExpr, ok := newExpression(a.pathCtx, eType.ValExpr, cons).(ReferenceOriginsExpression); ok {
+			origins = append(origins, valExpr.ReferenceOrigins(ctx, allowSelfRefs)...)
+		}
+
+		if eType.CondExpr != nil {
+			cons := schema.AnyExpression{
+				OfType: cty.Bool,
+			}
+
+			if condExpr, ok := newExpression(a.pathCtx, eType.CondExpr, cons).(ReferenceOriginsExpression); ok {
+				origins = append(origins, condExpr.ReferenceOrigins(ctx, allowSelfRefs)...)
+			}
+		}
+
+		return origins, true
+	}
+
+	return origins, false
 }
 
 func isTypeIterable(typ cty.Type) bool {

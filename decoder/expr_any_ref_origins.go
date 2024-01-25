@@ -117,7 +117,6 @@ func (a Any) ReferenceOrigins(ctx context.Context, allowSelfRefs bool) reference
 
 func (a Any) refOriginsForNonComplexExpr(ctx context.Context, allowSelfRefs bool) reference.Origins {
 	// TODO: Support splat expression https://github.com/hashicorp/terraform-ls/issues/526
-	// TODO: Support for-in-if expression https://github.com/hashicorp/terraform-ls/issues/527
 	// TODO: Support relative traversals https://github.com/hashicorp/terraform-ls/issues/532
 
 	if origins, ok := a.refOriginsForOperatorExpr(ctx, allowSelfRefs); ok {
@@ -129,6 +128,10 @@ func (a Any) refOriginsForNonComplexExpr(ctx context.Context, allowSelfRefs bool
 	}
 
 	if origins, ok := a.refOriginsForConditionalExpr(ctx, allowSelfRefs); ok {
+		return origins
+	}
+
+	if origins, ok := a.refOriginsForForExpr(ctx, allowSelfRefs); ok {
 		return origins
 	}
 
