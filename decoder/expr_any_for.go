@@ -110,6 +110,53 @@ func (a Any) hoverForExprAtPos(ctx context.Context, pos hcl.Pos) (*lang.HoverDat
 	return nil, false
 }
 
+func (a Any) semanticTokensForForExpr(ctx context.Context) ([]lang.SemanticToken, bool) {
+	tokens := make([]lang.SemanticToken, 0)
+
+	switch eType := a.expr.(type) {
+	case *hclsyntax.ForExpr:
+		if !isTypeIterable(a.cons.OfType) {
+			return nil, false
+		}
+
+		// TODO: eType.KeyVarExpr.Range() to report key as keyword
+		// TODO: eType.ValVarExpr.Range() to display value as keyword
+
+		tokens = append(tokens, newExpression(a.pathCtx, eType.CollExpr, a.cons).SemanticTokens(ctx)...)
+
+		if eType.KeyExpr != nil {
+			typ, ok := iterableKeyType(a.cons.OfType)
+			if !ok {
+				return nil, false
+			}
+			cons := schema.AnyExpression{
+				OfType: typ,
+			}
+			tokens = append(tokens, newExpression(a.pathCtx, eType.KeyExpr, cons).SemanticTokens(ctx)...)
+		}
+
+		typ, ok := iterableValueType(a.cons.OfType)
+		if !ok {
+			return nil, false
+		}
+		cons := schema.AnyExpression{
+			OfType: typ,
+		}
+		tokens = append(tokens, newExpression(a.pathCtx, eType.ValExpr, cons).SemanticTokens(ctx)...)
+
+		if eType.CondExpr != nil {
+			cons := schema.AnyExpression{
+				OfType: cty.Bool,
+			}
+			tokens = append(tokens, newExpression(a.pathCtx, eType.CondExpr, cons).SemanticTokens(ctx)...)
+		}
+
+		return tokens, true
+	}
+
+	return tokens, false
+}
+
 func isTypeIterable(typ cty.Type) bool {
 	if typ == cty.DynamicPseudoType {
 		return true
