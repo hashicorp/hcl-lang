@@ -54,11 +54,24 @@ func (a Any) completeTemplateExprAtPos(ctx context.Context, pos hcl.Pos) ([]lang
 
 		return candidates, false
 	case *hclsyntax.TemplateWrapExpr:
-		if eType.Wrapped.Range().ContainsPos(pos) {
+		if eType.Wrapped.Range().ContainsPos(pos) || eType.Wrapped.Range().End.Byte == pos.Byte {
 			cons := schema.AnyExpression{
 				OfType: cty.String,
 			}
 			return newExpression(a.pathCtx, eType.Wrapped, cons).CompletionAtPos(ctx, pos), true
+		}
+
+		// Trailing dot may be ignored by the parser so we attempt to recover it
+		if pos.Byte-eType.Wrapped.Range().End.Byte == 1 {
+			fileBytes := a.pathCtx.Files[eType.Wrapped.Range().Filename].Bytes
+			trailingRune := fileBytes[eType.Wrapped.Range().End.Byte:pos.Byte][0]
+
+			if trailingRune == '.' {
+				cons := schema.AnyExpression{
+					OfType: cty.String,
+				}
+				return newExpression(a.pathCtx, eType.Wrapped, cons).CompletionAtPos(ctx, pos), true
+			}
 		}
 
 		return candidates, false
