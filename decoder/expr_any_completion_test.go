@@ -4000,6 +4000,802 @@ func TestCompletionAtPos_exprAny_parentheses(t *testing.T) {
 	}
 }
 
+func TestCompletionAtPos_exprAny_forExpr(t *testing.T) {
+	testCases := []struct {
+		testName           string
+		attrSchema         map[string]*schema.AttributeSchema
+		refTargets         reference.Targets
+		cfg                string
+		pos                hcl.Pos
+		expectedCandidates lang.Candidates
+	}{
+		// list
+		{
+			"list on collection",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.AnyExpression{
+						OfType: cty.List(cty.String),
+					},
+				},
+			},
+			reference.Targets{
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "foo"},
+					},
+					Type: cty.List(cty.String),
+				},
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "mystring"},
+					},
+					Type: cty.String,
+				},
+			},
+			`attr = [for i, v in var: v]
+`,
+			hcl.Pos{Line: 1, Column: 24, Byte: 23},
+			lang.CompleteCandidates([]lang.Candidate{
+				{
+					Label:  "var.foo",
+					Detail: "list of string",
+					Kind:   lang.ReferenceCandidateKind,
+					TextEdit: lang.TextEdit{
+						NewText: "var.foo",
+						Snippet: "var.foo",
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 1, Column: 21, Byte: 20},
+							End:      hcl.Pos{Line: 1, Column: 24, Byte: 23},
+						},
+					},
+				},
+			}),
+		},
+		{
+			"list on value",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.AnyExpression{
+						OfType: cty.List(cty.String),
+					},
+				},
+			},
+			reference.Targets{
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "foo"},
+					},
+					Type: cty.List(cty.String),
+				},
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "bar"},
+					},
+					Type: cty.String,
+				},
+			},
+			`attr = [for i, v in var: v]
+`,
+			hcl.Pos{Line: 1, Column: 27, Byte: 26},
+			lang.CompleteCandidates([]lang.Candidate{
+				{
+					Label:  "var.bar",
+					Detail: "string",
+					Kind:   lang.ReferenceCandidateKind,
+					TextEdit: lang.TextEdit{
+						NewText: "var.bar",
+						Snippet: "var.bar",
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 1, Column: 26, Byte: 25},
+							End:      hcl.Pos{Line: 1, Column: 27, Byte: 26},
+						},
+					},
+				},
+			}),
+		},
+		{
+			"list on condition",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.AnyExpression{
+						OfType: cty.List(cty.String),
+					},
+				},
+			},
+			reference.Targets{},
+			`attr = [for i, v in var: v if t]
+`,
+			hcl.Pos{Line: 1, Column: 32, Byte: 31},
+			lang.CompleteCandidates([]lang.Candidate{
+				{
+					Label:  "true",
+					Detail: "bool",
+					Kind:   lang.BoolCandidateKind,
+					TextEdit: lang.TextEdit{
+						NewText: "true",
+						Snippet: "true",
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 1, Column: 31, Byte: 30},
+							End:      hcl.Pos{Line: 1, Column: 32, Byte: 31},
+						},
+					},
+				},
+			}),
+		},
+
+		// set
+		{
+			"set on collection",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.AnyExpression{
+						OfType: cty.Set(cty.String),
+					},
+				},
+			},
+			reference.Targets{
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "foo"},
+					},
+					Type: cty.Set(cty.String),
+				},
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "mystring"},
+					},
+					Type: cty.String,
+				},
+			},
+			`attr = [for i, v in var: v]
+`,
+			hcl.Pos{Line: 1, Column: 24, Byte: 23},
+			lang.CompleteCandidates([]lang.Candidate{
+				{
+					Label:  "var.foo",
+					Detail: "set of string",
+					Kind:   lang.ReferenceCandidateKind,
+					TextEdit: lang.TextEdit{
+						NewText: "var.foo",
+						Snippet: "var.foo",
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 1, Column: 21, Byte: 20},
+							End:      hcl.Pos{Line: 1, Column: 24, Byte: 23},
+						},
+					},
+				},
+			}),
+		},
+		{
+			"set on value",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.AnyExpression{
+						OfType: cty.Set(cty.String),
+					},
+				},
+			},
+			reference.Targets{
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "foo"},
+					},
+					Type: cty.Set(cty.String),
+				},
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "bar"},
+					},
+					Type: cty.String,
+				},
+			},
+			`attr = [for i, v in var: v]
+`,
+			hcl.Pos{Line: 1, Column: 27, Byte: 26},
+			lang.CompleteCandidates([]lang.Candidate{
+				{
+					Label:  "var.bar",
+					Detail: "string",
+					Kind:   lang.ReferenceCandidateKind,
+					TextEdit: lang.TextEdit{
+						NewText: "var.bar",
+						Snippet: "var.bar",
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 1, Column: 26, Byte: 25},
+							End:      hcl.Pos{Line: 1, Column: 27, Byte: 26},
+						},
+					},
+				},
+			}),
+		},
+		{
+			"set on condition",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.AnyExpression{
+						OfType: cty.Set(cty.String),
+					},
+				},
+			},
+			reference.Targets{
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "foo"},
+					},
+					Type: cty.Set(cty.String),
+				},
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "bar"},
+					},
+					Type: cty.String,
+				},
+			},
+			`attr = [for i, v in var: v if t]
+`,
+			hcl.Pos{Line: 1, Column: 32, Byte: 31},
+			lang.CompleteCandidates([]lang.Candidate{
+				{
+					Label:  "true",
+					Detail: "bool",
+					Kind:   lang.BoolCandidateKind,
+					TextEdit: lang.TextEdit{
+						NewText: "true",
+						Snippet: "true",
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 1, Column: 31, Byte: 30},
+							End:      hcl.Pos{Line: 1, Column: 32, Byte: 31},
+						},
+					},
+				},
+			}),
+		},
+
+		// tuple
+		{
+			"tuple on collection",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.AnyExpression{
+						OfType: cty.EmptyTuple,
+					},
+				},
+			},
+			reference.Targets{
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "foo"},
+					},
+					Type: cty.EmptyTuple,
+				},
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "mystring"},
+					},
+					Type: cty.String,
+				},
+			},
+			`attr = [for k, v in var: v]
+`,
+			hcl.Pos{Line: 1, Column: 24, Byte: 23},
+			lang.CompleteCandidates([]lang.Candidate{
+				{
+					Label:  "var.foo",
+					Detail: "tuple",
+					Kind:   lang.ReferenceCandidateKind,
+					TextEdit: lang.TextEdit{
+						NewText: "var.foo",
+						Snippet: "var.foo",
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 1, Column: 21, Byte: 20},
+							End:      hcl.Pos{Line: 1, Column: 24, Byte: 23},
+						},
+					},
+				},
+			}),
+		},
+		{
+			"tuple on value",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.AnyExpression{
+						OfType: cty.EmptyTuple,
+					},
+				},
+			},
+			reference.Targets{
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "foo"},
+					},
+					Type: cty.String,
+				},
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "bar"},
+					},
+					Type: cty.EmptyTuple,
+				},
+			},
+			`attr = [for k, v in var: v]
+`,
+			hcl.Pos{Line: 1, Column: 27, Byte: 26},
+			lang.CompleteCandidates([]lang.Candidate{
+				{
+					Label:  "var.foo",
+					Detail: "string",
+					Kind:   lang.ReferenceCandidateKind,
+					TextEdit: lang.TextEdit{
+						NewText: "var.foo",
+						Snippet: "var.foo",
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 1, Column: 26, Byte: 25},
+							End:      hcl.Pos{Line: 1, Column: 27, Byte: 26},
+						},
+					},
+				},
+				{
+					Label:  "var.bar",
+					Detail: "tuple",
+					Kind:   lang.ReferenceCandidateKind,
+					TextEdit: lang.TextEdit{
+						NewText: "var.bar",
+						Snippet: "var.bar",
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 1, Column: 26, Byte: 25},
+							End:      hcl.Pos{Line: 1, Column: 27, Byte: 26},
+						},
+					},
+				},
+			}),
+		},
+		{
+			"tuple on condition",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.AnyExpression{
+						OfType: cty.EmptyTuple,
+					},
+				},
+			},
+			reference.Targets{
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "foo"},
+					},
+					Type: cty.String,
+				},
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "bar"},
+					},
+					Type: cty.EmptyTuple,
+				},
+			},
+			`attr = [for k, v in var: v if f]
+`,
+			hcl.Pos{Line: 1, Column: 32, Byte: 31},
+			lang.CompleteCandidates([]lang.Candidate{
+				{
+					Label:  "false",
+					Detail: "bool",
+					Kind:   lang.BoolCandidateKind,
+					TextEdit: lang.TextEdit{
+						NewText: "false",
+						Snippet: "false",
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 1, Column: 31, Byte: 30},
+							End:      hcl.Pos{Line: 1, Column: 32, Byte: 31},
+						},
+					},
+				},
+			}),
+		},
+
+		// map
+		{
+			"map on collection",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.AnyExpression{
+						OfType: cty.Map(cty.String),
+					},
+				},
+			},
+			reference.Targets{
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "foo"},
+					},
+					Type: cty.Map(cty.String),
+				},
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "mystring"},
+					},
+					Type: cty.String,
+				},
+			},
+			`attr = {for k, v in var: k => v}
+`,
+			hcl.Pos{Line: 1, Column: 24, Byte: 23},
+			lang.CompleteCandidates([]lang.Candidate{
+				{
+					Label:  "var.foo",
+					Detail: "map of string",
+					Kind:   lang.ReferenceCandidateKind,
+					TextEdit: lang.TextEdit{
+						NewText: "var.foo",
+						Snippet: "var.foo",
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 1, Column: 21, Byte: 20},
+							End:      hcl.Pos{Line: 1, Column: 24, Byte: 23},
+						},
+					},
+				},
+			}),
+		},
+		{
+			"map on key",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.AnyExpression{
+						OfType: cty.Map(cty.Number),
+					},
+				},
+			},
+			reference.Targets{
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "foo"},
+					},
+					Type: cty.String,
+				},
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "bar"},
+					},
+					Type: cty.List(cty.String),
+				},
+			},
+			`attr = {for k, v in var: v => val}
+`,
+			hcl.Pos{Line: 1, Column: 27, Byte: 26},
+			lang.CompleteCandidates([]lang.Candidate{
+				{
+					Label:  "var.foo",
+					Detail: "string",
+					Kind:   lang.ReferenceCandidateKind,
+					TextEdit: lang.TextEdit{
+						NewText: "var.foo",
+						Snippet: "var.foo",
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 1, Column: 26, Byte: 25},
+							End:      hcl.Pos{Line: 1, Column: 27, Byte: 26},
+						},
+					},
+				},
+			}),
+		},
+		{
+			"map on value",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.AnyExpression{
+						OfType: cty.Map(cty.String),
+					},
+				},
+			},
+			reference.Targets{
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "foo"},
+					},
+					Type: cty.String,
+				},
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "bar"},
+					},
+					Type: cty.List(cty.String),
+				},
+			},
+			`attr = {for k, v in var: k => v}
+`,
+			hcl.Pos{Line: 1, Column: 32, Byte: 31},
+			lang.CompleteCandidates([]lang.Candidate{
+				{
+					Label:  "var.foo",
+					Detail: "string",
+					Kind:   lang.ReferenceCandidateKind,
+					TextEdit: lang.TextEdit{
+						NewText: "var.foo",
+						Snippet: "var.foo",
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 1, Column: 31, Byte: 30},
+							End:      hcl.Pos{Line: 1, Column: 32, Byte: 31},
+						},
+					},
+				},
+			}),
+		},
+		{
+			"map on condition",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.AnyExpression{
+						OfType: cty.Map(cty.String),
+					},
+				},
+			},
+			reference.Targets{},
+			`attr = {for k, v in var: v if f}
+`,
+			hcl.Pos{Line: 1, Column: 32, Byte: 31},
+			lang.CompleteCandidates([]lang.Candidate{
+				{
+					Label:  "false",
+					Detail: "bool",
+					Kind:   lang.BoolCandidateKind,
+					TextEdit: lang.TextEdit{
+						NewText: "false",
+						Snippet: "false",
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 1, Column: 31, Byte: 30},
+							End:      hcl.Pos{Line: 1, Column: 32, Byte: 31},
+						},
+					},
+				},
+			}),
+		},
+
+		// object
+		{
+			"object on collection",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.AnyExpression{
+						OfType: cty.EmptyObject,
+					},
+				},
+			},
+			reference.Targets{
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "foo"},
+					},
+					Type: cty.EmptyObject,
+				},
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "mystring"},
+					},
+					Type: cty.String,
+				},
+			},
+			`attr = {for k, v in var: k => v}
+`,
+			hcl.Pos{Line: 1, Column: 24, Byte: 23},
+			lang.CompleteCandidates([]lang.Candidate{
+				{
+					Label:  "var.foo",
+					Detail: "object",
+					Kind:   lang.ReferenceCandidateKind,
+					TextEdit: lang.TextEdit{
+						NewText: "var.foo",
+						Snippet: "var.foo",
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 1, Column: 21, Byte: 20},
+							End:      hcl.Pos{Line: 1, Column: 24, Byte: 23},
+						},
+					},
+				},
+			}),
+		},
+		{
+			"object on key",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.AnyExpression{
+						OfType: cty.EmptyObject,
+					},
+				},
+			},
+			reference.Targets{
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "foo"},
+					},
+					Type: cty.String,
+				},
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "bar"},
+					},
+					Type: cty.List(cty.String),
+				},
+			},
+			`attr = {for k, v in var: v => val}
+`,
+			hcl.Pos{Line: 1, Column: 27, Byte: 26},
+			lang.CompleteCandidates([]lang.Candidate{
+				{
+					Label:  "var.foo",
+					Detail: "string",
+					Kind:   lang.ReferenceCandidateKind,
+					TextEdit: lang.TextEdit{
+						NewText: "var.foo",
+						Snippet: "var.foo",
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 1, Column: 26, Byte: 25},
+							End:      hcl.Pos{Line: 1, Column: 27, Byte: 26},
+						},
+					},
+				},
+			}),
+		},
+		{
+			"object on value",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.AnyExpression{
+						OfType: cty.EmptyObject,
+					},
+				},
+			},
+			reference.Targets{
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "foo"},
+					},
+					Type: cty.String,
+				},
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "bar"},
+					},
+					Type: cty.List(cty.String),
+				},
+			},
+			`attr = {for k, v in var: k => v}
+`,
+			hcl.Pos{Line: 1, Column: 32, Byte: 31},
+			lang.CompleteCandidates([]lang.Candidate{
+				{
+					Label:  "var.foo",
+					Detail: "string",
+					Kind:   lang.ReferenceCandidateKind,
+					TextEdit: lang.TextEdit{
+						NewText: "var.foo",
+						Snippet: "var.foo",
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 1, Column: 31, Byte: 30},
+							End:      hcl.Pos{Line: 1, Column: 32, Byte: 31},
+						},
+					},
+				},
+				{
+					Label:  "var.bar",
+					Detail: "list of string",
+					Kind:   lang.ReferenceCandidateKind,
+					TextEdit: lang.TextEdit{
+						NewText: "var.bar",
+						Snippet: "var.bar",
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 1, Column: 31, Byte: 30},
+							End:      hcl.Pos{Line: 1, Column: 32, Byte: 31},
+						},
+					},
+				},
+			}),
+		},
+		{
+			"object on condition",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.AnyExpression{
+						OfType: cty.EmptyObject,
+					},
+				},
+			},
+			reference.Targets{},
+			`attr = {for k, v in var: v if f}
+`,
+			hcl.Pos{Line: 1, Column: 32, Byte: 31},
+			lang.CompleteCandidates([]lang.Candidate{
+				{
+					Label:  "false",
+					Detail: "bool",
+					Kind:   lang.BoolCandidateKind,
+					TextEdit: lang.TextEdit{
+						NewText: "false",
+						Snippet: "false",
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 1, Column: 31, Byte: 30},
+							End:      hcl.Pos{Line: 1, Column: 32, Byte: 31},
+						},
+					},
+				},
+			}),
+		},
+	}
+
+	for i, tc := range testCases {
+		t.Run(fmt.Sprintf("%2d-%s", i, tc.testName), func(t *testing.T) {
+			bodySchema := &schema.BodySchema{
+				Attributes: tc.attrSchema,
+			}
+
+			f, _ := hclsyntax.ParseConfig([]byte(tc.cfg), "test.tf", hcl.InitialPos)
+			d := testPathDecoder(t, &PathContext{
+				Schema: bodySchema,
+				Files: map[string]*hcl.File{
+					"test.tf": f,
+				},
+				ReferenceTargets: tc.refTargets,
+			})
+
+			ctx := context.Background()
+			candidates, err := d.CompletionAtPos(ctx, "test.tf", tc.pos)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			if diff := cmp.Diff(tc.expectedCandidates, candidates); diff != "" {
+				t.Fatalf("unexpected candidates: %s", diff)
+			}
+		})
+	}
+}
+
 func TestCompletionAtPos_exprAny_template(t *testing.T) {
 	testCases := []struct {
 		testName           string

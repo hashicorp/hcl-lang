@@ -1813,6 +1813,571 @@ func TestHoverAtPos_exprAny_parenthesis(t *testing.T) {
 	}
 }
 
+func TestHoverAtPos_exprAny_forExpr(t *testing.T) {
+	testCases := []struct {
+		testName          string
+		attrSchema        map[string]*schema.AttributeSchema
+		refTargets        reference.Targets
+		refOrigins        reference.Origins
+		cfg               string
+		pos               hcl.Pos
+		expectedHoverData *lang.HoverData
+	}{
+		// list
+		{
+			"list on collection",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.AnyExpression{
+						OfType: cty.List(cty.String),
+					},
+				},
+			},
+			reference.Targets{
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "foo"},
+					},
+					Type: cty.List(cty.String),
+					RangePtr: &hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 2, Column: 26, Byte: 25},
+						End:      hcl.Pos{Line: 2, Column: 26, Byte: 25},
+					},
+				},
+			},
+			reference.Origins{
+				reference.LocalOrigin{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "foo"},
+					},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 1, Column: 18, Byte: 17},
+						End:      hcl.Pos{Line: 1, Column: 25, Byte: 24},
+					},
+				},
+			},
+			`attr = [for v in var.foo: v]
+`,
+			hcl.Pos{Line: 1, Column: 20, Byte: 19},
+			&lang.HoverData{
+				Content: lang.Markdown("`var.foo`\n_list of string_"),
+				Range: hcl.Range{
+					Filename: "test.tf",
+					Start:    hcl.Pos{Line: 1, Column: 18, Byte: 17},
+					End:      hcl.Pos{Line: 1, Column: 25, Byte: 24},
+				},
+			},
+		},
+		{
+			"list on value",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.AnyExpression{
+						OfType: cty.List(cty.String),
+					},
+				},
+			},
+			reference.Targets{},
+			reference.Origins{},
+			`attr = [for v in col: "foo"]
+`,
+			hcl.Pos{Line: 1, Column: 25, Byte: 24},
+			&lang.HoverData{
+				Content: lang.Markdown("_string_"),
+				Range: hcl.Range{
+					Filename: "test.tf",
+					Start:    hcl.Pos{Line: 1, Column: 23, Byte: 22},
+					End:      hcl.Pos{Line: 1, Column: 28, Byte: 27},
+				},
+			},
+		},
+		{
+			"list on condition",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.AnyExpression{
+						OfType: cty.List(cty.String),
+					},
+				},
+			},
+			reference.Targets{},
+			reference.Origins{},
+			`attr = [for v in col: "foo" if true]
+`,
+			hcl.Pos{Line: 1, Column: 34, Byte: 33},
+			&lang.HoverData{
+				Content: lang.Markdown("_bool_"),
+				Range: hcl.Range{
+					Filename: "test.tf",
+					Start:    hcl.Pos{Line: 1, Column: 32, Byte: 31},
+					End:      hcl.Pos{Line: 1, Column: 36, Byte: 35},
+				},
+			},
+		},
+
+		// set
+		{
+			"set on collection",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.AnyExpression{
+						OfType: cty.Set(cty.String),
+					},
+				},
+			},
+			reference.Targets{
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "foo"},
+					},
+					Type: cty.Set(cty.String),
+					RangePtr: &hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 2, Column: 26, Byte: 25},
+						End:      hcl.Pos{Line: 2, Column: 26, Byte: 25},
+					},
+				},
+			},
+			reference.Origins{
+				reference.LocalOrigin{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "foo"},
+					},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 1, Column: 18, Byte: 17},
+						End:      hcl.Pos{Line: 1, Column: 25, Byte: 24},
+					},
+				},
+			},
+			`attr = [for v in var.foo: v]
+`,
+			hcl.Pos{Line: 1, Column: 20, Byte: 19},
+			&lang.HoverData{
+				Content: lang.Markdown("`var.foo`\n_set of string_"),
+				Range: hcl.Range{
+					Filename: "test.tf",
+					Start:    hcl.Pos{Line: 1, Column: 18, Byte: 17},
+					End:      hcl.Pos{Line: 1, Column: 25, Byte: 24},
+				},
+			},
+		},
+		{
+			"set on value",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.AnyExpression{
+						OfType: cty.Set(cty.String),
+					},
+				},
+			},
+			reference.Targets{},
+			reference.Origins{},
+			`attr = [for v in col: "foo"]
+`,
+			hcl.Pos{Line: 1, Column: 25, Byte: 24},
+			&lang.HoverData{
+				Content: lang.Markdown("_string_"),
+				Range: hcl.Range{
+					Filename: "test.tf",
+					Start:    hcl.Pos{Line: 1, Column: 23, Byte: 22},
+					End:      hcl.Pos{Line: 1, Column: 28, Byte: 27},
+				},
+			},
+		},
+		{
+			"set on condition",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.AnyExpression{
+						OfType: cty.Set(cty.String),
+					},
+				},
+			},
+			reference.Targets{},
+			reference.Origins{},
+			`attr = [for v in col: "foo" if true]
+`,
+			hcl.Pos{Line: 1, Column: 34, Byte: 33},
+			&lang.HoverData{
+				Content: lang.Markdown("_bool_"),
+				Range: hcl.Range{
+					Filename: "test.tf",
+					Start:    hcl.Pos{Line: 1, Column: 32, Byte: 31},
+					End:      hcl.Pos{Line: 1, Column: 36, Byte: 35},
+				},
+			},
+		},
+
+		// tuple
+		{
+			"tuple on collection",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.AnyExpression{
+						OfType: cty.EmptyTuple,
+					},
+				},
+			},
+			reference.Targets{
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "foo"},
+					},
+					Type: cty.EmptyTuple,
+					RangePtr: &hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 2, Column: 26, Byte: 25},
+						End:      hcl.Pos{Line: 2, Column: 26, Byte: 25},
+					},
+				},
+			},
+			reference.Origins{
+				reference.LocalOrigin{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "foo"},
+					},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 1, Column: 18, Byte: 17},
+						End:      hcl.Pos{Line: 1, Column: 25, Byte: 24},
+					},
+				},
+			},
+			`attr = [for v in var.foo: v]
+`,
+			hcl.Pos{Line: 1, Column: 20, Byte: 19},
+			&lang.HoverData{
+				Content: lang.Markdown("`var.foo`\n_tuple_"),
+				Range: hcl.Range{
+					Filename: "test.tf",
+					Start:    hcl.Pos{Line: 1, Column: 18, Byte: 17},
+					End:      hcl.Pos{Line: 1, Column: 25, Byte: 24},
+				},
+			},
+		},
+		{
+			"tuple on value",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.AnyExpression{
+						OfType: cty.EmptyTuple,
+					},
+				},
+			},
+			reference.Targets{},
+			reference.Origins{},
+			`attr = [for v in col: "foo"]
+`,
+			hcl.Pos{Line: 1, Column: 25, Byte: 24},
+			&lang.HoverData{
+				Content: lang.Markdown("_string_"),
+				Range: hcl.Range{
+					Filename: "test.tf",
+					Start:    hcl.Pos{Line: 1, Column: 23, Byte: 22},
+					End:      hcl.Pos{Line: 1, Column: 28, Byte: 27},
+				},
+			},
+		},
+		{
+			"tuple on condition",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.AnyExpression{
+						OfType: cty.EmptyTuple,
+					},
+				},
+			},
+			reference.Targets{},
+			reference.Origins{},
+			`attr = [for v in col: "foo" if true]
+`,
+			hcl.Pos{Line: 1, Column: 34, Byte: 33},
+			&lang.HoverData{
+				Content: lang.Markdown("_bool_"),
+				Range: hcl.Range{
+					Filename: "test.tf",
+					Start:    hcl.Pos{Line: 1, Column: 32, Byte: 31},
+					End:      hcl.Pos{Line: 1, Column: 36, Byte: 35},
+				},
+			},
+		},
+
+		// map
+		{
+			"map on collection",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.AnyExpression{
+						OfType: cty.Map(cty.String),
+					},
+				},
+			},
+			reference.Targets{
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "foo"},
+					},
+					Type: cty.Map(cty.String),
+					RangePtr: &hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 2, Column: 3, Byte: 29},
+						End:      hcl.Pos{Line: 2, Column: 3, Byte: 29},
+					},
+				},
+			},
+			reference.Origins{
+				reference.LocalOrigin{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "foo"},
+					},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 1, Column: 21, Byte: 20},
+						End:      hcl.Pos{Line: 1, Column: 28, Byte: 27},
+					},
+				},
+			},
+			`attr = {for k, v in var.foo: "key" => "val"]
+`,
+			hcl.Pos{Line: 1, Column: 23, Byte: 22},
+			&lang.HoverData{
+				Content: lang.Markdown("`var.foo`\n_map of string_"),
+				Range: hcl.Range{
+					Filename: "test.tf",
+					Start:    hcl.Pos{Line: 1, Column: 21, Byte: 20},
+					End:      hcl.Pos{Line: 1, Column: 28, Byte: 27},
+				},
+			},
+		},
+		{
+			"map on key",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.AnyExpression{
+						OfType: cty.Map(cty.String),
+					},
+				},
+			},
+			reference.Targets{},
+			reference.Origins{},
+			`attr = {for k, v in var.foo: "key" => "val"]
+`,
+			hcl.Pos{Line: 1, Column: 33, Byte: 32},
+			&lang.HoverData{
+				Content: lang.Markdown("_string_"),
+				Range: hcl.Range{
+					Filename: "test.tf",
+					Start:    hcl.Pos{Line: 1, Column: 30, Byte: 29},
+					End:      hcl.Pos{Line: 1, Column: 35, Byte: 34},
+				},
+			},
+		},
+		{
+			"map on value",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.AnyExpression{
+						OfType: cty.Map(cty.String),
+					},
+				},
+			},
+			reference.Targets{},
+			reference.Origins{},
+			`attr = {for k, v in var.foo: "key" => "val"]
+`,
+			hcl.Pos{Line: 1, Column: 41, Byte: 40},
+			&lang.HoverData{
+				Content: lang.Markdown("_string_"),
+				Range: hcl.Range{
+					Filename: "test.tf",
+					Start:    hcl.Pos{Line: 1, Column: 39, Byte: 38},
+					End:      hcl.Pos{Line: 1, Column: 44, Byte: 43},
+				},
+			},
+		},
+		{
+			"map on condition",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.AnyExpression{
+						OfType: cty.Map(cty.String),
+					},
+				},
+			},
+			reference.Targets{},
+			reference.Origins{},
+			`attr = {for k, v in var.foo: "key" => "val" if true]
+`,
+			hcl.Pos{Line: 1, Column: 50, Byte: 49},
+			&lang.HoverData{
+				Content: lang.Markdown("_bool_"),
+				Range: hcl.Range{
+					Filename: "test.tf",
+					Start:    hcl.Pos{Line: 1, Column: 48, Byte: 47},
+					End:      hcl.Pos{Line: 1, Column: 52, Byte: 51},
+				},
+			},
+		},
+
+		// object
+		{
+			"object on collection",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.AnyExpression{
+						OfType: cty.EmptyObject,
+					},
+				},
+			},
+			reference.Targets{
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "foo"},
+					},
+					Type: cty.EmptyObject,
+					RangePtr: &hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 2, Column: 3, Byte: 29},
+						End:      hcl.Pos{Line: 2, Column: 3, Byte: 29},
+					},
+				},
+			},
+			reference.Origins{
+				reference.LocalOrigin{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "foo"},
+					},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 1, Column: 21, Byte: 20},
+						End:      hcl.Pos{Line: 1, Column: 28, Byte: 27},
+					},
+				},
+			},
+			`attr = {for k, v in var.foo: "key" => "val"]
+`,
+			hcl.Pos{Line: 1, Column: 23, Byte: 22},
+			&lang.HoverData{
+				Content: lang.Markdown("`var.foo`\nobject"),
+				Range: hcl.Range{
+					Filename: "test.tf",
+					Start:    hcl.Pos{Line: 1, Column: 21, Byte: 20},
+					End:      hcl.Pos{Line: 1, Column: 28, Byte: 27},
+				},
+			},
+		},
+		{
+			"object on key",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.AnyExpression{
+						OfType: cty.EmptyObject,
+					},
+				},
+			},
+			reference.Targets{},
+			reference.Origins{},
+			`attr = {for k, v in var.foo: "key" => "val"]
+`,
+			hcl.Pos{Line: 1, Column: 33, Byte: 32},
+			&lang.HoverData{
+				Content: lang.Markdown("_string_"),
+				Range: hcl.Range{
+					Filename: "test.tf",
+					Start:    hcl.Pos{Line: 1, Column: 30, Byte: 29},
+					End:      hcl.Pos{Line: 1, Column: 35, Byte: 34},
+				},
+			},
+		},
+		{
+			"object on value",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.AnyExpression{
+						OfType: cty.EmptyObject,
+					},
+				},
+			},
+			reference.Targets{},
+			reference.Origins{},
+			`attr = {for k, v in var.foo: "key" => "val"]
+`,
+			hcl.Pos{Line: 1, Column: 41, Byte: 40},
+			&lang.HoverData{
+				Content: lang.Markdown("_string_"),
+				Range: hcl.Range{
+					Filename: "test.tf",
+					Start:    hcl.Pos{Line: 1, Column: 39, Byte: 38},
+					End:      hcl.Pos{Line: 1, Column: 44, Byte: 43},
+				},
+			},
+		},
+		{
+			"object on condition",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.AnyExpression{
+						OfType: cty.EmptyObject,
+					},
+				},
+			},
+			reference.Targets{},
+			reference.Origins{},
+			`attr = {for k, v in var.foo: "key" => "val" if true]
+`,
+			hcl.Pos{Line: 1, Column: 50, Byte: 49},
+			&lang.HoverData{
+				Content: lang.Markdown("_bool_"),
+				Range: hcl.Range{
+					Filename: "test.tf",
+					Start:    hcl.Pos{Line: 1, Column: 48, Byte: 47},
+					End:      hcl.Pos{Line: 1, Column: 52, Byte: 51},
+				},
+			},
+		},
+	}
+	for i, tc := range testCases {
+		t.Run(fmt.Sprintf("%2d-%s", i, tc.testName), func(t *testing.T) {
+			bodySchema := &schema.BodySchema{
+				Attributes: tc.attrSchema,
+			}
+
+			f, _ := hclsyntax.ParseConfig([]byte(tc.cfg), "test.tf", hcl.InitialPos)
+			d := testPathDecoder(t, &PathContext{
+				Schema:           bodySchema,
+				ReferenceTargets: tc.refTargets,
+				ReferenceOrigins: tc.refOrigins,
+				Files: map[string]*hcl.File{
+					"test.tf": f,
+				},
+			})
+
+			ctx := context.Background()
+			hoverData, err := d.HoverAtPos(ctx, "test.tf", tc.pos)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			if diff := cmp.Diff(tc.expectedHoverData, hoverData); diff != "" {
+				t.Fatalf("unexpected hover data: %s", diff)
+			}
+		})
+	}
+}
+
 func TestHoverAtPos_exprAny_templates(t *testing.T) {
 	testCases := []struct {
 		testName          string

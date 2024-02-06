@@ -1019,6 +1019,275 @@ func TestCollectRefOrigins_exprAny_parenthesis_hcl(t *testing.T) {
 	}
 }
 
+func TestCollectRefOrigins_exprAny_forExpr_hcl(t *testing.T) {
+	testCases := []struct {
+		testName           string
+		attrSchema         map[string]*schema.AttributeSchema
+		cfg                string
+		expectedRefOrigins reference.Origins
+	}{
+		{
+			"list",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.AnyExpression{
+						OfType: cty.List(cty.String),
+					},
+				},
+			},
+			`attr = [for key, val in var.coll: val]
+`,
+			reference.Origins{
+				reference.LocalOrigin{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "coll"},
+					},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 1, Column: 25, Byte: 24},
+						End:      hcl.Pos{Line: 1, Column: 33, Byte: 32},
+					},
+					Constraints: reference.OriginConstraints{
+						{OfType: cty.List(cty.String)},
+					},
+				},
+				reference.LocalOrigin{
+					Addr: lang.Address{
+						lang.RootStep{Name: "val"},
+					},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 1, Column: 35, Byte: 34},
+						End:      hcl.Pos{Line: 1, Column: 38, Byte: 37},
+					},
+					Constraints: reference.OriginConstraints{
+						{OfType: cty.String},
+					},
+				},
+			},
+		},
+		{
+			"set",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.AnyExpression{
+						OfType: cty.Set(cty.String),
+					},
+				},
+			},
+			`attr = [for key, val in var.coll: val]
+`,
+			reference.Origins{
+				reference.LocalOrigin{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "coll"},
+					},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 1, Column: 25, Byte: 24},
+						End:      hcl.Pos{Line: 1, Column: 33, Byte: 32},
+					},
+					Constraints: reference.OriginConstraints{
+						{OfType: cty.Set(cty.String)},
+					},
+				},
+				reference.LocalOrigin{
+					Addr: lang.Address{
+						lang.RootStep{Name: "val"},
+					},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 1, Column: 35, Byte: 34},
+						End:      hcl.Pos{Line: 1, Column: 38, Byte: 37},
+					},
+					Constraints: reference.OriginConstraints{
+						{OfType: cty.String},
+					},
+				},
+			},
+		},
+		{
+			"tuple",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.AnyExpression{
+						OfType: cty.EmptyTuple,
+					},
+				},
+			},
+			`attr = [for key, val in var.coll: val]
+`,
+			reference.Origins{
+				reference.LocalOrigin{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "coll"},
+					},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 1, Column: 25, Byte: 24},
+						End:      hcl.Pos{Line: 1, Column: 33, Byte: 32},
+					},
+					Constraints: reference.OriginConstraints{
+						{OfType: cty.EmptyTuple},
+					},
+				},
+				reference.LocalOrigin{
+					Addr: lang.Address{
+						lang.RootStep{Name: "val"},
+					},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 1, Column: 35, Byte: 34},
+						End:      hcl.Pos{Line: 1, Column: 38, Byte: 37},
+					},
+					Constraints: reference.OriginConstraints{
+						{OfType: cty.DynamicPseudoType},
+					},
+				},
+			},
+		},
+		{
+			"map",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.AnyExpression{
+						OfType: cty.Map(cty.String),
+					},
+				},
+			},
+			`attr = {for key, val in var.coll: key => val}
+`,
+			reference.Origins{
+				reference.LocalOrigin{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "coll"},
+					},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 1, Column: 25, Byte: 24},
+						End:      hcl.Pos{Line: 1, Column: 33, Byte: 32},
+					},
+					Constraints: reference.OriginConstraints{
+						{OfType: cty.Map(cty.String)},
+					},
+				},
+				reference.LocalOrigin{
+					Addr: lang.Address{
+						lang.RootStep{Name: "key"},
+					},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 1, Column: 35, Byte: 34},
+						End:      hcl.Pos{Line: 1, Column: 38, Byte: 37},
+					},
+					Constraints: reference.OriginConstraints{
+						{OfType: cty.String},
+					},
+				},
+				reference.LocalOrigin{
+					Addr: lang.Address{
+						lang.RootStep{Name: "val"},
+					},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 1, Column: 42, Byte: 41},
+						End:      hcl.Pos{Line: 1, Column: 45, Byte: 44},
+					},
+					Constraints: reference.OriginConstraints{
+						{OfType: cty.String},
+					},
+				},
+			},
+		},
+		{
+			"object",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.AnyExpression{
+						OfType: cty.EmptyObject,
+					},
+				},
+			},
+			`attr = {for key, val in var.coll: key => val}
+`,
+			reference.Origins{
+				reference.LocalOrigin{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "coll"},
+					},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 1, Column: 25, Byte: 24},
+						End:      hcl.Pos{Line: 1, Column: 33, Byte: 32},
+					},
+					Constraints: reference.OriginConstraints{
+						{OfType: cty.EmptyObject},
+					},
+				},
+				reference.LocalOrigin{
+					Addr: lang.Address{
+						lang.RootStep{Name: "key"},
+					},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 1, Column: 35, Byte: 34},
+						End:      hcl.Pos{Line: 1, Column: 38, Byte: 37},
+					},
+					Constraints: reference.OriginConstraints{
+						{OfType: cty.String},
+					},
+				},
+				reference.LocalOrigin{
+					Addr: lang.Address{
+						lang.RootStep{Name: "val"},
+					},
+					Range: hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 1, Column: 42, Byte: 41},
+						End:      hcl.Pos{Line: 1, Column: 45, Byte: 44},
+					},
+					Constraints: reference.OriginConstraints{
+						{OfType: cty.DynamicPseudoType},
+					},
+				},
+			},
+		},
+	}
+
+	for i, tc := range testCases {
+		t.Run(fmt.Sprintf("%2d-%s", i, tc.testName), func(t *testing.T) {
+			bodySchema := &schema.BodySchema{
+				Attributes: tc.attrSchema,
+			}
+
+			f, diags := hclsyntax.ParseConfig([]byte(tc.cfg), "test.tf", hcl.InitialPos)
+			if len(diags) > 0 {
+				t.Error(diags)
+			}
+			d := testPathDecoder(t, &PathContext{
+				Schema: bodySchema,
+				Files: map[string]*hcl.File{
+					"test.tf": f,
+				},
+			})
+
+			origins, err := d.CollectReferenceOrigins()
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			if diff := cmp.Diff(tc.expectedRefOrigins, origins, ctydebug.CmpOptions); diff != "" {
+				t.Fatalf("unexpected origins: %s", diff)
+			}
+		})
+	}
+}
+
 func TestCollectRefOrigins_exprAny_operators_json(t *testing.T) {
 	testCases := []struct {
 		testName           string
