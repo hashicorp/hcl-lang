@@ -4806,7 +4806,7 @@ func TestCompletionAtPos_exprAny_template(t *testing.T) {
 		expectedCandidates lang.Candidates
 	}{
 		{
-			"simple empty template",
+			"simple empty template (wrapped)",
 			map[string]*schema.AttributeSchema{
 				"attr": {
 					Constraint: schema.AnyExpression{
@@ -4918,6 +4918,92 @@ func TestCompletionAtPos_exprAny_template(t *testing.T) {
 							Filename: "test.tf",
 							Start:    hcl.Pos{Line: 1, Column: 11, Byte: 10},
 							End:      hcl.Pos{Line: 1, Column: 11, Byte: 10},
+						},
+					},
+				},
+			}),
+		},
+		{
+			"simple empty template with prefix (wrapped)",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.AnyExpression{
+						OfType: cty.String,
+					},
+				},
+			},
+			reference.Targets{
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "bar"},
+					},
+					RangePtr: &hcl.Range{
+						Filename: "variables.tf",
+						Start:    hcl.Pos{Line: 2, Column: 1, Byte: 17},
+						End:      hcl.Pos{Line: 2, Column: 3, Byte: 19},
+					},
+					Type: cty.String,
+				},
+			},
+			`attr = "${v}"
+`,
+			hcl.Pos{Line: 1, Column: 12, Byte: 11},
+			lang.CompleteCandidates([]lang.Candidate{
+				{
+					Label:  "var.bar",
+					Detail: "string",
+					Kind:   lang.ReferenceCandidateKind,
+					TextEdit: lang.TextEdit{
+						NewText: "var.bar",
+						Snippet: "var.bar",
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 1, Column: 11, Byte: 10},
+							End:      hcl.Pos{Line: 1, Column: 12, Byte: 11},
+						},
+					},
+				},
+			}),
+		},
+		{
+			"simple empty template with prefix trailing dot (wrapped)",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.AnyExpression{
+						OfType: cty.String,
+					},
+				},
+			},
+			reference.Targets{
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "var"},
+						lang.AttrStep{Name: "bar"},
+					},
+					RangePtr: &hcl.Range{
+						Filename: "variables.tf",
+						Start:    hcl.Pos{Line: 2, Column: 1, Byte: 17},
+						End:      hcl.Pos{Line: 2, Column: 3, Byte: 19},
+					},
+					Type: cty.String,
+				},
+			},
+			`attr = "${var.}"
+`,
+			hcl.Pos{Line: 1, Column: 15, Byte: 14},
+			lang.CompleteCandidates([]lang.Candidate{
+				{
+					Label:  "var.bar",
+					Detail: "string",
+					Kind:   lang.ReferenceCandidateKind,
+					TextEdit: lang.TextEdit{
+						NewText: "var.bar",
+						Snippet: "var.bar",
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 1, Column: 11, Byte: 10},
+							End:      hcl.Pos{Line: 1, Column: 15, Byte: 14},
 						},
 					},
 				},
