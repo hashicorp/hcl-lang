@@ -32,7 +32,7 @@ func (fs *FunctionSignature) Copy() *FunctionSignature {
 	newFS := &FunctionSignature{
 		Description: fs.Description,
 		Detail:      fs.Detail,
-		ReturnType:  fs.ReturnType, // TODO: deep copy needed?
+		ReturnType:  fs.ReturnType,
 		VarParam:    copyFunctionParameter(fs.VarParam),
 	}
 	newFS.Params = make([]function.Parameter, len(fs.Params))
