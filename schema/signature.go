@@ -44,6 +44,10 @@ func (fs *FunctionSignature) Copy() *FunctionSignature {
 }
 
 func copyFunctionParameter(p *function.Parameter) *function.Parameter {
+	if p == nil {
+		return nil
+	}
+
 	return &function.Parameter{
 		Name:             p.Name,
 		Type:             p.Type,
