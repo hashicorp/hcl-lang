@@ -151,9 +151,8 @@ func (fe functionExpr) HoverAtPos(ctx context.Context, pos hcl.Pos) *lang.HoverD
 
 	if funcExpr.NameRange.ContainsPos(pos) {
 		return &lang.HoverData{
-			Content: lang.Markdown(fmt.Sprintf("```terraform\n%s(%s) %s\n```\n\n%s",
-				funcExpr.Name, parameterNamesAsString(funcSig), funcSig.ReturnType.FriendlyName(), funcSig.Description)),
-			Range: fe.expr.Range(),
+			Content: hoverContentForFunction(funcSig, funcExpr),
+			Range:   fe.expr.Range(),
 		}
 	}
 
@@ -296,4 +295,9 @@ func (fe functionExpr) matchingFunctions(prefix string, editRange hcl.Range) []l
 	})
 
 	return candidates
+}
+
+func hoverContentForFunction(funcSig schema.FunctionSignature, funcExpr *hclsyntax.FunctionCallExpr) lang.MarkupContent {
+	return lang.Markdown(fmt.Sprintf("```terraform\n%s(%s) %s\n```\n\n%s\n\n%s",
+		funcExpr.Name, parameterNamesAsString(funcSig), funcSig.ReturnType.FriendlyName(), funcSig.Description, funcSig.Detail))
 }
