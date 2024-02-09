@@ -33,9 +33,24 @@ func (fs *FunctionSignature) Copy() *FunctionSignature {
 		Description: fs.Description,
 		Detail:      fs.Detail,
 		ReturnType:  fs.ReturnType, // TODO: deep copy needed?
-		VarParam:    fs.VarParam,   // TODO: deep copy needed?
+		VarParam:    copyFunctionParameter(fs.VarParam),
 	}
 	newFS.Params = make([]function.Parameter, len(fs.Params))
-	copy(newFS.Params, fs.Params) // TODO: deep copy needed?
+	for i, p := range fs.Params {
+		newFS.Params[i] = *copyFunctionParameter(&p)
+	}
+
 	return newFS
+}
+
+func copyFunctionParameter(p *function.Parameter) *function.Parameter {
+	return &function.Parameter{
+		Name:             p.Name,
+		Type:             p.Type,
+		Description:      p.Description,
+		AllowNull:        p.AllowNull,
+		AllowUnknown:     p.AllowUnknown,
+		AllowDynamicType: p.AllowDynamicType,
+		AllowMarked:      p.AllowMarked,
+	}
 }
