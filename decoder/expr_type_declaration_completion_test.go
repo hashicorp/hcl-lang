@@ -125,7 +125,7 @@ func TestCompletionAtPos_exprTypeDeclaration(t *testing.T) {
 			}),
 		},
 		{
-			"partial name with dot",
+			"partial name with dot",
 			map[string]*schema.AttributeSchema{
 				"attr": {
 					Constraint: schema.TypeDeclaration{},
@@ -1012,6 +1012,18 @@ func TestCompletionAtPos_exprTypeDeclaration(t *testing.T) {
   s = 
 })`,
 			hcl.Pos{Line: 2, Column: 4, Byte: 19},
+			lang.CompleteCandidates([]lang.Candidate{}),
+		},
+		{
+			"in front of prefix (with space)",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.TypeDeclaration{},
+				},
+			},
+			`attr = st
+`,
+			hcl.Pos{Line: 1, Column: 7, Byte: 6},
 			lang.CompleteCandidates([]lang.Candidate{}),
 		},
 	}
