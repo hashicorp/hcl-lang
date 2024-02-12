@@ -140,7 +140,7 @@ func (lt LiteralType) completeBoolAtPos(ctx context.Context, pos hcl.Pos) []lang
 
 	case *hclsyntax.ScopeTraversalExpr:
 		prefixLen := pos.Byte - eType.Range().Start.Byte
-		if prefixLen > len(eType.Traversal.RootName()) {
+		if prefixLen < 0 || prefixLen > len(eType.Traversal.RootName()) {
 			// The user has probably typed an extra character, such as a
 			// period, that is not (yet) part of the expression. This prefix
 			// won't match anything, so we'll return early.
