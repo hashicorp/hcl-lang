@@ -123,7 +123,19 @@ func TestCompletionAtPos_exprKeyword(t *testing.T) {
 			hcl.Pos{Line: 1, Column: 9, Byte: 8},
 			lang.CompleteCandidates([]lang.Candidate{}),
 		},
+		{
+			"in front of prefix (with space)",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.Keyword{Keyword: "foobar"},
+				},
+			},
+			`attr = f`,
+			hcl.Pos{Line: 1, Column: 7, Byte: 6},
+			lang.CompleteCandidates([]lang.Candidate{}),
+		},
 	}
+
 	for i, tc := range testCases {
 		t.Run(fmt.Sprintf("%d-%s", i, tc.testName), func(t *testing.T) {
 			bodySchema := &schema.BodySchema{

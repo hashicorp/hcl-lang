@@ -878,6 +878,36 @@ func TestCompletionAtPos_exprAny_functions(t *testing.T) {
 				},
 			}),
 		},
+		{
+			"in front of prefix (with space)",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.AnyExpression{
+						OfType: cty.String,
+					},
+				},
+			},
+			reference.Targets{},
+			`attr = t 
+`,
+			hcl.Pos{Line: 1, Column: 7, Byte: 6},
+			lang.CompleteCandidates([]lang.Candidate{}),
+		},
+		{
+			"in front of non-empty [ ]",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.AnyExpression{
+						OfType: cty.String,
+					},
+				},
+			},
+			reference.Targets{},
+			`attr = t [x]
+`,
+			hcl.Pos{Line: 1, Column: 9, Byte: 8},
+			lang.CompleteCandidates([]lang.Candidate{}),
+		},
 	}
 
 	for i, tc := range testCases {

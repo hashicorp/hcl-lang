@@ -49,7 +49,7 @@ func (fe functionExpr) CompletionAtPos(ctx context.Context, pos hcl.Pos) []lang.
 
 		// There can be a single segment with trailing dot which cannot
 		// be a function anymore as functions cannot contain dots.
-		if prefixLen > len(rootName) {
+		if prefixLen < 0 || prefixLen > len(rootName) {
 			return []lang.Candidate{}
 		}
 

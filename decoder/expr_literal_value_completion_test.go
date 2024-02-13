@@ -621,6 +621,20 @@ func TestCompletionAtPos_exprLiteralValue(t *testing.T) {
 				},
 			}),
 		},
+		{
+			"in front of prefix (with space)",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.LiteralValue{
+						Value: cty.BoolVal(true),
+					},
+				},
+			},
+			`attr = t
+`,
+			hcl.Pos{Line: 1, Column: 7, Byte: 6},
+			lang.CompleteCandidates([]lang.Candidate{}),
+		},
 	}
 
 	for i, tc := range testCases {
