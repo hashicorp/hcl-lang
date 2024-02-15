@@ -33,28 +33,14 @@ func (fs *FunctionSignature) Copy() *FunctionSignature {
 		Description: fs.Description,
 		Detail:      fs.Detail,
 		ReturnType:  fs.ReturnType,
-		VarParam:    copyFunctionParameter(fs.VarParam),
 	}
-	newFS.Params = make([]function.Parameter, len(fs.Params))
-	for i, p := range fs.Params {
-		newFS.Params[i] = *copyFunctionParameter(&p)
+
+	copy(newFS.Params, fs.Params)
+
+	if fs.VarParam != nil {
+		vpCpy := *fs.VarParam
+		newFS.VarParam = &vpCpy
 	}
 
 	return newFS
-}
-
-func copyFunctionParameter(p *function.Parameter) *function.Parameter {
-	if p == nil {
-		return nil
-	}
-
-	return &function.Parameter{
-		Name:             p.Name,
-		Type:             p.Type,
-		Description:      p.Description,
-		AllowNull:        p.AllowNull,
-		AllowUnknown:     p.AllowUnknown,
-		AllowDynamicType: p.AllowDynamicType,
-		AllowMarked:      p.AllowMarked,
-	}
 }
