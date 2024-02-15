@@ -35,6 +35,7 @@ func (fs *FunctionSignature) Copy() *FunctionSignature {
 		ReturnType:  fs.ReturnType,
 	}
 
+	newFS.Params = make([]function.Parameter, len(fs.Params))
 	copy(newFS.Params, fs.Params)
 
 	if fs.VarParam != nil {
