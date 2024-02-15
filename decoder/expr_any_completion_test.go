@@ -116,6 +116,21 @@ func TestCompletionAtPos_exprAny_functions(t *testing.T) {
 						},
 					},
 				},
+				{
+					Label:       "provider::framework::example",
+					Detail:      "provider::framework::example(input string) string",
+					Description: lang.Markdown("Echoes given argument as result"),
+					Kind:        lang.FunctionCandidateKind,
+					TextEdit: lang.TextEdit{
+						NewText: "provider::framework::example()",
+						Snippet: "provider::framework::example(${0})",
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 1, Column: 8, Byte: 7},
+							End:      hcl.Pos{Line: 1, Column: 8, Byte: 7},
+						},
+					},
+				},
 			}),
 		},
 		{
@@ -200,6 +215,21 @@ func TestCompletionAtPos_exprAny_functions(t *testing.T) {
 					TextEdit: lang.TextEdit{
 						NewText: "lower()",
 						Snippet: "lower(${0})",
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 1, Column: 8, Byte: 7},
+							End:      hcl.Pos{Line: 1, Column: 8, Byte: 7},
+						},
+					},
+				},
+				{
+					Label:       "provider::framework::example",
+					Detail:      "provider::framework::example(input string) string",
+					Description: lang.Markdown("Echoes given argument as result"),
+					Kind:        lang.FunctionCandidateKind,
+					TextEdit: lang.TextEdit{
+						NewText: "provider::framework::example()",
+						Snippet: "provider::framework::example(${0})",
 						Range: hcl.Range{
 							Filename: "test.tf",
 							Start:    hcl.Pos{Line: 1, Column: 8, Byte: 7},
@@ -364,6 +394,21 @@ func TestCompletionAtPos_exprAny_functions(t *testing.T) {
 					TextEdit: lang.TextEdit{
 						NewText: "lower()",
 						Snippet: "lower(${0})",
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 1, Column: 14, Byte: 15},
+							End:      hcl.Pos{Line: 1, Column: 14, Byte: 15},
+						},
+					},
+				},
+				{
+					Label:       "provider::framework::example",
+					Detail:      "provider::framework::example(input string) string",
+					Description: lang.Markdown("Echoes given argument as result"),
+					Kind:        lang.FunctionCandidateKind,
+					TextEdit: lang.TextEdit{
+						NewText: "provider::framework::example()",
+						Snippet: "provider::framework::example(${0})",
 						Range: hcl.Range{
 							Filename: "test.tf",
 							Start:    hcl.Pos{Line: 1, Column: 14, Byte: 15},
@@ -649,6 +694,21 @@ func TestCompletionAtPos_exprAny_functions(t *testing.T) {
 						},
 					},
 				},
+				{
+					Label:       "provider::framework::example",
+					Detail:      "provider::framework::example(input string) string",
+					Description: lang.Markdown("Echoes given argument as result"),
+					Kind:        lang.FunctionCandidateKind,
+					TextEdit: lang.TextEdit{
+						NewText: "provider::framework::example()",
+						Snippet: "provider::framework::example(${0})",
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 1, Column: 22, Byte: 21},
+							End:      hcl.Pos{Line: 1, Column: 22, Byte: 21},
+						},
+					},
+				},
 			}),
 		},
 		{
@@ -785,6 +845,21 @@ func TestCompletionAtPos_exprAny_functions(t *testing.T) {
 						},
 					},
 				},
+				{
+					Label:       "provider::framework::example",
+					Detail:      "provider::framework::example(input string) string",
+					Description: lang.Markdown("Echoes given argument as result"),
+					Kind:        lang.FunctionCandidateKind,
+					TextEdit: lang.TextEdit{
+						NewText: "provider::framework::example()",
+						Snippet: "provider::framework::example(${0})",
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 1, Column: 28, Byte: 29},
+							End:      hcl.Pos{Line: 1, Column: 28, Byte: 29},
+						},
+					},
+				},
 			}),
 		},
 		{
@@ -869,6 +944,21 @@ func TestCompletionAtPos_exprAny_functions(t *testing.T) {
 					TextEdit: lang.TextEdit{
 						NewText: "lower()",
 						Snippet: "lower(${0})",
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 1, Column: 22, Byte: 23},
+							End:      hcl.Pos{Line: 1, Column: 22, Byte: 23},
+						},
+					},
+				},
+				{
+					Label:       "provider::framework::example",
+					Detail:      "provider::framework::example(input string) string",
+					Description: lang.Markdown("Echoes given argument as result"),
+					Kind:        lang.FunctionCandidateKind,
+					TextEdit: lang.TextEdit{
+						NewText: "provider::framework::example()",
+						Snippet: "provider::framework::example(${0})",
 						Range: hcl.Range{
 							Filename: "test.tf",
 							Start:    hcl.Pos{Line: 1, Column: 22, Byte: 23},
@@ -1046,6 +1136,21 @@ func TestCompletionAtPos_exprAny_combinedExpressions(t *testing.T) {
 					TextEdit: lang.TextEdit{
 						NewText: "lower()",
 						Snippet: "lower(${0})",
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 1, Column: 8, Byte: 7},
+							End:      hcl.Pos{Line: 1, Column: 8, Byte: 7},
+						},
+					},
+				},
+				{
+					Label:       "provider::framework::example",
+					Detail:      "provider::framework::example(input string) string",
+					Description: lang.Markdown("Echoes given argument as result"),
+					Kind:        lang.FunctionCandidateKind,
+					TextEdit: lang.TextEdit{
+						NewText: "provider::framework::example()",
+						Snippet: "provider::framework::example(${0})",
 						Range: hcl.Range{
 							Filename: "test.tf",
 							Start:    hcl.Pos{Line: 1, Column: 8, Byte: 7},
@@ -1304,6 +1409,18 @@ func testFunctionSignatures() map[string]schema.FunctionSignature {
 			},
 			ReturnType:  cty.List(cty.String),
 			Description: "`split` produces a list by dividing a given string at all occurrences of a given separator.",
+		},
+		"provider::framework::example": {
+			Params: []function.Parameter{
+				{
+					Name:        "input",
+					Type:        cty.String,
+					Description: "String to echo",
+				},
+			},
+			ReturnType:  cty.String,
+			Description: "Echoes given argument as result",
+			Detail:      "bflad/framework 0.2.0",
 		},
 	}
 }
@@ -3186,6 +3303,21 @@ func TestCompletionAtPos_exprAny_operators(t *testing.T) {
 					},
 				},
 				{
+					Label:       "provider::framework::example",
+					Detail:      "provider::framework::example(input string) string",
+					Description: lang.Markdown("Echoes given argument as result"),
+					Kind:        lang.FunctionCandidateKind,
+					TextEdit: lang.TextEdit{
+						NewText: "provider::framework::example()",
+						Snippet: "provider::framework::example(${0})",
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 1, Column: 9, Byte: 8},
+							End:      hcl.Pos{Line: 1, Column: 9, Byte: 8},
+						},
+					},
+				},
+				{
 					Label:  "false",
 					Detail: "bool",
 					Kind:   lang.BoolCandidateKind,
@@ -3475,6 +3607,21 @@ func TestCompletionAtPos_exprAny_operators(t *testing.T) {
 					TextEdit: lang.TextEdit{
 						NewText: "lower()",
 						Snippet: "lower(${0})",
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 1, Column: 15, Byte: 14},
+							End:      hcl.Pos{Line: 1, Column: 15, Byte: 14},
+						},
+					},
+				},
+				{
+					Label:       "provider::framework::example",
+					Detail:      "provider::framework::example(input string) string",
+					Description: lang.Markdown("Echoes given argument as result"),
+					Kind:        lang.FunctionCandidateKind,
+					TextEdit: lang.TextEdit{
+						NewText: "provider::framework::example()",
+						Snippet: "provider::framework::example(${0})",
 						Range: hcl.Range{
 							Filename: "test.tf",
 							Start:    hcl.Pos{Line: 1, Column: 15, Byte: 14},
@@ -4951,6 +5098,21 @@ func TestCompletionAtPos_exprAny_template(t *testing.T) {
 						},
 					},
 				},
+				{
+					Label:       "provider::framework::example",
+					Detail:      "provider::framework::example(input string) string",
+					Description: lang.Markdown("Echoes given argument as result"),
+					Kind:        lang.FunctionCandidateKind,
+					TextEdit: lang.TextEdit{
+						NewText: "provider::framework::example()",
+						Snippet: "provider::framework::example(${0})",
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 1, Column: 11, Byte: 10},
+							End:      hcl.Pos{Line: 1, Column: 11, Byte: 10},
+						},
+					},
+				},
 			}),
 		},
 		{
@@ -5151,6 +5313,21 @@ EOT
 					TextEdit: lang.TextEdit{
 						NewText: "lower()",
 						Snippet: "lower(${0})",
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 3, Column: 10, Byte: 38},
+							End:      hcl.Pos{Line: 3, Column: 10, Byte: 38},
+						},
+					},
+				},
+				{
+					Label:       "provider::framework::example",
+					Detail:      "provider::framework::example(input string) string",
+					Description: lang.Markdown("Echoes given argument as result"),
+					Kind:        lang.FunctionCandidateKind,
+					TextEdit: lang.TextEdit{
+						NewText: "provider::framework::example()",
+						Snippet: "provider::framework::example(${0})",
 						Range: hcl.Range{
 							Filename: "test.tf",
 							Start:    hcl.Pos{Line: 3, Column: 10, Byte: 38},
@@ -5365,6 +5542,21 @@ EOT
 						},
 					},
 				},
+				{
+					Label:       "provider::framework::example",
+					Detail:      "provider::framework::example(input string) string",
+					Description: lang.Markdown("Echoes given argument as result"),
+					Kind:        lang.FunctionCandidateKind,
+					TextEdit: lang.TextEdit{
+						NewText: "provider::framework::example()",
+						Snippet: "provider::framework::example(${0})",
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 1, Column: 28, Byte: 27},
+							End:      hcl.Pos{Line: 1, Column: 28, Byte: 27},
+						},
+					},
+				},
 			}),
 		},
 		{
@@ -5569,6 +5761,21 @@ EOT
 						},
 					},
 				},
+				{
+					Label:       "provider::framework::example",
+					Detail:      "provider::framework::example(input string) string",
+					Description: lang.Markdown("Echoes given argument as result"),
+					Kind:        lang.FunctionCandidateKind,
+					TextEdit: lang.TextEdit{
+						NewText: "provider::framework::example()",
+						Snippet: "provider::framework::example(${0})",
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 1, Column: 23, Byte: 22},
+							End:      hcl.Pos{Line: 1, Column: 23, Byte: 22},
+						},
+					},
+				},
 			}),
 		},
 		{
@@ -5680,6 +5887,21 @@ EOT
 					TextEdit: lang.TextEdit{
 						NewText: "lower()",
 						Snippet: "lower(${0})",
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 1, Column: 23, Byte: 22},
+							End:      hcl.Pos{Line: 1, Column: 23, Byte: 22},
+						},
+					},
+				},
+				{
+					Label:       "provider::framework::example",
+					Detail:      "provider::framework::example(input string) string",
+					Description: lang.Markdown("Echoes given argument as result"),
+					Kind:        lang.FunctionCandidateKind,
+					TextEdit: lang.TextEdit{
+						NewText: "provider::framework::example()",
+						Snippet: "provider::framework::example(${0})",
 						Range: hcl.Range{
 							Filename: "test.tf",
 							Start:    hcl.Pos{Line: 1, Column: 23, Byte: 22},
@@ -5801,6 +6023,21 @@ EOT
 					TextEdit: lang.TextEdit{
 						NewText: "lower()",
 						Snippet: "lower(${0})",
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 1, Column: 23, Byte: 22},
+							End:      hcl.Pos{Line: 1, Column: 23, Byte: 22},
+						},
+					},
+				},
+				{
+					Label:       "provider::framework::example",
+					Detail:      "provider::framework::example(input string) string",
+					Description: lang.Markdown("Echoes given argument as result"),
+					Kind:        lang.FunctionCandidateKind,
+					TextEdit: lang.TextEdit{
+						NewText: "provider::framework::example()",
+						Snippet: "provider::framework::example(${0})",
 						Range: hcl.Range{
 							Filename: "test.tf",
 							Start:    hcl.Pos{Line: 1, Column: 23, Byte: 22},

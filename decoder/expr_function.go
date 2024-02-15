@@ -298,6 +298,12 @@ func (fe functionExpr) matchingFunctions(prefix string, editRange hcl.Range) []l
 }
 
 func hoverContentForFunction(funcSig schema.FunctionSignature, funcExpr *hclsyntax.FunctionCallExpr) lang.MarkupContent {
-	return lang.Markdown(fmt.Sprintf("```terraform\n%s(%s) %s\n```\n\n%s\n\n%s",
-		funcExpr.Name, parameterNamesAsString(funcSig), funcSig.ReturnType.FriendlyName(), funcSig.Description, funcSig.Detail))
+	rawMd := fmt.Sprintf("```terraform\n%s(%s) %s\n```\n\n%s",
+		funcExpr.Name, parameterNamesAsString(funcSig), funcSig.ReturnType.FriendlyName(), funcSig.Description)
+
+	if funcSig.Detail != "" {
+		rawMd += fmt.Sprintf("\n\n%s", funcSig.Detail)
+	}
+
+	return lang.Markdown(rawMd)
 }

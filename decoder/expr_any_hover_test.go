@@ -139,6 +139,30 @@ func TestHoverAtPos_exprAny_functions(t *testing.T) {
 			hcl.Pos{Line: 1, Column: 17, Byte: 16},
 			nil,
 		},
+		{
+			"over namespaced function",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.AnyExpression{
+						OfType: cty.String,
+					},
+				},
+			},
+			`attr = provider::framework::example("FOO")
+`,
+			hcl.Pos{Line: 1, Column: 11, Byte: 10},
+			&lang.HoverData{
+				Content: lang.MarkupContent{
+					Value: "```terraform\nprovider::framework::example(input string) string\n```\n\nEchoes given argument as result\n\nbflad/framework 0.2.0",
+					Kind:  lang.MarkdownKind,
+				},
+				Range: hcl.Range{
+					Filename: "test.tf",
+					Start:    hcl.Pos{Line: 1, Column: 8, Byte: 7},
+					End:      hcl.Pos{Line: 1, Column: 43, Byte: 42},
+				},
+			},
+		},
 	}
 
 	for i, tc := range testCases {
