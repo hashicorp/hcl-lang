@@ -44,7 +44,7 @@ func appendOrigins(origins, newOrigins reference.Origins) reference.Origins {
 			if ok &&
 				existingOrigin.Address().Equals(newMatchableOrigin.Address()) &&
 				rangesEqual(existingOrigin.OriginRange(), newMatchableOrigin.OriginRange()) {
-
+				// TODO? deduplicate constraints
 				origins[i] = existingOrigin.AppendConstraints(newMatchableOrigin.OriginConstraints())
 				foundMatch = true
 				break
