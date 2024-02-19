@@ -1049,7 +1049,11 @@ func TestCollectRefOrigins_exprAny_forExpr_hcl(t *testing.T) {
 						End:      hcl.Pos{Line: 1, Column: 33, Byte: 32},
 					},
 					Constraints: reference.OriginConstraints{
-						{OfType: cty.List(cty.String)},
+						{OfType: cty.List(cty.DynamicPseudoType)},
+						{OfType: cty.Set(cty.DynamicPseudoType)},
+						{OfType: cty.EmptyTuple},
+						{OfType: cty.Map(cty.DynamicPseudoType)},
+						{OfType: cty.EmptyObject},
 					},
 				},
 				reference.LocalOrigin{
@@ -1090,7 +1094,11 @@ func TestCollectRefOrigins_exprAny_forExpr_hcl(t *testing.T) {
 						End:      hcl.Pos{Line: 1, Column: 33, Byte: 32},
 					},
 					Constraints: reference.OriginConstraints{
-						{OfType: cty.Set(cty.String)},
+						{OfType: cty.List(cty.DynamicPseudoType)},
+						{OfType: cty.Set(cty.DynamicPseudoType)},
+						{OfType: cty.EmptyTuple},
+						{OfType: cty.Map(cty.DynamicPseudoType)},
+						{OfType: cty.EmptyObject},
 					},
 				},
 				reference.LocalOrigin{
@@ -1131,7 +1139,11 @@ func TestCollectRefOrigins_exprAny_forExpr_hcl(t *testing.T) {
 						End:      hcl.Pos{Line: 1, Column: 33, Byte: 32},
 					},
 					Constraints: reference.OriginConstraints{
+						{OfType: cty.List(cty.DynamicPseudoType)},
+						{OfType: cty.Set(cty.DynamicPseudoType)},
 						{OfType: cty.EmptyTuple},
+						{OfType: cty.Map(cty.DynamicPseudoType)},
+						{OfType: cty.EmptyObject},
 					},
 				},
 				reference.LocalOrigin{
@@ -1172,7 +1184,11 @@ func TestCollectRefOrigins_exprAny_forExpr_hcl(t *testing.T) {
 						End:      hcl.Pos{Line: 1, Column: 33, Byte: 32},
 					},
 					Constraints: reference.OriginConstraints{
-						{OfType: cty.Map(cty.String)},
+						{OfType: cty.List(cty.DynamicPseudoType)},
+						{OfType: cty.Set(cty.DynamicPseudoType)},
+						{OfType: cty.EmptyTuple},
+						{OfType: cty.Map(cty.DynamicPseudoType)},
+						{OfType: cty.EmptyObject},
 					},
 				},
 				reference.LocalOrigin{
@@ -1226,6 +1242,10 @@ func TestCollectRefOrigins_exprAny_forExpr_hcl(t *testing.T) {
 						End:      hcl.Pos{Line: 1, Column: 33, Byte: 32},
 					},
 					Constraints: reference.OriginConstraints{
+						{OfType: cty.List(cty.DynamicPseudoType)},
+						{OfType: cty.Set(cty.DynamicPseudoType)},
+						{OfType: cty.EmptyTuple},
+						{OfType: cty.Map(cty.DynamicPseudoType)},
 						{OfType: cty.EmptyObject},
 					},
 				},
