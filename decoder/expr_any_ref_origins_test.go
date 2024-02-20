@@ -1049,7 +1049,11 @@ func TestCollectRefOrigins_exprAny_forExpr_hcl(t *testing.T) {
 						End:      hcl.Pos{Line: 1, Column: 33, Byte: 32},
 					},
 					Constraints: reference.OriginConstraints{
-						{OfType: cty.List(cty.String)},
+						{OfType: cty.List(cty.DynamicPseudoType)},
+						{OfType: cty.Set(cty.DynamicPseudoType)},
+						{OfType: cty.EmptyTuple},
+						{OfType: cty.Map(cty.DynamicPseudoType)},
+						{OfType: cty.EmptyObject},
 					},
 				},
 				reference.LocalOrigin{
@@ -1090,7 +1094,11 @@ func TestCollectRefOrigins_exprAny_forExpr_hcl(t *testing.T) {
 						End:      hcl.Pos{Line: 1, Column: 33, Byte: 32},
 					},
 					Constraints: reference.OriginConstraints{
-						{OfType: cty.Set(cty.String)},
+						{OfType: cty.List(cty.DynamicPseudoType)},
+						{OfType: cty.Set(cty.DynamicPseudoType)},
+						{OfType: cty.EmptyTuple},
+						{OfType: cty.Map(cty.DynamicPseudoType)},
+						{OfType: cty.EmptyObject},
 					},
 				},
 				reference.LocalOrigin{
@@ -1131,7 +1139,11 @@ func TestCollectRefOrigins_exprAny_forExpr_hcl(t *testing.T) {
 						End:      hcl.Pos{Line: 1, Column: 33, Byte: 32},
 					},
 					Constraints: reference.OriginConstraints{
+						{OfType: cty.List(cty.DynamicPseudoType)},
+						{OfType: cty.Set(cty.DynamicPseudoType)},
 						{OfType: cty.EmptyTuple},
+						{OfType: cty.Map(cty.DynamicPseudoType)},
+						{OfType: cty.EmptyObject},
 					},
 				},
 				reference.LocalOrigin{
@@ -1172,7 +1184,11 @@ func TestCollectRefOrigins_exprAny_forExpr_hcl(t *testing.T) {
 						End:      hcl.Pos{Line: 1, Column: 33, Byte: 32},
 					},
 					Constraints: reference.OriginConstraints{
-						{OfType: cty.Map(cty.String)},
+						{OfType: cty.List(cty.DynamicPseudoType)},
+						{OfType: cty.Set(cty.DynamicPseudoType)},
+						{OfType: cty.EmptyTuple},
+						{OfType: cty.Map(cty.DynamicPseudoType)},
+						{OfType: cty.EmptyObject},
 					},
 				},
 				reference.LocalOrigin{
@@ -1226,6 +1242,10 @@ func TestCollectRefOrigins_exprAny_forExpr_hcl(t *testing.T) {
 						End:      hcl.Pos{Line: 1, Column: 33, Byte: 32},
 					},
 					Constraints: reference.OriginConstraints{
+						{OfType: cty.List(cty.DynamicPseudoType)},
+						{OfType: cty.Set(cty.DynamicPseudoType)},
+						{OfType: cty.EmptyTuple},
+						{OfType: cty.Map(cty.DynamicPseudoType)},
 						{OfType: cty.EmptyObject},
 					},
 				},
@@ -1285,6 +1305,109 @@ func TestCollectRefOrigins_exprAny_forExpr_hcl(t *testing.T) {
 				t.Fatalf("unexpected origins: %s", diff)
 			}
 		})
+	}
+}
+
+func TestCollectRefOrigins_exprAny_forExpr_forEach(t *testing.T) {
+	bodySchema := &schema.BodySchema{
+		Blocks: map[string]*schema.BlockSchema{
+			"resource": {
+				Labels: []*schema.LabelSchema{
+					{Name: "type"}, {Name: "name"},
+				},
+				Body: &schema.BodySchema{
+					Extensions: &schema.BodyExtensions{
+						ForEach: true,
+					},
+				},
+			},
+		},
+	}
+
+	cfg := `resource "aws_instance" "foo" {
+  for_each = { for i in var.coll : i.name => i }
+}`
+
+	f, diags := hclsyntax.ParseConfig([]byte(cfg), "test.tf", hcl.InitialPos)
+	if len(diags) > 0 {
+		t.Error(diags)
+	}
+	d := testPathDecoder(t, &PathContext{
+		Schema: bodySchema,
+		Files: map[string]*hcl.File{
+			"test.tf": f,
+		},
+	})
+
+	origins, err := d.CollectReferenceOrigins()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	expectedRefOrigins := reference.Origins{
+		reference.LocalOrigin{
+			Addr: lang.Address{
+				lang.RootStep{Name: "var"},
+				lang.AttrStep{Name: "coll"},
+			},
+			Range: hcl.Range{
+				Filename: "test.tf",
+				Start:    hcl.Pos{Line: 2, Column: 25, Byte: 56},
+				End:      hcl.Pos{Line: 2, Column: 33, Byte: 64},
+			},
+			Constraints: reference.OriginConstraints{
+				{OfType: cty.List(cty.DynamicPseudoType)},
+				{OfType: cty.Set(cty.DynamicPseudoType)},
+				{OfType: cty.EmptyTuple},
+				{OfType: cty.Map(cty.DynamicPseudoType)},
+				{OfType: cty.EmptyObject},
+				{OfType: cty.List(cty.DynamicPseudoType)},
+				{OfType: cty.Set(cty.DynamicPseudoType)},
+				{OfType: cty.EmptyTuple},
+				{OfType: cty.Map(cty.DynamicPseudoType)},
+				{OfType: cty.EmptyObject},
+				{OfType: cty.List(cty.DynamicPseudoType)},
+				{OfType: cty.Set(cty.DynamicPseudoType)},
+				{OfType: cty.EmptyTuple},
+				{OfType: cty.Map(cty.DynamicPseudoType)},
+				{OfType: cty.EmptyObject},
+			},
+		},
+		reference.LocalOrigin{
+			Addr: lang.Address{
+				lang.RootStep{Name: "i"},
+				lang.AttrStep{Name: "name"},
+			},
+			Range: hcl.Range{
+				Filename: "test.tf",
+				Start:    hcl.Pos{Line: 2, Column: 36, Byte: 67},
+				End:      hcl.Pos{Line: 2, Column: 42, Byte: 73},
+			},
+			Constraints: reference.OriginConstraints{
+				{OfType: cty.String},
+				{OfType: cty.String},
+				{OfType: cty.String},
+			},
+		},
+		reference.LocalOrigin{
+			Addr: lang.Address{
+				lang.RootStep{Name: "i"},
+			},
+			Range: hcl.Range{
+				Filename: "test.tf",
+				Start:    hcl.Pos{Line: 2, Column: 46, Byte: 77},
+				End:      hcl.Pos{Line: 2, Column: 47, Byte: 78},
+			},
+			Constraints: reference.OriginConstraints{
+				{OfType: cty.DynamicPseudoType},
+				{OfType: cty.String},
+				{OfType: cty.DynamicPseudoType},
+			},
+		},
+	}
+
+	if diff := cmp.Diff(expectedRefOrigins, origins, ctydebug.CmpOptions); diff != "" {
+		t.Fatalf("unexpected origins: %s", diff)
 	}
 }
 

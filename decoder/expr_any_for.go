@@ -175,7 +175,15 @@ func (a Any) refOriginsForForExpr(ctx context.Context, allowSelfRefs bool) (refe
 		// TODO: eType.KeyVarExpr.Range() to collect key as origin
 		// TODO: eType.ValVarExpr.Range() to collect value as origin
 
-		if collExpr, ok := newExpression(a.pathCtx, eType.CollExpr, a.cons).(ReferenceOriginsExpression); ok {
+		// A for expression's input can be a list, a set, a tuple, a map, or an object
+		collCons := schema.OneOf{
+			schema.AnyExpression{OfType: cty.List(cty.DynamicPseudoType)},
+			schema.AnyExpression{OfType: cty.Set(cty.DynamicPseudoType)},
+			schema.AnyExpression{OfType: cty.EmptyTuple},
+			schema.AnyExpression{OfType: cty.Map(cty.DynamicPseudoType)},
+			schema.AnyExpression{OfType: cty.EmptyObject},
+		}
+		if collExpr, ok := newExpression(a.pathCtx, eType.CollExpr, collCons).(ReferenceOriginsExpression); ok {
 			origins = append(origins, collExpr.ReferenceOrigins(ctx, allowSelfRefs)...)
 		}
 
