@@ -55,7 +55,10 @@ func (d *PathDecoder) completionAtPos(ctx context.Context, body *hclsyntax.Body,
 	filename := body.Range().Filename
 
 	for _, attr := range body.Attributes {
-		if d.isPosInsideAttrExpr(attr, pos) {
+		// TODO: handle nil Expr in all nested calls instead which allows us
+		// to recover incomplete calls to provider defined functions (which have no expression
+		// as they are deemed invalid by hcl while they are not completed yet)
+		if attr.Expr != nil && d.isPosInsideAttrExpr(attr, pos) {
 			if bodySchema.Extensions != nil && bodySchema.Extensions.SelfRefs {
 				ctx = schema.WithActiveSelfRefs(ctx)
 			}
