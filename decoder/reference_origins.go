@@ -161,6 +161,11 @@ func (d *PathDecoder) referenceOriginsInBody(body hcl.Body, bodySchema *schema.B
 			}
 		}
 
+		// skip if the attribute Expr is nil as all following origins are based on the expression
+		if attr.Expr == nil {
+			continue
+		}
+
 		if aSchema.IsDepKey && bodySchema.Targets != nil {
 			origins = append(origins, reference.DirectOrigin{
 				Range:       attr.Expr.Range(),
