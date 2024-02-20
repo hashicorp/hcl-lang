@@ -275,6 +275,11 @@ func (d *PathDecoder) decodeReferenceTargetsForAttribute(attr *hcl.Attribute, at
 
 	ctx := context.Background()
 
+	// Early return as we don't attempt to recover reference targets for invalid expressions
+	if attr.Expr == nil {
+		return refs
+	}
+
 	expr := d.newExpression(attr.Expr, attrSchema.Constraint)
 	if eType, ok := expr.(ReferenceTargetsExpression); ok {
 		var targetCtx *TargetContext
