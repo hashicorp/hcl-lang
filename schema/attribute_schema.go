@@ -8,7 +8,10 @@ import (
 	"fmt"
 
 	"github.com/hashicorp/hcl-lang/lang"
+	"github.com/zclconf/go-cty/cty"
 )
+
+type DepKeyTransformer func(value cty.Value) (cty.Value, error)
 
 // AttributeSchema describes schema for an attribute
 type AttributeSchema struct {
@@ -31,6 +34,8 @@ type AttributeSchema struct {
 	// IsDepKey describes whether to use this attribute (and its value)
 	// as key when looking up dependent schema
 	IsDepKey bool
+
+	DepKeyTransformer DepKeyTransformer
 
 	// Address describes whether and how the attribute itself is targetable
 	Address *AttributeAddrSchema
@@ -137,6 +142,7 @@ func (as *AttributeSchema) Copy() *AttributeSchema {
 		IsSensitive:            as.IsSensitive,
 		IsDepKey:               as.IsDepKey,
 		DefaultValue:           as.DefaultValue,
+		DepKeyTransformer:      as.DepKeyTransformer,
 		Description:            as.Description,
 		Address:                as.Address.Copy(),
 		OriginForTarget:        as.OriginForTarget.Copy(),

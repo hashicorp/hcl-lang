@@ -143,6 +143,13 @@ func dependencyKeysFromBlock(block *hcl.Block, blockSchema blockSchema) schema.D
 				continue
 			}
 
+			if attrSchema.DepKeyTransformer != nil {
+				newValue, err := attrSchema.DepKeyTransformer(value)
+				if err == nil {
+					value = newValue
+				}
+			}
+
 			dk.Attributes = append(dk.Attributes, schema.AttributeDependent{
 				Name: name,
 				Expr: schema.ExpressionValue{
