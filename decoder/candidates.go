@@ -85,6 +85,12 @@ func (d *PathDecoder) completionAtPos(ctx context.Context, body *hclsyntax.Body,
 		if attr.EqualsRange.ContainsPos(pos) {
 			return lang.ZeroCandidates(), nil
 		}
+
+		// There is a partial (aka invalid) namespaced function call in an attribute
+		// We abort here as we don't want to complete body schema candidates
+		if attr.Expr == nil {
+			return lang.ZeroCandidates(), nil
+		}
 	}
 
 	rng := hcl.Range{
