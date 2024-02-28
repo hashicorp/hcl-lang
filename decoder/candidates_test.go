@@ -1343,7 +1343,7 @@ func TestDecoder_CompletionAtPos_nil_expr(t *testing.T) {
 		},
 	})
 
-	pos := hcl.Pos{Line: 1, Column: 16, Byte: 15}
+	pos := hcl.Pos{Line: 1, Column: 18, Byte: 17}
 
 	candidates, err := d.CompletionAtPos(ctx, "test.tf", pos)
 	if err != nil {
