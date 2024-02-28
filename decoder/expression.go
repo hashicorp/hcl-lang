@@ -5,6 +5,7 @@ package decoder
 
 import (
 	"context"
+	"unicode"
 	"unicode/utf8"
 
 	"github.com/hashicorp/hcl-lang/lang"
@@ -253,11 +254,47 @@ func recoverLeftBytes(b []byte, pos hcl.Pos, f func(byteOffset int, r rune) bool
 	return []byte{}
 }
 
+// recoverRightBytes seeks right from given pos in given slice of bytes
+// and recovers all bytes up until f matches, including that match.
+// This allows recovery of incomplete configuration which is not
+// present in the parsed AST during completion.
+//
+// Zero bytes is returned if no match was found.
+func recoverRightBytes(b []byte, pos hcl.Pos, f func(byteOffset int, r rune) bool) []byte {
+	nextRune, size := utf8.DecodeRune(b[pos.Byte:])
+	offset := pos.Byte + size
+
+	// check for early match
+	if f(pos.Byte, nextRune) {
+		return b[pos.Byte:offset]
+	}
+
+	for offset < len(b) {
+		nextRune, size := utf8.DecodeRune(b[offset:])
+		if f(offset, nextRune) {
+			// record the matched offset
+			// and include the matched last rune
+			endByte := offset + size
+			return b[pos.Byte:endByte]
+		}
+		offset += size
+	}
+
+	return []byte{}
+}
+
 // isObjectItemTerminatingRune returns true if the given rune
 // is considered a left terminating character for an item
 // in hclsyntax.ObjectConsExpr.
 func isObjectItemTerminatingRune(r rune) bool {
 	return r == '\n' || r == ',' || r == '{'
+}
+
+// isNamespacedFunctionNameRune returns true if the given run
+// is a valid character of a namespaced function name.
+// This includes letters, digits, dashes, underscores, and colons.
+func isNamespacedFunctionNameRune(r rune) bool {
+	return unicode.IsLetter(r) || unicode.IsDigit(r) || r == '-' || r == '_' || r == ':'
 }
 
 // rawObjectKey extracts raw key (as string) from KeyExpr of

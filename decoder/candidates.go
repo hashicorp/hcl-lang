@@ -58,7 +58,57 @@ func (d *PathDecoder) completionAtPos(ctx context.Context, body *hclsyntax.Body,
 		// TODO: handle nil Expr in all nested calls instead which allows us
 		// to recover incomplete calls to provider defined functions (which have no expression
 		// as they are deemed invalid by hcl while they are not completed yet)
-		if attr.Expr != nil && d.isPosInsideAttrExpr(attr, pos) {
+
+		// attempt to recover incomplete provider defined function calls
+		// TODO: figure out if there's a better place to put this (possibly nested)
+		// if attr.Expr == nil && attr.SrcRange.ContainsPos(pos) {
+		// 	// we are somewhere in the range for this attribute but we don't have an expression range to check
+		// 	// so we look back to check whether we are in a partially written provider defined function
+		// 	fileBytes := d.pathCtx.Files[attr.SrcRange.Filename].Bytes
+
+		// 	recoveredPrefixBytes := recoverLeftBytes(fileBytes, pos, func(offset int, r rune) bool {
+		// 		return !isNamespacedFunctionNameRune(r)
+		// 	})
+		// 	// recoveredPrefixBytes also contains the rune before the function name, so we need to trim it
+		// 	_, lengthFirstRune := utf8.DecodeRune(recoveredPrefixBytes)
+		// 	recoveredPrefixBytes = recoveredPrefixBytes[lengthFirstRune:]
+
+		// 	recoveredSuffixBytes := recoverRightBytes(fileBytes, pos, func(offset int, r rune) bool {
+		// 		return !isNamespacedFunctionNameRune(r) && r != '('
+		// 	})
+		// 	// recoveredSuffixBytes also contains the rune after the function name, so we need to trim it
+		// 	_, lengthLastRune := utf8.DecodeLastRune(recoveredSuffixBytes)
+		// 	recoveredSuffixBytes = recoveredSuffixBytes[:len(recoveredSuffixBytes)-lengthLastRune]
+
+		// 	// check if our recovered string starts with provider:
+		// 	// Why just one colon? For no colons the parser would return a traversal expression
+		// 	// and a single colon will be the first prefix of a future provider defined function
+		// 	// TODO: this fails for completions for provider<>:: with the cursor at <> (and previous cursor positions)
+		// 	// 		 fixing this would also need a lookahead for a colon after the cursor position (and maybe more chars of "provider")
+		// 	if bytes.HasPrefix(recoveredPrefixBytes, []byte("provider:")) {
+		// 		print(recoveredPrefixBytes)
+		// 		print(recoveredSuffixBytes)
+		// 		// TODO: recover the full expression to get the entire name
+
+		// 		// TODO: is this smart? 🧐
+		// 		attr.Expr = &hclsyntax.FunctionCallExpr{
+		// 			Name: string(recoveredPrefixBytes),
+		// 			NameRange: hcl.Range{
+		// 				Filename: attr.SrcRange.Filename,
+		// 				Start: hcl.Pos{
+		// 					Byte: attr.SrcRange.Start.Byte - len(recoveredPrefixBytes),
+		// 				}, // TODO: wrong
+		// 				End: pos,
+		// 			},
+		// 		}
+
+		// 		// FIXME: put recovery into function expr CompletionAtPos -> handle nil expr everywhere else (all expressions)
+
+		// 	}
+
+		// }
+
+		if (attr.Expr != nil && d.isPosInsideAttrExpr(attr, pos)) || (attr.Expr == nil && attr.SrcRange.ContainsPos(pos)) {
 			if bodySchema.Extensions != nil && bodySchema.Extensions.SelfRefs {
 				ctx = schema.WithActiveSelfRefs(ctx)
 			}

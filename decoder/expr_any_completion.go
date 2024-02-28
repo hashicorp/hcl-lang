@@ -15,6 +15,10 @@ import (
 func (a Any) CompletionAtPos(ctx context.Context, pos hcl.Pos) []lang.Candidate {
 	typ := a.cons.OfType
 
+	if a.expr == nil {
+		return []lang.Candidate{}
+	}
+
 	if !a.cons.SkipLiteralComplexTypes && typ.IsListType() {
 		expr, ok := a.expr.(*hclsyntax.TupleConsExpr)
 		if !ok {
