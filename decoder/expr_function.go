@@ -226,6 +226,10 @@ func (fe functionExpr) SemanticTokens(ctx context.Context) []lang.SemanticToken 
 }
 
 func (fe functionExpr) ReferenceOrigins(ctx context.Context, allowSelfRefs bool) reference.Origins {
+	if fe.expr == nil {
+		return reference.Origins{}
+	}
+
 	funcExpr, diags := hcl.ExprCall(fe.expr)
 	if diags.HasErrors() {
 		return reference.Origins{}

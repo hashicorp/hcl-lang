@@ -168,6 +168,10 @@ func (d *PathDecoder) nestedSymbolsForExpr(expr hcl.Expression) []Symbol {
 	switch e := expr.(type) {
 	case *hclsyntax.TupleConsExpr:
 		for i, item := range e.ExprList() {
+			if item == nil {
+				continue
+			}
+
 			symbols = append(symbols, &ExprSymbol{
 				ExprName:      fmt.Sprintf("%d", i),
 				ExprKind:      symbolExprKind(item),

@@ -23,6 +23,10 @@ func (set Set) ReferenceOrigins(ctx context.Context, allowSelfRefs bool) referen
 	origins := make(reference.Origins, 0)
 
 	for _, elemExpr := range elems {
+		if elemExpr == nil {
+			continue
+		}
+
 		expr := newExpression(set.pathCtx, elemExpr, set.cons.Elem)
 		if e, ok := expr.(ReferenceOriginsExpression); ok {
 			origins = append(origins, e.ReferenceOrigins(ctx, allowSelfRefs)...)

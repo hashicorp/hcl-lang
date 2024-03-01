@@ -68,6 +68,11 @@ func (set Set) CompletionAtPos(ctx context.Context, pos hcl.Pos) []lang.Candidat
 		// See https://github.com/hashicorp/hcl-lang/issues/225
 
 		for _, elemExpr := range eType.Exprs {
+			// If there is an invalid namespaced function call (e.g. "provider::") the elemExpr will be nil
+			if elemExpr == nil {
+				continue
+			}
+
 			// We cannot trust ranges of empty expressions, so we imply
 			// that invalid configuration follows and we stop here
 			// e.g. for completion between commas [keyword, ,keyword]
