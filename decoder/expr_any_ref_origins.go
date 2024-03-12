@@ -116,6 +116,11 @@ func (a Any) ReferenceOrigins(ctx context.Context, allowSelfRefs bool) reference
 }
 
 func (a Any) refOriginsForNonComplexExpr(ctx context.Context, allowSelfRefs bool) reference.Origins {
+	// If we have no expression, we return prematurely
+	if a.expr == nil {
+		return reference.Origins{}
+	}
+
 	// TODO: Support splat expression https://github.com/hashicorp/terraform-ls/issues/526
 	// TODO: Support relative traversals https://github.com/hashicorp/terraform-ls/issues/532
 

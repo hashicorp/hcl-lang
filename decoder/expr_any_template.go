@@ -24,6 +24,10 @@ func (a Any) completeTemplateExprAtPos(ctx context.Context, pos hcl.Pos) ([]lang
 		}
 
 		for _, partExpr := range eType.Parts {
+			if partExpr == nil {
+				continue
+			}
+
 			// We overshot the position and stop
 			if partExpr.Range().Start.Byte > pos.Byte {
 				break
@@ -54,6 +58,10 @@ func (a Any) completeTemplateExprAtPos(ctx context.Context, pos hcl.Pos) ([]lang
 
 		return candidates, false
 	case *hclsyntax.TemplateWrapExpr:
+		if eType.Wrapped == nil {
+			return candidates, false
+		}
+
 		if eType.Wrapped.Range().ContainsPos(pos) || eType.Wrapped.Range().End.Byte == pos.Byte {
 			cons := schema.AnyExpression{
 				OfType: cty.String,
