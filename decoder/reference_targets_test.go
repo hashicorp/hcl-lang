@@ -12,7 +12,9 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/hashicorp/hcl-lang/lang"
 	"github.com/hashicorp/hcl-lang/reference"
+	"github.com/hashicorp/hcl-lang/schema"
 	"github.com/hashicorp/hcl/v2"
+	"github.com/hashicorp/hcl/v2/hclsyntax"
 	"github.com/zclconf/go-cty-debug/ctydebug"
 	"github.com/zclconf/go-cty/cty"
 )
@@ -350,5 +352,29 @@ func TestReferenceTargetForOriginAtPos(t *testing.T) {
 				t.Fatalf("mismatch of reference targets: %s", diff)
 			}
 		})
+	}
+}
+
+func TestCollectReferenceTargets_nil_expr(t *testing.T) {
+	// provider:: is not a traversal expression, so hcl will return a ExprSyntaxError which needs to be handled
+	f, _ := hclsyntax.ParseConfig([]byte(`attr = provider::`), "test.tf", hcl.InitialPos)
+
+	d := testPathDecoder(t, &PathContext{
+		Schema: &schema.BodySchema{
+			Attributes: map[string]*schema.AttributeSchema{
+				"attr": {Constraint: schema.AnyExpression{OfType: cty.DynamicPseudoType}},
+			},
+		},
+		Files: map[string]*hcl.File{
+			"test.tf": f,
+		},
+	})
+	targets, err := d.CollectReferenceTargets()
+	if err != nil {
+		t.Fatal("unexpected error when collecting reference targets while there was no expr in one of them")
+	}
+
+	if len(targets) != 0 {
+		t.Fatalf("expected no targets, got %d", len(targets))
 	}
 }
