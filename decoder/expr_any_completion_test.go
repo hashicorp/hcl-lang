@@ -998,6 +998,36 @@ func TestCompletionAtPos_exprAny_functions(t *testing.T) {
 			hcl.Pos{Line: 1, Column: 9, Byte: 8},
 			lang.CompleteCandidates([]lang.Candidate{}),
 		},
+		{
+			"in incomplete namespaced function call",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.AnyExpression{
+						OfType: cty.String,
+					},
+				},
+			},
+			reference.Targets{},
+			`attr = provider::framewo`,
+			hcl.Pos{Line: 1, Column: 17, Byte: 16}, // cursor is after second colon
+			lang.CompleteCandidates([]lang.Candidate{
+				{
+					Label:       "provider::framework::example",
+					Detail:      "provider::framework::example(input string) string",
+					Description: lang.Markdown("Echoes given argument as result"),
+					Kind:        lang.FunctionCandidateKind,
+					TextEdit: lang.TextEdit{
+						NewText: "provider::framework::example()",
+						Snippet: "provider::framework::example(${0})",
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 1, Column: 8, Byte: 7},
+							End:      hcl.Pos{Line: 1, Column: 17, Byte: 16},
+						},
+					},
+				},
+			}),
+		},
 	}
 
 	for i, tc := range testCases {
