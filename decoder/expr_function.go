@@ -58,9 +58,7 @@ func (fe functionExpr) CompletionAtPos(ctx context.Context, pos hcl.Pos) []lang.
 		return fe.matchingFunctions(prefix, eType.Range())
 
 	case *hclsyntax.ExprSyntaxError:
-		// TODO: "provider:" does not jump here, seems to be some other expression?
-
-		// This range can range up until the end of the file in case of invalid config
+		// Note: this range can range up until the end of the file in case of invalid config
 		if eType.SrcRange.ContainsPos(pos) {
 			// we are somewhere in the range for this attribute but we don't have an expression range to check
 			// so we look back to check whether we are in a partially written provider defined function
@@ -82,13 +80,11 @@ func (fe functionExpr) CompletionAtPos(ctx context.Context, pos hcl.Pos) []lang.
 
 			recoveredIdentifier := append(recoveredPrefixBytes, recoveredSuffixBytes...)
 
-			// TODO: this is specific to Terraform provider defined functions, we should generalize this
-			// and not rely on the "provider:" prefix
-
-			// check if our recovered identifier starts with "provider:"
-			// Why just one colon? For no colons the parser would return a traversal expression
-			// and a single colon will be the first prefix of a future provider defined function
-			if bytes.HasPrefix(recoveredIdentifier, []byte("provider:")) {
+			// check if our recovered identifier contains "::"
+			// Why two colons? For no colons the parser would return a traversal expression
+			// and a single colon will apparently be treated as a traversal and a partial object expression
+			// (refer to this follow-up issue for more on that case: TODOTODOTODOTODOTODOTODOTODOTODO)
+			if bytes.Contains(recoveredIdentifier, []byte("::")) {
 
 				editRange := hcl.Range{
 					Filename: fe.expr.Range().Filename,
