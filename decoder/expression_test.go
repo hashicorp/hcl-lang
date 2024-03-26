@@ -99,6 +99,48 @@ func TestRecoverLeftBytes(t *testing.T) {
 	}
 }
 
+func TestRecoverRightBytes(t *testing.T) {
+	testCases := []struct {
+		b             []byte
+		pos           hcl.Pos
+		f             func(int, rune) bool
+		expectedBytes []byte
+	}{
+		{
+			[]byte(`toot  foobar`),
+			hcl.Pos{Line: 1, Column: 1, Byte: 0},
+			func(i int, r rune) bool {
+				return unicode.IsSpace(r)
+			},
+			[]byte(`toot `),
+		},
+		{
+			[]byte(`provider::local::direxists()`),
+			hcl.Pos{Line: 1, Column: 15, Byte: 14},
+			func(i int, r rune) bool {
+				return !isNamespacedFunctionNameRune(r) && r != '('
+			},
+			[]byte(`l::direxists()`),
+		},
+		{
+			[]byte(`hello world👋and other planets`),
+			hcl.Pos{Line: 1, Column: 7, Byte: 6},
+			func(i int, r rune) bool {
+				return r == '👋'
+			},
+			[]byte(`world👋`),
+		},
+	}
+	for i, tc := range testCases {
+		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
+			recoveredBytes := recoverRightBytes(tc.b, tc.pos, tc.f)
+			if !bytes.Equal(tc.expectedBytes, recoveredBytes) {
+				t.Fatalf("mismatch!\nexpected:  %q\nrecovered: %q\n", string(tc.expectedBytes), string(recoveredBytes))
+			}
+		})
+	}
+}
+
 func TestRawObjectKey(t *testing.T) {
 	testCases := []struct {
 		cfg           string

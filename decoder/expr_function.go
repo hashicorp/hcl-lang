@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"sort"
 	"strings"
+	"unicode/utf8"
 
 	"github.com/hashicorp/hcl-lang/lang"
 	"github.com/hashicorp/hcl-lang/reference"
@@ -55,6 +56,55 @@ func (fe functionExpr) CompletionAtPos(ctx context.Context, pos hcl.Pos) []lang.
 
 		prefix := rootName[0:prefixLen]
 		return fe.matchingFunctions(prefix, eType.Range())
+
+	case *hclsyntax.ExprSyntaxError:
+		// Note: this range can range up until the end of the file in case of invalid config
+		if eType.SrcRange.ContainsPos(pos) {
+			// we are somewhere in the range for this attribute but we don't have an expression range to check
+			// so we look back to check whether we are in a partially written provider defined function
+			fileBytes := fe.pathCtx.Files[eType.SrcRange.Filename].Bytes
+
+			recoveredPrefixBytes := recoverLeftBytes(fileBytes, pos, func(offset int, r rune) bool {
+				return !isNamespacedFunctionNameRune(r)
+			})
+			// recoveredPrefixBytes also contains the rune before the function name, so we need to trim it
+			_, lengthFirstRune := utf8.DecodeRune(recoveredPrefixBytes)
+			recoveredPrefixBytes = recoveredPrefixBytes[lengthFirstRune:]
+
+			recoveredSuffixBytes := recoverRightBytes(fileBytes, pos, func(offset int, r rune) bool {
+				return !isNamespacedFunctionNameRune(r) && r != '('
+			})
+			// recoveredSuffixBytes also contains the rune after the function name, so we need to trim it
+			_, lengthLastRune := utf8.DecodeLastRune(recoveredSuffixBytes)
+			recoveredSuffixBytes = recoveredSuffixBytes[:len(recoveredSuffixBytes)-lengthLastRune]
+
+			recoveredIdentifier := append(recoveredPrefixBytes, recoveredSuffixBytes...)
+
+			// check if our recovered identifier contains "::"
+			// Why two colons? For no colons the parser would return a traversal expression
+			// and a single colon will apparently be treated as a traversal and a partial object expression
+			// (refer to this follow-up issue for more on that case: https://github.com/hashicorp/vscode-terraform/issues/1697)
+			if bytes.Contains(recoveredIdentifier, []byte("::")) {
+				editRange := hcl.Range{
+					Filename: fe.expr.Range().Filename,
+					Start: hcl.Pos{
+						Line:   pos.Line, // we don't recover newlines, so we can keep the original line number
+						Byte:   pos.Byte - len(recoveredPrefixBytes),
+						Column: pos.Column - len(recoveredPrefixBytes),
+					},
+					End: hcl.Pos{
+						Line:   pos.Line,
+						Byte:   pos.Byte + len(recoveredSuffixBytes),
+						Column: pos.Column + len(recoveredSuffixBytes),
+					},
+				}
+
+				return fe.matchingFunctions(string(recoveredPrefixBytes), editRange)
+			}
+		}
+
+		return []lang.Candidate{}
+
 	case *hclsyntax.FunctionCallExpr:
 		if eType.NameRange.ContainsPos(pos) {
 			prefixLen := pos.Byte - eType.NameRange.Start.Byte
@@ -151,9 +201,8 @@ func (fe functionExpr) HoverAtPos(ctx context.Context, pos hcl.Pos) *lang.HoverD
 
 	if funcExpr.NameRange.ContainsPos(pos) {
 		return &lang.HoverData{
-			Content: lang.Markdown(fmt.Sprintf("```terraform\n%s(%s) %s\n```\n\n%s",
-				funcExpr.Name, parameterNamesAsString(funcSig), funcSig.ReturnType.FriendlyName(), funcSig.Description)),
-			Range: fe.expr.Range(),
+			Content: hoverContentForFunction(funcExpr.Name, funcSig),
+			Range:   fe.expr.Range(),
 		}
 	}
 
@@ -296,4 +345,15 @@ func (fe functionExpr) matchingFunctions(prefix string, editRange hcl.Range) []l
 	})
 
 	return candidates
+}
+
+func hoverContentForFunction(name string, funcSig schema.FunctionSignature) lang.MarkupContent {
+	rawMd := fmt.Sprintf("```terraform\n%s(%s) %s\n```\n\n%s",
+		name, parameterNamesAsString(funcSig), funcSig.ReturnType.FriendlyName(), funcSig.Description)
+
+	if funcSig.Detail != "" {
+		rawMd += fmt.Sprintf("\n\n%s", funcSig.Detail)
+	}
+
+	return lang.Markdown(rawMd)
 }
