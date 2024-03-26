@@ -83,9 +83,8 @@ func (fe functionExpr) CompletionAtPos(ctx context.Context, pos hcl.Pos) []lang.
 			// check if our recovered identifier contains "::"
 			// Why two colons? For no colons the parser would return a traversal expression
 			// and a single colon will apparently be treated as a traversal and a partial object expression
-			// (refer to this follow-up issue for more on that case: TODOTODOTODOTODOTODOTODOTODOTODO)
+			// (refer to this follow-up issue for more on that case: https://github.com/hashicorp/vscode-terraform/issues/1697)
 			if bytes.Contains(recoveredIdentifier, []byte("::")) {
-
 				editRange := hcl.Range{
 					Filename: fe.expr.Range().Filename,
 					Start: hcl.Pos{
@@ -101,7 +100,6 @@ func (fe functionExpr) CompletionAtPos(ctx context.Context, pos hcl.Pos) []lang.
 				}
 
 				return fe.matchingFunctions(string(recoveredPrefixBytes), editRange)
-
 			}
 		}
 
