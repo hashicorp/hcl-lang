@@ -677,15 +677,14 @@ func TestDecoder_HoverAtPos_nil_expr(t *testing.T) {
 	})
 
 	ctx := context.Background()
-	_, err := d.HoverAtPos(ctx, "test.tf", hcl.Pos{Line: 1, Column: 16, Byte: 15})
+	hoverData, err := d.HoverAtPos(ctx, "test.tf", hcl.Pos{Line: 1, Column: 16, Byte: 15})
 
-	if err == nil {
-		t.Fatal("expected error")
+	if err != nil {
+		t.Fatal(err)
 	}
 
-	positionalErr := &PositionalError{}
-	if !errors.As(err, &positionalErr) {
-		t.Fatal("expected PositionalError for invalid expression")
+	if hoverData != nil {
+		t.Fatalf("expected nil hover data, got: %v", hoverData)
 	}
 }
 
