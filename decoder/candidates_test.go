@@ -1325,6 +1325,39 @@ resource "random_resource" "test" {
 	}
 }
 
+func TestDecoder_CompletionAtPos_nil_expr(t *testing.T) {
+	ctx := context.Background()
+
+	// provider:: is not a traversal expression, so hcl will return a ExprSyntaxError which needs to be handled
+	f, _ := hclsyntax.ParseConfig([]byte(`attr = provider::`), "test.tf", hcl.InitialPos)
+
+	d := testPathDecoder(t, &PathContext{
+		Schema: &schema.BodySchema{
+			Attributes: map[string]*schema.AttributeSchema{
+				"attr": {Constraint: schema.AnyExpression{OfType: cty.DynamicPseudoType}},
+			},
+		},
+		Files: map[string]*hcl.File{
+			"test.tf": f,
+		},
+	})
+
+	pos := hcl.Pos{Line: 1, Column: 18, Byte: 17}
+
+	candidates, err := d.CompletionAtPos(ctx, "test.tf", pos)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	expectedCandidates := lang.CompleteCandidates([]lang.Candidate{})
+
+	diff := cmp.Diff(expectedCandidates, candidates, ctydebug.CmpOptions)
+	if diff != "" {
+		t.Fatalf("unexpected schema for %s: %s", stringPos(pos), diff)
+	}
+
+}
+
 func TestDecoder_CompletionAtPos_AnyAttribute(t *testing.T) {
 	ctx := context.Background()
 	providersSchema := &schema.BlockSchema{

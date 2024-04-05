@@ -320,6 +320,54 @@ resource "vault_auth_backend" "blah" {
 	}
 }
 
+func TestDecoder_SemanticTokensInFile_nil_expr(t *testing.T) {
+	// provider:: is not a traversal expression, so hcl will return a ExprSyntaxError which needs to be handled
+	f, _ := hclsyntax.ParseConfig([]byte(`attr = provider::`), "test.tf", hcl.InitialPos)
+
+	d := testPathDecoder(t, &PathContext{
+		Schema: &schema.BodySchema{
+			Attributes: map[string]*schema.AttributeSchema{
+				"attr": {Constraint: schema.AnyExpression{OfType: cty.DynamicPseudoType}},
+			},
+		},
+		Files: map[string]*hcl.File{
+			"test.tf": f,
+		},
+	})
+
+	ctx := context.Background()
+
+	tokens, err := d.SemanticTokensInFile(ctx, "test.tf")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	expectedTokens := []lang.SemanticToken{
+		{
+			Type:      "hcl-attrName",
+			Modifiers: lang.SemanticTokenModifiers{},
+			Range: hcl.Range{
+				Filename: "test.tf",
+				Start: hcl.Pos{
+					Line:   1,
+					Column: 1,
+					Byte:   0,
+				},
+				End: hcl.Pos{
+					Line:   1,
+					Column: 5,
+					Byte:   4,
+				},
+			},
+		},
+	}
+
+	diff := cmp.Diff(expectedTokens, tokens)
+	if diff != "" {
+		t.Fatalf("unexpected tokens: %s", diff)
+	}
+}
+
 func TestDecoder_SemanticTokensInFile_dependentSchema(t *testing.T) {
 	bodySchema := &schema.BodySchema{
 		Blocks: map[string]*schema.BlockSchema{

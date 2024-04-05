@@ -661,6 +661,33 @@ func TestDecoder_HoverAtPos_basic(t *testing.T) {
 	}
 }
 
+func TestDecoder_HoverAtPos_nil_expr(t *testing.T) {
+	// provider:: is not a traversal expression, so hcl will return a ExprSyntaxError which needs to be handled
+	f, _ := hclsyntax.ParseConfig([]byte(`attr = provider::`), "test.tf", hcl.InitialPos)
+
+	d := testPathDecoder(t, &PathContext{
+		Schema: &schema.BodySchema{
+			Attributes: map[string]*schema.AttributeSchema{
+				"attr": {Constraint: schema.AnyExpression{OfType: cty.DynamicPseudoType}},
+			},
+		},
+		Files: map[string]*hcl.File{
+			"test.tf": f,
+		},
+	})
+
+	ctx := context.Background()
+	hoverData, err := d.HoverAtPos(ctx, "test.tf", hcl.Pos{Line: 1, Column: 16, Byte: 15})
+
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if hoverData != nil {
+		t.Fatalf("expected nil hover data, got: %v", hoverData)
+	}
+}
+
 func TestDecoder_HoverAtPos_URL(t *testing.T) {
 	resourceLabelSchema := []*schema.LabelSchema{
 		{Name: "type", IsDepKey: true},
