@@ -770,6 +770,9 @@ func resolveBlockAddress(block *hcl.Block, blockSchema *schema.BlockSchema) (lan
 		case schema.LabelStep:
 			if len(block.Labels)-1 < int(step.Index) {
 				// label not present
+				if step.IsOptional {
+					continue
+				}
 				return lang.Address{}, false
 			}
 			stepName = block.Labels[step.Index]

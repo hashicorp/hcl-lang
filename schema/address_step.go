@@ -18,7 +18,8 @@ func (StaticStep) isAddrStepImpl() addrStepImplSigil {
 }
 
 type LabelStep struct {
-	Index uint
+	Index      uint
+	IsOptional bool
 }
 
 func (LabelStep) isAddrStepImpl() addrStepImplSigil {
