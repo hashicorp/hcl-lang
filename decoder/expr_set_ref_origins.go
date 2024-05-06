@@ -10,7 +10,7 @@ import (
 	"github.com/hashicorp/hcl/v2"
 )
 
-func (set Set) ReferenceOrigins(ctx context.Context, allowSelfRefs bool) reference.Origins {
+func (set Set) ReferenceOrigins(ctx context.Context) reference.Origins {
 	elems, diags := hcl.ExprList(set.expr)
 	if diags.HasErrors() {
 		return reference.Origins{}
@@ -25,7 +25,7 @@ func (set Set) ReferenceOrigins(ctx context.Context, allowSelfRefs bool) referen
 	for _, elemExpr := range elems {
 		expr := newExpression(set.pathCtx, elemExpr, set.cons.Elem)
 		if e, ok := expr.(ReferenceOriginsExpression); ok {
-			origins = append(origins, e.ReferenceOrigins(ctx, allowSelfRefs)...)
+			origins = append(origins, e.ReferenceOrigins(ctx)...)
 		}
 	}
 

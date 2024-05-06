@@ -10,7 +10,7 @@ import (
 	"github.com/hashicorp/hcl/v2"
 )
 
-func (tuple Tuple) ReferenceOrigins(ctx context.Context, allowSelfRefs bool) reference.Origins {
+func (tuple Tuple) ReferenceOrigins(ctx context.Context) reference.Origins {
 	elems, diags := hcl.ExprList(tuple.expr)
 	if diags.HasErrors() {
 		return reference.Origins{}
@@ -29,7 +29,7 @@ func (tuple Tuple) ReferenceOrigins(ctx context.Context, allowSelfRefs bool) ref
 
 		expr := newExpression(tuple.pathCtx, elemExpr, tuple.cons.Elems[i])
 		if e, ok := expr.(ReferenceOriginsExpression); ok {
-			origins = append(origins, e.ReferenceOrigins(ctx, allowSelfRefs)...)
+			origins = append(origins, e.ReferenceOrigins(ctx)...)
 		}
 	}
 

@@ -9,7 +9,7 @@ import (
 	"github.com/hashicorp/hcl-lang/reference"
 )
 
-func (oo OneOf) ReferenceOrigins(ctx context.Context, allowSelfRefs bool) reference.Origins {
+func (oo OneOf) ReferenceOrigins(ctx context.Context) reference.Origins {
 	origins := make(reference.Origins, 0)
 
 	for _, con := range oo.cons {
@@ -19,7 +19,7 @@ func (oo OneOf) ReferenceOrigins(ctx context.Context, allowSelfRefs bool) refere
 			continue
 		}
 
-		origins = appendOrigins(origins, e.ReferenceOrigins(ctx, allowSelfRefs))
+		origins = appendOrigins(origins, e.ReferenceOrigins(ctx))
 	}
 
 	return origins
