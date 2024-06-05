@@ -9,9 +9,15 @@ import (
 	"github.com/zclconf/go-cty/cty"
 )
 
-func buildDynamicBlockSchema(inputSchema *schema.BodySchema) *schema.BlockSchema {
+// buildDynamicBlockSchema creates the schema for dynamic blocks based on the available blocks in the body schema (inputSchema).
+//
+// inputSchema - schema used to figure out which blocks can be dynamic (commonly the dependent schema in order to NOT include static blocks like e.g. lifecycle)
+// sourceSchema - schema used to copy the body of the block (commonly the merged schema in order to include changes that were made to the schema)
+func buildDynamicBlockSchema(inputSchema *schema.BodySchema, sourceSchema *schema.BodySchema) *schema.BlockSchema {
 	dependentBody := make(map[schema.SchemaKey]*schema.BodySchema)
-	for blockName, block := range inputSchema.Blocks {
+	for blockName := range inputSchema.Blocks {
+		block := sourceSchema.Blocks[blockName]
+
 		dependentBody[schema.NewSchemaKey(schema.DependencyKeys{
 			Labels: []schema.LabelDependent{
 				{Index: 0, Value: blockName},
