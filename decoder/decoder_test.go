@@ -15,7 +15,11 @@ type testPathReader struct {
 	paths map[string]*PathContext
 }
 
-func (r *testPathReader) Paths(ctx context.Context) []lang.Path {
+func (r *testPathReader) LanguageIDs() []string {
+	return []string{"hcl2"}
+}
+
+func (r *testPathReader) Paths(ctx context.Context, languageID string) []lang.Path {
 	paths := make([]lang.Path, len(r.paths))
 
 	i := 0
