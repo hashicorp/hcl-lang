@@ -29,29 +29,18 @@ func MergeBlockBodySchemas(block *hcl.Block, blockSchema *schema.BlockSchema) (*
 	depSchema, _, result := NewBlockSchema(blockSchema).DependentBodySchema(block)
 	if result == LookupSuccessful || result == LookupPartiallySuccessful {
 		for name, attr := range depSchema.Attributes {
-			if _, exists := mergedSchema.Attributes[name]; !exists {
-				mergedSchema.Attributes[name] = attr
-			} else {
-				// Skip duplicate attribute
-				continue
-			}
+			mergedSchema.Attributes[name] = attr
 		}
 		for bType, block := range depSchema.Blocks {
-			if _, exists := mergedSchema.Blocks[bType]; !exists {
-				copiedBlock := block.Copy()
-				// propagate DynamicBlocks extension to any nested blocks
-				if mergedSchema.Extensions != nil && mergedSchema.Extensions.DynamicBlocks {
-					if copiedBlock.Body.Extensions == nil {
-						copiedBlock.Body.Extensions = &schema.BodyExtensions{}
-					}
-					copiedBlock.Body.Extensions.DynamicBlocks = true
+			copiedBlock := block.Copy()
+			// propagate DynamicBlocks extension to any nested blocks
+			if mergedSchema.Extensions != nil && mergedSchema.Extensions.DynamicBlocks {
+				if copiedBlock.Body.Extensions == nil {
+					copiedBlock.Body.Extensions = &schema.BodyExtensions{}
 				}
-
-				mergedSchema.Blocks[bType] = copiedBlock
-			} else {
-				// Skip duplicate block type
-				continue
+				copiedBlock.Body.Extensions.DynamicBlocks = true
 			}
+			mergedSchema.Blocks[bType] = copiedBlock
 		}
 
 		if mergedSchema.Extensions != nil && mergedSchema.Extensions.DynamicBlocks && len(depSchema.Blocks) > 0 {
