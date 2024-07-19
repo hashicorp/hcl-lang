@@ -544,6 +544,98 @@ func TestBodySchema_DependentBodySchema_label_lookupUnsorted(t *testing.T) {
 	}
 }
 
+func TestBodySchema_DependentBodySchema_allows_overriding(t *testing.T) {
+	testSchema := NewBlockSchema(&schema.BlockSchema{
+		Labels: []*schema.LabelSchema{
+			{
+				Name:     "type",
+				IsDepKey: true,
+			},
+		},
+		Body: &schema.BodySchema{
+			Attributes: map[string]*schema.AttributeSchema{
+				"value": {
+					Constraint: schema.AnyExpression{},
+				},
+			},
+			Blocks: map[string]*schema.BlockSchema{
+				"config": {
+					Description: lang.Markdown("Provider configuration"),
+					MaxItems:    1,
+				},
+			},
+		},
+		DependentBody: map[schema.SchemaKey]*schema.BodySchema{
+			schema.NewSchemaKey(schema.DependencyKeys{
+				Labels: []schema.LabelDependent{
+					{
+						Index: 0,
+						Value: "specific",
+					},
+				},
+			}): {
+				Attributes: map[string]*schema.AttributeSchema{
+					"value": {
+						Constraint: schema.LiteralType{Type: cty.String},
+					},
+				},
+				Blocks: map[string]*schema.BlockSchema{
+					"config": {
+						Description: lang.Markdown("Provider configuration"),
+						MaxItems:    1,
+						Body: &schema.BodySchema{
+							Attributes: map[string]*schema.AttributeSchema{
+								"extra": {
+									Constraint: schema.LiteralType{Type: cty.String},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	})
+
+	block := &hcl.Block{
+		Labels: []string{"specific"},
+		Body: &hclsyntax.Body{
+			Attributes: map[string]*hclsyntax.Attribute{
+				"value": {
+					Name: "value",
+					Expr: &hclsyntax.LiteralValueExpr{
+						Val: cty.StringVal("hello"),
+					},
+				},
+			},
+			Blocks: []*hclsyntax.Block{
+				{
+					Body: &hclsyntax.Body{
+						Attributes: map[string]*hclsyntax.Attribute{
+							"extra": {
+								Name: "extra",
+								Expr: &hclsyntax.LiteralValueExpr{
+									Val: cty.StringVal("world"),
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	merged, result := MergeBlockBodySchemas(block, testSchema.BlockSchema)
+	if result != LookupSuccessful {
+		t.Fatal("expected lookup result to be successful")
+	}
+	if merged.Blocks["config"].Body == nil {
+		t.Fatal("expected to find overridden attribute in merged schema for blocks")
+	}
+	if _, ok := merged.Attributes["value"].Constraint.(schema.AnyExpression); ok {
+		t.Fatal("expected to find overridden attribute in merged schema for attributes")
+	}
+}
+
 var testSchemaWithLabels = NewBlockSchema(&schema.BlockSchema{
 	Labels: []*schema.LabelSchema{
 		{
