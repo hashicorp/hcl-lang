@@ -13,7 +13,7 @@ import (
 	"github.com/zclconf/go-cty/cty"
 )
 
-func (obj Object) ReferenceOrigins(ctx context.Context, allowSelfRefs bool) reference.Origins {
+func (obj Object) ReferenceOrigins(ctx context.Context) reference.Origins {
 	items, diags := hcl.ExprMap(obj.expr)
 	if diags.HasErrors() {
 		return reference.Origins{}
@@ -43,7 +43,7 @@ func (obj Object) ReferenceOrigins(ctx context.Context, allowSelfRefs bool) refe
 				}
 				kExpr := newExpression(obj.pathCtx, parensExpr, keyCons)
 				if expr, ok := kExpr.(ReferenceOriginsExpression); ok {
-					origins = append(origins, expr.ReferenceOrigins(ctx, allowSelfRefs)...)
+					origins = append(origins, expr.ReferenceOrigins(ctx)...)
 				}
 			}
 		}
@@ -51,7 +51,7 @@ func (obj Object) ReferenceOrigins(ctx context.Context, allowSelfRefs bool) refe
 		if isKnownAttr {
 			expr := newExpression(obj.pathCtx, item.Value, aSchema.Constraint)
 			if elemExpr, ok := expr.(ReferenceOriginsExpression); ok {
-				origins = append(origins, elemExpr.ReferenceOrigins(ctx, allowSelfRefs)...)
+				origins = append(origins, elemExpr.ReferenceOrigins(ctx)...)
 			}
 		}
 	}
