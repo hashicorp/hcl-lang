@@ -53,6 +53,14 @@ func (obj Object) ReferenceOrigins(ctx context.Context, allowSelfRefs bool) refe
 			if elemExpr, ok := expr.(ReferenceOriginsExpression); ok {
 				origins = append(origins, elemExpr.ReferenceOrigins(ctx, allowSelfRefs)...)
 			}
+
+			if aSchema.OriginForTarget != nil {
+				origins = append(origins, reference.PathOrigin{
+					TargetAddr:  aSchema.OriginForTarget.Address,
+					TargetPath:  aSchema.OriginForTarget.Path,
+					Constraints: aSchema.OriginForTarget.Constraints,
+				})
+			}
 		}
 	}
 
