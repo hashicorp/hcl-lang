@@ -118,9 +118,9 @@ type ExprSymbol struct {
 	ExprName string
 	ExprKind lang.SymbolExprKind
 
-	// Expr is set if the outter Expression is a *hclsyntax.TupleConsExpr
+	// Expr is set if the parent Expression is a *hclsyntax.TupleConsExpr
 	Expr hcl.Expression
-	// Item is set if the outter Expression is a *hclsyntax.ObjectConsExpr
+	// Item is set if the parent Expression is a *hclsyntax.ObjectConsExpr
 	Item hclsyntax.ObjectConsItem
 
 	path          lang.Path
