@@ -63,22 +63,36 @@ func (ref Reference) CompletionAtPos(ctx context.Context, pos hcl.Pos) []lang.Ca
 		return candidates
 	}
 
-	eType, ok := ref.expr.(*hclsyntax.ScopeTraversalExpr)
-	if !ok {
+	var editRng, prefixRng hcl.Range
+	switch eType := ref.expr.(type) {
+	case *hclsyntax.ScopeTraversalExpr:
+		editRng = eType.Range()
+		if !editRng.ContainsPos(pos) {
+			// account for trailing character(s) which doesn't appear in AST
+			// such as dot, opening bracket etc.
+			editRng.End = pos
+		}
+		prefixRng = hcl.Range{
+			Filename: eType.Range().Filename,
+			Start:    eType.Range().Start,
+			End:      pos,
+		}
+	case *hclsyntax.ExprSyntaxError:
+		editRng = eType.Range()
+		if !editRng.ContainsPos(pos) {
+			// account for trailing character(s) which doesn't appear in AST
+			// such as dot, opening bracket etc.
+			editRng.End = pos
+		}
+		prefixRng = hcl.Range{
+			Filename: eType.Range().Filename,
+			Start:    eType.Range().Start,
+			End:      pos,
+		}
+	default:
 		return []lang.Candidate{}
 	}
 
-	editRng := eType.Range()
-	if !editRng.ContainsPos(pos) {
-		// account for trailing character(s) which doesn't appear in AST
-		// such as dot, opening bracket etc.
-		editRng.End = pos
-	}
-	prefixRng := hcl.Range{
-		Filename: eType.Range().Filename,
-		Start:    eType.Range().Start,
-		End:      pos,
-	}
 	prefix := string(prefixRng.SliceBytes(file.Bytes))
 
 	candidates := make([]lang.Candidate, 0)
