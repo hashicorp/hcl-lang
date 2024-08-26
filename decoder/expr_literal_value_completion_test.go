@@ -415,7 +415,7 @@ func TestCompletionAtPos_exprLiteralValue(t *testing.T) {
 						Range: hcl.Range{
 							Filename: "test.tf",
 							Start:    hcl.Pos{Line: 1, Column: 8, Byte: 7},
-							End:      hcl.Pos{Line: 1, Column: 10, Byte: 9},
+							End:      hcl.Pos{Line: 1, Column: 11, Byte: 10},
 						},
 					},
 				},
