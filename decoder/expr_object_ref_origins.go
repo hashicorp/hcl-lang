@@ -82,7 +82,7 @@ func (obj Object) ReferenceOrigins(ctx context.Context, allowSelfRefs bool) refe
 func resolveObjectAddress(attrName string, addr schema.Address) (lang.Address, bool) {
 	// This function is a simplified version of the original resolveAttributeAddress
 	// because we don't have an attribute to pass
-	
+
 	address := make(lang.Address, 0)
 
 	if len(addr) == 0 {
