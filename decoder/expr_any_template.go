@@ -113,7 +113,7 @@ func (a Any) hoverTemplateExprAtPos(ctx context.Context, pos hcl.Pos) (*lang.Hov
 	return nil, false
 }
 
-func (a Any) refOriginsForTemplateExpr(ctx context.Context, allowSelfRefs bool) (reference.Origins, bool) {
+func (a Any) refOriginsForTemplateExpr(ctx context.Context) (reference.Origins, bool) {
 	origins := make(reference.Origins, 0)
 
 	switch eType := a.expr.(type) {
@@ -129,7 +129,7 @@ func (a Any) refOriginsForTemplateExpr(ctx context.Context, allowSelfRefs bool) 
 			expr := newExpression(a.pathCtx, partExpr, cons)
 
 			if e, ok := expr.(ReferenceOriginsExpression); ok {
-				origins = append(origins, e.ReferenceOrigins(ctx, allowSelfRefs)...)
+				origins = append(origins, e.ReferenceOrigins(ctx)...)
 			}
 		}
 
@@ -141,7 +141,7 @@ func (a Any) refOriginsForTemplateExpr(ctx context.Context, allowSelfRefs bool) 
 		expr := newExpression(a.pathCtx, eType.Wrapped, cons)
 
 		if e, ok := expr.(ReferenceOriginsExpression); ok {
-			origins = append(origins, e.ReferenceOrigins(ctx, allowSelfRefs)...)
+			origins = append(origins, e.ReferenceOrigins(ctx)...)
 		}
 
 		return origins, true

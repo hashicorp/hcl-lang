@@ -70,7 +70,7 @@ func (a Any) hoverConditionalExprAtPos(ctx context.Context, pos hcl.Pos) (*lang.
 	return nil, false
 }
 
-func (a Any) refOriginsForConditionalExpr(ctx context.Context, allowSelfRefs bool) (reference.Origins, bool) {
+func (a Any) refOriginsForConditionalExpr(ctx context.Context) (reference.Origins, bool) {
 	origins := make(reference.Origins, 0)
 
 	// There is currently no way of decoding conditional expressions in JSON
@@ -84,7 +84,7 @@ func (a Any) refOriginsForConditionalExpr(ctx context.Context, allowSelfRefs boo
 			OfType: cty.Bool,
 		})
 		if expr, ok := condExpr.(ReferenceOriginsExpression); ok {
-			origins = append(origins, expr.ReferenceOrigins(ctx, allowSelfRefs)...)
+			origins = append(origins, expr.ReferenceOrigins(ctx)...)
 		}
 
 		trueExpr := newExpression(a.pathCtx, eType.TrueResult, schema.AnyExpression{
@@ -92,7 +92,7 @@ func (a Any) refOriginsForConditionalExpr(ctx context.Context, allowSelfRefs boo
 			SkipLiteralComplexTypes: a.cons.SkipLiteralComplexTypes,
 		})
 		if expr, ok := trueExpr.(ReferenceOriginsExpression); ok {
-			origins = append(origins, expr.ReferenceOrigins(ctx, allowSelfRefs)...)
+			origins = append(origins, expr.ReferenceOrigins(ctx)...)
 		}
 
 		falseExpr := newExpression(a.pathCtx, eType.FalseResult, schema.AnyExpression{
@@ -100,7 +100,7 @@ func (a Any) refOriginsForConditionalExpr(ctx context.Context, allowSelfRefs boo
 			SkipLiteralComplexTypes: a.cons.SkipLiteralComplexTypes,
 		})
 		if expr, ok := falseExpr.(ReferenceOriginsExpression); ok {
-			origins = append(origins, expr.ReferenceOrigins(ctx, allowSelfRefs)...)
+			origins = append(origins, expr.ReferenceOrigins(ctx)...)
 		}
 
 		return origins, true

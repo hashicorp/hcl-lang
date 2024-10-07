@@ -274,7 +274,7 @@ func (fe functionExpr) SemanticTokens(ctx context.Context) []lang.SemanticToken 
 	return tokens
 }
 
-func (fe functionExpr) ReferenceOrigins(ctx context.Context, allowSelfRefs bool) reference.Origins {
+func (fe functionExpr) ReferenceOrigins(ctx context.Context) reference.Origins {
 	funcExpr, diags := hcl.ExprCall(fe.expr)
 	if diags.HasErrors() {
 		return reference.Origins{}
@@ -309,7 +309,7 @@ func (fe functionExpr) ReferenceOrigins(ctx context.Context, allowSelfRefs bool)
 				OfType: param.Type,
 			},
 		}
-		origins = append(origins, expr.ReferenceOrigins(ctx, allowSelfRefs)...)
+		origins = append(origins, expr.ReferenceOrigins(ctx)...)
 	}
 
 	return origins

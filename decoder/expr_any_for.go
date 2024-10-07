@@ -158,7 +158,7 @@ func (a Any) semanticTokensForForExpr(ctx context.Context) ([]lang.SemanticToken
 	return tokens, false
 }
 
-func (a Any) refOriginsForForExpr(ctx context.Context, allowSelfRefs bool) (reference.Origins, bool) {
+func (a Any) refOriginsForForExpr(ctx context.Context) (reference.Origins, bool) {
 	origins := make(reference.Origins, 0)
 
 	// There is currently no way of decoding for expressions in JSON
@@ -184,7 +184,7 @@ func (a Any) refOriginsForForExpr(ctx context.Context, allowSelfRefs bool) (refe
 			schema.AnyExpression{OfType: cty.EmptyObject},
 		}
 		if collExpr, ok := newExpression(a.pathCtx, eType.CollExpr, collCons).(ReferenceOriginsExpression); ok {
-			origins = append(origins, collExpr.ReferenceOrigins(ctx, allowSelfRefs)...)
+			origins = append(origins, collExpr.ReferenceOrigins(ctx)...)
 		}
 
 		if eType.KeyExpr != nil {
@@ -196,7 +196,7 @@ func (a Any) refOriginsForForExpr(ctx context.Context, allowSelfRefs bool) (refe
 				OfType: typ,
 			}
 			if keyExpr, ok := newExpression(a.pathCtx, eType.KeyExpr, cons).(ReferenceOriginsExpression); ok {
-				origins = append(origins, keyExpr.ReferenceOrigins(ctx, allowSelfRefs)...)
+				origins = append(origins, keyExpr.ReferenceOrigins(ctx)...)
 			}
 		}
 
@@ -208,7 +208,7 @@ func (a Any) refOriginsForForExpr(ctx context.Context, allowSelfRefs bool) (refe
 			OfType: typ,
 		}
 		if valExpr, ok := newExpression(a.pathCtx, eType.ValExpr, cons).(ReferenceOriginsExpression); ok {
-			origins = append(origins, valExpr.ReferenceOrigins(ctx, allowSelfRefs)...)
+			origins = append(origins, valExpr.ReferenceOrigins(ctx)...)
 		}
 
 		if eType.CondExpr != nil {
@@ -217,7 +217,7 @@ func (a Any) refOriginsForForExpr(ctx context.Context, allowSelfRefs bool) (refe
 			}
 
 			if condExpr, ok := newExpression(a.pathCtx, eType.CondExpr, cons).(ReferenceOriginsExpression); ok {
-				origins = append(origins, condExpr.ReferenceOrigins(ctx, allowSelfRefs)...)
+				origins = append(origins, condExpr.ReferenceOrigins(ctx)...)
 			}
 		}
 
