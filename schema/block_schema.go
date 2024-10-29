@@ -93,6 +93,11 @@ type BlockAddrSchema struct {
 	// and their addresses inferred as data
 	InferDependentBody bool
 
+	// SupportUnknownNestedRefs makes it possible to
+	// target the block with references that don't map to
+	// existing attributes
+	SupportUnknownNestedRefs bool
+
 	// DependentBodySelfRef instructs collection of reference
 	// targets with an additional self.* LocalAddr and
 	// makes those targetable by origins within the block body
@@ -137,16 +142,17 @@ func (bas *BlockAddrSchema) Copy() *BlockAddrSchema {
 	}
 
 	newBas := &BlockAddrSchema{
-		FriendlyName:         bas.FriendlyName,
-		ScopeId:              bas.ScopeId,
-		AsReference:          bas.AsReference,
-		AsTypeOf:             bas.AsTypeOf.Copy(),
-		BodyAsData:           bas.BodyAsData,
-		InferBody:            bas.InferBody,
-		DependentBodyAsData:  bas.DependentBodyAsData,
-		InferDependentBody:   bas.InferDependentBody,
-		DependentBodySelfRef: bas.DependentBodySelfRef,
-		Steps:                bas.Steps.Copy(),
+		FriendlyName:             bas.FriendlyName,
+		ScopeId:                  bas.ScopeId,
+		AsReference:              bas.AsReference,
+		AsTypeOf:                 bas.AsTypeOf.Copy(),
+		BodyAsData:               bas.BodyAsData,
+		InferBody:                bas.InferBody,
+		DependentBodyAsData:      bas.DependentBodyAsData,
+		InferDependentBody:       bas.InferDependentBody,
+		DependentBodySelfRef:     bas.DependentBodySelfRef,
+		SupportUnknownNestedRefs: bas.SupportUnknownNestedRefs,
+		Steps:                    bas.Steps.Copy(),
 	}
 
 	return newBas

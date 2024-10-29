@@ -238,6 +238,16 @@ func (d *PathDecoder) decodeReferenceTargetsForBody(body hcl.Body, parentBlock *
 			}
 		}
 
+		if bSchema.Address.SupportUnknownNestedRefs {
+			refs = append(refs, reference.Target{
+				Addr:        addr,
+				ScopeId:     bSchema.Address.ScopeId,
+				RangePtr:    blk.Range.Ptr(),
+				DefRangePtr: blk.DefRange.Ptr(),
+				Type:        cty.DynamicPseudoType,
+			})
+		}
+
 		sort.Sort(bodyRef.NestedTargets)
 	}
 

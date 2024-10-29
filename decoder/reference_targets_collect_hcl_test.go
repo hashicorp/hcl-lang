@@ -4046,6 +4046,66 @@ provider "test" {
 			},
 		},
 		{
+			"unknown nested refs",
+			&schema.BodySchema{
+				Blocks: map[string]*schema.BlockSchema{
+					"store": {
+						Labels: []*schema.LabelSchema{
+							{Name: "type"},
+							{Name: "name"},
+						},
+						Address: &schema.BlockAddrSchema{
+							Steps: []schema.AddrStep{
+								schema.StaticStep{Name: "store"},
+								schema.LabelStep{Index: 0},
+								schema.LabelStep{Index: 1},
+							},
+							SupportUnknownNestedRefs: true,
+						},
+					},
+				},
+			},
+			`store "varset" "test" {
+}
+`,
+			reference.Targets{
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "store"},
+						lang.AttrStep{Name: "varset"},
+						lang.AttrStep{Name: "test"},
+					},
+					RangePtr: &hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   1,
+							Column: 1,
+							Byte:   0,
+						},
+						End: hcl.Pos{
+							Line:   2,
+							Column: 2,
+							Byte:   25,
+						},
+					},
+					DefRangePtr: &hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   1,
+							Column: 1,
+							Byte:   0,
+						},
+						End: hcl.Pos{
+							Line:   1,
+							Column: 22,
+							Byte:   21,
+						},
+					},
+					Type: cty.DynamicPseudoType,
+				},
+			},
+		},
+		{
 			"block with dependent body",
 			&schema.BodySchema{
 				Blocks: map[string]*schema.BlockSchema{
