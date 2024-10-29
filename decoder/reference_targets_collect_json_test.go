@@ -3954,6 +3954,66 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 			},
 		},
 		{
+			"additional targetables",
+			&schema.BodySchema{
+				Blocks: map[string]*schema.BlockSchema{
+					"store": {
+						Labels: []*schema.LabelSchema{
+							{Name: "name"},
+						},
+						Address: &schema.BlockAddrSchema{
+							Steps: []schema.AddrStep{
+								schema.StaticStep{Name: "store"},
+								schema.LabelStep{Index: 0},
+							},
+							SupportUnknownNestedRefs: true,
+						},
+					},
+				},
+			},
+			`{
+  "store": {
+    "test": {}
+  }
+}
+`,
+			reference.Targets{
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "store"},
+						lang.AttrStep{Name: "test"},
+					},
+					RangePtr: &hcl.Range{
+						Filename: "test.tf.json",
+						Start: hcl.Pos{
+							Line:   3,
+							Column: 13,
+							Byte:   27,
+						},
+						End: hcl.Pos{
+							Line:   3,
+							Column: 15,
+							Byte:   29,
+						},
+					},
+					DefRangePtr: &hcl.Range{
+						Filename: "test.tf.json",
+						Start: hcl.Pos{
+							Line:   3,
+							Column: 13,
+							Byte:   27,
+						},
+						End: hcl.Pos{
+							Line:   3,
+							Column: 14,
+							Byte:   28,
+						},
+					},
+					Type: cty.DynamicPseudoType,
+				},
+			},
+		},
+		{
 			"block with dependent body",
 			&schema.BodySchema{
 				Blocks: map[string]*schema.BlockSchema{
