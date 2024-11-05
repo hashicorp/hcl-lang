@@ -169,13 +169,12 @@ func (d *PathDecoder) referenceOriginsInBody(body hcl.Body, bodySchema *schema.B
 			})
 		}
 
-		allowSelfRefs := false
 		if bodySchema.Extensions != nil && bodySchema.Extensions.SelfRefs {
-			allowSelfRefs = true
+			ctx = schema.WithActiveSelfRefs(ctx)
 		}
 		expr := d.newExpression(attr.Expr, aSchema.Constraint)
 		if eType, ok := expr.(ReferenceOriginsExpression); ok {
-			origins = append(origins, eType.ReferenceOrigins(ctx, allowSelfRefs)...)
+			origins = append(origins, eType.ReferenceOrigins(ctx)...)
 		}
 	}
 

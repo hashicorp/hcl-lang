@@ -13,13 +13,13 @@ import (
 	"github.com/zclconf/go-cty/cty"
 )
 
-func (a Any) ReferenceOrigins(ctx context.Context, allowSelfRefs bool) reference.Origins {
+func (a Any) ReferenceOrigins(ctx context.Context) reference.Origins {
 	typ := a.cons.OfType
 
 	if typ.IsListType() {
 		_, ok := a.expr.(*hclsyntax.TupleConsExpr)
 		if !ok {
-			return a.refOriginsForNonComplexExpr(ctx, allowSelfRefs)
+			return a.refOriginsForNonComplexExpr(ctx)
 		}
 
 		list := List{
@@ -31,13 +31,13 @@ func (a Any) ReferenceOrigins(ctx context.Context, allowSelfRefs bool) reference
 				},
 			},
 		}
-		return list.ReferenceOrigins(ctx, allowSelfRefs)
+		return list.ReferenceOrigins(ctx)
 	}
 
 	if typ.IsSetType() {
 		_, ok := a.expr.(*hclsyntax.TupleConsExpr)
 		if !ok {
-			return a.refOriginsForNonComplexExpr(ctx, allowSelfRefs)
+			return a.refOriginsForNonComplexExpr(ctx)
 		}
 
 		set := Set{
@@ -49,13 +49,13 @@ func (a Any) ReferenceOrigins(ctx context.Context, allowSelfRefs bool) reference
 				},
 			},
 		}
-		return set.ReferenceOrigins(ctx, allowSelfRefs)
+		return set.ReferenceOrigins(ctx)
 	}
 
 	if typ.IsTupleType() {
 		_, ok := a.expr.(*hclsyntax.TupleConsExpr)
 		if !ok {
-			return a.refOriginsForNonComplexExpr(ctx, allowSelfRefs)
+			return a.refOriginsForNonComplexExpr(ctx)
 		}
 
 		elemTypes := typ.TupleElementTypes()
@@ -73,13 +73,13 @@ func (a Any) ReferenceOrigins(ctx context.Context, allowSelfRefs bool) reference
 			pathCtx: a.pathCtx,
 			cons:    cons,
 		}
-		return tuple.ReferenceOrigins(ctx, allowSelfRefs)
+		return tuple.ReferenceOrigins(ctx)
 	}
 
 	if typ.IsMapType() {
 		_, ok := a.expr.(*hclsyntax.ObjectConsExpr)
 		if !ok {
-			return a.refOriginsForNonComplexExpr(ctx, allowSelfRefs)
+			return a.refOriginsForNonComplexExpr(ctx)
 		}
 
 		m := Map{
@@ -92,13 +92,13 @@ func (a Any) ReferenceOrigins(ctx context.Context, allowSelfRefs bool) reference
 				AllowInterpolatedKeys: true,
 			},
 		}
-		return m.ReferenceOrigins(ctx, allowSelfRefs)
+		return m.ReferenceOrigins(ctx)
 	}
 
 	if typ.IsObjectType() {
 		_, ok := a.expr.(*hclsyntax.ObjectConsExpr)
 		if !ok {
-			return a.refOriginsForNonComplexExpr(ctx, allowSelfRefs)
+			return a.refOriginsForNonComplexExpr(ctx)
 		}
 
 		obj := Object{
@@ -109,29 +109,29 @@ func (a Any) ReferenceOrigins(ctx context.Context, allowSelfRefs bool) reference
 				AllowInterpolatedKeys: true,
 			},
 		}
-		return obj.ReferenceOrigins(ctx, allowSelfRefs)
+		return obj.ReferenceOrigins(ctx)
 	}
 
-	return a.refOriginsForNonComplexExpr(ctx, allowSelfRefs)
+	return a.refOriginsForNonComplexExpr(ctx)
 }
 
-func (a Any) refOriginsForNonComplexExpr(ctx context.Context, allowSelfRefs bool) reference.Origins {
+func (a Any) refOriginsForNonComplexExpr(ctx context.Context) reference.Origins {
 	// TODO: Support splat expression https://github.com/hashicorp/terraform-ls/issues/526
 	// TODO: Support relative traversals https://github.com/hashicorp/terraform-ls/issues/532
 
-	if origins, ok := a.refOriginsForOperatorExpr(ctx, allowSelfRefs); ok {
+	if origins, ok := a.refOriginsForOperatorExpr(ctx); ok {
 		return origins
 	}
 
-	if origins, ok := a.refOriginsForTemplateExpr(ctx, allowSelfRefs); ok {
+	if origins, ok := a.refOriginsForTemplateExpr(ctx); ok {
 		return origins
 	}
 
-	if origins, ok := a.refOriginsForConditionalExpr(ctx, allowSelfRefs); ok {
+	if origins, ok := a.refOriginsForConditionalExpr(ctx); ok {
 		return origins
 	}
 
-	if origins, ok := a.refOriginsForForExpr(ctx, allowSelfRefs); ok {
+	if origins, ok := a.refOriginsForForExpr(ctx); ok {
 		return origins
 	}
 
@@ -142,7 +142,7 @@ func (a Any) refOriginsForNonComplexExpr(ctx context.Context, allowSelfRefs bool
 		returnType: a.cons.OfType,
 		pathCtx:    a.pathCtx,
 	}
-	origins := funcExpr.ReferenceOrigins(ctx, allowSelfRefs)
+	origins := funcExpr.ReferenceOrigins(ctx)
 	if len(origins) > 0 {
 		return origins
 	}
@@ -155,6 +155,7 @@ func (a Any) refOriginsForNonComplexExpr(ctx context.Context, allowSelfRefs bool
 		return origins
 	}
 
+	allowSelfRefs := schema.ActiveSelfRefsFromContext(ctx)
 	te, ok := a.expr.(*hclsyntax.ScopeTraversalExpr)
 	if ok {
 		oCons := reference.OriginConstraints{
