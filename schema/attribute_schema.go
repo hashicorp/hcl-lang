@@ -21,6 +21,10 @@ type AttributeSchema struct {
 
 	// Constraint represents expression constraint e.g. what types of
 	// expressions are expected for the attribute
+	//
+	// Constraints are immutable after construction by convention. It is
+	// particularly important not to mutate a constraint after it has been
+	// added to an AttributeSchema.
 	Constraint Constraint
 
 	// DefaultValue represents default value which applies
@@ -142,7 +146,8 @@ func (as *AttributeSchema) Copy() *AttributeSchema {
 		OriginForTarget:        as.OriginForTarget.Copy(),
 		SemanticTokenModifiers: as.SemanticTokenModifiers.Copy(),
 		CompletionHooks:        as.CompletionHooks.Copy(),
-		Constraint:             as.Constraint.Copy(),
+		// We do not copy Constraint as it should be immutable
+		Constraint: as.Constraint,
 	}
 
 	return newAs
