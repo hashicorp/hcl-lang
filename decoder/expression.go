@@ -26,7 +26,7 @@ type Expression interface {
 }
 
 type ReferenceOriginsExpression interface {
-	ReferenceOrigins(ctx context.Context, allowSelfRefs bool) reference.Origins
+	ReferenceOrigins(ctx context.Context) reference.Origins
 }
 
 type ReferenceTargetsExpression interface {

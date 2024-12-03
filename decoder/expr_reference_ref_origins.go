@@ -14,7 +14,8 @@ import (
 	"github.com/zclconf/go-cty/cty"
 )
 
-func (ref Reference) ReferenceOrigins(ctx context.Context, allowSelfRefs bool) reference.Origins {
+func (ref Reference) ReferenceOrigins(ctx context.Context) reference.Origins {
+	allowSelfRefs := schema.ActiveSelfRefsFromContext(ctx)
 	// deal with native HCL syntax first
 	te, ok := ref.expr.(*hclsyntax.ScopeTraversalExpr)
 	if ok {

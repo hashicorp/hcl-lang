@@ -159,7 +159,7 @@ func (a Any) hoverOperatorExprAtPos(ctx context.Context, pos hcl.Pos) (*lang.Hov
 	return nil, false
 }
 
-func (a Any) refOriginsForOperatorExpr(ctx context.Context, allowSelfRefs bool) (reference.Origins, bool) {
+func (a Any) refOriginsForOperatorExpr(ctx context.Context) (reference.Origins, bool) {
 	origins := make(reference.Origins, 0)
 
 	// There is currently no way of decoding operator expressions in JSON
@@ -186,14 +186,14 @@ func (a Any) refOriginsForOperatorExpr(ctx context.Context, allowSelfRefs bool) 
 			OfType: opFuncParams[0].Type,
 		})
 		if expr, ok := leftExpr.(ReferenceOriginsExpression); ok {
-			origins = append(origins, expr.ReferenceOrigins(ctx, allowSelfRefs)...)
+			origins = append(origins, expr.ReferenceOrigins(ctx)...)
 		}
 
 		rightExpr := newExpression(a.pathCtx, eType.RHS, schema.AnyExpression{
 			OfType: opFuncParams[1].Type,
 		})
 		if expr, ok := rightExpr.(ReferenceOriginsExpression); ok {
-			origins = append(origins, expr.ReferenceOrigins(ctx, allowSelfRefs)...)
+			origins = append(origins, expr.ReferenceOrigins(ctx)...)
 		}
 
 		return origins, true
@@ -216,14 +216,14 @@ func (a Any) refOriginsForOperatorExpr(ctx context.Context, allowSelfRefs bool) 
 			OfType: opFuncParams[0].Type,
 		})
 		if expr, ok := expr.(ReferenceOriginsExpression); ok {
-			origins = append(origins, expr.ReferenceOrigins(ctx, allowSelfRefs)...)
+			origins = append(origins, expr.ReferenceOrigins(ctx)...)
 		}
 
 		return origins, true
 	case *hclsyntax.ParenthesesExpr:
 		expr := newExpression(a.pathCtx, eType.Expression, a.cons)
 		if expr, ok := expr.(ReferenceOriginsExpression); ok {
-			origins = append(origins, expr.ReferenceOrigins(ctx, allowSelfRefs)...)
+			origins = append(origins, expr.ReferenceOrigins(ctx)...)
 		}
 
 		return origins, true

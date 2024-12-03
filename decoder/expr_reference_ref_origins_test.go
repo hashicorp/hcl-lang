@@ -372,3 +372,59 @@ func TestCollectRefOrigins_exprReference_json(t *testing.T) {
 		})
 	}
 }
+
+func TestCollectRefOrigins_exprReference_self(t *testing.T) {
+	bodySchema := &schema.BodySchema{
+		Attributes: map[string]*schema.AttributeSchema{
+			"attr": {
+				Constraint: schema.Reference{
+					OfType:    cty.String,
+					OfScopeId: lang.ScopeId("foobar"),
+				},
+			},
+		},
+		Extensions: &schema.BodyExtensions{
+			SelfRefs: true,
+		},
+	}
+
+	f, diags := hclsyntax.ParseConfig([]byte(`attr = self`), "test.tf", hcl.InitialPos)
+	if len(diags) > 0 {
+		t.Error(diags)
+	}
+	d := testPathDecoder(t, &PathContext{
+		Schema: bodySchema,
+		Files: map[string]*hcl.File{
+			"test.tf": f,
+		},
+	})
+
+	origins, err := d.CollectReferenceOrigins()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	expectedRefOrigins := reference.Origins{
+		reference.LocalOrigin{
+			Addr: lang.Address{
+				lang.RootStep{Name: "self"},
+			},
+			Range: hcl.Range{
+				Filename: "test.tf",
+				Start:    hcl.Pos{Line: 1, Column: 8, Byte: 7},
+				End:      hcl.Pos{Line: 1, Column: 12, Byte: 11},
+			},
+			Constraints: reference.OriginConstraints{
+				{
+					OfType:    cty.String,
+					OfScopeId: lang.ScopeId("foobar"),
+				},
+			},
+		},
+	}
+
+	if diff := cmp.Diff(expectedRefOrigins, origins, ctydebug.CmpOptions); diff != "" {
+		t.Fatalf("unexpected origins: %s", diff)
+	}
+
+}
