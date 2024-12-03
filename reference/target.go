@@ -199,6 +199,12 @@ func (target Target) Matches(origin MatchableOrigin) bool {
 			matchesCons = true
 			continue
 		}
+		if cons.OfType.IsTupleType() && cons.OfType.Length() == 0 && target.Type.IsTupleType() {
+			// This is a special case where we match an empty tuple (cty.EmptyTuple)
+			// against any tuple.
+			matchesCons = true
+			continue
+		}
 		if cons.OfType != cty.NilType && target.IsConvertibleToType(cons.OfType) {
 			matchesCons = true
 		}
