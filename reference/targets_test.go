@@ -268,6 +268,43 @@ func TestTargets_Match(t *testing.T) {
 			},
 			true,
 		},
+		{
+			"matches empty tuple",
+			Targets{
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "local"},
+						lang.AttrStep{Name: "a"},
+					},
+					Type: cty.Tuple([]cty.Type{
+						cty.String,
+						cty.Bool,
+					}),
+				},
+			},
+			LocalOrigin{
+				Addr: lang.Address{
+					lang.RootStep{Name: "local"},
+					lang.AttrStep{Name: "a"},
+				},
+				Constraints: OriginConstraints{{
+					OfType: cty.EmptyTuple,
+				}},
+			},
+			Targets{
+				Target{
+					Addr: lang.Address{
+						lang.RootStep{Name: "local"},
+						lang.AttrStep{Name: "a"},
+					},
+					Type: cty.Tuple([]cty.Type{
+						cty.String,
+						cty.Bool,
+					}),
+				},
+			},
+			true,
+		},
 	}
 	for i, tc := range testCases {
 		t.Run(fmt.Sprintf("%d-%s", i, tc.name), func(t *testing.T) {
