@@ -620,6 +620,51 @@ func TestCollectRefTargets_exprObject_hcl(t *testing.T) {
 				},
 			},
 		},
+		{
+			"object from for-expression",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.Object{
+						Attributes: schema.ObjectAttributes{
+							"foo": {
+								Constraint: schema.LiteralType{
+									Type: cty.String,
+								},
+								IsOptional: true,
+							},
+						},
+					},
+					IsOptional: true,
+					Address: &schema.AttributeAddrSchema{
+						Steps: schema.Address{
+							schema.AttrNameStep{},
+						},
+						ScopeId:    lang.ScopeId("test"),
+						AsExprType: true,
+					},
+				},
+			},
+			`attr = { for s in ["a", "b"] : s => "s${s}" }`,
+			reference.Targets{
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "attr"},
+					},
+					ScopeId: lang.ScopeId("test"),
+					RangePtr: &hcl.Range{
+						Filename: "test.hcl",
+						Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
+						End:      hcl.Pos{Line: 1, Column: 46, Byte: 45},
+					},
+					DefRangePtr: &hcl.Range{
+						Filename: "test.hcl",
+						Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
+						End:      hcl.Pos{Line: 1, Column: 5, Byte: 4},
+					},
+					Type: cty.DynamicPseudoType,
+				},
+			},
+		},
 	}
 	for i, tc := range testCases {
 		t.Run(fmt.Sprintf("%d-%s", i, tc.testName), func(t *testing.T) {

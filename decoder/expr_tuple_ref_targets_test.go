@@ -452,6 +452,48 @@ func TestCollectRefTargets_exprTuple_hcl(t *testing.T) {
 				},
 			},
 		},
+		{
+			"tuple from for-expression",
+			map[string]*schema.AttributeSchema{
+				"attr": {
+					Constraint: schema.Tuple{
+						Elems: []schema.Constraint{
+							schema.LiteralType{
+								Type: cty.String,
+							},
+						},
+					},
+					IsOptional: true,
+					Address: &schema.AttributeAddrSchema{
+						Steps: schema.Address{
+							schema.AttrNameStep{},
+						},
+						ScopeId:    lang.ScopeId("test"),
+						AsExprType: true,
+					},
+				},
+			},
+			`attr = [for sa in ["one", "two"]: sa]`,
+			reference.Targets{
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "attr"},
+					},
+					RangePtr: &hcl.Range{
+						Filename: "test.hcl",
+						Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
+						End:      hcl.Pos{Line: 1, Column: 38, Byte: 37},
+					},
+					DefRangePtr: &hcl.Range{
+						Filename: "test.hcl",
+						Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
+						End:      hcl.Pos{Line: 1, Column: 5, Byte: 4},
+					},
+					ScopeId: lang.ScopeId("test"),
+					Type:    cty.DynamicPseudoType,
+				},
+			},
+		},
 	}
 	for i, tc := range testCases {
 		t.Run(fmt.Sprintf("%d-%s", i, tc.testName), func(t *testing.T) {

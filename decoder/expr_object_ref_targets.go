@@ -21,6 +21,32 @@ func (obj Object) ReferenceTargets(ctx context.Context, targetCtx *TargetContext
 		return obj.wholeObjectReferenceTargets(targetCtx, attrTargets)
 	}
 
+	// An object can be the result of a for-expression, so we explicitly check for
+	// this before trying to convert it to a static map
+	//
+	// While we can't evaluate the whole for-expression yet, we can still
+	// collect a target for the whole object with a dynamic type
+	if _, ok := obj.expr.(*hclsyntax.ForExpr); ok && targetCtx != nil {
+		var rangePtr *hcl.Range
+		if targetCtx.ParentRangePtr != nil {
+			rangePtr = targetCtx.ParentRangePtr
+		} else {
+			rangePtr = obj.expr.Range().Ptr()
+		}
+
+		return reference.Targets{
+			{
+				Addr:                   targetCtx.ParentAddress,
+				LocalAddr:              targetCtx.ParentLocalAddress,
+				TargetableFromRangePtr: targetCtx.TargetableFromRangePtr,
+				ScopeId:                targetCtx.ScopeId,
+				RangePtr:               rangePtr,
+				DefRangePtr:            targetCtx.ParentDefRangePtr,
+				Type:                   cty.DynamicPseudoType,
+			},
+		}
+	}
+
 	items, diags := hcl.ExprMap(obj.expr)
 	if diags.HasErrors() {
 		return reference.Targets{}

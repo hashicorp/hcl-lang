@@ -9,12 +9,39 @@ import (
 	"github.com/hashicorp/hcl-lang/lang"
 	"github.com/hashicorp/hcl-lang/reference"
 	"github.com/hashicorp/hcl/v2"
+	"github.com/hashicorp/hcl/v2/hclsyntax"
 	"github.com/zclconf/go-cty/cty"
 )
 
 func (tuple Tuple) ReferenceTargets(ctx context.Context, targetCtx *TargetContext) reference.Targets {
 	if isEmptyExpression(tuple.expr) && targetCtx != nil {
 		return tuple.wholeTupleReferenceTargets(targetCtx, tuple.collectTupleElemTargets(ctx, targetCtx, []hcl.Expression{}))
+	}
+
+	// A tuple can be the result of a for-expression, so we explicitly check for
+	// this before trying to convert it to a static list
+	//
+	// While we can't evaluate the whole for-expression yet, we can still
+	// collect a target for the whole tuple with a dynamic type
+	if _, ok := tuple.expr.(*hclsyntax.ForExpr); ok && targetCtx != nil {
+		var rangePtr *hcl.Range
+		if targetCtx.ParentRangePtr != nil {
+			rangePtr = targetCtx.ParentRangePtr
+		} else {
+			rangePtr = tuple.expr.Range().Ptr()
+		}
+
+		return reference.Targets{
+			{
+				Addr:                   targetCtx.ParentAddress,
+				LocalAddr:              targetCtx.ParentLocalAddress,
+				TargetableFromRangePtr: targetCtx.TargetableFromRangePtr,
+				ScopeId:                targetCtx.ScopeId,
+				RangePtr:               rangePtr,
+				DefRangePtr:            targetCtx.ParentDefRangePtr,
+				Type:                   cty.DynamicPseudoType,
+			},
+		}
 	}
 
 	elems, diags := hcl.ExprList(tuple.expr)
