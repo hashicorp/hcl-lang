@@ -40,6 +40,7 @@ func (ro Origins) Match(localPath lang.Path, target Target, targetPath lang.Path
 	for _, refOrigin := range ro {
 		switch origin := refOrigin.(type) {
 		case LocalOrigin:
+			// TODO: equals might do weird things for non test files, ensure this works!
 			if localPath.Equals(targetPath) && target.Matches(origin) {
 				origins = append(origins, refOrigin)
 			}
