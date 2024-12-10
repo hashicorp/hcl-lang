@@ -55,6 +55,10 @@ type Target struct {
 	Name        string
 	Description lang.MarkupContent
 
+	// Tags is a map, representing a set, of tags that can be used to
+	// mark a target with additional information
+	Tags schema.ReferenceTags
+
 	NestedTargets Targets
 }
 

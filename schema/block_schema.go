@@ -107,6 +107,10 @@ type BlockAddrSchema struct {
 	// BodySchema.Extensions.SelfRef, where only self.* origins
 	// within a body w/ SelfRef:true will be collected.
 	DependentBodySelfRef bool
+
+	// ApplyTags contains a set of tags that should be applied to a block
+	// with this address schema.
+	ApplyTags ReferenceTags
 }
 
 type BlockAsTypeOf struct {

@@ -6,6 +6,7 @@ package decoder
 import (
 	"bytes"
 	"context"
+	"maps"
 	"sort"
 
 	"github.com/hashicorp/hcl-lang/decoder/internal/ast"
@@ -194,6 +195,10 @@ func (d *PathDecoder) decodeReferenceTargetsForBody(body hcl.Body, parentBlock *
 
 			bodyRef.Type = bodyToDataType(bSchema.Type, bSchema.Body)
 
+			if len(bSchema.Address.ApplyTags) > 0 {
+				maps.Copy(bodyRef.Tags, bSchema.Address.ApplyTags)
+			}
+
 			refs = append(refs, bodyRef)
 		}
 
@@ -204,6 +209,10 @@ func (d *PathDecoder) decodeReferenceTargetsForBody(body hcl.Body, parentBlock *
 					ScopeId:     bSchema.Address.ScopeId,
 					DefRangePtr: blk.DefRange.Ptr(),
 					RangePtr:    blk.Range.Ptr(),
+				}
+
+				if len(bSchema.Address.ApplyTags) > 0 {
+					maps.Copy(bodyRef.Tags, bSchema.Address.ApplyTags)
 				}
 			}
 

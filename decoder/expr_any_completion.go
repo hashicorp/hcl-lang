@@ -128,7 +128,7 @@ func (a Any) completeNonComplexExprAtPos(ctx context.Context, pos hcl.Pos) []lan
 
 	ref := Reference{
 		expr:    a.expr,
-		cons:    schema.Reference{OfType: a.cons.OfType},
+		cons:    schema.Reference{OfType: a.cons.OfType, WithTags: a.cons.WithTags},
 		pathCtx: a.pathCtx,
 	}
 	candidates = append(candidates, ref.CompletionAtPos(ctx, pos)...)

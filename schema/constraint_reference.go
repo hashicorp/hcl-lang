@@ -30,6 +30,8 @@ type Reference struct {
 	//
 	// Only one of Address or OfScopeId/OfType can be declared
 	Address *ReferenceAddrSchema
+
+	WithTags ReferenceTags
 }
 
 type ReferenceAddrSchema struct {

@@ -83,6 +83,10 @@ type AttributeAddrSchema struct {
 	// AsReference defines whether the attribute
 	// is addressable as a type-less reference
 	AsReference bool
+
+	// ApplyTags contains a set of tags that should be applied to a block
+	// with this address schema.
+	ApplyTags ReferenceTags
 }
 
 func (*AttributeSchema) isSchemaImpl() schemaImplSigil {

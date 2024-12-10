@@ -18,6 +18,8 @@ type AnyExpression struct {
 	// OfType defines the type which the outermost expression is constrained to
 	OfType cty.Type
 
+	WithTags ReferenceTags
+
 	// SkipLiteralComplexTypes avoids descending into complex literal types, such as {} and [].
 	// It might be required when AnyExpression is used in OneOf to avoid duplicates.
 	SkipLiteralComplexTypes bool
