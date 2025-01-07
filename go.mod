@@ -10,7 +10,7 @@ require (
 	github.com/mh-cbon/go-fmt-fail v0.0.0-20160815164508-67765b3fbcb5
 	github.com/zclconf/go-cty v1.16.0
 	github.com/zclconf/go-cty-debug v0.0.0-20240509010212-0d6042c53940
-	golang.org/x/tools v0.28.0
+	golang.org/x/tools v0.29.0
 )
 
 require (
