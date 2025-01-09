@@ -40,6 +40,10 @@ func attributeSchemaToCandidate(ctx context.Context, name string, attr *schema.A
 func detailForAttribute(attr *schema.AttributeSchema) string {
 	details := []string{}
 
+	if attr.IsWriteOnly {
+		details = append(details, "write-only")
+	}
+
 	if attr.IsRequired {
 		details = append(details, "required")
 	} else if attr.IsOptional {

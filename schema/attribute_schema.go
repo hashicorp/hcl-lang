@@ -19,6 +19,10 @@ type AttributeSchema struct {
 	IsComputed   bool
 	IsSensitive  bool
 
+	// If true, this attribute is write only and its value will not be
+	// persisted in artifacts such as plan files or state.
+	IsWriteOnly bool
+
 	// Constraint represents expression constraint e.g. what types of
 	// expressions are expected for the attribute
 	//
@@ -139,6 +143,7 @@ func (as *AttributeSchema) Copy() *AttributeSchema {
 		IsDeprecated:           as.IsDeprecated,
 		IsComputed:             as.IsComputed,
 		IsSensitive:            as.IsSensitive,
+		IsWriteOnly:            as.IsWriteOnly,
 		IsDepKey:               as.IsDepKey,
 		DefaultValue:           as.DefaultValue,
 		Description:            as.Description,
