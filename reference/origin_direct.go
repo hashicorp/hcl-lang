@@ -14,6 +14,10 @@ type DirectOrigin struct {
 	// Range represents a range of a local traversal, attribute, or an expression
 	Range hcl.Range
 
+	// RootBlockRange represents the range of the root block containing this origin.
+	// This will be empty for origins not contained within a block.
+	RootBlockRange hcl.Range
+
 	// TargetPath represents what (directory) Path does the origin targets
 	TargetPath lang.Path
 
@@ -23,9 +27,10 @@ type DirectOrigin struct {
 
 func (do DirectOrigin) Copy() Origin {
 	return DirectOrigin{
-		Range:       do.Range,
-		TargetPath:  do.TargetPath,
-		TargetRange: do.TargetRange,
+		Range:          do.Range,
+		RootBlockRange: do.RootBlockRange,
+		TargetPath:     do.TargetPath,
+		TargetRange:    do.TargetRange,
 	}
 }
 
@@ -35,4 +40,8 @@ func (DirectOrigin) isOriginImpl() originSigil {
 
 func (do DirectOrigin) OriginRange() hcl.Range {
 	return do.Range
+}
+
+func (do DirectOrigin) RootBlockOriginRange() hcl.Range {
+	return do.RootBlockRange
 }

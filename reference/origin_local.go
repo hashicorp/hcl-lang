@@ -17,6 +17,10 @@ type LocalOrigin struct {
 	// Range represents the range of the traversal
 	Range hcl.Range
 
+	// RootBlockRange represents the range of the root block containing this origin.
+	// This will be empty for origins not contained within a block.
+	RootBlockRange hcl.Range
+
 	// Constraints represents any traversal expression constraints
 	// for the attribute where the origin was found.
 	//
@@ -28,9 +32,10 @@ type LocalOrigin struct {
 
 func (lo LocalOrigin) Copy() Origin {
 	return LocalOrigin{
-		Addr:        lo.Addr.Copy(),
-		Range:       lo.Range,
-		Constraints: lo.Constraints.Copy(),
+		Addr:           lo.Addr.Copy(),
+		Range:          lo.Range,
+		RootBlockRange: lo.RootBlockRange,
+		Constraints:    lo.Constraints.Copy(),
 	}
 }
 
@@ -40,6 +45,10 @@ func (LocalOrigin) isOriginImpl() originSigil {
 
 func (lo LocalOrigin) OriginRange() hcl.Range {
 	return lo.Range
+}
+
+func (do LocalOrigin) RootBlockOriginRange() hcl.Range {
+	return do.RootBlockRange
 }
 
 func (lo LocalOrigin) OriginConstraints() OriginConstraints {
