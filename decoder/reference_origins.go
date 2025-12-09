@@ -203,7 +203,7 @@ func (d *PathDecoder) referenceOriginsInBody(body hcl.Body, bodySchema *schema.B
 			// Otherwise, pass the existing rootBlockRange down to preserve the root context.
 			var nextRootBlockRange *hcl.Range
 			if rootBlockRange == nil {
-				nextRootBlockRange = &block.Range
+				nextRootBlockRange = &block.DefRange
 			} else {
 				nextRootBlockRange = rootBlockRange
 			}

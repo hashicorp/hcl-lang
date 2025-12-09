@@ -1358,7 +1358,7 @@ func TestCollectRefOrigins_exprAny_forExpr_forEach(t *testing.T) {
 			RootBlockRange: hcl.Range{
 				Filename: "test.tf",
 				Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
-				End:      hcl.Pos{Line: 3, Column: 2, Byte: 82},
+				End:      hcl.Pos{Line: 1, Column: 30, Byte: 29},
 			},
 			Constraints: reference.OriginConstraints{
 				{OfType: cty.List(cty.DynamicPseudoType)},
@@ -1391,7 +1391,7 @@ func TestCollectRefOrigins_exprAny_forExpr_forEach(t *testing.T) {
 			RootBlockRange: hcl.Range{
 				Filename: "test.tf",
 				Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
-				End:      hcl.Pos{Line: 3, Column: 2, Byte: 82},
+				End:      hcl.Pos{Line: 1, Column: 30, Byte: 29},
 			},
 			Constraints: reference.OriginConstraints{
 				{OfType: cty.String},
@@ -1411,7 +1411,7 @@ func TestCollectRefOrigins_exprAny_forExpr_forEach(t *testing.T) {
 			RootBlockRange: hcl.Range{
 				Filename: "test.tf",
 				Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
-				End:      hcl.Pos{Line: 3, Column: 2, Byte: 82},
+				End:      hcl.Pos{Line: 1, Column: 30, Byte: 29},
 			},
 			Constraints: reference.OriginConstraints{
 				{OfType: cty.DynamicPseudoType},
