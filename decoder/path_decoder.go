@@ -94,3 +94,7 @@ func (d *PathDecoder) bodyForFileAndPos(name string, f *hcl.File, pos hcl.Pos) (
 
 	return body, nil
 }
+
+func (d *PathDecoder) Files() map[string]*hcl.File {
+	return d.pathCtx.Files
+}
