@@ -31,7 +31,8 @@ func (d *Decoder) ReferenceOriginsTargetingPos(path lang.Path, file string, pos 
 	}
 
 	for _, target := range targets {
-		origins = d.ReferenceOriginsByTarget(ctx, target, path)
+		origins = append(origins, d.ReferenceOriginsByTarget(ctx, target, path)...)
+
 	}
 
 	sort.SliceStable(origins, func(i, j int) bool {
