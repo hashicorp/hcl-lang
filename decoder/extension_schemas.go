@@ -10,7 +10,7 @@ import (
 	"github.com/zclconf/go-cty/cty"
 )
 
-func countIndexReferenceTarget(attr *hcl.Attribute, bodyRange hcl.Range) reference.Target {
+func countIndexReferenceTarget(attr *hcl.Attribute, bodyRange hcl.Range, rootBlockRange *hcl.Range) reference.Target {
 	return reference.Target{
 		LocalAddr: lang.Address{
 			lang.RootStep{Name: "count"},
@@ -21,10 +21,11 @@ func countIndexReferenceTarget(attr *hcl.Attribute, bodyRange hcl.Range) referen
 		Description:            lang.Markdown("The distinct index number (starting with 0) corresponding to the instance"),
 		RangePtr:               attr.Range.Ptr(),
 		DefRangePtr:            attr.NameRange.Ptr(),
+		RootBlockRange:         rootBlockRange,
 	}
 }
 
-func forEachReferenceTargets(attr *hcl.Attribute, bodyRange hcl.Range) reference.Targets {
+func forEachReferenceTargets(attr *hcl.Attribute, bodyRange hcl.Range, rootBlockRange *hcl.Range) reference.Targets {
 	return reference.Targets{
 		{
 			LocalAddr: lang.Address{
@@ -36,6 +37,7 @@ func forEachReferenceTargets(attr *hcl.Attribute, bodyRange hcl.Range) reference
 			Description:            lang.Markdown("The map key (or set member) corresponding to this instance"),
 			RangePtr:               attr.Range.Ptr(),
 			DefRangePtr:            attr.NameRange.Ptr(),
+			RootBlockRange:         rootBlockRange,
 		},
 		{
 			LocalAddr: lang.Address{
@@ -47,6 +49,7 @@ func forEachReferenceTargets(attr *hcl.Attribute, bodyRange hcl.Range) reference
 			Description:            lang.Markdown("The map value corresponding to this instance. (If a set was provided, this is the same as `each.key`.)"),
 			RangePtr:               attr.Range.Ptr(),
 			DefRangePtr:            attr.NameRange.Ptr(),
+			RootBlockRange:         rootBlockRange,
 		},
 	}
 }

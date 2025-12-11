@@ -76,6 +76,7 @@ func (set Set) wholeSetReferenceTargets(targetCtx *TargetContext, nestedTargets 
 				NestedTargets:          nestedTargets,
 				LocalAddr:              targetCtx.ParentLocalAddress,
 				TargetableFromRangePtr: targetCtx.TargetableFromRangePtr,
+				RootBlockRange:         targetCtx.RootBlockRange,
 			})
 		}
 	}
