@@ -119,6 +119,19 @@ func TestCollectReferenceTargets_extension_json(t *testing.T) {
 							Byte:   55,
 						},
 					},
+					RootBlockRange: &hcl.Range{
+						Filename: "test.tf.json",
+						Start: hcl.Pos{
+							Line:   4,
+							Column: 15,
+							Byte:   54,
+						},
+						End: hcl.Pos{
+							Line:   4,
+							Column: 16,
+							Byte:   55,
+						},
+					},
 					TargetableFromRangePtr: &hcl.Range{
 						Filename: "test.tf.json",
 						Start: hcl.Pos{
@@ -156,6 +169,20 @@ func TestCollectReferenceTargets_extension_json(t *testing.T) {
 									Line:   7,
 									Column: 10,
 									Byte:   102,
+								},
+							},
+							DefRangePtr: nil,
+							RootBlockRange: &hcl.Range{
+								Filename: "test.tf.json",
+								Start: hcl.Pos{
+									Line:   4,
+									Column: 15,
+									Byte:   54,
+								},
+								End: hcl.Pos{
+									Line:   4,
+									Column: 16,
+									Byte:   55,
 								},
 							},
 							Type: cty.List(cty.Object(map[string]cty.Type{
@@ -196,6 +223,19 @@ func TestCollectReferenceTargets_extension_json(t *testing.T) {
 											Byte:   72,
 										},
 									},
+									RootBlockRange: &hcl.Range{
+										Filename: "test.tf.json",
+										Start: hcl.Pos{
+											Line:   4,
+											Column: 15,
+											Byte:   54,
+										},
+										End: hcl.Pos{
+											Line:   4,
+											Column: 16,
+											Byte:   55,
+										},
+									},
 									Type: cty.Object(map[string]cty.Type{
 										"bar": cty.Number,
 									}),
@@ -233,6 +273,19 @@ func TestCollectReferenceTargets_extension_json(t *testing.T) {
 													Line:   6,
 													Column: 16,
 													Byte:   88,
+												},
+											},
+											RootBlockRange: &hcl.Range{
+												Filename: "test.tf.json",
+												Start: hcl.Pos{
+													Line:   4,
+													Column: 15,
+													Byte:   54,
+												},
+												End: hcl.Pos{
+													Line:   4,
+													Column: 16,
+													Byte:   55,
 												},
 											},
 											Type: cty.Number,
