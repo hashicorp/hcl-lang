@@ -101,6 +101,7 @@ func (m Map) wholeMapReferenceTargets(targetCtx *TargetContext, nestedTargets re
 				NestedTargets:          nestedTargets,
 				LocalAddr:              targetCtx.ParentLocalAddress,
 				TargetableFromRangePtr: targetCtx.TargetableFromRangePtr,
+				RootBlockRange:         targetCtx.RootBlockRange,
 			})
 		}
 	}

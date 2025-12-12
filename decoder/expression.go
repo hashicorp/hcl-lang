@@ -83,6 +83,10 @@ type TargetContext struct {
 	// ParentDefRangePtr represents the range of the parent target's definition
 	// e.g. object attribute name or map key
 	ParentDefRangePtr *hcl.Range
+
+	// RootBlockRange represents the range of the root block that contains this target.
+	// This is useful for understanding the absolute root context of a target.
+	RootBlockRange *hcl.Range
 }
 
 func (tctx *TargetContext) Copy() *TargetContext {
@@ -91,11 +95,12 @@ func (tctx *TargetContext) Copy() *TargetContext {
 	}
 
 	newCtx := &TargetContext{
-		FriendlyName:  tctx.FriendlyName,
-		ScopeId:       tctx.ScopeId,
-		AsExprType:    tctx.AsExprType,
-		AsReference:   tctx.AsReference,
-		ParentAddress: tctx.ParentAddress.Copy(),
+		FriendlyName:   tctx.FriendlyName,
+		ScopeId:        tctx.ScopeId,
+		AsExprType:     tctx.AsExprType,
+		AsReference:    tctx.AsReference,
+		ParentAddress:  tctx.ParentAddress.Copy(),
+		RootBlockRange: copyHclRangePtr(tctx.RootBlockRange),
 	}
 
 	if tctx.ParentLocalAddress != nil {
@@ -106,6 +111,13 @@ func (tctx *TargetContext) Copy() *TargetContext {
 	}
 
 	return newCtx
+}
+
+func copyHclRangePtr(rng *hcl.Range) *hcl.Range {
+	if rng == nil {
+		return nil
+	}
+	return rng.Ptr()
 }
 
 func (d *PathDecoder) newExpression(expr hcl.Expression, cons schema.Constraint) Expression {

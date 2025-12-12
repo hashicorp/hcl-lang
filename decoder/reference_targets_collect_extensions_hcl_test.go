@@ -111,6 +111,19 @@ func TestCollectReferenceTargets_extension_hcl(t *testing.T) {
 							Byte:   30,
 						},
 					},
+					RootBlockRange: &hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   1,
+							Column: 1,
+							Byte:   0,
+						},
+						End: hcl.Pos{
+							Line:   1,
+							Column: 31,
+							Byte:   30,
+						},
+					},
 					TargetableFromRangePtr: &hcl.Range{
 						Filename: "test.tf",
 						Start: hcl.Pos{
@@ -165,6 +178,19 @@ func TestCollectReferenceTargets_extension_hcl(t *testing.T) {
 									Byte:   71,
 								},
 							},
+							RootBlockRange: &hcl.Range{
+								Filename: "test.tf",
+								Start: hcl.Pos{
+									Line:   1,
+									Column: 1,
+									Byte:   0,
+								},
+								End: hcl.Pos{
+									Line:   1,
+									Column: 31,
+									Byte:   30,
+								},
+							},
 							Type: cty.Number,
 							TargetableFromRangePtr: &hcl.Range{
 								Filename: "test.tf",
@@ -214,6 +240,19 @@ func TestCollectReferenceTargets_extension_hcl(t *testing.T) {
 									Line:   3,
 									Column: 6,
 									Byte:   56,
+								},
+							},
+							RootBlockRange: &hcl.Range{
+								Filename: "test.tf",
+								Start: hcl.Pos{
+									Line:   1,
+									Column: 1,
+									Byte:   0,
+								},
+								End: hcl.Pos{
+									Line:   1,
+									Column: 31,
+									Byte:   30,
 								},
 							},
 							Type: cty.String,
@@ -329,6 +368,19 @@ func TestCollectReferenceTargets_extension_hcl(t *testing.T) {
 							Byte:   30,
 						},
 					},
+					RootBlockRange: &hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   1,
+							Column: 1,
+							Byte:   0,
+						},
+						End: hcl.Pos{
+							Line:   1,
+							Column: 31,
+							Byte:   30,
+						},
+					},
 					TargetableFromRangePtr: &hcl.Range{
 						Filename: "test.tf",
 						Start: hcl.Pos{
@@ -384,6 +436,19 @@ func TestCollectReferenceTargets_extension_hcl(t *testing.T) {
 									Byte:   56,
 								},
 							},
+							RootBlockRange: &hcl.Range{
+								Filename: "test.tf",
+								Start: hcl.Pos{
+									Line:   1,
+									Column: 1,
+									Byte:   0,
+								},
+								End: hcl.Pos{
+									Line:   1,
+									Column: 31,
+									Byte:   30,
+								},
+							},
 							Type: cty.Object(map[string]cty.Type{
 								"bar": cty.Number,
 							}),
@@ -437,6 +502,19 @@ func TestCollectReferenceTargets_extension_hcl(t *testing.T) {
 											Line:   4,
 											Column: 8,
 											Byte:   66,
+										},
+									},
+									RootBlockRange: &hcl.Range{
+										Filename: "test.tf",
+										Start: hcl.Pos{
+											Line:   1,
+											Column: 1,
+											Byte:   0,
+										},
+										End: hcl.Pos{
+											Line:   1,
+											Column: 31,
+											Byte:   30,
 										},
 									},
 									Type: cty.Number,
@@ -554,6 +632,19 @@ func TestCollectReferenceTargets_extension_hcl(t *testing.T) {
 							Byte:   30,
 						},
 					},
+					RootBlockRange: &hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   1,
+							Column: 1,
+							Byte:   0,
+						},
+						End: hcl.Pos{
+							Line:   1,
+							Column: 31,
+							Byte:   30,
+						},
+					},
 					TargetableFromRangePtr: &hcl.Range{
 						Filename: "test.tf",
 						Start: hcl.Pos{
@@ -594,6 +685,19 @@ func TestCollectReferenceTargets_extension_hcl(t *testing.T) {
 									Line:   5,
 									Column: 4,
 									Byte:   75,
+								},
+							},
+							RootBlockRange: &hcl.Range{
+								Filename: "test.tf",
+								Start: hcl.Pos{
+									Line:   1,
+									Column: 1,
+									Byte:   0,
+								},
+								End: hcl.Pos{
+									Line:   1,
+									Column: 31,
+									Byte:   30,
 								},
 							},
 							Type: cty.List(cty.Object(map[string]cty.Type{
@@ -651,6 +755,19 @@ func TestCollectReferenceTargets_extension_hcl(t *testing.T) {
 											Byte:   56,
 										},
 									},
+									RootBlockRange: &hcl.Range{
+										Filename: "test.tf",
+										Start: hcl.Pos{
+											Line:   1,
+											Column: 1,
+											Byte:   0,
+										},
+										End: hcl.Pos{
+											Line:   1,
+											Column: 31,
+											Byte:   30,
+										},
+									},
 									Type: cty.Object(map[string]cty.Type{
 										"bar": cty.Number,
 									}),
@@ -706,6 +823,19 @@ func TestCollectReferenceTargets_extension_hcl(t *testing.T) {
 													Line:   4,
 													Column: 8,
 													Byte:   66,
+												},
+											},
+											RootBlockRange: &hcl.Range{
+												Filename: "test.tf",
+												Start: hcl.Pos{
+													Line:   1,
+													Column: 1,
+													Byte:   0,
+												},
+												End: hcl.Pos{
+													Line:   1,
+													Column: 31,
+													Byte:   30,
 												},
 											},
 											Type: cty.Number,
@@ -825,6 +955,19 @@ func TestCollectReferenceTargets_extension_hcl(t *testing.T) {
 							Byte:   30,
 						},
 					},
+					RootBlockRange: &hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   1,
+							Column: 1,
+							Byte:   0,
+						},
+						End: hcl.Pos{
+							Line:   1,
+							Column: 31,
+							Byte:   30,
+						},
+					},
 					TargetableFromRangePtr: &hcl.Range{
 						Filename: "test.tf",
 						Start: hcl.Pos{
@@ -865,6 +1008,19 @@ func TestCollectReferenceTargets_extension_hcl(t *testing.T) {
 									Line:   5,
 									Column: 4,
 									Byte:   75,
+								},
+							},
+							RootBlockRange: &hcl.Range{
+								Filename: "test.tf",
+								Start: hcl.Pos{
+									Line:   1,
+									Column: 1,
+									Byte:   0,
+								},
+								End: hcl.Pos{
+									Line:   1,
+									Column: 31,
+									Byte:   30,
 								},
 							},
 							Type: cty.Set(cty.Object(map[string]cty.Type{
@@ -982,6 +1138,19 @@ func TestCollectReferenceTargets_extension_hcl(t *testing.T) {
 							Byte:   30,
 						},
 					},
+					RootBlockRange: &hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   1,
+							Column: 1,
+							Byte:   0,
+						},
+						End: hcl.Pos{
+							Line:   1,
+							Column: 31,
+							Byte:   30,
+						},
+					},
 					TargetableFromRangePtr: &hcl.Range{
 						Filename: "test.tf",
 						Start: hcl.Pos{
@@ -1022,6 +1191,19 @@ func TestCollectReferenceTargets_extension_hcl(t *testing.T) {
 									Line:   5,
 									Column: 4,
 									Byte:   81,
+								},
+							},
+							RootBlockRange: &hcl.Range{
+								Filename: "test.tf",
+								Start: hcl.Pos{
+									Line:   1,
+									Column: 1,
+									Byte:   0,
+								},
+								End: hcl.Pos{
+									Line:   1,
+									Column: 31,
+									Byte:   30,
 								},
 							},
 							Type: cty.Map(cty.Object(map[string]cty.Type{
@@ -1079,6 +1261,19 @@ func TestCollectReferenceTargets_extension_hcl(t *testing.T) {
 											Byte:   62,
 										},
 									},
+									RootBlockRange: &hcl.Range{
+										Filename: "test.tf",
+										Start: hcl.Pos{
+											Line:   1,
+											Column: 1,
+											Byte:   0,
+										},
+										End: hcl.Pos{
+											Line:   1,
+											Column: 31,
+											Byte:   30,
+										},
+									},
 									Type: cty.Object(map[string]cty.Type{
 										"bar": cty.Number,
 									}),
@@ -1134,6 +1329,19 @@ func TestCollectReferenceTargets_extension_hcl(t *testing.T) {
 													Line:   4,
 													Column: 8,
 													Byte:   72,
+												},
+											},
+											RootBlockRange: &hcl.Range{
+												Filename: "test.tf",
+												Start: hcl.Pos{
+													Line:   1,
+													Column: 1,
+													Byte:   0,
+												},
+												End: hcl.Pos{
+													Line:   1,
+													Column: 31,
+													Byte:   30,
 												},
 											},
 											Type: cty.Number,

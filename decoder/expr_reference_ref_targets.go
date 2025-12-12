@@ -14,9 +14,14 @@ import (
 	"github.com/zclconf/go-cty/cty"
 )
 
-func (ref Reference) ReferenceTargets(ctx context.Context, _ *TargetContext) reference.Targets {
+func (ref Reference) ReferenceTargets(ctx context.Context, targetCtx *TargetContext) reference.Targets {
 	if ref.cons.Address == nil {
 		return reference.Targets{}
+	}
+
+	var rootBlockRange *hcl.Range
+	if targetCtx != nil {
+		rootBlockRange = targetCtx.RootBlockRange
 	}
 
 	// deal with native HCL syntax first
@@ -29,10 +34,11 @@ func (ref Reference) ReferenceTargets(ctx context.Context, _ *TargetContext) ref
 
 		return reference.Targets{
 			reference.Target{
-				Addr:     addr,
-				ScopeId:  ref.cons.Address.ScopeId,
-				RangePtr: eType.SrcRange.Ptr(),
-				Name:     ref.cons.Name,
+				Addr:           addr,
+				ScopeId:        ref.cons.Address.ScopeId,
+				RangePtr:       eType.SrcRange.Ptr(),
+				Name:           ref.cons.Name,
+				RootBlockRange: rootBlockRange,
 			},
 		}
 	}
@@ -68,10 +74,11 @@ func (ref Reference) ReferenceTargets(ctx context.Context, _ *TargetContext) ref
 
 				return reference.Targets{
 					reference.Target{
-						Addr:     addr,
-						ScopeId:  ref.cons.Address.ScopeId,
-						RangePtr: vars[0].SourceRange().Ptr(),
-						Name:     ref.cons.Name,
+						Addr:           addr,
+						ScopeId:        ref.cons.Address.ScopeId,
+						RangePtr:       vars[0].SourceRange().Ptr(),
+						Name:           ref.cons.Name,
+						RootBlockRange: rootBlockRange,
 					},
 				}
 			}
@@ -104,10 +111,11 @@ func (ref Reference) ReferenceTargets(ctx context.Context, _ *TargetContext) ref
 
 		return reference.Targets{
 			reference.Target{
-				Addr:     addr,
-				ScopeId:  ref.cons.Address.ScopeId,
-				RangePtr: traversal.SourceRange().Ptr(),
-				Name:     ref.cons.Name,
+				Addr:           addr,
+				ScopeId:        ref.cons.Address.ScopeId,
+				RangePtr:       traversal.SourceRange().Ptr(),
+				Name:           ref.cons.Name,
+				RootBlockRange: rootBlockRange,
 			},
 		}
 	}

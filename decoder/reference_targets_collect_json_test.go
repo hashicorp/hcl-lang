@@ -626,6 +626,19 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 							Byte:   47,
 						},
 					},
+					RootBlockRange: &hcl.Range{
+						Filename: "test.tf.json",
+						Start: hcl.Pos{
+							Line:   4,
+							Column: 15,
+							Byte:   46,
+						},
+						End: hcl.Pos{
+							Line:   4,
+							Column: 16,
+							Byte:   47,
+						},
+					},
 				},
 			},
 		},
@@ -756,6 +769,19 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 							Byte:   47,
 						},
 					},
+					RootBlockRange: &hcl.Range{
+						Filename: "test.tf.json",
+						Start: hcl.Pos{
+							Line:   4,
+							Column: 15,
+							Byte:   46,
+						},
+						End: hcl.Pos{
+							Line:   4,
+							Column: 16,
+							Byte:   47,
+						},
+					},
 				},
 			},
 		},
@@ -825,6 +851,19 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 						},
 					},
 					DefRangePtr: &hcl.Range{
+						Filename: "test.tf.json",
+						Start: hcl.Pos{
+							Line:   4,
+							Column: 15,
+							Byte:   46,
+						},
+						End: hcl.Pos{
+							Line:   4,
+							Column: 16,
+							Byte:   47,
+						},
+					},
+					RootBlockRange: &hcl.Range{
 						Filename: "test.tf.json",
 						Start: hcl.Pos{
 							Line:   4,
@@ -919,6 +958,19 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 							Byte:   47,
 						},
 					},
+					RootBlockRange: &hcl.Range{
+						Filename: "test.tf.json",
+						Start: hcl.Pos{
+							Line:   4,
+							Column: 15,
+							Byte:   46,
+						},
+						End: hcl.Pos{
+							Line:   4,
+							Column: 16,
+							Byte:   47,
+						},
+					},
 				},
 			},
 		},
@@ -1000,6 +1052,19 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 							Byte:   31,
 						},
 					},
+					RootBlockRange: &hcl.Range{
+						Filename: "test.tf.json",
+						Start: hcl.Pos{
+							Line:   3,
+							Column: 13,
+							Byte:   30,
+						},
+						End: hcl.Pos{
+							Line:   3,
+							Column: 14,
+							Byte:   31,
+						},
+					},
 				},
 				{
 					Addr: lang.Address{
@@ -1023,6 +1088,19 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 						},
 					},
 					DefRangePtr: &hcl.Range{
+						Filename: "test.tf.json",
+						Start: hcl.Pos{
+							Line:   7,
+							Column: 14,
+							Byte:   101,
+						},
+						End: hcl.Pos{
+							Line:   7,
+							Column: 15,
+							Byte:   102,
+						},
+					},
+					RootBlockRange: &hcl.Range{
 						Filename: "test.tf.json",
 						Start: hcl.Pos{
 							Line:   7,
@@ -1145,6 +1223,19 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 							Byte:   30,
 						},
 					},
+					RootBlockRange: &hcl.Range{
+						Filename: "test.tf.json",
+						Start: hcl.Pos{
+							Line:   3,
+							Column: 12,
+							Byte:   29,
+						},
+						End: hcl.Pos{
+							Line:   3,
+							Column: 13,
+							Byte:   30,
+						},
+					},
 					NestedTargets: reference.Targets{
 						{
 							Addr: lang.Address{
@@ -1176,6 +1267,19 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 									Line:   4,
 									Column: 13,
 									Byte:   43,
+								},
+							},
+							RootBlockRange: &hcl.Range{
+								Filename: "test.tf.json",
+								Start: hcl.Pos{
+									Line:   3,
+									Column: 12,
+									Byte:   29,
+								},
+								End: hcl.Pos{
+									Line:   3,
+									Column: 13,
+									Byte:   30,
 								},
 							},
 						},
@@ -1211,6 +1315,19 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 									Byte:   171,
 								},
 							},
+							RootBlockRange: &hcl.Range{
+								Filename: "test.tf.json",
+								Start: hcl.Pos{
+									Line:   3,
+									Column: 12,
+									Byte:   29,
+								},
+								End: hcl.Pos{
+									Line:   3,
+									Column: 13,
+									Byte:   30,
+								},
+							},
 							NestedTargets: reference.Targets{
 								{
 									Addr: lang.Address{
@@ -1224,6 +1341,19 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 										End:      hcl.Pos{Line: 10, Column: 27, Byte: 180},
 									},
 									Type: cty.String,
+									RootBlockRange: &hcl.Range{
+										Filename: "test.tf.json",
+										Start: hcl.Pos{
+											Line:   3,
+											Column: 12,
+											Byte:   29,
+										},
+										End: hcl.Pos{
+											Line:   3,
+											Column: 13,
+											Byte:   30,
+										},
+									},
 								},
 								{
 									Addr: lang.Address{
@@ -1237,6 +1367,19 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 										End:      hcl.Pos{Line: 10, Column: 34, Byte: 187},
 									},
 									Type: cty.String,
+									RootBlockRange: &hcl.Range{
+										Filename: "test.tf.json",
+										Start: hcl.Pos{
+											Line:   3,
+											Column: 12,
+											Byte:   29,
+										},
+										End: hcl.Pos{
+											Line:   3,
+											Column: 13,
+											Byte:   30,
+										},
+									},
 								},
 							},
 						},
@@ -1272,6 +1415,19 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 									Byte:   94,
 								},
 							},
+							RootBlockRange: &hcl.Range{
+								Filename: "test.tf.json",
+								Start: hcl.Pos{
+									Line:   3,
+									Column: 12,
+									Byte:   29,
+								},
+								End: hcl.Pos{
+									Line:   3,
+									Column: 13,
+									Byte:   30,
+								},
+							},
 							NestedTargets: reference.Targets{
 								{
 									Addr: lang.Address{
@@ -1288,6 +1444,19 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 										Filename: "test.tf.json",
 										Start:    hcl.Pos{Line: 7, Column: 9, Byte: 106},
 										End:      hcl.Pos{Line: 7, Column: 14, Byte: 111},
+									},
+									RootBlockRange: &hcl.Range{
+										Filename: "test.tf.json",
+										Start: hcl.Pos{
+											Line:   3,
+											Column: 12,
+											Byte:   29,
+										},
+										End: hcl.Pos{
+											Line:   3,
+											Column: 13,
+											Byte:   30,
+										},
 									},
 									Type: cty.String,
 								},
@@ -1306,6 +1475,19 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 										Filename: "test.tf.json",
 										Start:    hcl.Pos{Line: 8, Column: 9, Byte: 130},
 										End:      hcl.Pos{Line: 8, Column: 14, Byte: 135},
+									},
+									RootBlockRange: &hcl.Range{
+										Filename: "test.tf.json",
+										Start: hcl.Pos{
+											Line:   3,
+											Column: 12,
+											Byte:   29,
+										},
+										End: hcl.Pos{
+											Line:   3,
+											Column: 13,
+											Byte:   30,
+										},
 									},
 									Type: cty.String,
 								},
@@ -1343,6 +1525,19 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 									Byte:   61,
 								},
 							},
+							RootBlockRange: &hcl.Range{
+								Filename: "test.tf.json",
+								Start: hcl.Pos{
+									Line:   3,
+									Column: 12,
+									Byte:   29,
+								},
+								End: hcl.Pos{
+									Line:   3,
+									Column: 13,
+									Byte:   30,
+								},
+							},
 						},
 						{
 							Addr: lang.Address{
@@ -1378,6 +1573,19 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 									Byte:   207,
 								},
 							},
+							RootBlockRange: &hcl.Range{
+								Filename: "test.tf.json",
+								Start: hcl.Pos{
+									Line:   3,
+									Column: 12,
+									Byte:   29,
+								},
+								End: hcl.Pos{
+									Line:   3,
+									Column: 13,
+									Byte:   30,
+								},
+							},
 							NestedTargets: reference.Targets{
 								{
 									Addr: lang.Address{
@@ -1394,6 +1602,19 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 										Filename: "test.tf.json",
 										Start:    hcl.Pos{Line: 12, Column: 9, Byte: 219},
 										End:      hcl.Pos{Line: 12, Column: 21, Byte: 231},
+									},
+									RootBlockRange: &hcl.Range{
+										Filename: "test.tf.json",
+										Start: hcl.Pos{
+											Line:   3,
+											Column: 12,
+											Byte:   29,
+										},
+										End: hcl.Pos{
+											Line:   3,
+											Column: 13,
+											Byte:   30,
+										},
 									},
 									Type: cty.String,
 								},
@@ -1508,6 +1729,19 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 						},
 					},
 					DefRangePtr: &hcl.Range{
+						Filename: "test.tf.json",
+						Start: hcl.Pos{
+							Line:   3,
+							Column: 12,
+							Byte:   29,
+						},
+						End: hcl.Pos{
+							Line:   3,
+							Column: 13,
+							Byte:   30,
+						},
+					},
+					RootBlockRange: &hcl.Range{
 						Filename: "test.tf.json",
 						Start: hcl.Pos{
 							Line:   3,
@@ -1642,6 +1876,19 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 							Byte:   30,
 						},
 					},
+					RootBlockRange: &hcl.Range{
+						Filename: "test.tf.json",
+						Start: hcl.Pos{
+							Line:   3,
+							Column: 12,
+							Byte:   29,
+						},
+						End: hcl.Pos{
+							Line:   3,
+							Column: 13,
+							Byte:   30,
+						},
+					},
 					NestedTargets: reference.Targets{
 						{
 							Addr: lang.Address{
@@ -1673,6 +1920,19 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 									Line:   4,
 									Column: 13,
 									Byte:   43,
+								},
+							},
+							RootBlockRange: &hcl.Range{
+								Filename: "test.tf.json",
+								Start: hcl.Pos{
+									Line:   3,
+									Column: 12,
+									Byte:   29,
+								},
+								End: hcl.Pos{
+									Line:   3,
+									Column: 13,
+									Byte:   30,
 								},
 							},
 						},
@@ -1708,6 +1968,19 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 									Byte:   95,
 								},
 							},
+							RootBlockRange: &hcl.Range{
+								Filename: "test.tf.json",
+								Start: hcl.Pos{
+									Line:   3,
+									Column: 12,
+									Byte:   29,
+								},
+								End: hcl.Pos{
+									Line:   3,
+									Column: 13,
+									Byte:   30,
+								},
+							},
 							NestedTargets: reference.Targets{
 								{
 									Addr: lang.Address{
@@ -1719,6 +1992,19 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 										Filename: "test.tf.json",
 										Start:    hcl.Pos{Line: 6, Column: 21, Byte: 98},
 										End:      hcl.Pos{Line: 6, Column: 26, Byte: 103},
+									},
+									RootBlockRange: &hcl.Range{
+										Filename: "test.tf.json",
+										Start: hcl.Pos{
+											Line:   3,
+											Column: 12,
+											Byte:   29,
+										},
+										End: hcl.Pos{
+											Line:   3,
+											Column: 13,
+											Byte:   30,
+										},
 									},
 									Type: cty.String,
 								},
@@ -1732,6 +2018,19 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 										Filename: "test.tf.json",
 										Start:    hcl.Pos{Line: 6, Column: 28, Byte: 105},
 										End:      hcl.Pos{Line: 6, Column: 33, Byte: 110},
+									},
+									RootBlockRange: &hcl.Range{
+										Filename: "test.tf.json",
+										Start: hcl.Pos{
+											Line:   3,
+											Column: 12,
+											Byte:   29,
+										},
+										End: hcl.Pos{
+											Line:   3,
+											Column: 13,
+											Byte:   30,
+										},
 									},
 									Type: cty.String,
 								},
@@ -1769,6 +2068,19 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 									Byte:   129,
 								},
 							},
+							RootBlockRange: &hcl.Range{
+								Filename: "test.tf.json",
+								Start: hcl.Pos{
+									Line:   3,
+									Column: 12,
+									Byte:   29,
+								},
+								End: hcl.Pos{
+									Line:   3,
+									Column: 13,
+									Byte:   30,
+								},
+							},
 							NestedTargets: reference.Targets{
 								{
 									Addr: lang.Address{
@@ -1785,6 +2097,19 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 										Filename: "test.tf.json",
 										Start:    hcl.Pos{Line: 8, Column: 9, Byte: 141},
 										End:      hcl.Pos{Line: 8, Column: 14, Byte: 146},
+									},
+									RootBlockRange: &hcl.Range{
+										Filename: "test.tf.json",
+										Start: hcl.Pos{
+											Line:   3,
+											Column: 12,
+											Byte:   29,
+										},
+										End: hcl.Pos{
+											Line:   3,
+											Column: 13,
+											Byte:   30,
+										},
 									},
 									Type: cty.String,
 								},
@@ -1820,6 +2145,18 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 									Line:   5,
 									Column: 13,
 									Byte:   61,
+								}},
+							RootBlockRange: &hcl.Range{
+								Filename: "test.tf.json",
+								Start: hcl.Pos{
+									Line:   3,
+									Column: 12,
+									Byte:   29,
+								},
+								End: hcl.Pos{
+									Line:   3,
+									Column: 13,
+									Byte:   30,
 								},
 							},
 						},
@@ -1857,6 +2194,19 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 									Byte:   174,
 								},
 							},
+							RootBlockRange: &hcl.Range{
+								Filename: "test.tf.json",
+								Start: hcl.Pos{
+									Line:   3,
+									Column: 12,
+									Byte:   29,
+								},
+								End: hcl.Pos{
+									Line:   3,
+									Column: 13,
+									Byte:   30,
+								},
+							},
 							NestedTargets: reference.Targets{
 								{
 									Addr: lang.Address{
@@ -1873,6 +2223,19 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 										Filename: "test.tf.json",
 										Start:    hcl.Pos{Line: 11, Column: 9, Byte: 186},
 										End:      hcl.Pos{Line: 11, Column: 21, Byte: 198},
+									},
+									RootBlockRange: &hcl.Range{
+										Filename: "test.tf.json",
+										Start: hcl.Pos{
+											Line:   3,
+											Column: 12,
+											Byte:   29,
+										},
+										End: hcl.Pos{
+											Line:   3,
+											Column: 13,
+											Byte:   30,
+										},
 									},
 									Type: cty.String,
 								},
@@ -1971,6 +2334,19 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 							Byte:   30,
 						},
 					},
+					RootBlockRange: &hcl.Range{
+						Filename: "test.tf.json",
+						Start: hcl.Pos{
+							Line:   3,
+							Column: 12,
+							Byte:   29,
+						},
+						End: hcl.Pos{
+							Line:   3,
+							Column: 13,
+							Byte:   30,
+						},
+					},
 					Type: cty.Object(map[string]cty.Type{
 						"attr": cty.Number,
 						"objblock": cty.Object(map[string]cty.Type{
@@ -2011,6 +2387,19 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 									Byte:   43,
 								},
 							},
+							RootBlockRange: &hcl.Range{
+								Filename: "test.tf.json",
+								Start: hcl.Pos{
+									Line:   3,
+									Column: 12,
+									Byte:   29,
+								},
+								End: hcl.Pos{
+									Line:   3,
+									Column: 13,
+									Byte:   30,
+								},
+							},
 							Type: cty.Number,
 						},
 						{
@@ -2044,6 +2433,19 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 									Line:   5,
 									Column: 20,
 									Byte:   68,
+								},
+							},
+							RootBlockRange: &hcl.Range{
+								Filename: "test.tf.json",
+								Start: hcl.Pos{
+									Line:   3,
+									Column: 12,
+									Byte:   29,
+								},
+								End: hcl.Pos{
+									Line:   3,
+									Column: 13,
+									Byte:   30,
 								},
 							},
 							Type: cty.Object(map[string]cty.Type{
@@ -2084,6 +2486,19 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 											Byte:   83,
 										},
 									},
+									RootBlockRange: &hcl.Range{
+										Filename: "test.tf.json",
+										Start: hcl.Pos{
+											Line:   3,
+											Column: 12,
+											Byte:   29,
+										},
+										End: hcl.Pos{
+											Line:   3,
+											Column: 13,
+											Byte:   30,
+										},
+									},
 									Type: cty.Number,
 								},
 								{
@@ -2117,6 +2532,19 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 											Line:   7,
 											Column: 19,
 											Byte:   107,
+										},
+									},
+									RootBlockRange: &hcl.Range{
+										Filename: "test.tf.json",
+										Start: hcl.Pos{
+											Line:   3,
+											Column: 12,
+											Byte:   29,
+										},
+										End: hcl.Pos{
+											Line:   3,
+											Column: 13,
+											Byte:   30,
 										},
 									},
 									Type: cty.String,
@@ -2220,6 +2648,19 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 							Byte:   30,
 						},
 					},
+					RootBlockRange: &hcl.Range{
+						Filename: "test.tf.json",
+						Start: hcl.Pos{
+							Line:   3,
+							Column: 12,
+							Byte:   29,
+						},
+						End: hcl.Pos{
+							Line:   3,
+							Column: 13,
+							Byte:   30,
+						},
+					},
 					Type: cty.Object(map[string]cty.Type{
 						"attr": cty.Number,
 						"listblock": cty.List(cty.Object(map[string]cty.Type{
@@ -2260,6 +2701,19 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 									Byte:   43,
 								},
 							},
+							RootBlockRange: &hcl.Range{
+								Filename: "test.tf.json",
+								Start: hcl.Pos{
+									Line:   3,
+									Column: 12,
+									Byte:   29,
+								},
+								End: hcl.Pos{
+									Line:   3,
+									Column: 13,
+									Byte:   30,
+								},
+							},
 							Type: cty.Number,
 						},
 						{
@@ -2283,6 +2737,19 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 								},
 							},
 							DefRangePtr: nil,
+							RootBlockRange: &hcl.Range{
+								Filename: "test.tf.json",
+								Start: hcl.Pos{
+									Line:   3,
+									Column: 12,
+									Byte:   29,
+								},
+								End: hcl.Pos{
+									Line:   3,
+									Column: 13,
+									Byte:   30,
+								},
+							},
 							Type: cty.List(cty.Object(map[string]cty.Type{
 								"port":     cty.Number,
 								"protocol": cty.String,
@@ -2320,6 +2787,19 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 											Line:   5,
 											Column: 21,
 											Byte:   69,
+										},
+									},
+									RootBlockRange: &hcl.Range{
+										Filename: "test.tf.json",
+										Start: hcl.Pos{
+											Line:   3,
+											Column: 12,
+											Byte:   29,
+										},
+										End: hcl.Pos{
+											Line:   3,
+											Column: 13,
+											Byte:   30,
 										},
 									},
 									Type: cty.Object(map[string]cty.Type{
@@ -2361,6 +2841,19 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 													Byte:   84,
 												},
 											},
+											RootBlockRange: &hcl.Range{
+												Filename: "test.tf.json",
+												Start: hcl.Pos{
+													Line:   3,
+													Column: 12,
+													Byte:   29,
+												},
+												End: hcl.Pos{
+													Line:   3,
+													Column: 13,
+													Byte:   30,
+												},
+											},
 											Type: cty.Number,
 										},
 										{
@@ -2395,6 +2888,19 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 													Line:   7,
 													Column: 19,
 													Byte:   108,
+												},
+											},
+											RootBlockRange: &hcl.Range{
+												Filename: "test.tf.json",
+												Start: hcl.Pos{
+													Line:   3,
+													Column: 12,
+													Byte:   29,
+												},
+												End: hcl.Pos{
+													Line:   3,
+													Column: 13,
+													Byte:   30,
 												},
 											},
 											Type: cty.String,
@@ -2433,6 +2939,19 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 											Line:   9,
 											Column: 21,
 											Byte:   145,
+										},
+									},
+									RootBlockRange: &hcl.Range{
+										Filename: "test.tf.json",
+										Start: hcl.Pos{
+											Line:   3,
+											Column: 12,
+											Byte:   29,
+										},
+										End: hcl.Pos{
+											Line:   3,
+											Column: 13,
+											Byte:   30,
 										},
 									},
 									Type: cty.Object(map[string]cty.Type{
@@ -2474,6 +2993,19 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 													Byte:   160,
 												},
 											},
+											RootBlockRange: &hcl.Range{
+												Filename: "test.tf.json",
+												Start: hcl.Pos{
+													Line:   3,
+													Column: 12,
+													Byte:   29,
+												},
+												End: hcl.Pos{
+													Line:   3,
+													Column: 13,
+													Byte:   30,
+												},
+											},
 											Type: cty.Number,
 										},
 										{
@@ -2508,6 +3040,19 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 													Line:   11,
 													Column: 19,
 													Byte:   185,
+												},
+											},
+											RootBlockRange: &hcl.Range{
+												Filename: "test.tf.json",
+												Start: hcl.Pos{
+													Line:   3,
+													Column: 12,
+													Byte:   29,
+												},
+												End: hcl.Pos{
+													Line:   3,
+													Column: 13,
+													Byte:   30,
 												},
 											},
 											Type: cty.String,
@@ -2613,6 +3158,19 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 							Byte:   30,
 						},
 					},
+					RootBlockRange: &hcl.Range{
+						Filename: "test.tf.json",
+						Start: hcl.Pos{
+							Line:   3,
+							Column: 12,
+							Byte:   29,
+						},
+						End: hcl.Pos{
+							Line:   3,
+							Column: 13,
+							Byte:   30,
+						},
+					},
 					Type: cty.Object(map[string]cty.Type{
 						"attr": cty.Number,
 						"setblock": cty.Set(cty.Object(map[string]cty.Type{
@@ -2653,6 +3211,19 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 									Byte:   43,
 								},
 							},
+							RootBlockRange: &hcl.Range{
+								Filename: "test.tf.json",
+								Start: hcl.Pos{
+									Line:   3,
+									Column: 12,
+									Byte:   29,
+								},
+								End: hcl.Pos{
+									Line:   3,
+									Column: 13,
+									Byte:   30,
+								},
+							},
 							Type: cty.Number,
 						},
 						{
@@ -2679,6 +3250,19 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 								"port":     cty.Number,
 								"protocol": cty.String,
 							})),
+							RootBlockRange: &hcl.Range{
+								Filename: "test.tf.json",
+								Start: hcl.Pos{
+									Line:   3,
+									Column: 12,
+									Byte:   29,
+								},
+								End: hcl.Pos{
+									Line:   3,
+									Column: 13,
+									Byte:   30,
+								},
+							},
 						},
 					},
 				},
@@ -2779,6 +3363,19 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 							Byte:   31,
 						},
 					},
+					RootBlockRange: &hcl.Range{
+						Filename: "test.tf.json",
+						Start: hcl.Pos{
+							Line:   3,
+							Column: 12,
+							Byte:   30,
+						},
+						End: hcl.Pos{
+							Line:   3,
+							Column: 13,
+							Byte:   31,
+						},
+					},
 					Type: cty.Object(map[string]cty.Type{
 						"attr": cty.Number,
 						"listblock": cty.List(cty.Object(map[string]cty.Type{
@@ -2819,6 +3416,19 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 									Byte:   120,
 								},
 							},
+							RootBlockRange: &hcl.Range{
+								Filename: "test.tf.json",
+								Start: hcl.Pos{
+									Line:   3,
+									Column: 12,
+									Byte:   30,
+								},
+								End: hcl.Pos{
+									Line:   3,
+									Column: 13,
+									Byte:   31,
+								},
+							},
 							Type: cty.Number,
 						},
 						{
@@ -2842,6 +3452,19 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 								},
 							},
 							DefRangePtr: nil,
+							RootBlockRange: &hcl.Range{
+								Filename: "test.tf.json",
+								Start: hcl.Pos{
+									Line:   3,
+									Column: 12,
+									Byte:   30,
+								},
+								End: hcl.Pos{
+									Line:   3,
+									Column: 13,
+									Byte:   31,
+								},
+							},
 							Type: cty.List(cty.Object(map[string]cty.Type{
 								"port":     cty.Number,
 								"protocol": cty.String,
@@ -2879,6 +3502,19 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 											Line:   4,
 											Column: 21,
 											Byte:   52,
+										},
+									},
+									RootBlockRange: &hcl.Range{
+										Filename: "test.tf.json",
+										Start: hcl.Pos{
+											Line:   3,
+											Column: 12,
+											Byte:   30,
+										},
+										End: hcl.Pos{
+											Line:   3,
+											Column: 13,
+											Byte:   31,
 										},
 									},
 									Type: cty.Object(map[string]cty.Type{
@@ -2920,6 +3556,19 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 													Byte:   67,
 												},
 											},
+											RootBlockRange: &hcl.Range{
+												Filename: "test.tf.json",
+												Start: hcl.Pos{
+													Line:   3,
+													Column: 12,
+													Byte:   30,
+												},
+												End: hcl.Pos{
+													Line:   3,
+													Column: 13,
+													Byte:   31,
+												},
+											},
 											Type: cty.Number,
 										},
 										{
@@ -2954,6 +3603,19 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 													Line:   6,
 													Column: 19,
 													Byte:   91,
+												},
+											},
+											RootBlockRange: &hcl.Range{
+												Filename: "test.tf.json",
+												Start: hcl.Pos{
+													Line:   3,
+													Column: 12,
+													Byte:   30,
+												},
+												End: hcl.Pos{
+													Line:   3,
+													Column: 13,
+													Byte:   31,
 												},
 											},
 											Type: cty.String,
@@ -2992,6 +3654,19 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 											Line:   9,
 											Column: 21,
 											Byte:   146,
+										},
+									},
+									RootBlockRange: &hcl.Range{
+										Filename: "test.tf.json",
+										Start: hcl.Pos{
+											Line:   3,
+											Column: 12,
+											Byte:   30,
+										},
+										End: hcl.Pos{
+											Line:   3,
+											Column: 13,
+											Byte:   31,
 										},
 									},
 									Type: cty.Object(map[string]cty.Type{
@@ -3033,6 +3708,19 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 													Byte:   161,
 												},
 											},
+											RootBlockRange: &hcl.Range{
+												Filename: "test.tf.json",
+												Start: hcl.Pos{
+													Line:   3,
+													Column: 12,
+													Byte:   30,
+												},
+												End: hcl.Pos{
+													Line:   3,
+													Column: 13,
+													Byte:   31,
+												},
+											},
 											Type: cty.Number,
 										},
 										{
@@ -3067,6 +3755,19 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 													Line:   11,
 													Column: 19,
 													Byte:   186,
+												},
+											},
+											RootBlockRange: &hcl.Range{
+												Filename: "test.tf.json",
+												Start: hcl.Pos{
+													Line:   3,
+													Column: 12,
+													Byte:   30,
+												},
+												End: hcl.Pos{
+													Line:   3,
+													Column: 13,
+													Byte:   31,
 												},
 											},
 											Type: cty.String,
@@ -3176,6 +3877,19 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 							Byte:   35,
 						},
 					},
+					RootBlockRange: &hcl.Range{
+						Filename: "test.tf.json",
+						Start: hcl.Pos{
+							Line:   3,
+							Column: 12,
+							Byte:   34,
+						},
+						End: hcl.Pos{
+							Line:   3,
+							Column: 13,
+							Byte:   35,
+						},
+					},
 					Type: cty.Object(map[string]cty.Type{
 						"attr": cty.Number,
 						"listener": cty.Map(cty.Object(map[string]cty.Type{
@@ -3216,6 +3930,19 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 									Byte:   48,
 								},
 							},
+							RootBlockRange: &hcl.Range{
+								Filename: "test.tf.json",
+								Start: hcl.Pos{
+									Line:   3,
+									Column: 12,
+									Byte:   34,
+								},
+								End: hcl.Pos{
+									Line:   3,
+									Column: 13,
+									Byte:   35,
+								},
+							},
 							Type: cty.Number,
 						},
 						{
@@ -3239,6 +3966,19 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 								},
 							},
 							DefRangePtr: nil,
+							RootBlockRange: &hcl.Range{
+								Filename: "test.tf.json",
+								Start: hcl.Pos{
+									Line:   3,
+									Column: 12,
+									Byte:   34,
+								},
+								End: hcl.Pos{
+									Line:   3,
+									Column: 13,
+									Byte:   35,
+								},
+							},
 							Type: cty.Map(cty.Object(map[string]cty.Type{
 								"port":     cty.Number,
 								"protocol": cty.String,
@@ -3282,6 +4022,19 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 											Byte:   91,
 										},
 									},
+									RootBlockRange: &hcl.Range{
+										Filename: "test.tf.json",
+										Start: hcl.Pos{
+											Line:   3,
+											Column: 12,
+											Byte:   34,
+										},
+										End: hcl.Pos{
+											Line:   3,
+											Column: 13,
+											Byte:   35,
+										},
+									},
 									NestedTargets: reference.Targets{
 										{
 											Addr: lang.Address{
@@ -3315,6 +4068,19 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 													Line:   7,
 													Column: 17,
 													Byte:   108,
+												},
+											},
+											RootBlockRange: &hcl.Range{
+												Filename: "test.tf.json",
+												Start: hcl.Pos{
+													Line:   3,
+													Column: 12,
+													Byte:   34,
+												},
+												End: hcl.Pos{
+													Line:   3,
+													Column: 13,
+													Byte:   35,
 												},
 											},
 											Type: cty.Number,
@@ -3351,6 +4117,19 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 													Line:   8,
 													Column: 21,
 													Byte:   134,
+												},
+											},
+											RootBlockRange: &hcl.Range{
+												Filename: "test.tf.json",
+												Start: hcl.Pos{
+													Line:   3,
+													Column: 12,
+													Byte:   34,
+												},
+												End: hcl.Pos{
+													Line:   3,
+													Column: 13,
+													Byte:   35,
 												},
 											},
 											Type: cty.String,
@@ -3395,6 +4174,19 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 											Byte:   171,
 										},
 									},
+									RootBlockRange: &hcl.Range{
+										Filename: "test.tf.json",
+										Start: hcl.Pos{
+											Line:   3,
+											Column: 12,
+											Byte:   34,
+										},
+										End: hcl.Pos{
+											Line:   3,
+											Column: 13,
+											Byte:   35,
+										},
+									},
 									NestedTargets: reference.Targets{
 										{
 											Addr: lang.Address{
@@ -3430,6 +4222,19 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 													Byte:   188,
 												},
 											},
+											RootBlockRange: &hcl.Range{
+												Filename: "test.tf.json",
+												Start: hcl.Pos{
+													Line:   3,
+													Column: 12,
+													Byte:   34,
+												},
+												End: hcl.Pos{
+													Line:   3,
+													Column: 13,
+													Byte:   35,
+												},
+											},
 											Type: cty.Number,
 										},
 										{
@@ -3451,6 +4256,19 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 													Line:   12,
 													Column: 9,
 													Byte:   202,
+												},
+											},
+											RootBlockRange: &hcl.Range{
+												Filename: "test.tf.json",
+												Start: hcl.Pos{
+													Line:   3,
+													Column: 12,
+													Byte:   34,
+												},
+												End: hcl.Pos{
+													Line:   3,
+													Column: 13,
+													Byte:   35,
 												},
 											},
 											Type: cty.String,
@@ -3561,6 +4379,19 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 							Byte:   30,
 						},
 					},
+					RootBlockRange: &hcl.Range{
+						Filename: "test.tf.json",
+						Start: hcl.Pos{
+							Line:   3,
+							Column: 12,
+							Byte:   29,
+						},
+						End: hcl.Pos{
+							Line:   3,
+							Column: 13,
+							Byte:   30,
+						},
+					},
 				},
 			},
 		},
@@ -3610,6 +4441,19 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 						},
 					},
 					DefRangePtr: &hcl.Range{
+						Filename: "test.tf.json",
+						Start: hcl.Pos{
+							Line:   3,
+							Column: 13,
+							Byte:   30,
+						},
+						End: hcl.Pos{
+							Line:   3,
+							Column: 14,
+							Byte:   31,
+						},
+					},
+					RootBlockRange: &hcl.Range{
 						Filename: "test.tf.json",
 						Start: hcl.Pos{
 							Line:   3,
@@ -3693,6 +4537,19 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 							Byte:   31,
 						},
 					},
+					RootBlockRange: &hcl.Range{
+						Filename: "test.tf.json",
+						Start: hcl.Pos{
+							Line:   3,
+							Column: 13,
+							Byte:   30,
+						},
+						End: hcl.Pos{
+							Line:   3,
+							Column: 14,
+							Byte:   31,
+						},
+					},
 				},
 			},
 		},
@@ -3756,6 +4613,19 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 						},
 					},
 					DefRangePtr: &hcl.Range{
+						Filename: "test.tf.json",
+						Start: hcl.Pos{
+							Line:   3,
+							Column: 13,
+							Byte:   30,
+						},
+						End: hcl.Pos{
+							Line:   3,
+							Column: 14,
+							Byte:   31,
+						},
+					},
+					RootBlockRange: &hcl.Range{
 						Filename: "test.tf.json",
 						Start: hcl.Pos{
 							Line:   3,
@@ -3844,6 +4714,19 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 							Byte:   31,
 						},
 					},
+					RootBlockRange: &hcl.Range{
+						Filename: "test.tf.json",
+						Start: hcl.Pos{
+							Line:   3,
+							Column: 13,
+							Byte:   30,
+						},
+						End: hcl.Pos{
+							Line:   3,
+							Column: 14,
+							Byte:   31,
+						},
+					},
 				},
 			},
 		},
@@ -3916,6 +4799,19 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 							Byte:   29,
 						},
 					},
+					RootBlockRange: &hcl.Range{
+						Filename: "test.tf.json",
+						Start: hcl.Pos{
+							Line:   3,
+							Column: 13,
+							Byte:   28,
+						},
+						End: hcl.Pos{
+							Line:   3,
+							Column: 14,
+							Byte:   29,
+						},
+					},
 				},
 				{
 					Addr: lang.Address{
@@ -3938,6 +4834,19 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 						},
 					},
 					DefRangePtr: &hcl.Range{
+						Filename: "test.tf.json",
+						Start: hcl.Pos{
+							Line:   3,
+							Column: 13,
+							Byte:   28,
+						},
+						End: hcl.Pos{
+							Line:   3,
+							Column: 14,
+							Byte:   29,
+						},
+					},
+					RootBlockRange: &hcl.Range{
 						Filename: "test.tf.json",
 						Start: hcl.Pos{
 							Line:   3,
@@ -3997,6 +4906,19 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 						},
 					},
 					DefRangePtr: &hcl.Range{
+						Filename: "test.tf.json",
+						Start: hcl.Pos{
+							Line:   3,
+							Column: 13,
+							Byte:   27,
+						},
+						End: hcl.Pos{
+							Line:   3,
+							Column: 14,
+							Byte:   28,
+						},
+					},
+					RootBlockRange: &hcl.Range{
 						Filename: "test.tf.json",
 						Start: hcl.Pos{
 							Line:   3,
@@ -4095,6 +5017,19 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 							Byte:   29,
 						},
 					},
+					RootBlockRange: &hcl.Range{
+						Filename: "test.tf.json",
+						Start: hcl.Pos{
+							Line:   3,
+							Column: 13,
+							Byte:   28,
+						},
+						End: hcl.Pos{
+							Line:   3,
+							Column: 14,
+							Byte:   29,
+						},
+					},
 					NestedTargets: reference.Targets{
 						{
 							Addr: lang.Address{
@@ -4127,6 +5062,19 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 									Line:   4,
 									Column: 13,
 									Byte:   42,
+								},
+							},
+							RootBlockRange: &hcl.Range{
+								Filename: "test.tf.json",
+								Start: hcl.Pos{
+									Line:   3,
+									Column: 13,
+									Byte:   28,
+								},
+								End: hcl.Pos{
+									Line:   3,
+									Column: 14,
+									Byte:   29,
 								},
 							},
 						},
@@ -4225,6 +5173,19 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 							Byte:   29,
 						},
 					},
+					RootBlockRange: &hcl.Range{
+						Filename: "test.tf.json",
+						Start: hcl.Pos{
+							Line:   2,
+							Column: 13,
+							Byte:   14,
+						},
+						End: hcl.Pos{
+							Line:   2,
+							Column: 14,
+							Byte:   15,
+						},
+					},
 					NestedTargets: reference.Targets{
 						{
 							Addr: lang.Address{
@@ -4242,6 +5203,19 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 								Filename: "test.tf.json",
 								Start:    hcl.Pos{Line: 4, Column: 7, Byte: 39},
 								End:      hcl.Pos{Line: 4, Column: 14, Byte: 46},
+							},
+							RootBlockRange: &hcl.Range{
+								Filename: "test.tf.json",
+								Start: hcl.Pos{
+									Line:   2,
+									Column: 13,
+									Byte:   14,
+								},
+								End: hcl.Pos{
+									Line:   2,
+									Column: 14,
+									Byte:   15,
+								},
 							},
 							Type: cty.Object(map[string]cty.Type{
 								"attr": cty.String,
@@ -4266,6 +5240,19 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 										Start:    hcl.Pos{Line: 5, Column: 9, Byte: 58},
 										End:      hcl.Pos{Line: 5, Column: 15, Byte: 64},
 									},
+									RootBlockRange: &hcl.Range{
+										Filename: "test.tf.json",
+										Start: hcl.Pos{
+											Line:   2,
+											Column: 13,
+											Byte:   14,
+										},
+										End: hcl.Pos{
+											Line:   2,
+											Column: 14,
+											Byte:   15,
+										},
+									},
 								},
 							},
 						},
@@ -4285,6 +5272,19 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 								Filename: "test.tf.json",
 								Start:    hcl.Pos{Line: 13, Column: 7, Byte: 184},
 								End:      hcl.Pos{Line: 13, Column: 15, Byte: 192},
+							},
+							RootBlockRange: &hcl.Range{
+								Filename: "test.tf.json",
+								Start: hcl.Pos{
+									Line:   2,
+									Column: 13,
+									Byte:   14,
+								},
+								End: hcl.Pos{
+									Line:   2,
+									Column: 14,
+									Byte:   15,
+								},
 							},
 							Type: cty.Object(map[string]cty.Type{
 								"attr": cty.String,
@@ -4309,6 +5309,19 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 										Start:    hcl.Pos{Line: 14, Column: 9, Byte: 204},
 										End:      hcl.Pos{Line: 14, Column: 15, Byte: 210},
 									},
+									RootBlockRange: &hcl.Range{
+										Filename: "test.tf.json",
+										Start: hcl.Pos{
+											Line:   2,
+											Column: 13,
+											Byte:   14,
+										},
+										End: hcl.Pos{
+											Line:   2,
+											Column: 14,
+											Byte:   15,
+										},
+									},
 								},
 							},
 						},
@@ -4328,6 +5341,19 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 								Filename: "test.tf.json",
 								Start:    hcl.Pos{Line: 7, Column: 7, Byte: 87},
 								End:      hcl.Pos{Line: 7, Column: 15, Byte: 95},
+							},
+							RootBlockRange: &hcl.Range{
+								Filename: "test.tf.json",
+								Start: hcl.Pos{
+									Line:   2,
+									Column: 13,
+									Byte:   14,
+								},
+								End: hcl.Pos{
+									Line:   2,
+									Column: 14,
+									Byte:   15,
+								},
 							},
 							Type: cty.Object(map[string]cty.Type{
 								"attr": cty.String,
@@ -4352,6 +5378,19 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 										Start:    hcl.Pos{Line: 8, Column: 9, Byte: 107},
 										End:      hcl.Pos{Line: 8, Column: 15, Byte: 113},
 									},
+									RootBlockRange: &hcl.Range{
+										Filename: "test.tf.json",
+										Start: hcl.Pos{
+											Line:   2,
+											Column: 13,
+											Byte:   14,
+										},
+										End: hcl.Pos{
+											Line:   2,
+											Column: 14,
+											Byte:   15,
+										},
+									},
 								},
 							},
 						},
@@ -4371,6 +5410,19 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 								Filename: "test.tf.json",
 								Start:    hcl.Pos{Line: 10, Column: 7, Byte: 136},
 								End:      hcl.Pos{Line: 10, Column: 14, Byte: 143},
+							},
+							RootBlockRange: &hcl.Range{
+								Filename: "test.tf.json",
+								Start: hcl.Pos{
+									Line:   2,
+									Column: 13,
+									Byte:   14,
+								},
+								End: hcl.Pos{
+									Line:   2,
+									Column: 14,
+									Byte:   15,
+								},
 							},
 							Type: cty.Object(map[string]cty.Type{
 								"attr": cty.String,
@@ -4394,6 +5446,19 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 										Filename: "test.tf.json",
 										Start:    hcl.Pos{Line: 11, Column: 9, Byte: 155},
 										End:      hcl.Pos{Line: 11, Column: 15, Byte: 161},
+									},
+									RootBlockRange: &hcl.Range{
+										Filename: "test.tf.json",
+										Start: hcl.Pos{
+											Line:   2,
+											Column: 13,
+											Byte:   14,
+										},
+										End: hcl.Pos{
+											Line:   2,
+											Column: 14,
+											Byte:   15,
+										},
 									},
 								},
 							},

@@ -77,7 +77,8 @@ func TestCollectReferenceTargets_hcl(t *testing.T) {
 							Byte:   8,
 						},
 					},
-					NestedTargets: reference.Targets{},
+					RootBlockRange: nil,
+					NestedTargets:  reference.Targets{},
 				},
 			},
 		},
@@ -664,6 +665,19 @@ func TestCollectReferenceTargets_hcl(t *testing.T) {
 							Byte:   22,
 						},
 					},
+					RootBlockRange: &hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   1,
+							Column: 1,
+							Byte:   0,
+						},
+						End: hcl.Pos{
+							Line:   1,
+							Column: 23,
+							Byte:   22,
+						},
+					},
 				},
 			},
 		},
@@ -794,6 +808,11 @@ func TestCollectReferenceTargets_hcl(t *testing.T) {
 							Byte:   22,
 						},
 					},
+					RootBlockRange: &hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
+						End:      hcl.Pos{Line: 1, Column: 23, Byte: 22},
+					},
 				},
 			},
 		},
@@ -870,6 +889,11 @@ func TestCollectReferenceTargets_hcl(t *testing.T) {
 							Byte:   22,
 						},
 					},
+					RootBlockRange: &hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
+						End:      hcl.Pos{Line: 1, Column: 23, Byte: 22},
+					},
 				},
 			},
 		},
@@ -934,6 +958,19 @@ func TestCollectReferenceTargets_hcl(t *testing.T) {
 						},
 					},
 					DefRangePtr: &hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   1,
+							Column: 1,
+							Byte:   0,
+						},
+						End: hcl.Pos{
+							Line:   1,
+							Column: 23,
+							Byte:   22,
+						},
+					},
+					RootBlockRange: &hcl.Range{
 						Filename: "test.tf",
 						Start: hcl.Pos{
 							Line:   1,
@@ -1023,6 +1060,19 @@ listener "https" {
 							Byte:   15,
 						},
 					},
+					RootBlockRange: &hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   1,
+							Column: 1,
+							Byte:   0,
+						},
+						End: hcl.Pos{
+							Line:   1,
+							Column: 16,
+							Byte:   15,
+						},
+					},
 				},
 				{
 					Addr: lang.Address{
@@ -1046,6 +1096,19 @@ listener "https" {
 						},
 					},
 					DefRangePtr: &hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   5,
+							Column: 1,
+							Byte:   56,
+						},
+						End: hcl.Pos{
+							Line:   5,
+							Column: 17,
+							Byte:   72,
+						},
+					},
+					RootBlockRange: &hcl.Range{
 						Filename: "test.tf",
 						Start: hcl.Pos{
 							Line:   5,
@@ -1164,6 +1227,19 @@ listener "https" {
 							Byte:   14,
 						},
 					},
+					RootBlockRange: &hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   1,
+							Column: 1,
+							Byte:   0,
+						},
+						End: hcl.Pos{
+							Line:   1,
+							Column: 15,
+							Byte:   14,
+						},
+					},
 					NestedTargets: reference.Targets{
 						{
 							Addr: lang.Address{
@@ -1195,6 +1271,19 @@ listener "https" {
 									Line:   2,
 									Column: 7,
 									Byte:   23,
+								},
+							},
+							RootBlockRange: &hcl.Range{
+								Filename: "test.tf",
+								Start: hcl.Pos{
+									Line:   1,
+									Column: 1,
+									Byte:   0,
+								},
+								End: hcl.Pos{
+									Line:   1,
+									Column: 15,
+									Byte:   14,
 								},
 							},
 						},
@@ -1230,6 +1319,19 @@ listener "https" {
 									Byte:   118,
 								},
 							},
+							RootBlockRange: &hcl.Range{
+								Filename: "test.tf",
+								Start: hcl.Pos{
+									Line:   1,
+									Column: 1,
+									Byte:   0,
+								},
+								End: hcl.Pos{
+									Line:   1,
+									Column: 15,
+									Byte:   14,
+								},
+							},
 							NestedTargets: reference.Targets{
 								{
 									Addr: lang.Address{
@@ -1251,6 +1353,19 @@ listener "https" {
 											Byte:   128,
 										},
 									},
+									RootBlockRange: &hcl.Range{
+										Filename: "test.tf",
+										Start: hcl.Pos{
+											Line:   1,
+											Column: 1,
+											Byte:   0,
+										},
+										End: hcl.Pos{
+											Line:   1,
+											Column: 15,
+											Byte:   14,
+										},
+									},
 								},
 								{
 									Addr: lang.Address{
@@ -1270,6 +1385,19 @@ listener "https" {
 											Line:   8,
 											Column: 29,
 											Byte:   135,
+										},
+									},
+									RootBlockRange: &hcl.Range{
+										Filename: "test.tf",
+										Start: hcl.Pos{
+											Line:   1,
+											Column: 1,
+											Byte:   0,
+										},
+										End: hcl.Pos{
+											Line:   1,
+											Column: 15,
+											Byte:   14,
 										},
 									},
 								},
@@ -1307,6 +1435,19 @@ listener "https" {
 									Byte:   62,
 								},
 							},
+							RootBlockRange: &hcl.Range{
+								Filename: "test.tf",
+								Start: hcl.Pos{
+									Line:   1,
+									Column: 1,
+									Byte:   0,
+								},
+								End: hcl.Pos{
+									Line:   1,
+									Column: 15,
+									Byte:   14,
+								},
+							},
 							NestedTargets: reference.Targets{
 								{
 									Addr: lang.Address{
@@ -1341,6 +1482,19 @@ listener "https" {
 											Byte:   74,
 										},
 									},
+									RootBlockRange: &hcl.Range{
+										Filename: "test.tf",
+										Start: hcl.Pos{
+											Line:   1,
+											Column: 1,
+											Byte:   0,
+										},
+										End: hcl.Pos{
+											Line:   1,
+											Column: 15,
+											Byte:   14,
+										},
+									},
 								},
 								{
 									Addr: lang.Address{
@@ -1373,6 +1527,19 @@ listener "https" {
 											Line:   6,
 											Column: 8,
 											Byte:   92,
+										},
+									},
+									RootBlockRange: &hcl.Range{
+										Filename: "test.tf",
+										Start: hcl.Pos{
+											Line:   1,
+											Column: 1,
+											Byte:   0,
+										},
+										End: hcl.Pos{
+											Line:   1,
+											Column: 15,
+											Byte:   14,
 										},
 									},
 								},
@@ -1410,6 +1577,19 @@ listener "https" {
 									Byte:   35,
 								},
 							},
+							RootBlockRange: &hcl.Range{
+								Filename: "test.tf",
+								Start: hcl.Pos{
+									Line:   1,
+									Column: 1,
+									Byte:   0,
+								},
+								End: hcl.Pos{
+									Line:   1,
+									Column: 15,
+									Byte:   14,
+								},
+							},
 						},
 						{
 							Addr: lang.Address{
@@ -1445,6 +1625,19 @@ listener "https" {
 									Byte:   148,
 								},
 							},
+							RootBlockRange: &hcl.Range{
+								Filename: "test.tf",
+								Start: hcl.Pos{
+									Line:   1,
+									Column: 1,
+									Byte:   0,
+								},
+								End: hcl.Pos{
+									Line:   1,
+									Column: 15,
+									Byte:   14,
+								},
+							},
 							NestedTargets: reference.Targets{
 								{
 									Addr: lang.Address{
@@ -1477,6 +1670,19 @@ listener "https" {
 											Line:   10,
 											Column: 15,
 											Byte:   167,
+										},
+									},
+									RootBlockRange: &hcl.Range{
+										Filename: "test.tf",
+										Start: hcl.Pos{
+											Line:   1,
+											Column: 1,
+											Byte:   0,
+										},
+										End: hcl.Pos{
+											Line:   1,
+											Column: 15,
+											Byte:   14,
 										},
 									},
 								},
@@ -1587,6 +1793,19 @@ provider "test" {
 						},
 					},
 					DefRangePtr: &hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   1,
+							Column: 1,
+							Byte:   0,
+						},
+						End: hcl.Pos{
+							Line:   1,
+							Column: 15,
+							Byte:   14,
+						},
+					},
+					RootBlockRange: &hcl.Range{
 						Filename: "test.tf",
 						Start: hcl.Pos{
 							Line:   1,
@@ -1717,6 +1936,19 @@ provider "test" {
 							Byte:   14,
 						},
 					},
+					RootBlockRange: &hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   1,
+							Column: 1,
+							Byte:   0,
+						},
+						End: hcl.Pos{
+							Line:   1,
+							Column: 15,
+							Byte:   14,
+						},
+					},
 					NestedTargets: reference.Targets{
 						{
 							Addr: lang.Address{
@@ -1748,6 +1980,19 @@ provider "test" {
 									Line:   2,
 									Column: 7,
 									Byte:   23,
+								},
+							},
+							RootBlockRange: &hcl.Range{
+								Filename: "test.tf",
+								Start: hcl.Pos{
+									Line:   1,
+									Column: 1,
+									Byte:   0,
+								},
+								End: hcl.Pos{
+									Line:   1,
+									Column: 15,
+									Byte:   14,
 								},
 							},
 						},
@@ -1783,6 +2028,19 @@ provider "test" {
 									Byte:   63,
 								},
 							},
+							RootBlockRange: &hcl.Range{
+								Filename: "test.tf",
+								Start: hcl.Pos{
+									Line:   1,
+									Column: 1,
+									Byte:   0,
+								},
+								End: hcl.Pos{
+									Line:   1,
+									Column: 15,
+									Byte:   14,
+								},
+							},
 							NestedTargets: reference.Targets{
 								{
 									Addr: lang.Address{
@@ -1804,6 +2062,19 @@ provider "test" {
 											Byte:   72,
 										},
 									},
+									RootBlockRange: &hcl.Range{
+										Filename: "test.tf",
+										Start: hcl.Pos{
+											Line:   1,
+											Column: 1,
+											Byte:   0,
+										},
+										End: hcl.Pos{
+											Line:   1,
+											Column: 15,
+											Byte:   14,
+										},
+									},
 								},
 								{
 									Addr: lang.Address{
@@ -1823,6 +2094,19 @@ provider "test" {
 											Line:   4,
 											Column: 28,
 											Byte:   79,
+										},
+									},
+									RootBlockRange: &hcl.Range{
+										Filename: "test.tf",
+										Start: hcl.Pos{
+											Line:   1,
+											Column: 1,
+											Byte:   0,
+										},
+										End: hcl.Pos{
+											Line:   1,
+											Column: 15,
+											Byte:   14,
 										},
 									},
 								},
@@ -1860,6 +2144,19 @@ provider "test" {
 									Byte:   91,
 								},
 							},
+							RootBlockRange: &hcl.Range{
+								Filename: "test.tf",
+								Start: hcl.Pos{
+									Line:   1,
+									Column: 1,
+									Byte:   0,
+								},
+								End: hcl.Pos{
+									Line:   1,
+									Column: 15,
+									Byte:   14,
+								},
+							},
 							NestedTargets: reference.Targets{
 								{
 									Addr: lang.Address{
@@ -1892,6 +2189,19 @@ provider "test" {
 											Line:   6,
 											Column: 8,
 											Byte:   103,
+										},
+									},
+									RootBlockRange: &hcl.Range{
+										Filename: "test.tf",
+										Start: hcl.Pos{
+											Line:   1,
+											Column: 1,
+											Byte:   0,
+										},
+										End: hcl.Pos{
+											Line:   1,
+											Column: 15,
+											Byte:   14,
 										},
 									},
 								},
@@ -1929,6 +2239,19 @@ provider "test" {
 									Byte:   35,
 								},
 							},
+							RootBlockRange: &hcl.Range{
+								Filename: "test.tf",
+								Start: hcl.Pos{
+									Line:   1,
+									Column: 1,
+									Byte:   0,
+								},
+								End: hcl.Pos{
+									Line:   1,
+									Column: 15,
+									Byte:   14,
+								},
+							},
 						},
 						{
 							Addr: lang.Address{
@@ -1964,6 +2287,19 @@ provider "test" {
 									Byte:   121,
 								},
 							},
+							RootBlockRange: &hcl.Range{
+								Filename: "test.tf",
+								Start: hcl.Pos{
+									Line:   1,
+									Column: 1,
+									Byte:   0,
+								},
+								End: hcl.Pos{
+									Line:   1,
+									Column: 15,
+									Byte:   14,
+								},
+							},
 							NestedTargets: reference.Targets{
 								{
 									Addr: lang.Address{
@@ -1996,6 +2332,19 @@ provider "test" {
 											Line:   9,
 											Column: 15,
 											Byte:   140,
+										},
+									},
+									RootBlockRange: &hcl.Range{
+										Filename: "test.tf",
+										Start: hcl.Pos{
+											Line:   1,
+											Column: 1,
+											Byte:   0,
+										},
+										End: hcl.Pos{
+											Line:   1,
+											Column: 15,
+											Byte:   14,
 										},
 									},
 								},
@@ -2090,6 +2439,19 @@ provider "test" {
 							Byte:   15,
 						},
 					},
+					RootBlockRange: &hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   1,
+							Column: 1,
+							Byte:   0,
+						},
+						End: hcl.Pos{
+							Line:   1,
+							Column: 16,
+							Byte:   15,
+						},
+					},
 					Type: cty.Object(map[string]cty.Type{
 						"attr": cty.Number,
 						"objblock": cty.Object(map[string]cty.Type{
@@ -2130,6 +2492,19 @@ provider "test" {
 									Byte:   24,
 								},
 							},
+							RootBlockRange: &hcl.Range{
+								Filename: "test.tf",
+								Start: hcl.Pos{
+									Line:   1,
+									Column: 1,
+									Byte:   0,
+								},
+								End: hcl.Pos{
+									Line:   1,
+									Column: 16,
+									Byte:   15,
+								},
+							},
 							Type: cty.Number,
 						},
 						{
@@ -2163,6 +2538,19 @@ provider "test" {
 									Line:   3,
 									Column: 11,
 									Byte:   40,
+								},
+							},
+							RootBlockRange: &hcl.Range{
+								Filename: "test.tf",
+								Start: hcl.Pos{
+									Line:   1,
+									Column: 1,
+									Byte:   0,
+								},
+								End: hcl.Pos{
+									Line:   1,
+									Column: 16,
+									Byte:   15,
 								},
 							},
 							Type: cty.Object(map[string]cty.Type{
@@ -2203,6 +2591,19 @@ provider "test" {
 											Byte:   51,
 										},
 									},
+									RootBlockRange: &hcl.Range{
+										Filename: "test.tf",
+										Start: hcl.Pos{
+											Line:   1,
+											Column: 1,
+											Byte:   0,
+										},
+										End: hcl.Pos{
+											Line:   1,
+											Column: 16,
+											Byte:   15,
+										},
+									},
 									Type: cty.Number,
 								},
 								{
@@ -2236,6 +2637,19 @@ provider "test" {
 											Line:   5,
 											Column: 13,
 											Byte:   69,
+										},
+									},
+									RootBlockRange: &hcl.Range{
+										Filename: "test.tf",
+										Start: hcl.Pos{
+											Line:   1,
+											Column: 1,
+											Byte:   0,
+										},
+										End: hcl.Pos{
+											Line:   1,
+											Column: 16,
+											Byte:   15,
 										},
 									},
 									Type: cty.String,
@@ -2335,6 +2749,19 @@ provider "test" {
 							Byte:   15,
 						},
 					},
+					RootBlockRange: &hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   1,
+							Column: 1,
+							Byte:   0,
+						},
+						End: hcl.Pos{
+							Line:   1,
+							Column: 16,
+							Byte:   15,
+						},
+					},
 					Type: cty.Object(map[string]cty.Type{
 						"attr": cty.Number,
 						"listblock": cty.List(cty.Object(map[string]cty.Type{
@@ -2375,6 +2802,19 @@ provider "test" {
 									Byte:   24,
 								},
 							},
+							RootBlockRange: &hcl.Range{
+								Filename: "test.tf",
+								Start: hcl.Pos{
+									Line:   1,
+									Column: 1,
+									Byte:   0,
+								},
+								End: hcl.Pos{
+									Line:   1,
+									Column: 16,
+									Byte:   15,
+								},
+							},
 							Type: cty.Number,
 						},
 						{
@@ -2398,6 +2838,19 @@ provider "test" {
 								},
 							},
 							DefRangePtr: nil,
+							RootBlockRange: &hcl.Range{
+								Filename: "test.tf",
+								Start: hcl.Pos{
+									Line:   1,
+									Column: 1,
+									Byte:   0,
+								},
+								End: hcl.Pos{
+									Line:   1,
+									Column: 16,
+									Byte:   15,
+								},
+							},
 							Type: cty.List(cty.Object(map[string]cty.Type{
 								"port":     cty.Number,
 								"protocol": cty.String,
@@ -2435,6 +2888,19 @@ provider "test" {
 											Line:   3,
 											Column: 12,
 											Byte:   41,
+										},
+									},
+									RootBlockRange: &hcl.Range{
+										Filename: "test.tf",
+										Start: hcl.Pos{
+											Line:   1,
+											Column: 1,
+											Byte:   0,
+										},
+										End: hcl.Pos{
+											Line:   1,
+											Column: 16,
+											Byte:   15,
 										},
 									},
 									Type: cty.Object(map[string]cty.Type{
@@ -2476,6 +2942,19 @@ provider "test" {
 													Byte:   52,
 												},
 											},
+											RootBlockRange: &hcl.Range{
+												Filename: "test.tf",
+												Start: hcl.Pos{
+													Line:   1,
+													Column: 1,
+													Byte:   0,
+												},
+												End: hcl.Pos{
+													Line:   1,
+													Column: 16,
+													Byte:   15,
+												},
+											},
 											Type: cty.Number,
 										},
 										{
@@ -2510,6 +2989,19 @@ provider "test" {
 													Line:   5,
 													Column: 13,
 													Byte:   70,
+												},
+											},
+											RootBlockRange: &hcl.Range{
+												Filename: "test.tf",
+												Start: hcl.Pos{
+													Line:   1,
+													Column: 1,
+													Byte:   0,
+												},
+												End: hcl.Pos{
+													Line:   1,
+													Column: 16,
+													Byte:   15,
 												},
 											},
 											Type: cty.String,
@@ -2548,6 +3040,19 @@ provider "test" {
 											Line:   7,
 											Column: 12,
 											Byte:   94,
+										},
+									},
+									RootBlockRange: &hcl.Range{
+										Filename: "test.tf",
+										Start: hcl.Pos{
+											Line:   1,
+											Column: 1,
+											Byte:   0,
+										},
+										End: hcl.Pos{
+											Line:   1,
+											Column: 16,
+											Byte:   15,
 										},
 									},
 									Type: cty.Object(map[string]cty.Type{
@@ -2589,6 +3094,19 @@ provider "test" {
 													Byte:   105,
 												},
 											},
+											RootBlockRange: &hcl.Range{
+												Filename: "test.tf",
+												Start: hcl.Pos{
+													Line:   1,
+													Column: 1,
+													Byte:   0,
+												},
+												End: hcl.Pos{
+													Line:   1,
+													Column: 16,
+													Byte:   15,
+												},
+											},
 											Type: cty.Number,
 										},
 										{
@@ -2623,6 +3141,19 @@ provider "test" {
 													Line:   9,
 													Column: 13,
 													Byte:   124,
+												},
+											},
+											RootBlockRange: &hcl.Range{
+												Filename: "test.tf",
+												Start: hcl.Pos{
+													Line:   1,
+													Column: 1,
+													Byte:   0,
+												},
+												End: hcl.Pos{
+													Line:   1,
+													Column: 16,
+													Byte:   15,
 												},
 											},
 											Type: cty.String,
@@ -2724,6 +3255,19 @@ provider "test" {
 							Byte:   15,
 						},
 					},
+					RootBlockRange: &hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   1,
+							Column: 1,
+							Byte:   0,
+						},
+						End: hcl.Pos{
+							Line:   1,
+							Column: 16,
+							Byte:   15,
+						},
+					},
 					Type: cty.Object(map[string]cty.Type{
 						"attr": cty.Number,
 						"setblock": cty.Set(cty.Object(map[string]cty.Type{
@@ -2764,6 +3308,19 @@ provider "test" {
 									Byte:   24,
 								},
 							},
+							RootBlockRange: &hcl.Range{
+								Filename: "test.tf",
+								Start: hcl.Pos{
+									Line:   1,
+									Column: 1,
+									Byte:   0,
+								},
+								End: hcl.Pos{
+									Line:   1,
+									Column: 16,
+									Byte:   15,
+								},
+							},
 							Type: cty.Number,
 						},
 						{
@@ -2784,6 +3341,19 @@ provider "test" {
 									Line:   10,
 									Column: 4,
 									Byte:   134,
+								},
+							},
+							RootBlockRange: &hcl.Range{
+								Filename: "test.tf",
+								Start: hcl.Pos{
+									Line:   1,
+									Column: 1,
+									Byte:   0,
+								},
+								End: hcl.Pos{
+									Line:   1,
+									Column: 16,
+									Byte:   15,
 								},
 							},
 							Type: cty.Set(cty.Object(map[string]cty.Type{
@@ -2886,6 +3456,19 @@ provider "test" {
 							Byte:   15,
 						},
 					},
+					RootBlockRange: &hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   1,
+							Column: 1,
+							Byte:   0,
+						},
+						End: hcl.Pos{
+							Line:   1,
+							Column: 16,
+							Byte:   15,
+						},
+					},
 					Type: cty.Object(map[string]cty.Type{
 						"attr": cty.Number,
 						"listblock": cty.List(cty.Object(map[string]cty.Type{
@@ -2926,6 +3509,19 @@ provider "test" {
 									Byte:   77,
 								},
 							},
+							RootBlockRange: &hcl.Range{
+								Filename: "test.tf",
+								Start: hcl.Pos{
+									Line:   1,
+									Column: 1,
+									Byte:   0,
+								},
+								End: hcl.Pos{
+									Line:   1,
+									Column: 16,
+									Byte:   15,
+								},
+							},
 							Type: cty.Number,
 						},
 						{
@@ -2949,6 +3545,19 @@ provider "test" {
 								},
 							},
 							DefRangePtr: nil,
+							RootBlockRange: &hcl.Range{
+								Filename: "test.tf",
+								Start: hcl.Pos{
+									Line:   1,
+									Column: 1,
+									Byte:   0,
+								},
+								End: hcl.Pos{
+									Line:   1,
+									Column: 16,
+									Byte:   15,
+								},
+							},
 							Type: cty.List(cty.Object(map[string]cty.Type{
 								"port":     cty.Number,
 								"protocol": cty.String,
@@ -2986,6 +3595,19 @@ provider "test" {
 											Line:   2,
 											Column: 12,
 											Byte:   29,
+										},
+									},
+									RootBlockRange: &hcl.Range{
+										Filename: "test.tf",
+										Start: hcl.Pos{
+											Line:   1,
+											Column: 1,
+											Byte:   0,
+										},
+										End: hcl.Pos{
+											Line:   1,
+											Column: 16,
+											Byte:   15,
 										},
 									},
 									Type: cty.Object(map[string]cty.Type{
@@ -3027,6 +3649,19 @@ provider "test" {
 													Byte:   40,
 												},
 											},
+											RootBlockRange: &hcl.Range{
+												Filename: "test.tf",
+												Start: hcl.Pos{
+													Line:   1,
+													Column: 1,
+													Byte:   0,
+												},
+												End: hcl.Pos{
+													Line:   1,
+													Column: 16,
+													Byte:   15,
+												},
+											},
 											Type: cty.Number,
 										},
 										{
@@ -3061,6 +3696,19 @@ provider "test" {
 													Line:   4,
 													Column: 13,
 													Byte:   58,
+												},
+											},
+											RootBlockRange: &hcl.Range{
+												Filename: "test.tf",
+												Start: hcl.Pos{
+													Line:   1,
+													Column: 1,
+													Byte:   0,
+												},
+												End: hcl.Pos{
+													Line:   1,
+													Column: 16,
+													Byte:   15,
 												},
 											},
 											Type: cty.String,
@@ -3099,6 +3747,19 @@ provider "test" {
 											Line:   7,
 											Column: 12,
 											Byte:   94,
+										},
+									},
+									RootBlockRange: &hcl.Range{
+										Filename: "test.tf",
+										Start: hcl.Pos{
+											Line:   1,
+											Column: 1,
+											Byte:   0,
+										},
+										End: hcl.Pos{
+											Line:   1,
+											Column: 16,
+											Byte:   15,
 										},
 									},
 									Type: cty.Object(map[string]cty.Type{
@@ -3140,6 +3801,19 @@ provider "test" {
 													Byte:   105,
 												},
 											},
+											RootBlockRange: &hcl.Range{
+												Filename: "test.tf",
+												Start: hcl.Pos{
+													Line:   1,
+													Column: 1,
+													Byte:   0,
+												},
+												End: hcl.Pos{
+													Line:   1,
+													Column: 16,
+													Byte:   15,
+												},
+											},
 											Type: cty.Number,
 										},
 										{
@@ -3174,6 +3848,19 @@ provider "test" {
 													Line:   9,
 													Column: 13,
 													Byte:   124,
+												},
+											},
+											RootBlockRange: &hcl.Range{
+												Filename: "test.tf",
+												Start: hcl.Pos{
+													Line:   1,
+													Column: 1,
+													Byte:   0,
+												},
+												End: hcl.Pos{
+													Line:   1,
+													Column: 16,
+													Byte:   15,
 												},
 											},
 											Type: cty.String,
@@ -3277,6 +3964,19 @@ provider "test" {
 							Byte:   19,
 						},
 					},
+					RootBlockRange: &hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   1,
+							Column: 1,
+							Byte:   0,
+						},
+						End: hcl.Pos{
+							Line:   1,
+							Column: 20,
+							Byte:   19,
+						},
+					},
 					Type: cty.Object(map[string]cty.Type{
 						"attr": cty.Number,
 						"listener": cty.Map(cty.Object(map[string]cty.Type{
@@ -3317,6 +4017,19 @@ provider "test" {
 									Byte:   28,
 								},
 							},
+							RootBlockRange: &hcl.Range{
+								Filename: "test.tf",
+								Start: hcl.Pos{
+									Line:   1,
+									Column: 1,
+									Byte:   0,
+								},
+								End: hcl.Pos{
+									Line:   1,
+									Column: 20,
+									Byte:   19,
+								},
+							},
 							Type: cty.Number,
 						},
 						{
@@ -3340,6 +4053,19 @@ provider "test" {
 								},
 							},
 							DefRangePtr: nil,
+							RootBlockRange: &hcl.Range{
+								Filename: "test.tf",
+								Start: hcl.Pos{
+									Line:   1,
+									Column: 1,
+									Byte:   0,
+								},
+								End: hcl.Pos{
+									Line:   1,
+									Column: 20,
+									Byte:   19,
+								},
+							},
 							Type: cty.Map(cty.Object(map[string]cty.Type{
 								"port":     cty.Number,
 								"protocol": cty.String,
@@ -3383,6 +4109,19 @@ provider "test" {
 											Byte:   51,
 										},
 									},
+									RootBlockRange: &hcl.Range{
+										Filename: "test.tf",
+										Start: hcl.Pos{
+											Line:   1,
+											Column: 1,
+											Byte:   0,
+										},
+										End: hcl.Pos{
+											Line:   1,
+											Column: 20,
+											Byte:   19,
+										},
+									},
 									NestedTargets: reference.Targets{
 										{
 											Addr: lang.Address{
@@ -3416,6 +4155,19 @@ provider "test" {
 													Line:   4,
 													Column: 9,
 													Byte:   62,
+												},
+											},
+											RootBlockRange: &hcl.Range{
+												Filename: "test.tf",
+												Start: hcl.Pos{
+													Line:   1,
+													Column: 1,
+													Byte:   0,
+												},
+												End: hcl.Pos{
+													Line:   1,
+													Column: 20,
+													Byte:   19,
 												},
 											},
 											Type: cty.Number,
@@ -3452,6 +4204,19 @@ provider "test" {
 													Line:   5,
 													Column: 13,
 													Byte:   80,
+												},
+											},
+											RootBlockRange: &hcl.Range{
+												Filename: "test.tf",
+												Start: hcl.Pos{
+													Line:   1,
+													Column: 1,
+													Byte:   0,
+												},
+												End: hcl.Pos{
+													Line:   1,
+													Column: 20,
+													Byte:   19,
 												},
 											},
 											Type: cty.String,
@@ -3496,6 +4261,19 @@ provider "test" {
 											Byte:   111,
 										},
 									},
+									RootBlockRange: &hcl.Range{
+										Filename: "test.tf",
+										Start: hcl.Pos{
+											Line:   1,
+											Column: 1,
+											Byte:   0,
+										},
+										End: hcl.Pos{
+											Line:   1,
+											Column: 20,
+											Byte:   19,
+										},
+									},
 									NestedTargets: reference.Targets{
 										{
 											Addr: lang.Address{
@@ -3531,6 +4309,19 @@ provider "test" {
 													Byte:   122,
 												},
 											},
+											RootBlockRange: &hcl.Range{
+												Filename: "test.tf",
+												Start: hcl.Pos{
+													Line:   1,
+													Column: 1,
+													Byte:   0,
+												},
+												End: hcl.Pos{
+													Line:   1,
+													Column: 20,
+													Byte:   19,
+												},
+											},
 											Type: cty.Number,
 										},
 										{
@@ -3552,6 +4343,20 @@ provider "test" {
 													Line:   7,
 													Column: 20,
 													Byte:   112,
+												},
+											},
+											DefRangePtr: nil,
+											RootBlockRange: &hcl.Range{
+												Filename: "test.tf",
+												Start: hcl.Pos{
+													Line:   1,
+													Column: 1,
+													Byte:   0,
+												},
+												End: hcl.Pos{
+													Line:   1,
+													Column: 20,
+													Byte:   19,
 												},
 											},
 											Type: cty.String,
@@ -3668,6 +4473,19 @@ provider "test" {
 							Byte:   14,
 						},
 					},
+					RootBlockRange: &hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   1,
+							Column: 1,
+							Byte:   0,
+						},
+						End: hcl.Pos{
+							Line:   1,
+							Column: 15,
+							Byte:   14,
+						},
+					},
 				},
 			},
 		},
@@ -3715,6 +4533,19 @@ provider "test" {
 						},
 					},
 					DefRangePtr: &hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   1,
+							Column: 1,
+							Byte:   0,
+						},
+						End: hcl.Pos{
+							Line:   1,
+							Column: 16,
+							Byte:   15,
+						},
+					},
+					RootBlockRange: &hcl.Range{
 						Filename: "test.tf",
 						Start: hcl.Pos{
 							Line:   1,
@@ -3794,6 +4625,19 @@ provider "test" {
 							Byte:   15,
 						},
 					},
+					RootBlockRange: &hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   1,
+							Column: 1,
+							Byte:   0,
+						},
+						End: hcl.Pos{
+							Line:   1,
+							Column: 16,
+							Byte:   15,
+						},
+					},
 				},
 			},
 		},
@@ -3853,6 +4697,19 @@ provider "test" {
 						},
 					},
 					DefRangePtr: &hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   1,
+							Column: 1,
+							Byte:   0,
+						},
+						End: hcl.Pos{
+							Line:   1,
+							Column: 16,
+							Byte:   15,
+						},
+					},
+					RootBlockRange: &hcl.Range{
 						Filename: "test.tf",
 						Start: hcl.Pos{
 							Line:   1,
@@ -3939,6 +4796,19 @@ provider "test" {
 							Byte:   15,
 						},
 					},
+					RootBlockRange: &hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   1,
+							Column: 1,
+							Byte:   0,
+						},
+						End: hcl.Pos{
+							Line:   1,
+							Column: 16,
+							Byte:   15,
+						},
+					},
 				},
 			},
 		},
@@ -4008,6 +4878,19 @@ provider "test" {
 							Byte:   13,
 						},
 					},
+					RootBlockRange: &hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   1,
+							Column: 1,
+							Byte:   0,
+						},
+						End: hcl.Pos{
+							Line:   1,
+							Column: 14,
+							Byte:   13,
+						},
+					},
 				},
 				{
 					Addr: lang.Address{
@@ -4030,6 +4913,19 @@ provider "test" {
 						},
 					},
 					DefRangePtr: &hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   1,
+							Column: 1,
+							Byte:   0,
+						},
+						End: hcl.Pos{
+							Line:   1,
+							Column: 14,
+							Byte:   13,
+						},
+					},
+					RootBlockRange: &hcl.Range{
 						Filename: "test.tf",
 						Start: hcl.Pos{
 							Line:   1,
@@ -4102,6 +4998,19 @@ provider "test" {
 						},
 					},
 					Type: cty.DynamicPseudoType,
+					RootBlockRange: &hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   1,
+							Column: 1,
+							Byte:   0,
+						},
+						End: hcl.Pos{
+							Line:   1,
+							Column: 22,
+							Byte:   21,
+						},
+					},
 				},
 			},
 		},
@@ -4183,6 +5092,19 @@ module "different" {
 							Byte:   13,
 						},
 					},
+					RootBlockRange: &hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   1,
+							Column: 1,
+							Byte:   0,
+						},
+						End: hcl.Pos{
+							Line:   1,
+							Column: 14,
+							Byte:   13,
+						},
+					},
 					NestedTargets: reference.Targets{
 						{
 							Addr: lang.Address{
@@ -4215,6 +5137,19 @@ module "different" {
 									Line:   2,
 									Column: 7,
 									Byte:   22,
+								},
+							},
+							RootBlockRange: &hcl.Range{
+								Filename: "test.tf",
+								Start: hcl.Pos{
+									Line:   1,
+									Column: 1,
+									Byte:   0,
+								},
+								End: hcl.Pos{
+									Line:   1,
+									Column: 14,
+									Byte:   13,
 								},
 							},
 						},
@@ -4311,6 +5246,19 @@ module "different" {
 							Byte:   18,
 						},
 					},
+					RootBlockRange: &hcl.Range{
+						Filename: "test.tf",
+						Start: hcl.Pos{
+							Line:   1,
+							Column: 1,
+							Byte:   0,
+						},
+						End: hcl.Pos{
+							Line:   1,
+							Column: 7,
+							Byte:   6,
+						},
+					},
 					NestedTargets: reference.Targets{
 						{
 							Addr: lang.Address{
@@ -4348,6 +5296,19 @@ module "different" {
 									Byte:   32,
 								},
 							},
+							RootBlockRange: &hcl.Range{
+								Filename: "test.tf",
+								Start: hcl.Pos{
+									Line:   1,
+									Column: 1,
+									Byte:   0,
+								},
+								End: hcl.Pos{
+									Line:   1,
+									Column: 7,
+									Byte:   6,
+								},
+							},
 							NestedTargets: reference.Targets{
 								{
 									Addr: lang.Address{
@@ -4382,6 +5343,19 @@ module "different" {
 											Line:   4,
 											Column: 11,
 											Byte:   47,
+										},
+									},
+									RootBlockRange: &hcl.Range{
+										Filename: "test.tf",
+										Start: hcl.Pos{
+											Line:   1,
+											Column: 1,
+											Byte:   0,
+										},
+										End: hcl.Pos{
+											Line:   1,
+											Column: 7,
+											Byte:   6,
 										},
 									},
 								},
@@ -4423,6 +5397,19 @@ module "different" {
 									Byte:   151,
 								},
 							},
+							RootBlockRange: &hcl.Range{
+								Filename: "test.tf",
+								Start: hcl.Pos{
+									Line:   1,
+									Column: 1,
+									Byte:   0,
+								},
+								End: hcl.Pos{
+									Line:   1,
+									Column: 7,
+									Byte:   6,
+								},
+							},
 							NestedTargets: reference.Targets{
 								{
 									Addr: lang.Address{
@@ -4457,6 +5444,19 @@ module "different" {
 											Line:   13,
 											Column: 11,
 											Byte:   166,
+										},
+									},
+									RootBlockRange: &hcl.Range{
+										Filename: "test.tf",
+										Start: hcl.Pos{
+											Line:   1,
+											Column: 1,
+											Byte:   0,
+										},
+										End: hcl.Pos{
+											Line:   1,
+											Column: 7,
+											Byte:   6,
 										},
 									},
 								},
@@ -4498,6 +5498,19 @@ module "different" {
 									Byte:   72,
 								},
 							},
+							RootBlockRange: &hcl.Range{
+								Filename: "test.tf",
+								Start: hcl.Pos{
+									Line:   1,
+									Column: 1,
+									Byte:   0,
+								},
+								End: hcl.Pos{
+									Line:   1,
+									Column: 7,
+									Byte:   6,
+								},
+							},
 							NestedTargets: reference.Targets{
 								{
 									Addr: lang.Address{
@@ -4532,6 +5545,19 @@ module "different" {
 											Line:   7,
 											Column: 11,
 											Byte:   87,
+										},
+									},
+									RootBlockRange: &hcl.Range{
+										Filename: "test.tf",
+										Start: hcl.Pos{
+											Line:   1,
+											Column: 1,
+											Byte:   0,
+										},
+										End: hcl.Pos{
+											Line:   1,
+											Column: 7,
+											Byte:   6,
 										},
 									},
 								},
@@ -4573,6 +5599,19 @@ module "different" {
 									Byte:   111,
 								},
 							},
+							RootBlockRange: &hcl.Range{
+								Filename: "test.tf",
+								Start: hcl.Pos{
+									Line:   1,
+									Column: 1,
+									Byte:   0,
+								},
+								End: hcl.Pos{
+									Line:   1,
+									Column: 7,
+									Byte:   6,
+								},
+							},
 							NestedTargets: reference.Targets{
 								{
 									Addr: lang.Address{
@@ -4607,6 +5646,19 @@ module "different" {
 											Line:   10,
 											Column: 11,
 											Byte:   126,
+										},
+									},
+									RootBlockRange: &hcl.Range{
+										Filename: "test.tf",
+										Start: hcl.Pos{
+											Line:   1,
+											Column: 1,
+											Byte:   0,
+										},
+										End: hcl.Pos{
+											Line:   1,
+											Column: 7,
+											Byte:   6,
 										},
 									},
 								},
@@ -4684,6 +5736,11 @@ module "different" {
 						Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
 						End:      hcl.Pos{Line: 1, Column: 6, Byte: 5},
 					},
+					RootBlockRange: &hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
+						End:      hcl.Pos{Line: 1, Column: 6, Byte: 5},
+					},
 					Type: cty.Object(map[string]cty.Type{
 						"foo": cty.String,
 						"bar": cty.Number,
@@ -4698,6 +5755,11 @@ module "different" {
 								Filename: "test.tf",
 								Start:    hcl.Pos{Line: 1, Column: 9, Byte: 8},
 								End:      hcl.Pos{Line: 1, Column: 9, Byte: 8},
+							},
+							RootBlockRange: &hcl.Range{
+								Filename: "test.tf",
+								Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
+								End:      hcl.Pos{Line: 1, Column: 6, Byte: 5},
 							},
 							Type: cty.Number,
 						},
@@ -4715,6 +5777,11 @@ module "different" {
 								Filename: "test.tf",
 								Start:    hcl.Pos{Line: 1, Column: 9, Byte: 8},
 								End:      hcl.Pos{Line: 1, Column: 12, Byte: 11},
+							},
+							RootBlockRange: &hcl.Range{
+								Filename: "test.tf",
+								Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
+								End:      hcl.Pos{Line: 1, Column: 6, Byte: 5},
 							},
 							Type: cty.String,
 						},
@@ -4779,6 +5846,11 @@ module "different" {
 						Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
 						End:      hcl.Pos{Line: 1, Column: 15, Byte: 14},
 					},
+					RootBlockRange: &hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
+						End:      hcl.Pos{Line: 1, Column: 15, Byte: 14},
+					},
 					Type: cty.Object(map[string]cty.Type{
 						"attr_map": cty.Map(cty.String),
 					}),
@@ -4799,6 +5871,11 @@ module "different" {
 								Start:    hcl.Pos{Line: 2, Column: 3, Byte: 19},
 								End:      hcl.Pos{Line: 2, Column: 11, Byte: 27},
 							},
+							RootBlockRange: &hcl.Range{
+								Filename: "test.tf",
+								Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
+								End:      hcl.Pos{Line: 1, Column: 15, Byte: 14},
+							},
 							Type: cty.Map(cty.String),
 							NestedTargets: reference.Targets{
 								{
@@ -4817,6 +5894,11 @@ module "different" {
 										Filename: "test.tf",
 										Start:    hcl.Pos{Line: 3, Column: 5, Byte: 36},
 										End:      hcl.Pos{Line: 3, Column: 8, Byte: 39},
+									},
+									RootBlockRange: &hcl.Range{
+										Filename: "test.tf",
+										Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
+										End:      hcl.Pos{Line: 1, Column: 15, Byte: 14},
 									},
 									Type: cty.String,
 								},

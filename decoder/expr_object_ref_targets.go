@@ -43,6 +43,7 @@ func (obj Object) ReferenceTargets(ctx context.Context, targetCtx *TargetContext
 				RangePtr:               rangePtr,
 				DefRangePtr:            targetCtx.ParentDefRangePtr,
 				Type:                   cty.DynamicPseudoType,
+				RootBlockRange:         targetCtx.RootBlockRange,
 			},
 		}
 	}
@@ -164,6 +165,7 @@ func (obj Object) wholeObjectReferenceTargets(targetCtx *TargetContext, nestedTa
 				NestedTargets:          nestedTargets,
 				LocalAddr:              targetCtx.ParentLocalAddress,
 				TargetableFromRangePtr: targetCtx.TargetableFromRangePtr,
+				RootBlockRange:         targetCtx.RootBlockRange,
 			})
 		}
 	}
