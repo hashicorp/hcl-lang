@@ -54,6 +54,7 @@ func (lt LiteralType) ReferenceTargets(ctx context.Context, targetCtx *TargetCon
 				ScopeId:                targetCtx.ScopeId,
 				RangePtr:               rangePtr,
 				DefRangePtr:            targetCtx.ParentDefRangePtr,
+				RootBlockRange:         targetCtx.RootBlockRange,
 				Type:                   typ,
 			},
 		}

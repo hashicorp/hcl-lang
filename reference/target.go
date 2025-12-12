@@ -51,6 +51,11 @@ type Target struct {
 	// the editor near the middle of this range.
 	DefRangePtr *hcl.Range
 
+	// RootBlockRange represents the range of the root block that contains this target.
+	// This is useful for understanding the absolute root context of a target,
+	// similar to how it's tracked in ReferenceOrigins.
+	RootBlockRange *hcl.Range
+
 	Type        cty.Type
 	Name        string
 	Description lang.MarkupContent
@@ -86,6 +91,7 @@ func (ref Target) Copy() Target {
 		ScopeId:                ref.ScopeId,
 		RangePtr:               copyHclRangePtr(ref.RangePtr),
 		DefRangePtr:            copyHclRangePtr(ref.DefRangePtr),
+		RootBlockRange:         copyHclRangePtr(ref.RootBlockRange),
 		Type:                   ref.Type, // cty.Type is immutable by design
 		Name:                   ref.Name,
 		Description:            ref.Description,

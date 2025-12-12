@@ -88,6 +88,7 @@ func (list List) wholeListReferenceTargets(targetCtx *TargetContext, nestedTarge
 				NestedTargets:          nestedTargets,
 				LocalAddr:              targetCtx.ParentLocalAddress,
 				TargetableFromRangePtr: targetCtx.TargetableFromRangePtr,
+				RootBlockRange:         targetCtx.RootBlockRange,
 			})
 		}
 	}

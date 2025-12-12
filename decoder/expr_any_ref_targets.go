@@ -42,6 +42,7 @@ func (a Any) ReferenceTargets(ctx context.Context, targetCtx *TargetContext) ref
 				ScopeId:                targetCtx.ScopeId,
 				RangePtr:               rangePtr,
 				DefRangePtr:            targetCtx.ParentDefRangePtr,
+				RootBlockRange:         targetCtx.RootBlockRange,
 				Type:                   typ,
 			},
 		}

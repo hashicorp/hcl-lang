@@ -11,7 +11,8 @@ import (
 type ReferenceTarget struct {
 	OriginRange hcl.Range
 
-	Path        lang.Path
-	Range       hcl.Range
-	DefRangePtr *hcl.Range
+	Path           lang.Path
+	Range          hcl.Range
+	DefRangePtr    *hcl.Range
+	RootBlockRange *hcl.Range
 }

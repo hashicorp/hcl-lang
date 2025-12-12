@@ -574,6 +574,11 @@ func TestCollectRefTargets_exprTuple_implied_hcl(t *testing.T) {
 						Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
 						End:      hcl.Pos{Line: 1, Column: 4, Byte: 3},
 					},
+					RootBlockRange: &hcl.Range{
+						Filename: "test.hcl",
+						Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
+						End:      hcl.Pos{Line: 1, Column: 4, Byte: 3},
+					},
 					Type: cty.Object(map[string]cty.Type{
 						"attr": cty.Tuple([]cty.Type{cty.Bool}),
 					}),
@@ -588,6 +593,11 @@ func TestCollectRefTargets_exprTuple_implied_hcl(t *testing.T) {
 								Start:    hcl.Pos{Line: 1, Column: 5, Byte: 4},
 								End:      hcl.Pos{Line: 1, Column: 5, Byte: 4},
 							},
+							RootBlockRange: &hcl.Range{
+								Filename: "test.hcl",
+								Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
+								End:      hcl.Pos{Line: 1, Column: 4, Byte: 3},
+							},
 							Type: cty.Tuple([]cty.Type{cty.Bool}),
 							NestedTargets: reference.Targets{
 								{
@@ -600,6 +610,11 @@ func TestCollectRefTargets_exprTuple_implied_hcl(t *testing.T) {
 										Filename: "test.hcl",
 										Start:    hcl.Pos{Line: 1, Column: 5, Byte: 4},
 										End:      hcl.Pos{Line: 1, Column: 5, Byte: 4},
+									},
+									RootBlockRange: &hcl.Range{
+										Filename: "test.hcl",
+										Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
+										End:      hcl.Pos{Line: 1, Column: 4, Byte: 3},
 									},
 									Type: cty.Bool,
 								},
@@ -652,6 +667,11 @@ func TestCollectRefTargets_exprTuple_implied_hcl(t *testing.T) {
 						Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
 						End:      hcl.Pos{Line: 1, Column: 4, Byte: 3},
 					},
+					RootBlockRange: &hcl.Range{
+						Filename: "test.hcl",
+						Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
+						End:      hcl.Pos{Line: 1, Column: 4, Byte: 3},
+					},
 					Type: cty.Object(map[string]cty.Type{
 						"attr": cty.Tuple([]cty.Type{cty.Bool}),
 					}),
@@ -671,6 +691,11 @@ func TestCollectRefTargets_exprTuple_implied_hcl(t *testing.T) {
 								Start:    hcl.Pos{Line: 1, Column: 7, Byte: 6},
 								End:      hcl.Pos{Line: 1, Column: 11, Byte: 10},
 							},
+							RootBlockRange: &hcl.Range{
+								Filename: "test.hcl",
+								Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
+								End:      hcl.Pos{Line: 1, Column: 4, Byte: 3},
+							},
 							Type: cty.Tuple([]cty.Type{cty.Bool}),
 							NestedTargets: reference.Targets{
 								{
@@ -683,6 +708,11 @@ func TestCollectRefTargets_exprTuple_implied_hcl(t *testing.T) {
 										Filename: "test.hcl",
 										Start:    hcl.Pos{Line: 1, Column: 14, Byte: 13},
 										End:      hcl.Pos{Line: 1, Column: 14, Byte: 13},
+									},
+									RootBlockRange: &hcl.Range{
+										Filename: "test.hcl",
+										Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
+										End:      hcl.Pos{Line: 1, Column: 4, Byte: 3},
 									},
 									Type: cty.Bool,
 								},
@@ -732,6 +762,11 @@ func TestCollectRefTargets_exprTuple_implied_hcl(t *testing.T) {
 						End:      hcl.Pos{Line: 1, Column: 7, Byte: 6},
 					},
 					DefRangePtr: &hcl.Range{
+						Filename: "test.hcl",
+						Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
+						End:      hcl.Pos{Line: 1, Column: 4, Byte: 3},
+					},
+					RootBlockRange: &hcl.Range{
 						Filename: "test.hcl",
 						Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
 						End:      hcl.Pos{Line: 1, Column: 4, Byte: 3},
@@ -1216,6 +1251,11 @@ func TestCollectRefTargets_exprTuple_implied_json(t *testing.T) {
 						Start:    hcl.Pos{Line: 1, Column: 9, Byte: 8},
 						End:      hcl.Pos{Line: 1, Column: 10, Byte: 9},
 					},
+					RootBlockRange: &hcl.Range{
+						Filename: "test.hcl.json",
+						Start:    hcl.Pos{Line: 1, Column: 9, Byte: 8},
+						End:      hcl.Pos{Line: 1, Column: 10, Byte: 9},
+					},
 					Type: cty.Object(map[string]cty.Type{
 						"attr": cty.Tuple([]cty.Type{cty.Bool}),
 					}),
@@ -1230,6 +1270,11 @@ func TestCollectRefTargets_exprTuple_implied_json(t *testing.T) {
 								Start:    hcl.Pos{Line: 1, Column: 10, Byte: 9},
 								End:      hcl.Pos{Line: 1, Column: 10, Byte: 9},
 							},
+							RootBlockRange: &hcl.Range{
+								Filename: "test.hcl.json",
+								Start:    hcl.Pos{Line: 1, Column: 9, Byte: 8},
+								End:      hcl.Pos{Line: 1, Column: 10, Byte: 9},
+							},
 							Type: cty.Tuple([]cty.Type{cty.Bool}),
 							NestedTargets: reference.Targets{
 								{
@@ -1241,6 +1286,11 @@ func TestCollectRefTargets_exprTuple_implied_json(t *testing.T) {
 									RangePtr: &hcl.Range{
 										Filename: "test.hcl.json",
 										Start:    hcl.Pos{Line: 1, Column: 10, Byte: 9},
+										End:      hcl.Pos{Line: 1, Column: 10, Byte: 9},
+									},
+									RootBlockRange: &hcl.Range{
+										Filename: "test.hcl.json",
+										Start:    hcl.Pos{Line: 1, Column: 9, Byte: 8},
 										End:      hcl.Pos{Line: 1, Column: 10, Byte: 9},
 									},
 									Type: cty.Bool,
@@ -1294,6 +1344,11 @@ func TestCollectRefTargets_exprTuple_implied_json(t *testing.T) {
 						Start:    hcl.Pos{Line: 1, Column: 9, Byte: 8},
 						End:      hcl.Pos{Line: 1, Column: 10, Byte: 9},
 					},
+					RootBlockRange: &hcl.Range{
+						Filename: "test.hcl.json",
+						Start:    hcl.Pos{Line: 1, Column: 9, Byte: 8},
+						End:      hcl.Pos{Line: 1, Column: 10, Byte: 9},
+					},
 					Type: cty.Object(map[string]cty.Type{
 						"attr": cty.Tuple([]cty.Type{cty.Bool}),
 					}),
@@ -1313,6 +1368,11 @@ func TestCollectRefTargets_exprTuple_implied_json(t *testing.T) {
 								Start:    hcl.Pos{Line: 1, Column: 10, Byte: 9},
 								End:      hcl.Pos{Line: 1, Column: 16, Byte: 15},
 							},
+							RootBlockRange: &hcl.Range{
+								Filename: "test.hcl.json",
+								Start:    hcl.Pos{Line: 1, Column: 9, Byte: 8},
+								End:      hcl.Pos{Line: 1, Column: 10, Byte: 9},
+							},
 							Type: cty.Tuple([]cty.Type{cty.Bool}),
 							NestedTargets: reference.Targets{
 								{
@@ -1325,6 +1385,11 @@ func TestCollectRefTargets_exprTuple_implied_json(t *testing.T) {
 										Filename: "test.hcl.json",
 										Start:    hcl.Pos{Line: 1, Column: 18, Byte: 17},
 										End:      hcl.Pos{Line: 1, Column: 18, Byte: 17},
+									},
+									RootBlockRange: &hcl.Range{
+										Filename: "test.hcl.json",
+										Start:    hcl.Pos{Line: 1, Column: 9, Byte: 8},
+										End:      hcl.Pos{Line: 1, Column: 10, Byte: 9},
 									},
 									Type: cty.Bool,
 								},
@@ -1374,6 +1439,11 @@ func TestCollectRefTargets_exprTuple_implied_json(t *testing.T) {
 						End:      hcl.Pos{Line: 1, Column: 11, Byte: 10},
 					},
 					DefRangePtr: &hcl.Range{
+						Filename: "test.hcl.json",
+						Start:    hcl.Pos{Line: 1, Column: 9, Byte: 8},
+						End:      hcl.Pos{Line: 1, Column: 10, Byte: 9},
+					},
+					RootBlockRange: &hcl.Range{
 						Filename: "test.hcl.json",
 						Start:    hcl.Pos{Line: 1, Column: 9, Byte: 8},
 						End:      hcl.Pos{Line: 1, Column: 10, Byte: 9},

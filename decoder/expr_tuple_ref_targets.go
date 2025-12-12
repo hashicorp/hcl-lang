@@ -40,6 +40,7 @@ func (tuple Tuple) ReferenceTargets(ctx context.Context, targetCtx *TargetContex
 				RangePtr:               rangePtr,
 				DefRangePtr:            targetCtx.ParentDefRangePtr,
 				Type:                   cty.DynamicPseudoType,
+				RootBlockRange:         targetCtx.RootBlockRange,
 			},
 		}
 	}
@@ -122,6 +123,7 @@ func (tuple Tuple) wholeTupleReferenceTargets(targetCtx *TargetContext, nestedTa
 				NestedTargets:          nestedTargets,
 				LocalAddr:              targetCtx.ParentLocalAddress,
 				TargetableFromRangePtr: targetCtx.TargetableFromRangePtr,
+				RootBlockRange:         targetCtx.RootBlockRange,
 			})
 		}
 	}
