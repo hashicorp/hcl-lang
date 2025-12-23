@@ -31,22 +31,8 @@ func (d *Decoder) ReferenceOriginsTargetingPos(path lang.Path, file string, pos 
 	}
 
 	for _, target := range targets {
-		paths := d.pathReader.Paths(ctx)
-		for _, p := range paths {
-			pathCtx, err := d.pathReader.PathContext(p)
-			if err != nil {
-				continue
-			}
+		origins = append(origins, d.ReferenceOriginsByTarget(ctx, target, path)...)
 
-			rawOrigins := pathCtx.ReferenceOrigins.Match(p, target, path)
-			for _, origin := range rawOrigins {
-				origins = append(origins, ReferenceOrigin{
-					Path:           p,
-					Range:          origin.OriginRange(),
-					RootBlockRange: origin.RootBlockOriginRange(),
-				})
-			}
-		}
 	}
 
 	sort.SliceStable(origins, func(i, j int) bool {
@@ -59,6 +45,35 @@ func (d *Decoder) ReferenceOriginsTargetingPos(path lang.Path, file string, pos 
 		return origins[i].Range.Start.Byte < origins[j].Range.Start.Byte
 	})
 
+	return origins
+}
+
+func (d *Decoder) ReferenceOriginsByTarget(ctx context.Context, target reference.Target, targetPath lang.Path) ReferenceOrigins {
+	origins := make(ReferenceOrigins, 0)
+
+	paths := d.pathReader.Paths(ctx)
+	for _, p := range paths {
+		origins = append(origins, d.ReferenceOriginsByTargetInPath(ctx, target, p, targetPath)...)
+	}
+	return origins
+}
+
+func (d *Decoder) ReferenceOriginsByTargetInPath(ctx context.Context, target reference.Target, localPath, targetPath lang.Path) ReferenceOrigins {
+	origins := make(ReferenceOrigins, 0)
+
+	pathCtx, err := d.pathReader.PathContext(localPath)
+	if err != nil {
+		return origins
+	}
+
+	rawOrigins := pathCtx.ReferenceOrigins.Match(localPath, target, targetPath)
+	for _, origin := range rawOrigins {
+		origins = append(origins, ReferenceOrigin{
+			Path:           localPath,
+			Range:          origin.OriginRange(),
+			RootBlockRange: origin.RootBlockOriginRange(),
+		})
+	}
 	return origins
 }
 

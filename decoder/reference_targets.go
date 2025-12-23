@@ -853,3 +853,7 @@ func resolveBlockAddress(block *hcl.Block, blockSchema *schema.BlockSchema) (lan
 
 	return address, true
 }
+
+func (d *PathDecoder) RefTargets() []reference.Target {
+	return d.pathCtx.ReferenceTargets
+}
