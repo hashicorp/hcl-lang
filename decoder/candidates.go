@@ -201,8 +201,11 @@ func (d *PathDecoder) nameTokenRangeAtPos(filename string, pos hcl.Pos) (hcl.Ran
 		return rng, err
 	}
 	tokens, diags := hclsyntax.LexConfig(f.Bytes, filename, hcl.InitialPos)
-	if diags.HasErrors() {
-		return rng, diags
+
+	for _, diag := range diags {
+		if diag.Severity == hcl.DiagError && diag.Subject != nil && diag.Subject.ContainsPos(pos) {
+			return rng, diags
+		}
 	}
 
 	return nameTokenRangeAtPos(tokens, pos)
