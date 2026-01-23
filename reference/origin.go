@@ -14,6 +14,7 @@ type Origin interface {
 	isOriginImpl() originSigil
 	Copy() Origin
 	OriginRange() hcl.Range
+	RootBlockOriginRange() hcl.Range
 }
 
 type MatchableOrigin interface {

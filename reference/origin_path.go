@@ -14,6 +14,10 @@ type PathOrigin struct {
 	// Range represents a range of a local traversal or an attribute
 	Range hcl.Range
 
+	// RootBlockRange represents the range of the root block containing this origin.
+	// This will be empty for origins not contained within a block.
+	RootBlockRange hcl.Range
+
 	// TargetAddr describes the address of the targeted attribute or block
 	TargetAddr lang.Address
 
@@ -27,10 +31,11 @@ type PathOrigin struct {
 
 func (po PathOrigin) Copy() Origin {
 	return PathOrigin{
-		Range:       po.Range,
-		TargetAddr:  po.TargetAddr.Copy(),
-		TargetPath:  po.TargetPath,
-		Constraints: po.Constraints.Copy(),
+		Range:          po.Range,
+		RootBlockRange: po.RootBlockRange,
+		TargetAddr:     po.TargetAddr.Copy(),
+		TargetPath:     po.TargetPath,
+		Constraints:    po.Constraints.Copy(),
 	}
 }
 
@@ -40,6 +45,10 @@ func (PathOrigin) isOriginImpl() originSigil {
 
 func (po PathOrigin) OriginRange() hcl.Range {
 	return po.Range
+}
+
+func (po PathOrigin) RootBlockOriginRange() hcl.Range {
+	return po.RootBlockRange
 }
 
 func (po PathOrigin) OriginConstraints() OriginConstraints {

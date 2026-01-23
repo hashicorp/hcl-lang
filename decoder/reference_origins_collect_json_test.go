@@ -307,6 +307,19 @@ func TestCollectReferenceOrigins_json(t *testing.T) {
 							Byte:   39,
 						},
 					},
+					RootBlockRange: hcl.Range{
+						Filename: "test.tf.json",
+						Start: hcl.Pos{
+							Line:   2,
+							Column: 14,
+							Byte:   15,
+						},
+						End: hcl.Pos{
+							Line:   2,
+							Column: 15,
+							Byte:   16,
+						},
+					},
 					Constraints: reference.OriginConstraints{},
 				},
 			},
@@ -346,6 +359,19 @@ func TestCollectReferenceOrigins_json(t *testing.T) {
 							Line:   3,
 							Column: 23,
 							Byte:   39,
+						},
+					},
+					RootBlockRange: hcl.Range{
+						Filename: "test.tf.json",
+						Start: hcl.Pos{
+							Line:   2,
+							Column: 14,
+							Byte:   15,
+						},
+						End: hcl.Pos{
+							Line:   2,
+							Column: 15,
+							Byte:   16,
 						},
 					},
 					Constraints: reference.OriginConstraints{},
@@ -411,6 +437,19 @@ func TestCollectReferenceOrigins_json(t *testing.T) {
 							Byte:   61,
 						},
 					},
+					RootBlockRange: hcl.Range{
+						Filename: "test.tf.json",
+						Start: hcl.Pos{
+							Line:   3,
+							Column: 16,
+							Byte:   31,
+						},
+						End: hcl.Pos{
+							Line:   3,
+							Column: 17,
+							Byte:   32,
+						},
+					},
 					Constraints: reference.OriginConstraints{},
 				},
 				reference.LocalOrigin{
@@ -429,6 +468,19 @@ func TestCollectReferenceOrigins_json(t *testing.T) {
 							Line:   5,
 							Column: 32,
 							Byte:   96,
+						},
+					},
+					RootBlockRange: hcl.Range{
+						Filename: "test.tf.json",
+						Start: hcl.Pos{
+							Line:   3,
+							Column: 16,
+							Byte:   31,
+						},
+						End: hcl.Pos{
+							Line:   3,
+							Column: 17,
+							Byte:   32,
 						},
 					},
 					Constraints: reference.OriginConstraints{},
@@ -492,6 +544,19 @@ func TestCollectReferenceOrigins_json(t *testing.T) {
 							Line:   4,
 							Column: 29,
 							Byte:   63,
+						},
+					},
+					RootBlockRange: hcl.Range{
+						Filename: "test.tf.json",
+						Start: hcl.Pos{
+							Line:   3,
+							Column: 18,
+							Byte:   33,
+						},
+						End: hcl.Pos{
+							Line:   3,
+							Column: 19,
+							Byte:   34,
 						},
 					},
 					Constraints: reference.OriginConstraints{},
