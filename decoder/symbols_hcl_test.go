@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/hashicorp/hcl-lang/lang"
 	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hclsyntax"
@@ -81,7 +82,8 @@ provider "google" {
 				"aws_vpc",
 				"main",
 			},
-			path: lang.Path{Path: dirPath},
+			Block: f1.InnermostBlockAtPos(hcl.Pos{Byte: 1}),
+			path:  lang.Path{Path: dirPath},
 			rng: hcl.Range{
 				Filename: "first.tf",
 				Start:    hcl.Pos{Line: 2, Column: 1, Byte: 1},
@@ -89,9 +91,10 @@ provider "google" {
 			},
 			nestedSymbols: []Symbol{
 				&AttributeSymbol{
-					AttrName: "cidr_block",
-					ExprKind: lang.LiteralTypeKind{Type: cty.String},
-					path:     lang.Path{Path: dirPath},
+					AttrName:  "cidr_block",
+					ExprKind:  lang.LiteralTypeKind{Type: cty.String},
+					Attribute: bodyMustJustAttributes(t, f1.InnermostBlockAtPos(hcl.Pos{Byte: 1}).Body)["cidr_block"],
+					path:      lang.Path{Path: dirPath},
 					rng: hcl.Range{
 						Filename: "first.tf",
 						Start:    hcl.Pos{Line: 3, Column: 3, Byte: 31},
@@ -106,7 +109,8 @@ provider "google" {
 			Labels: []string{
 				"google",
 			},
-			path: lang.Path{Path: dirPath},
+			Block: f2.InnermostBlockAtPos(hcl.Pos{Byte: 1}),
+			path:  lang.Path{Path: dirPath},
 			rng: hcl.Range{
 				Filename: "second.tf",
 				Start:    hcl.Pos{Line: 2, Column: 1, Byte: 1},
@@ -114,9 +118,10 @@ provider "google" {
 			},
 			nestedSymbols: []Symbol{
 				&AttributeSymbol{
-					AttrName: "project",
-					ExprKind: lang.LiteralTypeKind{Type: cty.String},
-					path:     lang.Path{Path: dirPath},
+					AttrName:  "project",
+					ExprKind:  lang.LiteralTypeKind{Type: cty.String},
+					Attribute: bodyMustJustAttributes(t, f2.InnermostBlockAtPos(hcl.Pos{Byte: 1}).Body)["project"],
+					path:      lang.Path{Path: dirPath},
 					rng: hcl.Range{
 						Filename: "second.tf",
 						Start:    hcl.Pos{Line: 3, Column: 3, Byte: 23},
@@ -125,9 +130,10 @@ provider "google" {
 					nestedSymbols: []Symbol{},
 				},
 				&AttributeSymbol{
-					AttrName: "region",
-					ExprKind: lang.LiteralTypeKind{Type: cty.String},
-					path:     lang.Path{Path: dirPath},
+					AttrName:  "region",
+					ExprKind:  lang.LiteralTypeKind{Type: cty.String},
+					Attribute: bodyMustJustAttributes(t, f2.InnermostBlockAtPos(hcl.Pos{Byte: 1}).Body)["region"],
+					path:      lang.Path{Path: dirPath},
 					rng: hcl.Range{
 						Filename: "second.tf",
 						Start:    hcl.Pos{Line: 4, Column: 3, Byte: 55},
@@ -139,7 +145,7 @@ provider "google" {
 		},
 	}
 
-	diff := cmp.Diff(expectedSymbols, symbols)
+	diff := cmp.Diff(expectedSymbols, symbols, cmpopts.IgnoreFields(BlockSymbol{}, "Block"))
 	if diff != "" {
 		t.Fatalf("unexpected symbols: %s", diff)
 	}
@@ -189,7 +195,8 @@ resource "aws_instance" "test" {
 				"aws_instance",
 				"test",
 			},
-			path: lang.Path{Path: dirPath},
+			Block: f.InnermostBlockAtPos(hcl.Pos{Byte: 1}),
+			path:  lang.Path{Path: dirPath},
 			rng: hcl.Range{
 				Filename: "test.tf",
 				Start:    hcl.Pos{Line: 2, Column: 1, Byte: 1},
@@ -197,9 +204,10 @@ resource "aws_instance" "test" {
 			},
 			nestedSymbols: []Symbol{
 				&AttributeSymbol{
-					AttrName: "subnet_ids",
-					ExprKind: lang.TupleConsExprKind{},
-					path:     lang.Path{Path: dirPath},
+					AttrName:  "subnet_ids",
+					ExprKind:  lang.TupleConsExprKind{},
+					Attribute: bodyMustJustAttributes(t, f.InnermostBlockAtPos(hcl.Pos{Byte: 1}).Body)["subnet_ids"],
+					path:      lang.Path{Path: dirPath},
 					rng: hcl.Range{
 						Filename: "test.tf",
 						Start: hcl.Pos{
@@ -219,6 +227,7 @@ resource "aws_instance" "test" {
 							ExprKind: lang.LiteralTypeKind{
 								Type: cty.String,
 							},
+							Expr: bodyMustJustAttributes(t, f.InnermostBlockAtPos(hcl.Pos{Byte: 1}).Body)["subnet_ids"].Expr.(*hclsyntax.TupleConsExpr).ExprList()[0],
 							path: lang.Path{Path: dirPath},
 							rng: hcl.Range{
 								Filename: "test.tf",
@@ -240,6 +249,7 @@ resource "aws_instance" "test" {
 							ExprKind: lang.LiteralTypeKind{
 								Type: cty.String,
 							},
+							Expr: bodyMustJustAttributes(t, f.InnermostBlockAtPos(hcl.Pos{Byte: 1}).Body)["subnet_ids"].Expr.(*hclsyntax.TupleConsExpr).ExprList()[1],
 							path: lang.Path{Path: dirPath},
 							rng: hcl.Range{
 								Filename: "test.tf",
@@ -259,9 +269,10 @@ resource "aws_instance" "test" {
 					},
 				},
 				&AttributeSymbol{
-					AttrName: "configuration",
-					ExprKind: lang.ObjectConsExprKind{},
-					path:     lang.Path{Path: dirPath},
+					AttrName:  "configuration",
+					ExprKind:  lang.ObjectConsExprKind{},
+					Attribute: bodyMustJustAttributes(t, f.InnermostBlockAtPos(hcl.Pos{Byte: 1}).Body)["configuration"],
+					path:      lang.Path{Path: dirPath},
 					rng: hcl.Range{
 						Filename: "test.tf",
 						Start: hcl.Pos{
@@ -281,6 +292,7 @@ resource "aws_instance" "test" {
 							ExprKind: lang.LiteralTypeKind{
 								Type: cty.String,
 							},
+							Item: bodyMustJustAttributes(t, f.InnermostBlockAtPos(hcl.Pos{Byte: 1}).Body)["configuration"].Expr.(*hclsyntax.ObjectConsExpr).Items[0],
 							path: lang.Path{Path: dirPath},
 							rng: hcl.Range{
 								Filename: "test.tf",
@@ -302,6 +314,7 @@ resource "aws_instance" "test" {
 							ExprKind: lang.LiteralTypeKind{
 								Type: cty.Number,
 							},
+							Item: bodyMustJustAttributes(t, f.InnermostBlockAtPos(hcl.Pos{Byte: 1}).Body)["configuration"].Expr.(*hclsyntax.ObjectConsExpr).Items[1],
 							path: lang.Path{Path: dirPath},
 							rng: hcl.Range{
 								Filename: "test.tf",
@@ -323,6 +336,7 @@ resource "aws_instance" "test" {
 							ExprKind: lang.LiteralTypeKind{
 								Type: cty.Bool,
 							},
+							Item: bodyMustJustAttributes(t, f.InnermostBlockAtPos(hcl.Pos{Byte: 1}).Body)["configuration"].Expr.(*hclsyntax.ObjectConsExpr).Items[2],
 							path: lang.Path{Path: dirPath},
 							rng: hcl.Range{
 								Filename: "test.tf",
@@ -342,9 +356,10 @@ resource "aws_instance" "test" {
 					},
 				},
 				&AttributeSymbol{
-					AttrName: "random_kw",
-					ExprKind: lang.ReferenceExprKind{},
-					path:     lang.Path{Path: dirPath},
+					AttrName:  "random_kw",
+					ExprKind:  lang.ReferenceExprKind{},
+					Attribute: bodyMustJustAttributes(t, f.InnermostBlockAtPos(hcl.Pos{Byte: 1}).Body)["random_kw"],
+					path:      lang.Path{Path: dirPath},
 					rng: hcl.Range{
 						Filename: "test.tf",
 						Start: hcl.Pos{
@@ -414,7 +429,8 @@ resource "aws_instance" "test" {
 				"aws_instance",
 				"test",
 			},
-			path: lang.Path{Path: dirPath},
+			path:  lang.Path{Path: dirPath},
+			Block: f.InnermostBlockAtPos(hcl.Pos{Byte: 1}),
 			rng: hcl.Range{
 				Filename: "test.tf",
 				Start:    hcl.Pos{Line: 2, Column: 1, Byte: 1},
@@ -422,9 +438,10 @@ resource "aws_instance" "test" {
 			},
 			nestedSymbols: []Symbol{
 				&AttributeSymbol{
-					AttrName: "subnet_ids",
-					ExprKind: lang.TupleConsExprKind{},
-					path:     lang.Path{Path: dirPath},
+					AttrName:  "subnet_ids",
+					ExprKind:  lang.TupleConsExprKind{},
+					Attribute: bodyMustJustAttributes(t, f.InnermostBlockAtPos(hcl.Pos{Byte: 1}).Body)["subnet_ids"],
+					path:      lang.Path{Path: dirPath},
 					rng: hcl.Range{
 						Filename: "test.tf",
 						Start: hcl.Pos{
@@ -442,6 +459,7 @@ resource "aws_instance" "test" {
 						&ExprSymbol{
 							ExprName: "0",
 							ExprKind: lang.ReferenceExprKind{},
+							Expr:     bodyMustJustAttributes(t, f.InnermostBlockAtPos(hcl.Pos{Byte: 1}).Body)["subnet_ids"].Expr.(*hclsyntax.TupleConsExpr).ExprList()[0],
 							path:     lang.Path{Path: dirPath},
 							rng: hcl.Range{
 								Filename: "test.tf",
@@ -463,6 +481,7 @@ resource "aws_instance" "test" {
 							ExprKind: lang.LiteralTypeKind{
 								Type: cty.String,
 							},
+							Expr: bodyMustJustAttributes(t, f.InnermostBlockAtPos(hcl.Pos{Byte: 1}).Body)["subnet_ids"].Expr.(*hclsyntax.TupleConsExpr).ExprList()[1],
 							path: lang.Path{Path: dirPath},
 							rng: hcl.Range{
 								Filename: "test.tf",
@@ -482,9 +501,10 @@ resource "aws_instance" "test" {
 					},
 				},
 				&AttributeSymbol{
-					AttrName: "configuration",
-					ExprKind: lang.ObjectConsExprKind{},
-					path:     lang.Path{Path: dirPath},
+					AttrName:  "configuration",
+					ExprKind:  lang.ObjectConsExprKind{},
+					path:      lang.Path{Path: dirPath},
+					Attribute: bodyMustJustAttributes(t, f.InnermostBlockAtPos(hcl.Pos{Byte: 1}).Body)["configuration"],
 					rng: hcl.Range{
 						Filename: "test.tf",
 						Start: hcl.Pos{
@@ -503,6 +523,7 @@ resource "aws_instance" "test" {
 							ExprName: "num",
 							ExprKind: lang.ReferenceExprKind{},
 							path:     lang.Path{Path: dirPath},
+							Item:     bodyMustJustAttributes(t, f.InnermostBlockAtPos(hcl.Pos{Byte: 1}).Body)["configuration"].Expr.(*hclsyntax.ObjectConsExpr).Items[1],
 							rng: hcl.Range{
 								Filename: "test.tf",
 								Start: hcl.Pos{
@@ -521,9 +542,10 @@ resource "aws_instance" "test" {
 					},
 				},
 				&AttributeSymbol{
-					AttrName: "random_kw",
-					ExprKind: lang.ReferenceExprKind{},
-					path:     lang.Path{Path: dirPath},
+					AttrName:  "random_kw",
+					ExprKind:  lang.ReferenceExprKind{},
+					Attribute: bodyMustJustAttributes(t, f.InnermostBlockAtPos(hcl.Pos{Byte: 1}).Body)["random_kw"],
+					path:      lang.Path{Path: dirPath},
 					rng: hcl.Range{
 						Filename: "test.tf",
 						Start: hcl.Pos{
@@ -593,7 +615,8 @@ provider "google" {
 			Labels: []string{
 				"google",
 			},
-			path: lang.Path{Path: dirPath},
+			Block: f2.InnermostBlockAtPos(hcl.Pos{Byte: 1}),
+			path:  lang.Path{Path: dirPath},
 			rng: hcl.Range{
 				Filename: "second.tf",
 				Start:    hcl.Pos{Line: 2, Column: 1, Byte: 1},
@@ -601,9 +624,10 @@ provider "google" {
 			},
 			nestedSymbols: []Symbol{
 				&AttributeSymbol{
-					AttrName: "project",
-					ExprKind: lang.LiteralTypeKind{Type: cty.String},
-					path:     lang.Path{Path: dirPath},
+					AttrName:  "project",
+					ExprKind:  lang.LiteralTypeKind{Type: cty.String},
+					Attribute: bodyMustJustAttributes(t, f2.InnermostBlockAtPos(hcl.Pos{Byte: 1}).Body)["project"],
+					path:      lang.Path{Path: dirPath},
 					rng: hcl.Range{
 						Filename: "second.tf",
 						Start:    hcl.Pos{Line: 3, Column: 3, Byte: 23},
@@ -612,9 +636,10 @@ provider "google" {
 					nestedSymbols: []Symbol{},
 				},
 				&AttributeSymbol{
-					AttrName: "region",
-					ExprKind: lang.LiteralTypeKind{Type: cty.String},
-					path:     lang.Path{Path: dirPath},
+					AttrName:  "region",
+					ExprKind:  lang.LiteralTypeKind{Type: cty.String},
+					Attribute: bodyMustJustAttributes(t, f2.InnermostBlockAtPos(hcl.Pos{Byte: 1}).Body)["region"],
+					path:      lang.Path{Path: dirPath},
 					rng: hcl.Range{
 						Filename: "second.tf",
 						Start:    hcl.Pos{Line: 4, Column: 3, Byte: 55},
@@ -630,4 +655,20 @@ provider "google" {
 	if diff != "" {
 		t.Fatalf("unexpected symbols: %s", diff)
 	}
+}
+
+func bodyMustJustAttributes(t *testing.T, body hcl.Body) hcl.Attributes {
+	attrs, diags := body.JustAttributes()
+	if diags.HasErrors() {
+		t.Fatalf("failed to call JustAttributes: %v", diags.Error())
+	}
+	return attrs
+}
+
+func bodyMustContent(t *testing.T, body hcl.Body, schema *hcl.BodySchema) *hcl.BodyContent {
+	bc, diags := body.Content(schema)
+	if diags.HasErrors() {
+		t.Fatal(diags.Error())
+	}
+	return bc
 }
