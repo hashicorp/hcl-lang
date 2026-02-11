@@ -4,11 +4,13 @@
 package reference
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/hashicorp/hcl-lang/lang"
+	"github.com/hashicorp/hcl-lang/schema"
 	"github.com/hashicorp/hcl/v2"
 	"github.com/zclconf/go-cty-debug/ctydebug"
 	"github.com/zclconf/go-cty/cty"
@@ -528,6 +530,129 @@ func TestTargets_Match_localRefs(t *testing.T) {
 
 			if diff := cmp.Diff(tc.expectedTargets, refTarget, ctydebug.CmpOptions); diff != "" {
 				t.Fatalf("mismatch of reference target: %s", diff)
+			}
+		})
+	}
+}
+
+func TestTargets_MatchWalk_nestedBlockFiltering(t *testing.T) {
+	testCases := []struct {
+		name             string
+		targets          Targets
+		ref              schema.Reference
+		prefix           string
+		outermostBodyRng hcl.Range
+		originRng        hcl.Range
+		innermostBodyRng hcl.Range
+		expectedTargets  Targets
+		expectedMatch    bool
+	}{
+		{
+			name: "reject local defined in nested locals block from same block",
+			targets: Targets{
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "local"},
+						lang.AttrStep{Name: "key1"},
+					},
+					Type: cty.Bool,
+					RangePtr: &hcl.Range{
+						Filename: "test.policy.hcl",
+						Start:    hcl.Pos{Line: 3, Column: 5, Byte: 50},
+						End:      hcl.Pos{Line: 3, Column: 17, Byte: 62},
+					},
+				},
+			},
+			ref:    schema.Reference{OfType: cty.Bool},
+			prefix: "local",
+			outermostBodyRng: hcl.Range{
+				Filename: "test.policy.hcl",
+				Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
+				End:      hcl.Pos{Line: 10, Column: 2, Byte: 200},
+			},
+			originRng: hcl.Range{
+				Filename: "test.policy.hcl",
+				Start:    hcl.Pos{Line: 8, Column: 13, Byte: 150},
+				End:      hcl.Pos{Line: 8, Column: 19, Byte: 156},
+			},
+			innermostBodyRng: hcl.Range{
+				Filename: "test.policy.hcl",
+				Start:    hcl.Pos{Line: 2, Column: 10, Byte: 30},
+				End:      hcl.Pos{Line: 9, Column: 3, Byte: 180},
+			},
+			expectedTargets: Targets{}, // Should be rejected (local.key1 defined in same nested locals block)
+			expectedMatch:   false,
+		},
+		{
+			name: "accept root-level local from nested locals block",
+			targets: Targets{
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "local"},
+						lang.AttrStep{Name: "rootKey1"},
+					},
+					Type: cty.Bool,
+					RangePtr: &hcl.Range{
+						Filename: "test.policy.hcl",
+						Start:    hcl.Pos{Line: 2, Column: 3, Byte: 15},
+						End:      hcl.Pos{Line: 2, Column: 19, Byte: 31},
+					},
+				},
+			},
+			ref:    schema.Reference{OfType: cty.Bool},
+			prefix: "local",
+			outermostBodyRng: hcl.Range{
+				Filename: "test.policy.hcl",
+				Start:    hcl.Pos{Line: 10, Column: 1, Byte: 200},
+				End:      hcl.Pos{Line: 20, Column: 2, Byte: 400},
+			},
+			originRng: hcl.Range{
+				Filename: "test.policy.hcl",
+				Start:    hcl.Pos{Line: 18, Column: 13, Byte: 350},
+				End:      hcl.Pos{Line: 18, Column: 25, Byte: 362},
+			},
+			innermostBodyRng: hcl.Range{
+				Filename: "test.policy.hcl",
+				Start:    hcl.Pos{Line: 12, Column: 10, Byte: 230},
+				End:      hcl.Pos{Line: 19, Column: 3, Byte: 380},
+			},
+			expectedTargets: Targets{
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "local"},
+						lang.AttrStep{Name: "rootKey1"},
+					},
+					Type: cty.Bool,
+					RangePtr: &hcl.Range{
+						Filename: "test.policy.hcl",
+						Start:    hcl.Pos{Line: 2, Column: 3, Byte: 15},
+						End:      hcl.Pos{Line: 2, Column: 19, Byte: 31},
+					},
+				},
+			},
+			expectedMatch: true, // Should be accepted (rootKey1 is outside nested locals block)
+		},
+	}
+
+	for i, tc := range testCases {
+		t.Run(fmt.Sprintf("%d-%s", i, tc.name), func(t *testing.T) {
+			ctx := context.Background()
+			matchedTargets := Targets{}
+
+			tc.targets.MatchWalk(ctx, tc.ref, tc.prefix, tc.outermostBodyRng, tc.originRng, tc.innermostBodyRng, func(target Target) error {
+				matchedTargets = append(matchedTargets, target)
+				return nil
+			})
+
+			// Check if we got a match
+			gotMatch := len(matchedTargets) > 0
+			if gotMatch != tc.expectedMatch {
+				t.Fatalf("expected match=%v, got match=%v (matched %d targets)", tc.expectedMatch, gotMatch, len(matchedTargets))
+			}
+
+			// Compare the actual targets returned
+			if diff := cmp.Diff(tc.expectedTargets, matchedTargets, ctydebug.CmpOptions); diff != "" {
+				t.Fatalf("mismatch of matched targets: %s", diff)
 			}
 		})
 	}
