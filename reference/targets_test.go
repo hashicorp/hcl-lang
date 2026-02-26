@@ -537,54 +537,172 @@ func TestTargets_Match_localRefs(t *testing.T) {
 
 func TestTargets_MatchWalk_nestedBlockFiltering(t *testing.T) {
 	testCases := []struct {
-		name             string
-		targets          Targets
-		ref              schema.Reference
-		prefix           string
-		outermostBodyRng hcl.Range
-		originRng        hcl.Range
-		innermostBodyRng hcl.Range
-		expectedTargets  Targets
-		expectedMatch    bool
+		name              string
+		targets           Targets
+		ref               schema.Reference
+		prefix            string
+		outermostBodyRng  hcl.Range
+		originRng         hcl.Range
+		innermostBlockRng hcl.Range
+		expectedTargets   Targets
+		expectedMatch     bool
 	}{
 		{
-			name: "reject local defined in nested locals block from same block",
+			name: "reject block-scoped local from same nested block",
 			targets: Targets{
 				{
-					Addr: lang.Address{
+					LocalAddr: lang.Address{
 						lang.RootStep{Name: "local"},
 						lang.AttrStep{Name: "key1"},
 					},
-					Type: cty.Bool,
+					BlockScoped: true,
+					Type:        cty.Bool,
 					RangePtr: &hcl.Range{
 						Filename: "test.policy.hcl",
 						Start:    hcl.Pos{Line: 3, Column: 5, Byte: 50},
 						End:      hcl.Pos{Line: 3, Column: 17, Byte: 62},
 					},
+					TargetableFromRangePtr: &hcl.Range{
+						Filename: "test.policy.hcl",
+						Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
+						End:      hcl.Pos{Line: 10, Column: 2, Byte: 200},
+					},
 				},
 			},
 			ref:    schema.Reference{OfType: cty.Bool},
 			prefix: "local",
+			// outermostBodyRng is the resource_policy block body
 			outermostBodyRng: hcl.Range{
 				Filename: "test.policy.hcl",
 				Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
 				End:      hcl.Pos{Line: 10, Column: 2, Byte: 200},
 			},
+			// origin is inside the same locals block where key1 is defined
 			originRng: hcl.Range{
 				Filename: "test.policy.hcl",
-				Start:    hcl.Pos{Line: 8, Column: 13, Byte: 150},
-				End:      hcl.Pos{Line: 8, Column: 19, Byte: 156},
+				Start:    hcl.Pos{Line: 4, Column: 13, Byte: 70},
+				End:      hcl.Pos{Line: 4, Column: 19, Byte: 76},
 			},
-			innermostBodyRng: hcl.Range{
+			// innermostBlockRng is the locals block containing both target and origin
+			innermostBlockRng: hcl.Range{
 				Filename: "test.policy.hcl",
-				Start:    hcl.Pos{Line: 2, Column: 10, Byte: 30},
-				End:      hcl.Pos{Line: 9, Column: 3, Byte: 180},
+				Start:    hcl.Pos{Line: 2, Column: 3, Byte: 30},
+				End:      hcl.Pos{Line: 5, Column: 4, Byte: 90},
 			},
-			expectedTargets: Targets{}, // Should be rejected (local.key1 defined in same nested locals block)
+			expectedTargets: Targets{},
 			expectedMatch:   false,
 		},
 		{
-			name: "accept root-level local from nested locals block",
+			name: "accept block-scoped local from sibling block",
+			targets: Targets{
+				{
+					// Block-scoped local defined in locals block
+					LocalAddr: lang.Address{
+						lang.RootStep{Name: "local"},
+						lang.AttrStep{Name: "key1"},
+					},
+					BlockScoped: true,
+					Type:        cty.Bool,
+					RangePtr: &hcl.Range{
+						Filename: "test.policy.hcl",
+						Start:    hcl.Pos{Line: 3, Column: 5, Byte: 50},
+						End:      hcl.Pos{Line: 3, Column: 17, Byte: 62},
+					},
+					TargetableFromRangePtr: &hcl.Range{
+						Filename: "test.policy.hcl",
+						Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
+						End:      hcl.Pos{Line: 10, Column: 2, Byte: 200},
+					},
+				},
+			},
+			ref:    schema.Reference{OfType: cty.Bool},
+			prefix: "local",
+			// outermostBodyRng is the resource_policy block body
+			outermostBodyRng: hcl.Range{
+				Filename: "test.policy.hcl",
+				Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
+				End:      hcl.Pos{Line: 10, Column: 2, Byte: 200},
+			},
+			// origin is inside an enforce block (sibling of locals)
+			originRng: hcl.Range{
+				Filename: "test.policy.hcl",
+				Start:    hcl.Pos{Line: 8, Column: 13, Byte: 150},
+				End:      hcl.Pos{Line: 8, Column: 25, Byte: 162},
+			},
+			// innermostBlockRng is the enforce block (different from locals block)
+			innermostBlockRng: hcl.Range{
+				Filename: "test.policy.hcl",
+				Start:    hcl.Pos{Line: 6, Column: 3, Byte: 100},
+				End:      hcl.Pos{Line: 9, Column: 4, Byte: 180},
+			},
+			expectedTargets: Targets{
+				{
+					LocalAddr: lang.Address{
+						lang.RootStep{Name: "local"},
+						lang.AttrStep{Name: "key1"},
+					},
+					BlockScoped: true,
+					Type:        cty.Bool,
+					RangePtr: &hcl.Range{
+						Filename: "test.policy.hcl",
+						Start:    hcl.Pos{Line: 3, Column: 5, Byte: 50},
+						End:      hcl.Pos{Line: 3, Column: 17, Byte: 62},
+					},
+					TargetableFromRangePtr: &hcl.Range{
+						Filename: "test.policy.hcl",
+						Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
+						End:      hcl.Pos{Line: 10, Column: 2, Byte: 200},
+					},
+				},
+			},
+			expectedMatch: true,
+		},
+		{
+			name: "reject block-scoped local from outside parent block",
+			targets: Targets{
+				{
+					LocalAddr: lang.Address{
+						lang.RootStep{Name: "local"},
+						lang.AttrStep{Name: "key1"},
+					},
+					BlockScoped: true,
+					Type:        cty.Bool,
+					RangePtr: &hcl.Range{
+						Filename: "test.policy.hcl",
+						Start:    hcl.Pos{Line: 3, Column: 5, Byte: 50},
+						End:      hcl.Pos{Line: 3, Column: 17, Byte: 62},
+					},
+					TargetableFromRangePtr: &hcl.Range{
+						Filename: "test.policy.hcl",
+						Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
+						End:      hcl.Pos{Line: 10, Column: 2, Byte: 200},
+					},
+				},
+			},
+			ref:    schema.Reference{OfType: cty.Bool},
+			prefix: "local",
+			// outermostBodyRng is a different resource_policy block
+			outermostBodyRng: hcl.Range{
+				Filename: "test.policy.hcl",
+				Start:    hcl.Pos{Line: 12, Column: 1, Byte: 210},
+				End:      hcl.Pos{Line: 20, Column: 2, Byte: 400},
+			},
+			// origin is outside the TargetableFromRangePtr
+			originRng: hcl.Range{
+				Filename: "test.policy.hcl",
+				Start:    hcl.Pos{Line: 15, Column: 13, Byte: 300},
+				End:      hcl.Pos{Line: 15, Column: 25, Byte: 312},
+			},
+			innermostBlockRng: hcl.Range{
+				Filename: "test.policy.hcl",
+				Start:    hcl.Pos{Line: 12, Column: 1, Byte: 210},
+				End:      hcl.Pos{Line: 20, Column: 2, Byte: 400},
+			},
+			expectedTargets: Targets{},
+			expectedMatch:   false,
+		},
+		{
+			name: "accept non-block-scoped local (root-level)",
 			targets: Targets{
 				{
 					Addr: lang.Address{
@@ -611,7 +729,7 @@ func TestTargets_MatchWalk_nestedBlockFiltering(t *testing.T) {
 				Start:    hcl.Pos{Line: 18, Column: 13, Byte: 350},
 				End:      hcl.Pos{Line: 18, Column: 25, Byte: 362},
 			},
-			innermostBodyRng: hcl.Range{
+			innermostBlockRng: hcl.Range{
 				Filename: "test.policy.hcl",
 				Start:    hcl.Pos{Line: 12, Column: 10, Byte: 230},
 				End:      hcl.Pos{Line: 19, Column: 3, Byte: 380},
@@ -630,7 +748,7 @@ func TestTargets_MatchWalk_nestedBlockFiltering(t *testing.T) {
 					},
 				},
 			},
-			expectedMatch: true, // Should be accepted (rootKey1 is outside nested locals block)
+			expectedMatch: true,
 		},
 	}
 
@@ -639,7 +757,7 @@ func TestTargets_MatchWalk_nestedBlockFiltering(t *testing.T) {
 			ctx := context.Background()
 			matchedTargets := Targets{}
 
-			tc.targets.MatchWalk(ctx, tc.ref, tc.prefix, tc.outermostBodyRng, tc.originRng, tc.innermostBodyRng, func(target Target) error {
+			tc.targets.MatchWalk(ctx, tc.ref, tc.prefix, tc.outermostBodyRng, tc.originRng, tc.innermostBlockRng, func(target Target) error {
 				matchedTargets = append(matchedTargets, target)
 				return nil
 			})

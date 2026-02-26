@@ -5036,6 +5036,338 @@ module "different" {
 				},
 			},
 		},
+		{
+			"TargetableFromCurrentBlock - single attribute in nested block",
+			&schema.BodySchema{
+				Blocks: map[string]*schema.BlockSchema{
+					"resource_policy": {
+						Labels: []*schema.LabelSchema{
+							{Name: "name"},
+						},
+						Body: &schema.BodySchema{
+							Blocks: map[string]*schema.BlockSchema{
+								"locals": {
+									Body: &schema.BodySchema{
+										AnyAttribute: &schema.AttributeSchema{
+											Address: &schema.AttributeAddrSchema{
+												Steps: []schema.AddrStep{
+													schema.StaticStep{Name: "local"},
+													schema.AttrNameStep{},
+												},
+												ScopeId:    lang.ScopeId("local"),
+												AsExprType: true,
+											},
+											Constraint: schema.AnyExpression{OfType: cty.DynamicPseudoType},
+										},
+										TargetableFromCurrentBlock: true,
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			`resource_policy "mypolicy" {
+  locals {
+    key1 = "value1"
+  }
+}
+`,
+			reference.Targets{
+				{
+					LocalAddr: lang.Address{
+						lang.RootStep{Name: "local"},
+						lang.AttrStep{Name: "key1"},
+					},
+					ScopeId:     lang.ScopeId("local"),
+					BlockScoped: true,
+					RangePtr: &hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 3, Column: 5, Byte: 44},
+						End:      hcl.Pos{Line: 3, Column: 20, Byte: 59},
+					},
+					DefRangePtr: &hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 3, Column: 5, Byte: 44},
+						End:      hcl.Pos{Line: 3, Column: 9, Byte: 48},
+					},
+					Type: cty.String,
+					TargetableFromRangePtr: &hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
+						End:      hcl.Pos{Line: 5, Column: 2, Byte: 65},
+					},
+				},
+			},
+		},
+		{
+			"TargetableFromCurrentBlock - multiple attributes in nested block",
+			&schema.BodySchema{
+				Blocks: map[string]*schema.BlockSchema{
+					"resource_policy": {
+						Labels: []*schema.LabelSchema{
+							{Name: "name"},
+						},
+						Body: &schema.BodySchema{
+							Blocks: map[string]*schema.BlockSchema{
+								"locals": {
+									Body: &schema.BodySchema{
+										AnyAttribute: &schema.AttributeSchema{
+											Address: &schema.AttributeAddrSchema{
+												Steps: []schema.AddrStep{
+													schema.StaticStep{Name: "local"},
+													schema.AttrNameStep{},
+												},
+												ScopeId:    lang.ScopeId("local"),
+												AsExprType: true,
+											},
+											Constraint: schema.AnyExpression{OfType: cty.DynamicPseudoType},
+										},
+										TargetableFromCurrentBlock: true,
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			`resource_policy "mypolicy" {
+  locals {
+    key1 = "value1"
+    key2 = true
+  }
+}
+`,
+			reference.Targets{
+				{
+					LocalAddr: lang.Address{
+						lang.RootStep{Name: "local"},
+						lang.AttrStep{Name: "key1"},
+					},
+					ScopeId:     lang.ScopeId("local"),
+					BlockScoped: true,
+					RangePtr: &hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 3, Column: 5, Byte: 44},
+						End:      hcl.Pos{Line: 3, Column: 20, Byte: 59},
+					},
+					DefRangePtr: &hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 3, Column: 5, Byte: 44},
+						End:      hcl.Pos{Line: 3, Column: 9, Byte: 48},
+					},
+					Type: cty.String,
+					TargetableFromRangePtr: &hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
+						End:      hcl.Pos{Line: 6, Column: 2, Byte: 81},
+					},
+				},
+				{
+					LocalAddr: lang.Address{
+						lang.RootStep{Name: "local"},
+						lang.AttrStep{Name: "key2"},
+					},
+					ScopeId:     lang.ScopeId("local"),
+					BlockScoped: true,
+					RangePtr: &hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 4, Column: 5, Byte: 64},
+						End:      hcl.Pos{Line: 4, Column: 16, Byte: 75},
+					},
+					DefRangePtr: &hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 4, Column: 5, Byte: 64},
+						End:      hcl.Pos{Line: 4, Column: 9, Byte: 68},
+					},
+					Type: cty.Bool,
+					TargetableFromRangePtr: &hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
+						End:      hcl.Pos{Line: 6, Column: 2, Byte: 81},
+					},
+				},
+			},
+		},
+		{
+			"TargetableFromCurrentBlock false - targets retain Addr",
+			&schema.BodySchema{
+				Blocks: map[string]*schema.BlockSchema{
+					"resource_policy": {
+						Labels: []*schema.LabelSchema{
+							{Name: "name"},
+						},
+						Body: &schema.BodySchema{
+							Blocks: map[string]*schema.BlockSchema{
+								"locals": {
+									Body: &schema.BodySchema{
+										AnyAttribute: &schema.AttributeSchema{
+											Address: &schema.AttributeAddrSchema{
+												Steps: []schema.AddrStep{
+													schema.StaticStep{Name: "local"},
+													schema.AttrNameStep{},
+												},
+												ScopeId:    lang.ScopeId("local"),
+												AsExprType: true,
+											},
+											Constraint: schema.AnyExpression{OfType: cty.DynamicPseudoType},
+										},
+										// TargetableFromCurrentBlock is false (default)
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			`resource_policy "mypolicy" {
+  locals {
+    key1 = "value1"
+  }
+}
+`,
+			reference.Targets{
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "local"},
+						lang.AttrStep{Name: "key1"},
+					},
+					ScopeId: lang.ScopeId("local"),
+					RangePtr: &hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 3, Column: 5, Byte: 44},
+						End:      hcl.Pos{Line: 3, Column: 20, Byte: 59},
+					},
+					DefRangePtr: &hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 3, Column: 5, Byte: 44},
+						End:      hcl.Pos{Line: 3, Column: 9, Byte: 48},
+					},
+					Type: cty.String,
+				},
+			},
+		},
+		{
+			"TargetableFromCurrentBlock - no parent block (root level) does not apply",
+			&schema.BodySchema{
+				// TargetableFromCurrentBlock on root body has no parent block,
+				// so it should NOT apply the block-scoped transformation
+				Attributes: map[string]*schema.AttributeSchema{
+					"attr": {
+						Constraint: schema.AnyExpression{OfType: cty.DynamicPseudoType},
+						IsOptional: true,
+						Address: &schema.AttributeAddrSchema{
+							Steps: schema.Address{
+								schema.StaticStep{Name: "local"},
+								schema.AttrNameStep{},
+							},
+							ScopeId:    lang.ScopeId("local"),
+							AsExprType: true,
+						},
+					},
+				},
+				TargetableFromCurrentBlock: true,
+			},
+			`attr = "value"
+`,
+			reference.Targets{
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "local"},
+						lang.AttrStep{Name: "attr"},
+					},
+					ScopeId: lang.ScopeId("local"),
+					RangePtr: &hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
+						End:      hcl.Pos{Line: 1, Column: 15, Byte: 14},
+					},
+					DefRangePtr: &hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
+						End:      hcl.Pos{Line: 1, Column: 5, Byte: 4},
+					},
+					Type: cty.String,
+				},
+			},
+		},
+		{
+			"TargetableFromCurrentBlock - sibling blocks in parent",
+			&schema.BodySchema{
+				Blocks: map[string]*schema.BlockSchema{
+					"resource_policy": {
+						Labels: []*schema.LabelSchema{
+							{Name: "name"},
+						},
+						Body: &schema.BodySchema{
+							Blocks: map[string]*schema.BlockSchema{
+								"locals": {
+									Body: &schema.BodySchema{
+										AnyAttribute: &schema.AttributeSchema{
+											Address: &schema.AttributeAddrSchema{
+												Steps: []schema.AddrStep{
+													schema.StaticStep{Name: "local"},
+													schema.AttrNameStep{},
+												},
+												ScopeId:    lang.ScopeId("local"),
+												AsExprType: true,
+											},
+											Constraint: schema.AnyExpression{OfType: cty.DynamicPseudoType},
+										},
+										TargetableFromCurrentBlock: true,
+									},
+								},
+								"enforce": {
+									Body: &schema.BodySchema{
+										Attributes: map[string]*schema.AttributeSchema{
+											"condition": {
+												Constraint: schema.AnyExpression{OfType: cty.Bool},
+												IsOptional: true,
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			`resource_policy "mypolicy" {
+  locals {
+    key1 = "value1"
+  }
+  enforce {
+    condition = true
+  }
+}
+`,
+			reference.Targets{
+				{
+					LocalAddr: lang.Address{
+						lang.RootStep{Name: "local"},
+						lang.AttrStep{Name: "key1"},
+					},
+					ScopeId:     lang.ScopeId("local"),
+					BlockScoped: true,
+					RangePtr: &hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 3, Column: 5, Byte: 44},
+						End:      hcl.Pos{Line: 3, Column: 20, Byte: 59},
+					},
+					DefRangePtr: &hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 3, Column: 5, Byte: 44},
+						End:      hcl.Pos{Line: 3, Column: 9, Byte: 48},
+					},
+					Type: cty.String,
+					TargetableFromRangePtr: &hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
+						End:      hcl.Pos{Line: 8, Column: 2, Byte: 102},
+					},
+				},
+			},
+		},
 	}
 
 	for i, tc := range testCases {
