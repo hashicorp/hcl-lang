@@ -110,8 +110,6 @@ func (d *PathDecoder) decodeReferenceTargetsForBody(body hcl.Body, parentBlock *
 
 	var currentBlockAddr lang.Address
 	if parentBlock != nil {
-		// We use the same logic your code uses at line 170
-		// But we do it here so both Attributes and Blocks can use it
 		if bSchema, ok := d.pathCtx.Schema.Blocks[parentBlock.Type]; ok {
 			if a, ok := resolveBlockAddress(parentBlock.Block, bSchema); ok {
 				currentBlockAddr = a
@@ -441,7 +439,7 @@ func (d *PathDecoder) collectInferredReferenceTargetsForBody(addr lang.Address, 
 	for name, aSchema := range bodySchema.Attributes {
 		attrAddr := addr.Copy()
 
-		// 2. Determine if we should append the attribute name or skip it
+		// Determine if we should append the attribute name or skip it
 		if aSchema.Address != nil && len(aSchema.Address.Steps) > 0 {
 			_, isSkip := aSchema.Address.Steps[0].(schema.Skip)
 			if !isSkip {
@@ -777,7 +775,7 @@ func resolveAttributeAddress(attr *hcl.Attribute, addr schema.Address) (lang.Add
 		case schema.AttrNameStep:
 			stepName = attr.Name
 		case schema.Skip:
-			// CRITICAL: Just skip this step and don't add to address
+			// Skip Including any name
 			continue
 		// TODO: AttrValueStep? Currently no use case for it
 		default:
