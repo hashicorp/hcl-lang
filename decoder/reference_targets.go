@@ -108,6 +108,17 @@ func (d *PathDecoder) decodeReferenceTargetsForBody(body hcl.Body, parentBlock *
 		return reference.Targets{}
 	}
 
+	var currentBlockAddr lang.Address
+	if parentBlock != nil {
+		// We use the same logic your code uses at line 170
+		// But we do it here so both Attributes and Blocks can use it
+		if bSchema, ok := d.pathCtx.Schema.Blocks[parentBlock.Type]; ok {
+			if a, ok := resolveBlockAddress(parentBlock.Block, bSchema); ok {
+				currentBlockAddr = a
+			}
+		}
+	}
+
 	content := ast.DecodeBody(body, bodySchema)
 
 	for _, attr := range content.Attributes {
@@ -130,7 +141,7 @@ func (d *PathDecoder) decodeReferenceTargetsForBody(body hcl.Body, parentBlock *
 			attrSchema = bodySchema.AnyAttribute
 		}
 
-		refs = append(refs, d.decodeReferenceTargetsForAttribute(attr, attrSchema)...)
+		refs = append(refs, d.decodeReferenceTargetsForAttribute(attr, attrSchema, currentBlockAddr)...)
 	}
 
 	for _, blk := range content.Blocks {
@@ -280,7 +291,7 @@ func decodeTargetableBody(body hcl.Body, parentBlock *ast.BlockContent, tt *sche
 	return target
 }
 
-func (d *PathDecoder) decodeReferenceTargetsForAttribute(attr *hcl.Attribute, attrSchema *schema.AttributeSchema) reference.Targets {
+func (d *PathDecoder) decodeReferenceTargetsForAttribute(attr *hcl.Attribute, attrSchema *schema.AttributeSchema, parentAddr lang.Address) reference.Targets {
 	refs := make(reference.Targets, 0)
 
 	ctx := context.Background()
@@ -289,7 +300,18 @@ func (d *PathDecoder) decodeReferenceTargetsForAttribute(attr *hcl.Attribute, at
 	if eType, ok := expr.(ReferenceTargetsExpression); ok {
 		var targetCtx *TargetContext
 		if attrSchema.Address != nil {
-			attrAddr, ok := resolveAttributeAddress(attr, attrSchema.Address.Steps)
+			var attrAddr lang.Address
+			var ok bool
+			if len(attrSchema.Address.Steps) > 0 {
+				if _, isSkip := attrSchema.Address.Steps[0].(schema.Skip); isSkip {
+					// Initialize with the parent block's address
+					attrAddr = parentAddr.Copy()
+					ok = true
+				}
+			}
+			if attrAddr == nil {
+				attrAddr, ok = resolveAttributeAddress(attr, attrSchema.Address.Steps)
+			}
 			if ok && (attrSchema.Address.AsExprType || attrSchema.Address.AsReference) {
 				targetCtx = &TargetContext{
 					FriendlyName:      attrSchema.Address.FriendlyName,
@@ -399,6 +421,14 @@ func bodySchemaAsAttrTypes(bodySchema *schema.BodySchema) map[string]cty.Type {
 	return attrTypes
 }
 
+func isSkipStep(s schema.AddrStep) bool {
+	if s == nil {
+		return false
+	}
+	_, ok := s.(schema.Skip)
+	return ok
+}
+
 func (d *PathDecoder) collectInferredReferenceTargetsForBody(addr lang.Address, bAddrSchema *schema.BlockAddrSchema, body hcl.Body, bodySchema *schema.BodySchema, selfRefBodyRangePtr *hcl.Range, selfRefAddr lang.Address) reference.Targets {
 	var (
 		refs             = make(reference.Targets, 0)
@@ -417,6 +447,18 @@ func (d *PathDecoder) collectInferredReferenceTargetsForBody(addr lang.Address, 
 	rawAttributes, _ := body.JustAttributes()
 
 	for name, aSchema := range bodySchema.Attributes {
+		attrAddr := addr.Copy()
+
+		// 2. Determine if we should append the attribute name or skip it
+		if aSchema.Address != nil && len(aSchema.Address.Steps) > 0 {
+			_, isSkip := aSchema.Address.Steps[0].(schema.Skip)
+			if !isSkip {
+				attrAddr = append(attrAddr, lang.AttrStep{Name: name})
+			}
+		} else {
+			// Default: no schema address means it's a standard attribute
+			attrAddr = append(attrAddr, lang.AttrStep{Name: name})
+		}
 		var attrType cty.Type
 		cons, ok := aSchema.Constraint.(schema.TypeAwareConstraint)
 		if ok {
@@ -442,7 +484,6 @@ func (d *PathDecoder) collectInferredReferenceTargetsForBody(addr lang.Address, 
 			continue
 		}
 
-		attrAddr := append(addr.Copy(), lang.AttrStep{Name: name})
 		targetCtx := &TargetContext{
 			ParentAddress: attrAddr,
 			ScopeId:       bAddrSchema.ScopeId,
@@ -743,6 +784,9 @@ func resolveAttributeAddress(attr *hcl.Attribute, addr schema.Address) (lang.Add
 			stepName = step.Name
 		case schema.AttrNameStep:
 			stepName = attr.Name
+		case schema.Skip:
+			// CRITICAL: Just skip this step and don't add to address
+			continue
 		// TODO: AttrValueStep? Currently no use case for it
 		default:
 			// unknown step
