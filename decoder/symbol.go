@@ -9,6 +9,7 @@ import (
 
 	"github.com/hashicorp/hcl-lang/lang"
 	"github.com/hashicorp/hcl/v2"
+	"github.com/hashicorp/hcl/v2/hclsyntax"
 )
 
 type symbolImplSigil struct{}
@@ -27,6 +28,7 @@ type Symbol interface {
 type BlockSymbol struct {
 	Type   string
 	Labels []string
+	Block  *hcl.Block
 
 	path          lang.Path
 	rng           hcl.Range
@@ -71,8 +73,9 @@ func (bs *BlockSymbol) Path() lang.Path {
 
 // AttributeSymbol is Symbol implementation representing an attribute
 type AttributeSymbol struct {
-	AttrName string
-	ExprKind lang.SymbolExprKind
+	AttrName  string
+	ExprKind  lang.SymbolExprKind
+	Attribute *hcl.Attribute
 
 	path          lang.Path
 	rng           hcl.Range
@@ -114,6 +117,11 @@ func (as *AttributeSymbol) Path() lang.Path {
 type ExprSymbol struct {
 	ExprName string
 	ExprKind lang.SymbolExprKind
+
+	// Expr is set if the parent Expression is a *hclsyntax.TupleConsExpr
+	Expr hcl.Expression
+	// Item is set if the parent Expression is a *hclsyntax.ObjectConsExpr
+	Item hclsyntax.ObjectConsItem
 
 	path          lang.Path
 	rng           hcl.Range
