@@ -1,4 +1,4 @@
-// Copyright (c) HashiCorp, Inc.
+// Copyright IBM Corp. 2020, 2026
 // SPDX-License-Identifier: MPL-2.0
 
 package decoder
@@ -152,6 +152,14 @@ func (d *PathDecoder) decodeReferenceTargetsForBody(body hcl.Body, parentBlock *
 		mergedSchema, _ := schemahelper.MergeBlockBodySchemas(blk.Block, bSchema)
 
 		iRefs := d.decodeReferenceTargetsForBody(blk.Body, blk, mergedSchema)
+
+		// If TargetableFromCurrentBlock is set on the block's body schema,
+		// transform targets to be block-scoped: swap Addr/LocalAddr
+		// and set TargetableFromRangePtr to the parent block's range.
+		if mergedSchema.TargetableFromCurrentBlock && parentBlock != nil {
+			applyBlockScopedTargets(iRefs, parentBlock.Range.Ptr())
+		}
+
 		refs = append(refs, iRefs...)
 
 		addr, ok := resolveBlockAddress(blk.Block, bSchema)
@@ -287,6 +295,27 @@ func decodeTargetableBody(body hcl.Body, parentBlock *ast.BlockContent, tt *sche
 	}
 
 	return target
+}
+
+// applyBlockScopedTargets transforms reference targets to be block-scoped by
+// swapping Addr to LocalAddr and setting TargetableFromRangePtr to the parent
+// block's range. This is applied recursively to all nested targets.
+func applyBlockScopedTargets(targets reference.Targets, parentBlockRange *hcl.Range) {
+	for i := range targets {
+		target := &targets[i]
+		target.BlockScoped = true
+		if target.Addr != nil {
+			target.LocalAddr = target.Addr.Copy()
+			target.Addr = nil
+		}
+		if target.TargetableFromRangePtr == nil {
+			target.TargetableFromRangePtr = parentBlockRange
+		}
+		// Recursively modify nested targets
+		if len(target.NestedTargets) > 0 {
+			applyBlockScopedTargets(target.NestedTargets, parentBlockRange)
+		}
+	}
 }
 
 func (d *PathDecoder) decodeReferenceTargetsForAttribute(attr *hcl.Attribute, attrSchema *schema.AttributeSchema, parentAddr lang.Address) reference.Targets {

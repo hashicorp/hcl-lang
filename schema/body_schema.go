@@ -1,4 +1,4 @@
-// Copyright (c) HashiCorp, Inc.
+// Copyright IBM Corp. 2020, 2026
 // SPDX-License-Identifier: MPL-2.0
 
 package schema
@@ -51,6 +51,18 @@ type BodySchema struct {
 
 	// Extensions represents any HCL extensions supported in this body
 	Extensions *BodyExtensions
+
+	// TargetableFromCurrentBlock indicates that reference targets defined in this body
+	// are only accessible from origins within the parent block's range. This is used
+	// for block-scoped constructs like nested locals blocks in policy files.
+	//
+	// When true, reference matching will ensure that:
+	// 1. TargetableFromRangePtr is set to the parent block's range, restricting where they can be referenced from.
+	// 2. The targets Addr is swapped to LocalAddr (Addr is set to nil)
+	//
+	// Example: A locals block nested within a resource_policy block where local.foo
+	// defined in the nested locals is only accessible within that resource_policy block.
+	TargetableFromCurrentBlock bool
 }
 
 type BodyExtensions struct {
@@ -195,14 +207,15 @@ func (bs *BodySchema) Copy() *BodySchema {
 	}
 
 	newBs := &BodySchema{
-		IsDeprecated: bs.IsDeprecated,
-		Detail:       bs.Detail,
-		Description:  bs.Description,
-		AnyAttribute: bs.AnyAttribute.Copy(),
-		HoverURL:     bs.HoverURL,
-		DocsLink:     bs.DocsLink.Copy(),
-		Targets:      bs.Targets.Copy(),
-		Extensions:   bs.Extensions.Copy(),
+		IsDeprecated:               bs.IsDeprecated,
+		Detail:                     bs.Detail,
+		Description:                bs.Description,
+		AnyAttribute:               bs.AnyAttribute.Copy(),
+		HoverURL:                   bs.HoverURL,
+		DocsLink:                   bs.DocsLink.Copy(),
+		Targets:                    bs.Targets.Copy(),
+		Extensions:                 bs.Extensions.Copy(),
+		TargetableFromCurrentBlock: bs.TargetableFromCurrentBlock,
 	}
 
 	if bs.TargetableAs != nil {

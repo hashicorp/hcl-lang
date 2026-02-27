@@ -1,4 +1,4 @@
-// Copyright (c) HashiCorp, Inc.
+// Copyright IBM Corp. 2020, 2026
 // SPDX-License-Identifier: MPL-2.0
 
 package decoder
@@ -4425,6 +4425,135 @@ func TestCollectReferenceTargets_json(t *testing.T) {
 }
 `,
 			reference.Targets{},
+		},
+		{
+			"TargetableFromCurrentBlock - single attribute in nested block",
+			&schema.BodySchema{
+				Blocks: map[string]*schema.BlockSchema{
+					"resource_policy": {
+						Labels: []*schema.LabelSchema{
+							{Name: "name"},
+						},
+						Body: &schema.BodySchema{
+							Blocks: map[string]*schema.BlockSchema{
+								"locals": {
+									Body: &schema.BodySchema{
+										AnyAttribute: &schema.AttributeSchema{
+											Address: &schema.AttributeAddrSchema{
+												Steps: []schema.AddrStep{
+													schema.StaticStep{Name: "local"},
+													schema.AttrNameStep{},
+												},
+												ScopeId:    lang.ScopeId("local"),
+												AsExprType: true,
+											},
+											Constraint: schema.AnyExpression{OfType: cty.DynamicPseudoType},
+										},
+										TargetableFromCurrentBlock: true,
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			`{
+  "resource_policy": {
+    "mypolicy": {
+      "locals": {
+        "key1": "value1"
+      }
+    }
+  }
+}
+`,
+			reference.Targets{
+				{
+					LocalAddr: lang.Address{
+						lang.RootStep{Name: "local"},
+						lang.AttrStep{Name: "key1"},
+					},
+					ScopeId:     lang.ScopeId("local"),
+					BlockScoped: true,
+					RangePtr: &hcl.Range{
+						Filename: "test.tf.json",
+						Start:    hcl.Pos{Line: 5, Column: 9, Byte: 69},
+						End:      hcl.Pos{Line: 5, Column: 25, Byte: 85},
+					},
+					DefRangePtr: &hcl.Range{
+						Filename: "test.tf.json",
+						Start:    hcl.Pos{Line: 5, Column: 9, Byte: 69},
+						End:      hcl.Pos{Line: 5, Column: 15, Byte: 75},
+					},
+					Type: cty.String,
+					TargetableFromRangePtr: &hcl.Range{
+						Filename: "test.tf.json",
+						Start:    hcl.Pos{Line: 3, Column: 17, Byte: 41},
+						End:      hcl.Pos{Line: 7, Column: 6, Byte: 99},
+					},
+				},
+			},
+		},
+		{
+			"TargetableFromCurrentBlock false - targets retain Addr",
+			&schema.BodySchema{
+				Blocks: map[string]*schema.BlockSchema{
+					"resource_policy": {
+						Labels: []*schema.LabelSchema{
+							{Name: "name"},
+						},
+						Body: &schema.BodySchema{
+							Blocks: map[string]*schema.BlockSchema{
+								"locals": {
+									Body: &schema.BodySchema{
+										AnyAttribute: &schema.AttributeSchema{
+											Address: &schema.AttributeAddrSchema{
+												Steps: []schema.AddrStep{
+													schema.StaticStep{Name: "local"},
+													schema.AttrNameStep{},
+												},
+												ScopeId:    lang.ScopeId("local"),
+												AsExprType: true,
+											},
+											Constraint: schema.AnyExpression{OfType: cty.DynamicPseudoType},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			`{
+  "resource_policy": {
+    "mypolicy": {
+      "locals": {
+        "key1": "value1"
+      }
+    }
+  }
+}
+`,
+			reference.Targets{
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "local"},
+						lang.AttrStep{Name: "key1"},
+					},
+					ScopeId: lang.ScopeId("local"),
+					RangePtr: &hcl.Range{
+						Filename: "test.tf.json",
+						Start:    hcl.Pos{Line: 5, Column: 9, Byte: 69},
+						End:      hcl.Pos{Line: 5, Column: 25, Byte: 85},
+					},
+					DefRangePtr: &hcl.Range{
+						Filename: "test.tf.json",
+						Start:    hcl.Pos{Line: 5, Column: 9, Byte: 69},
+						End:      hcl.Pos{Line: 5, Column: 15, Byte: 75},
+					},
+					Type: cty.String,
+				},
+			},
 		},
 	}
 
