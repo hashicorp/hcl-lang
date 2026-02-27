@@ -116,8 +116,11 @@ func localTargetMatches(ctx context.Context, target Target, ref schema.Reference
 			//
 			// Example: in resource_policy { locals { foo = ... } }, don't suggest
 			// local.foo while still typing within that same locals block.
-			if target.BlockScoped && innermostBlockRng != outermostBodyRng && innermostBlockRng.Filename == target.RangePtr.Filename && innermostBlockRng.ContainsPos(target.RangePtr.Start) {
-				return false
+			if target.BlockScoped {
+				// if target is in the same block as it's immediate parent, we don't want any suggestions
+				if innermostBlockRng.Filename == target.RangePtr.Filename && innermostBlockRng.ContainsPos(target.RangePtr.Start) {
+					return false
+				}
 			}
 
 			// We compare line in case the (incomplete) attribute
