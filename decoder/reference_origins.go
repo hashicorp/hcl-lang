@@ -41,8 +41,9 @@ func (d *Decoder) ReferenceOriginsTargetingPos(path lang.Path, file string, pos 
 			rawOrigins := pathCtx.ReferenceOrigins.Match(p, target, path)
 			for _, origin := range rawOrigins {
 				origins = append(origins, ReferenceOrigin{
-					Path:  p,
-					Range: origin.OriginRange(),
+					Path:           p,
+					Range:          origin.OriginRange(),
+					RootBlockRange: origin.RootBlockOriginRange(),
 				})
 			}
 		}
@@ -78,7 +79,7 @@ func (d *PathDecoder) CollectReferenceOrigins() (reference.Origins, error) {
 			continue
 		}
 
-		os, ios := d.referenceOriginsInBody(f.Body, d.pathCtx.Schema)
+		os, ios := d.referenceOriginsInBody(f.Body, d.pathCtx.Schema, nil)
 		refOrigins = append(refOrigins, os...)
 		impliedOrigins = append(impliedOrigins, ios...)
 	}
@@ -89,9 +90,10 @@ func (d *PathDecoder) CollectReferenceOrigins() (reference.Origins, error) {
 
 			if ok && localOrigin.Addr.Equals(impliedOrigin.OriginAddress) {
 				refOrigins = append(refOrigins, reference.PathOrigin{
-					Range:      origin.OriginRange(),
-					TargetAddr: impliedOrigin.TargetAddress,
-					TargetPath: impliedOrigin.Path,
+					Range:          origin.OriginRange(),
+					RootBlockRange: origin.RootBlockOriginRange(),
+					TargetAddr:     impliedOrigin.TargetAddress,
+					TargetPath:     impliedOrigin.Path,
 					Constraints: reference.OriginConstraints{
 						{
 							OfScopeId: impliedOrigin.Constraints.ScopeId,
@@ -113,7 +115,7 @@ func (d *PathDecoder) CollectReferenceOrigins() (reference.Origins, error) {
 	return refOrigins, nil
 }
 
-func (d *PathDecoder) referenceOriginsInBody(body hcl.Body, bodySchema *schema.BodySchema) (reference.Origins, []schema.ImpliedOrigin) {
+func (d *PathDecoder) referenceOriginsInBody(body hcl.Body, bodySchema *schema.BodySchema, rootBlockRange *hcl.Range) (reference.Origins, []schema.ImpliedOrigin) {
 	origins := make(reference.Origins, 0)
 	impliedOrigins := make([]schema.ImpliedOrigin, 0)
 
@@ -144,13 +146,20 @@ func (d *PathDecoder) referenceOriginsInBody(body hcl.Body, bodySchema *schema.B
 			}
 		}
 
+		var rootBlockRng hcl.Range
+		if rootBlockRange != nil {
+			rootBlockRng = *rootBlockRange
+		}
+
 		if aSchema.OriginForTarget != nil {
 			targetAddr, ok := resolveAttributeAddress(attr, aSchema.OriginForTarget.Address)
 			if ok {
+
 				origins = append(origins, reference.PathOrigin{
-					Range:      attr.NameRange,
-					TargetAddr: targetAddr,
-					TargetPath: aSchema.OriginForTarget.Path,
+					Range:          attr.NameRange,
+					RootBlockRange: rootBlockRng,
+					TargetAddr:     targetAddr,
+					TargetPath:     aSchema.OriginForTarget.Path,
 					Constraints: reference.OriginConstraints{
 						{
 							OfScopeId: aSchema.OriginForTarget.Constraints.ScopeId,
@@ -162,16 +171,19 @@ func (d *PathDecoder) referenceOriginsInBody(body hcl.Body, bodySchema *schema.B
 		}
 
 		if aSchema.IsDepKey && bodySchema.Targets != nil {
+
 			origins = append(origins, reference.DirectOrigin{
-				Range:       attr.Expr.Range(),
-				TargetPath:  bodySchema.Targets.Path,
-				TargetRange: bodySchema.Targets.Range,
+				Range:          attr.Expr.Range(),
+				RootBlockRange: rootBlockRng,
+				TargetPath:     bodySchema.Targets.Path,
+				TargetRange:    bodySchema.Targets.Range,
 			})
 		}
 
 		if bodySchema.Extensions != nil && bodySchema.Extensions.SelfRefs {
 			ctx = schema.WithActiveSelfRefs(ctx)
 		}
+		ctx = WithRootBlockRange(ctx, rootBlockRng)
 		expr := d.newExpression(attr.Expr, aSchema.Constraint)
 		if eType, ok := expr.(ReferenceOriginsExpression); ok {
 			origins = append(origins, eType.ReferenceOrigins(ctx)...)
@@ -187,7 +199,15 @@ func (d *PathDecoder) referenceOriginsInBody(body hcl.Body, bodySchema *schema.B
 			}
 			mergedSchema, _ := schemahelper.MergeBlockBodySchemas(block.Block, bSchema)
 
-			os, ios := d.referenceOriginsInBody(block.Body, mergedSchema)
+			// If rootBlockRange is nil, use the current block's range as the root block range.
+			// Otherwise, pass the existing rootBlockRange down to preserve the root context.
+			var nextRootBlockRange *hcl.Range
+			if rootBlockRange == nil {
+				nextRootBlockRange = &block.DefRange
+			} else {
+				nextRootBlockRange = rootBlockRange
+			}
+			os, ios := d.referenceOriginsInBody(block.Body, mergedSchema, nextRootBlockRange)
 			origins = append(origins, os...)
 			impliedOrigins = append(impliedOrigins, ios...)
 		}
