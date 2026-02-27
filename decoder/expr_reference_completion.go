@@ -37,6 +37,13 @@ func (ref Reference) CompletionAtPos(ctx context.Context, pos hcl.Pos) []lang.Ca
 		outerBodyRng = ob.Range()
 	}
 
+	innerBodyRng := rootBody.Range()
+	innerBlock := rootBody.InnermostBlockAtPos(pos)
+	if innerBlock != nil {
+		ib := innerBlock.Body.(*hclsyntax.Body)
+		innerBodyRng = ib.Range()
+	}
+
 	if isEmptyExpression(ref.expr) {
 		editRng := hcl.Range{
 			Filename: ref.expr.Range().Filename,
@@ -44,7 +51,7 @@ func (ref Reference) CompletionAtPos(ctx context.Context, pos hcl.Pos) []lang.Ca
 			End:      pos,
 		}
 		candidates := make([]lang.Candidate, 0)
-		ref.pathCtx.ReferenceTargets.MatchWalk(ctx, ref.cons, "", outerBodyRng, editRng, func(target reference.Target) error {
+		ref.pathCtx.ReferenceTargets.MatchWalk(ctx, ref.cons, "", outerBodyRng, editRng, innerBodyRng, func(target reference.Target) error {
 			address := target.Address(ctx, editRng.Start).String()
 
 			candidates = append(candidates, lang.Candidate{
@@ -96,7 +103,7 @@ func (ref Reference) CompletionAtPos(ctx context.Context, pos hcl.Pos) []lang.Ca
 	prefix := string(prefixRng.SliceBytes(file.Bytes))
 
 	candidates := make([]lang.Candidate, 0)
-	ref.pathCtx.ReferenceTargets.MatchWalk(ctx, ref.cons, prefix, outerBodyRng, editRng, func(target reference.Target) error {
+	ref.pathCtx.ReferenceTargets.MatchWalk(ctx, ref.cons, prefix, outerBodyRng, editRng, innerBodyRng, func(target reference.Target) error {
 		address := target.Address(ctx, editRng.Start).String()
 
 		candidates = append(candidates, lang.Candidate{
