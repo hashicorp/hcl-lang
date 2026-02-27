@@ -421,14 +421,6 @@ func bodySchemaAsAttrTypes(bodySchema *schema.BodySchema) map[string]cty.Type {
 	return attrTypes
 }
 
-func isSkipStep(s schema.AddrStep) bool {
-	if s == nil {
-		return false
-	}
-	_, ok := s.(schema.Skip)
-	return ok
-}
-
 func (d *PathDecoder) collectInferredReferenceTargetsForBody(addr lang.Address, bAddrSchema *schema.BlockAddrSchema, body hcl.Body, bodySchema *schema.BodySchema, selfRefBodyRangePtr *hcl.Range, selfRefAddr lang.Address) reference.Targets {
 	var (
 		refs             = make(reference.Targets, 0)
@@ -854,6 +846,7 @@ func resolveBlockAddress(block *hcl.Block, blockSchema *schema.BlockSchema) (lan
 				return lang.Address{}, false
 			}
 			stepName = val.AsString()
+			// TODO: SkipStep? Currently no use case for it
 		default:
 			// unknown step
 			return lang.Address{}, false
