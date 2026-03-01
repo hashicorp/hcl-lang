@@ -95,27 +95,20 @@ func (d *PathDecoder) CollectReferenceTargets() (reference.Targets, error) {
 			// skip unparseable file
 			continue
 		}
-		refs = append(refs, d.decodeReferenceTargetsForBody(f.Body, nil, d.pathCtx.Schema)...)
+		refs = append(refs, d.decodeReferenceTargetsForBody(f.Body, nil, d.pathCtx.Schema, nil)...)
 	}
 
 	return refs, nil
 }
 
-func (d *PathDecoder) decodeReferenceTargetsForBody(body hcl.Body, parentBlock *ast.BlockContent, bodySchema *schema.BodySchema) reference.Targets {
+func (d *PathDecoder) decodeReferenceTargetsForBody(body hcl.Body, parentBlock *ast.BlockContent, bodySchema *schema.BodySchema, parentAddr lang.Address) reference.Targets {
 	refs := make(reference.Targets, 0)
 
 	if bodySchema == nil {
 		return reference.Targets{}
 	}
 
-	var currentBlockAddr lang.Address
-	if parentBlock != nil {
-		if bSchema, ok := d.pathCtx.Schema.Blocks[parentBlock.Type]; ok {
-			if a, ok := resolveBlockAddress(parentBlock.Block, bSchema); ok {
-				currentBlockAddr = a
-			}
-		}
-	}
+	var currentBlockAddr = parentAddr
 
 	content := ast.DecodeBody(body, bodySchema)
 
@@ -148,10 +141,15 @@ func (d *PathDecoder) decodeReferenceTargetsForBody(body hcl.Body, parentBlock *
 			// unknown block (no schema)
 			continue
 		}
+		addr, ok := resolveBlockAddress(blk.Block, bSchema)
+		effectiveAddr := addr
+		if !ok {
+			effectiveAddr = currentBlockAddr.Copy()
+		}
 
 		mergedSchema, _ := schemahelper.MergeBlockBodySchemas(blk.Block, bSchema)
 
-		iRefs := d.decodeReferenceTargetsForBody(blk.Body, blk, mergedSchema)
+		iRefs := d.decodeReferenceTargetsForBody(blk.Body, blk, mergedSchema, effectiveAddr)
 
 		// If TargetableFromCurrentBlock is set on the block's body schema,
 		// transform targets to be block-scoped: swap Addr/LocalAddr
@@ -162,7 +160,6 @@ func (d *PathDecoder) decodeReferenceTargetsForBody(body hcl.Body, parentBlock *
 
 		refs = append(refs, iRefs...)
 
-		addr, ok := resolveBlockAddress(blk.Block, bSchema)
 		if !ok {
 			// skip unresolvable address
 			continue
