@@ -87,6 +87,10 @@ type AttributeAddrSchema struct {
 	// AsReference defines whether the attribute
 	// is addressable as a type-less reference
 	AsReference bool
+
+	// Skip describes whether to skip the attribute name while referencing in the address
+	// Helps to flatten address
+	Skip bool
 }
 
 func (*AttributeSchema) isSchemaImpl() schemaImplSigil {
@@ -169,6 +173,7 @@ func (aas *AttributeAddrSchema) Copy() *AttributeAddrSchema {
 		AsExprType:   aas.AsExprType,
 		AsReference:  aas.AsReference,
 		Steps:        aas.Steps.Copy(),
+		Skip:         aas.Skip,
 	}
 
 	return newAas

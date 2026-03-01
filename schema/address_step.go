@@ -39,9 +39,3 @@ type AttrValueStep struct {
 func (AttrValueStep) isAddrStepImpl() addrStepImplSigil {
 	return addrStepImplSigil{}
 }
-
-type Skip struct{}
-
-func (Skip) isAddrStepImpl() addrStepImplSigil {
-	return addrStepImplSigil{}
-}

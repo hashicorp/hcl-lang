@@ -329,12 +329,10 @@ func (d *PathDecoder) decodeReferenceTargetsForAttribute(attr *hcl.Attribute, at
 		if attrSchema.Address != nil {
 			var attrAddr lang.Address
 			var ok bool
-			if len(attrSchema.Address.Steps) > 0 {
-				if _, isSkip := attrSchema.Address.Steps[0].(schema.Skip); isSkip {
-					// Initialize with the parent block's address
-					attrAddr = parentAddr.Copy()
-					ok = true
-				}
+			if attrSchema.Address != nil && attrSchema.Address.Skip == true {
+				// Initialize with the parent block's address
+				attrAddr = parentAddr.Copy()
+				ok = true
 			}
 			if attrAddr == nil {
 				attrAddr, ok = resolveAttributeAddress(attr, attrSchema.Address.Steps)
@@ -469,13 +467,9 @@ func (d *PathDecoder) collectInferredReferenceTargetsForBody(addr lang.Address, 
 		attrAddr := addr.Copy()
 
 		// Determine if we should append the attribute name or skip it
-		if aSchema.Address != nil && len(aSchema.Address.Steps) > 0 {
-			_, isSkip := aSchema.Address.Steps[0].(schema.Skip)
-			if !isSkip {
-				attrAddr = append(attrAddr, lang.AttrStep{Name: name})
-			}
+		if aSchema.Address != nil && aSchema.Address.Skip {
+			// No-op: we explicitly skip appending for this schema type
 		} else {
-			// Default: no schema address means it's a standard attribute
 			attrAddr = append(attrAddr, lang.AttrStep{Name: name})
 		}
 		var attrType cty.Type
@@ -803,9 +797,6 @@ func resolveAttributeAddress(attr *hcl.Attribute, addr schema.Address) (lang.Add
 			stepName = step.Name
 		case schema.AttrNameStep:
 			stepName = attr.Name
-		case schema.Skip:
-			// Skip Including any name
-			continue
 		// TODO: AttrValueStep? Currently no use case for it
 		default:
 			// unknown step
