@@ -83,6 +83,8 @@ type TargetContext struct {
 	// ParentDefRangePtr represents the range of the parent target's definition
 	// e.g. object attribute name or map key
 	ParentDefRangePtr *hcl.Range
+
+	Skip bool
 }
 
 func (tctx *TargetContext) Copy() *TargetContext {

@@ -326,10 +326,11 @@ func (d *PathDecoder) decodeReferenceTargetsForAttribute(attr *hcl.Attribute, at
 	expr := d.newExpression(attr.Expr, attrSchema.Constraint)
 	if eType, ok := expr.(ReferenceTargetsExpression); ok {
 		var targetCtx *TargetContext
+		isSkipped := attrSchema.Address != nil && attrSchema.Address.Skip
 		if attrSchema.Address != nil {
 			var attrAddr lang.Address
 			var ok bool
-			if attrSchema.Address != nil && attrSchema.Address.Skip == true {
+			if isSkipped {
 				// Initialize with the parent block's address
 				attrAddr = parentAddr.Copy()
 				ok = true
@@ -346,10 +347,11 @@ func (d *PathDecoder) decodeReferenceTargetsForAttribute(attr *hcl.Attribute, at
 					ParentAddress:     attrAddr,
 					ParentRangePtr:    attr.Range.Ptr(),
 					ParentDefRangePtr: attr.NameRange.Ptr(),
+					Skip:              isSkipped, // Ensure TargetContext has a Skip field
 				}
 			}
 
-			if attrSchema.Address.AsReference {
+			if attrSchema.Address.AsReference && !isSkipped {
 				ref := reference.Target{
 					Addr:          attrAddr,
 					ScopeId:       attrSchema.Address.ScopeId,
@@ -465,11 +467,9 @@ func (d *PathDecoder) collectInferredReferenceTargetsForBody(addr lang.Address, 
 
 	for name, aSchema := range bodySchema.Attributes {
 		attrAddr := addr.Copy()
+		isSkipped := aSchema.Address != nil && aSchema.Address.Skip
 
-		// Determine if we should append the attribute name or skip it
-		if aSchema.Address != nil && aSchema.Address.Skip {
-			// No-op: we explicitly skip appending for this schema type
-		} else {
+		if !isSkipped {
 			attrAddr = append(attrAddr, lang.AttrStep{Name: name})
 		}
 		var attrType cty.Type
@@ -501,6 +501,7 @@ func (d *PathDecoder) collectInferredReferenceTargetsForBody(addr lang.Address, 
 			ParentAddress: attrAddr,
 			ScopeId:       bAddrSchema.ScopeId,
 			AsExprType:    true,
+			Skip:          isSkipped,
 		}
 
 		if collectLocalAddr {
@@ -864,7 +865,6 @@ func resolveBlockAddress(block *hcl.Block, blockSchema *schema.BlockSchema) (lan
 				return lang.Address{}, false
 			}
 			stepName = val.AsString()
-			// TODO: SkipStep? Currently no use case for it
 		default:
 			// unknown step
 			return lang.Address{}, false
