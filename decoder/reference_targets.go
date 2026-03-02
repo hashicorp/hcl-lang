@@ -95,18 +95,20 @@ func (d *PathDecoder) CollectReferenceTargets() (reference.Targets, error) {
 			// skip unparseable file
 			continue
 		}
-		refs = append(refs, d.decodeReferenceTargetsForBody(f.Body, nil, d.pathCtx.Schema)...)
+		refs = append(refs, d.decodeReferenceTargetsForBody(f.Body, nil, d.pathCtx.Schema, nil)...)
 	}
 
 	return refs, nil
 }
 
-func (d *PathDecoder) decodeReferenceTargetsForBody(body hcl.Body, parentBlock *ast.BlockContent, bodySchema *schema.BodySchema) reference.Targets {
+func (d *PathDecoder) decodeReferenceTargetsForBody(body hcl.Body, parentBlock *ast.BlockContent, bodySchema *schema.BodySchema, parentAddr lang.Address) reference.Targets {
 	refs := make(reference.Targets, 0)
 
 	if bodySchema == nil {
 		return reference.Targets{}
 	}
+
+	var currentBlockAddr = parentAddr
 
 	content := ast.DecodeBody(body, bodySchema)
 
@@ -130,7 +132,7 @@ func (d *PathDecoder) decodeReferenceTargetsForBody(body hcl.Body, parentBlock *
 			attrSchema = bodySchema.AnyAttribute
 		}
 
-		refs = append(refs, d.decodeReferenceTargetsForAttribute(attr, attrSchema)...)
+		refs = append(refs, d.decodeReferenceTargetsForAttribute(attr, attrSchema, currentBlockAddr)...)
 	}
 
 	for _, blk := range content.Blocks {
@@ -139,10 +141,15 @@ func (d *PathDecoder) decodeReferenceTargetsForBody(body hcl.Body, parentBlock *
 			// unknown block (no schema)
 			continue
 		}
+		addr, ok := resolveBlockAddress(blk.Block, bSchema)
+		effectiveAddr := addr
+		if !ok {
+			effectiveAddr = currentBlockAddr.Copy()
+		}
 
 		mergedSchema, _ := schemahelper.MergeBlockBodySchemas(blk.Block, bSchema)
 
-		iRefs := d.decodeReferenceTargetsForBody(blk.Body, blk, mergedSchema)
+		iRefs := d.decodeReferenceTargetsForBody(blk.Body, blk, mergedSchema, effectiveAddr)
 
 		// If TargetableFromCurrentBlock is set on the block's body schema,
 		// transform targets to be block-scoped: swap Addr/LocalAddr
@@ -153,7 +160,6 @@ func (d *PathDecoder) decodeReferenceTargetsForBody(body hcl.Body, parentBlock *
 
 		refs = append(refs, iRefs...)
 
-		addr, ok := resolveBlockAddress(blk.Block, bSchema)
 		if !ok {
 			// skip unresolvable address
 			continue
@@ -309,7 +315,7 @@ func applyBlockScopedTargets(targets reference.Targets, parentBlockRange *hcl.Ra
 	}
 }
 
-func (d *PathDecoder) decodeReferenceTargetsForAttribute(attr *hcl.Attribute, attrSchema *schema.AttributeSchema) reference.Targets {
+func (d *PathDecoder) decodeReferenceTargetsForAttribute(attr *hcl.Attribute, attrSchema *schema.AttributeSchema, parentAddr lang.Address) reference.Targets {
 	refs := make(reference.Targets, 0)
 
 	ctx := context.Background()
@@ -317,8 +323,18 @@ func (d *PathDecoder) decodeReferenceTargetsForAttribute(attr *hcl.Attribute, at
 	expr := d.newExpression(attr.Expr, attrSchema.Constraint)
 	if eType, ok := expr.(ReferenceTargetsExpression); ok {
 		var targetCtx *TargetContext
+		isSkipped := attrSchema.Address != nil && attrSchema.Address.Skip
 		if attrSchema.Address != nil {
-			attrAddr, ok := resolveAttributeAddress(attr, attrSchema.Address.Steps)
+			var attrAddr lang.Address
+			var ok bool
+			if isSkipped {
+				// Initialize with the parent block's address
+				attrAddr = parentAddr.Copy()
+				ok = true
+			}
+			if attrAddr == nil {
+				attrAddr, ok = resolveAttributeAddress(attr, attrSchema.Address.Steps)
+			}
 			if ok && (attrSchema.Address.AsExprType || attrSchema.Address.AsReference) {
 				targetCtx = &TargetContext{
 					FriendlyName:      attrSchema.Address.FriendlyName,
@@ -328,10 +344,11 @@ func (d *PathDecoder) decodeReferenceTargetsForAttribute(attr *hcl.Attribute, at
 					ParentAddress:     attrAddr,
 					ParentRangePtr:    attr.Range.Ptr(),
 					ParentDefRangePtr: attr.NameRange.Ptr(),
+					Skip:              isSkipped, // Ensure TargetContext has a Skip field
 				}
 			}
 
-			if attrSchema.Address.AsReference {
+			if attrSchema.Address.AsReference && !isSkipped {
 				ref := reference.Target{
 					Addr:          attrAddr,
 					ScopeId:       attrSchema.Address.ScopeId,
@@ -446,6 +463,12 @@ func (d *PathDecoder) collectInferredReferenceTargetsForBody(addr lang.Address, 
 	rawAttributes, _ := body.JustAttributes()
 
 	for name, aSchema := range bodySchema.Attributes {
+		attrAddr := addr.Copy()
+		isSkipped := aSchema.Address != nil && aSchema.Address.Skip
+
+		if !isSkipped {
+			attrAddr = append(attrAddr, lang.AttrStep{Name: name})
+		}
 		var attrType cty.Type
 		cons, ok := aSchema.Constraint.(schema.TypeAwareConstraint)
 		if ok {
@@ -471,11 +494,11 @@ func (d *PathDecoder) collectInferredReferenceTargetsForBody(addr lang.Address, 
 			continue
 		}
 
-		attrAddr := append(addr.Copy(), lang.AttrStep{Name: name})
 		targetCtx := &TargetContext{
 			ParentAddress: attrAddr,
 			ScopeId:       bAddrSchema.ScopeId,
 			AsExprType:    true,
+			Skip:          isSkipped,
 		}
 
 		if collectLocalAddr {
