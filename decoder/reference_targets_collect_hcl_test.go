@@ -5403,7 +5403,6 @@ module "different" {
 					},
 				},
 			},
-			// Valid HCL Syntax (no outer braces)
 			`data "aws_ami" "ubuntu_ami" {
   attrs = {
     id = "ami-ubuntu-12345"
@@ -5412,7 +5411,6 @@ module "different" {
 `,
 			reference.Targets{
 				{
-					// 1. The Data Block Target
 					Addr: lang.Address{
 						lang.RootStep{Name: "data"},
 						lang.AttrStep{Name: "aws_ami"},
@@ -5432,8 +5430,6 @@ module "different" {
 					Type: cty.Type{},
 				},
 				{
-					// 2. The FLATTENED Attribute Target
-					// Address jumps from ubuntu_ami directly to id (skipping attrs)
 					Addr: lang.Address{
 						lang.RootStep{Name: "data"},
 						lang.AttrStep{Name: "aws_ami"},
