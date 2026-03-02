@@ -5368,6 +5368,116 @@ module "different" {
 				},
 			},
 		},
+		{
+			"Skip Attribute true - attribute is skipped in target and in address chain",
+			&schema.BodySchema{
+				Blocks: map[string]*schema.BlockSchema{
+					"data": {
+						Address: &schema.BlockAddrSchema{
+							Steps: []schema.AddrStep{
+								schema.StaticStep{Name: "data"},
+								schema.LabelStep{Index: 0},
+								schema.LabelStep{Index: 1},
+							},
+							ScopeId:     lang.ScopeId("data"),
+							AsReference: true,
+							InferBody:   true,
+							BodyAsData:  true,
+						},
+						Labels: []*schema.LabelSchema{
+							{Name: "data_type"},
+							{Name: "name"},
+						},
+						Body: &schema.BodySchema{
+							Attributes: map[string]*schema.AttributeSchema{
+								"attrs": {
+									Address: &schema.AttributeAddrSchema{
+										Skip:    true,
+										ScopeId: lang.ScopeId("data"),
+									},
+									Constraint: schema.AnyExpression{OfType: cty.DynamicPseudoType},
+									IsRequired: true,
+								},
+							},
+						},
+					},
+				},
+			},
+			// Valid HCL Syntax (no outer braces)
+			`data "aws_ami" "ubuntu_ami" {
+  attrs = {
+    id = "ami-ubuntu-12345"
+  }
+}
+`,
+			reference.Targets{
+				{
+					// 1. The Data Block Target
+					Addr: lang.Address{
+						lang.RootStep{Name: "data"},
+						lang.AttrStep{Name: "aws_ami"},
+						lang.AttrStep{Name: "ubuntu_ami"},
+					},
+					ScopeId: lang.ScopeId("data"),
+					RangePtr: &hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
+						End:      hcl.Pos{Line: 5, Column: 2, Byte: 75},
+					},
+					DefRangePtr: &hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
+						End:      hcl.Pos{Line: 1, Column: 28, Byte: 27},
+					},
+					Type: cty.Type{},
+				},
+				{
+					// 2. The FLATTENED Attribute Target
+					// Address jumps from ubuntu_ami directly to id (skipping attrs)
+					Addr: lang.Address{
+						lang.RootStep{Name: "data"},
+						lang.AttrStep{Name: "aws_ami"},
+						lang.AttrStep{Name: "ubuntu_ami"},
+					},
+					ScopeId: lang.ScopeId("data"),
+					RangePtr: &hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
+						End:      hcl.Pos{Line: 5, Column: 2, Byte: 75},
+					},
+					DefRangePtr: &hcl.Range{
+						Filename: "test.tf",
+						Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
+						End:      hcl.Pos{Line: 1, Column: 28, Byte: 27},
+					},
+					Type: cty.Object(map[string]cty.Type{
+						"attrs": cty.DynamicPseudoType,
+					}),
+					NestedTargets: reference.Targets{
+						{
+							Addr: lang.Address{
+								lang.RootStep{Name: "data"},
+								lang.AttrStep{Name: "aws_ami"},
+								lang.AttrStep{Name: "ubuntu_ami"},
+								lang.AttrStep{Name: "id"},
+							},
+							ScopeId: lang.ScopeId("data"),
+							RangePtr: &hcl.Range{
+								Filename: "test.tf",
+								Start:    hcl.Pos{Line: 3, Column: 5, Byte: 46},
+								End:      hcl.Pos{Line: 3, Column: 28, Byte: 69},
+							},
+							DefRangePtr: &hcl.Range{
+								Filename: "test.tf",
+								Start:    hcl.Pos{Line: 3, Column: 5, Byte: 46},
+								End:      hcl.Pos{Line: 3, Column: 7, Byte: 48},
+							},
+							Type: cty.String,
+						},
+					},
+				},
+			},
+		},
 	}
 
 	for i, tc := range testCases {
