@@ -9,6 +9,7 @@ import (
 	"github.com/hashicorp/hcl-lang/lang"
 	"github.com/hashicorp/hcl-lang/schema"
 	"github.com/hashicorp/hcl/v2/hclsyntax"
+	"github.com/zclconf/go-cty/cty"
 )
 
 func (a Any) SemanticTokens(ctx context.Context) []lang.SemanticToken {
@@ -89,6 +90,27 @@ func (a Any) SemanticTokens(ctx context.Context) []lang.SemanticToken {
 			AllowInterpolatedKeys: true,
 		}
 		return newExpression(a.pathCtx, expr, cons).SemanticTokens(ctx)
+	}
+
+	if typ == cty.DynamicPseudoType {
+		if expr, ok := a.expr.(*hclsyntax.ObjectConsExpr); ok {
+			objCons := schema.Object{
+				Attributes:            make(map[string]*schema.AttributeSchema),
+				AllowInterpolatedKeys: true,
+			}
+
+			for _, item := range expr.Items {
+				attrName, _, isRaw := rawObjectKey(item.KeyExpr)
+
+				if isRaw && attrName != "" {
+					objCons.Attributes[attrName] = &schema.AttributeSchema{
+						Constraint:  schema.AnyExpression{OfType: cty.String},
+						Description: lang.Markdown("Inferred from existing configuration"),
+					}
+				}
+			}
+			return newExpression(a.pathCtx, expr, objCons).SemanticTokens(ctx)
+		}
 	}
 
 	return a.semanticTokensForNonComplexExpr(ctx)
