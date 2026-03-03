@@ -468,12 +468,7 @@ func (d *PathDecoder) collectInferredReferenceTargetsForBody(addr lang.Address, 
 	rawAttributes, _ := body.JustAttributes()
 
 	for name, aSchema := range bodySchema.Attributes {
-		attrAddr := addr.Copy()
-		isSkipped := aSchema.Address != nil && aSchema.Address.Skip
 
-		if !isSkipped {
-			attrAddr = append(attrAddr, lang.AttrStep{Name: name})
-		}
 		var attrType cty.Type
 		cons, ok := aSchema.Constraint.(schema.TypeAwareConstraint)
 		if ok {
@@ -497,6 +492,13 @@ func (d *PathDecoder) collectInferredReferenceTargetsForBody(addr lang.Address, 
 
 		if attrType == cty.NilType {
 			continue
+		}
+
+		attrAddr := addr.Copy()
+		isSkipped := aSchema.Address != nil && aSchema.Address.Skip
+
+		if !isSkipped {
+			attrAddr = append(attrAddr, lang.AttrStep{Name: name})
 		}
 
 		targetCtx := &TargetContext{
