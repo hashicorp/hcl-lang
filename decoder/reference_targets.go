@@ -142,14 +142,14 @@ func (d *PathDecoder) decodeReferenceTargetsForBody(body hcl.Body, parentBlock *
 			continue
 		}
 		addr, ok := resolveBlockAddress(blk.Block, bSchema)
-		effectiveAddr := addr
-		if !ok {
-			// Check for nil to prevent panic
-			if currentBlockAddr != nil {
-				effectiveAddr = currentBlockAddr.Copy()
-			} else {
-				effectiveAddr = nil // Stay at root if parent is nil
-			}
+		var effectiveAddr lang.Address
+
+		if ok {
+			effectiveAddr = addr.Copy()
+		} else if currentBlockAddr != nil {
+			effectiveAddr = currentBlockAddr.Copy()
+		} else {
+			effectiveAddr = nil
 		}
 
 		mergedSchema, _ := schemahelper.MergeBlockBodySchemas(blk.Block, bSchema)
