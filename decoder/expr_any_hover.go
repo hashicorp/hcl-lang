@@ -105,7 +105,7 @@ func (a Any) HoverAtPos(ctx context.Context, pos hcl.Pos) *lang.HoverData {
 
 				if isRaw && attrName != "" {
 					objCons.Attributes[attrName] = &schema.AttributeSchema{
-						Constraint:  schema.AnyExpression{OfType: cty.String},
+						Constraint:  schema.AnyExpression{OfType: cty.DynamicPseudoType},
 						Description: lang.Markdown("Inferred from existing configuration"),
 					}
 				}

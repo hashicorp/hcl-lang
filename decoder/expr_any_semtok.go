@@ -104,7 +104,7 @@ func (a Any) SemanticTokens(ctx context.Context) []lang.SemanticToken {
 
 				if isRaw && attrName != "" {
 					objCons.Attributes[attrName] = &schema.AttributeSchema{
-						Constraint:  schema.AnyExpression{OfType: cty.String},
+						Constraint:  schema.AnyExpression{OfType: cty.DynamicPseudoType},
 						Description: lang.Markdown("Inferred from existing configuration"),
 					}
 				}
