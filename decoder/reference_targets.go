@@ -141,15 +141,14 @@ func (d *PathDecoder) decodeReferenceTargetsForBody(body hcl.Body, parentBlock *
 			// unknown block (no schema)
 			continue
 		}
-		addr, ok := resolveBlockAddress(blk.Block, bSchema)
-		var effectiveAddr lang.Address
+		effectiveAddr, ok := resolveBlockAddress(blk.Block, bSchema)
 
-		if ok {
-			effectiveAddr = addr.Copy()
-		} else if currentBlockAddr != nil {
-			effectiveAddr = currentBlockAddr.Copy()
-		} else {
-			effectiveAddr = nil
+		if !ok {
+			if currentBlockAddr != nil {
+				effectiveAddr = currentBlockAddr.Copy()
+			} else {
+				effectiveAddr = nil
+			}
 		}
 
 		mergedSchema, _ := schemahelper.MergeBlockBodySchemas(blk.Block, bSchema)
@@ -165,6 +164,7 @@ func (d *PathDecoder) decodeReferenceTargetsForBody(body hcl.Body, parentBlock *
 
 		refs = append(refs, iRefs...)
 
+		addr, ok := resolveBlockAddress(blk.Block, bSchema)
 		if !ok {
 			// skip unresolvable address
 			continue
