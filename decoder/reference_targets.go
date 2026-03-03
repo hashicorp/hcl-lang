@@ -332,7 +332,7 @@ func (d *PathDecoder) decodeReferenceTargetsForAttribute(attr *hcl.Attribute, at
 		if attrSchema.Address != nil {
 			var attrAddr lang.Address
 			var ok bool
-			if isSkipped {
+			if isSkipped && parentAddr != nil {
 				// Initialize with the parent block's address
 				attrAddr = parentAddr.Copy()
 				ok = true
