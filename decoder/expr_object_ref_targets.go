@@ -140,6 +140,11 @@ func (obj Object) collectAttributeTargets(ctx context.Context, targetCtx *Target
 }
 
 func (obj Object) wholeObjectReferenceTargets(targetCtx *TargetContext, nestedTargets reference.Targets) reference.Targets {
+	// If Skip is true, we don't want to create a target for the current address.
+	// Instead, we "promote" the nested targets up to the parent.
+	if targetCtx != nil && targetCtx.Skip {
+		return nestedTargets
+	}
 	targets := make(reference.Targets, 0)
 
 	// collect target for the whole object

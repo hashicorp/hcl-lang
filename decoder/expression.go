@@ -83,6 +83,11 @@ type TargetContext struct {
 	// ParentDefRangePtr represents the range of the parent target's definition
 	// e.g. object attribute name or map key
 	ParentDefRangePtr *hcl.Range
+
+	// Skip determines whether the current attribute should be excluded from the
+	// address chain. When true, children of this expression will be registered
+	// directly under the ParentAddress, effectively "flattening" the hierarchy.
+	Skip bool
 }
 
 func (tctx *TargetContext) Copy() *TargetContext {
@@ -96,6 +101,7 @@ func (tctx *TargetContext) Copy() *TargetContext {
 		AsExprType:    tctx.AsExprType,
 		AsReference:   tctx.AsReference,
 		ParentAddress: tctx.ParentAddress.Copy(),
+		Skip:          tctx.Skip,
 	}
 
 	if tctx.ParentLocalAddress != nil {

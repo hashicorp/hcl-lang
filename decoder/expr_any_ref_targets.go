@@ -6,9 +6,11 @@ package decoder
 import (
 	"context"
 
+	"github.com/hashicorp/hcl-lang/lang"
 	"github.com/hashicorp/hcl-lang/reference"
 	"github.com/hashicorp/hcl-lang/schema"
 	"github.com/hashicorp/hcl/v2"
+	"github.com/hashicorp/hcl/v2/hclsyntax"
 	"github.com/zclconf/go-cty/cty"
 )
 
@@ -24,6 +26,33 @@ func (a Any) ReferenceTargets(ctx context.Context, targetCtx *TargetContext) ref
 
 	if targetCtx == nil || len(targetCtx.ParentAddress) == 0 || !targetCtx.AsExprType {
 		return reference.Targets{}
+	}
+
+	if typ == cty.DynamicPseudoType {
+		if expr, ok := a.expr.(*hclsyntax.ObjectConsExpr); ok {
+			if expr != nil && len(expr.Items) != 0 {
+				obj := Object{
+					cons: schema.Object{
+						Attributes:            make(map[string]*schema.AttributeSchema),
+						AllowInterpolatedKeys: true,
+					},
+					expr:    expr,
+					pathCtx: a.pathCtx,
+				}
+
+				for _, item := range expr.Items {
+					attrName, _, isRaw := rawObjectKey(item.KeyExpr)
+
+					if isRaw && attrName != "" {
+						obj.cons.Attributes[attrName] = &schema.AttributeSchema{
+							Constraint:  schema.AnyExpression{OfType: cty.String},
+							Description: lang.Markdown("Inferred from existing configuration"),
+						}
+					}
+				}
+				return obj.ReferenceTargets(ctx, targetCtx)
+			}
+		}
 	}
 
 	if typ.IsPrimitiveType() || typ == cty.DynamicPseudoType {
