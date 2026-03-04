@@ -103,7 +103,6 @@ func (a Any) CompletionAtPos(ctx context.Context, pos hcl.Pos) []lang.Candidate 
 
 			for _, item := range expr.Items {
 				attrName, _, isRaw := rawObjectKey(item.KeyExpr)
-
 				if isRaw && attrName != "" {
 					objCons.Attributes[attrName] = &schema.AttributeSchema{
 						Constraint:  schema.AnyExpression{OfType: cty.DynamicPseudoType},
