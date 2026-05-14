@@ -5313,6 +5313,21 @@ func TestCompletionAtPos_exprAny_template(t *testing.T) {
 						},
 					},
 				},
+				{
+					Label:       "split",
+					Detail:      "split(separator string, str string) list of string",
+					Description: lang.Markdown("`split` produces a list by dividing a given string at all occurrences of a given separator."),
+					Kind:        lang.FunctionCandidateKind,
+					TextEdit: lang.TextEdit{
+						NewText: "split()",
+						Snippet: "split(${0})",
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 1, Column: 11, Byte: 10},
+							End:      hcl.Pos{Line: 1, Column: 11, Byte: 10},
+						},
+					},
+				},
 			}),
 		},
 		{
@@ -5543,6 +5558,21 @@ EOT
 					TextEdit: lang.TextEdit{
 						NewText: "provider::framework::example()",
 						Snippet: "provider::framework::example(${0})",
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 3, Column: 10, Byte: 38},
+							End:      hcl.Pos{Line: 3, Column: 10, Byte: 38},
+						},
+					},
+				},
+				{
+					Label:       "split",
+					Detail:      "split(separator string, str string) list of string",
+					Description: lang.Markdown("`split` produces a list by dividing a given string at all occurrences of a given separator."),
+					Kind:        lang.FunctionCandidateKind,
+					TextEdit: lang.TextEdit{
+						NewText: "split()",
+						Snippet: "split(${0})",
 						Range: hcl.Range{
 							Filename: "test.tf",
 							Start:    hcl.Pos{Line: 3, Column: 10, Byte: 38},
@@ -6006,6 +6036,21 @@ EOT
 						},
 					},
 				},
+				{
+					Label:       "split",
+					Detail:      "split(separator string, str string) list of string",
+					Description: lang.Markdown("`split` produces a list by dividing a given string at all occurrences of a given separator."),
+					Kind:        lang.FunctionCandidateKind,
+					TextEdit: lang.TextEdit{
+						NewText: "split()",
+						Snippet: "split(${0})",
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 1, Column: 23, Byte: 22},
+							End:      hcl.Pos{Line: 1, Column: 23, Byte: 22},
+						},
+					},
+				},
 			}),
 		},
 		{
@@ -6147,6 +6192,21 @@ EOT
 					TextEdit: lang.TextEdit{
 						NewText: "provider::framework::example()",
 						Snippet: "provider::framework::example(${0})",
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 1, Column: 23, Byte: 22},
+							End:      hcl.Pos{Line: 1, Column: 23, Byte: 22},
+						},
+					},
+				},
+				{
+					Label:       "split",
+					Detail:      "split(separator string, str string) list of string",
+					Description: lang.Markdown("`split` produces a list by dividing a given string at all occurrences of a given separator."),
+					Kind:        lang.FunctionCandidateKind,
+					TextEdit: lang.TextEdit{
+						NewText: "split()",
+						Snippet: "split(${0})",
 						Range: hcl.Range{
 							Filename: "test.tf",
 							Start:    hcl.Pos{Line: 1, Column: 23, Byte: 22},
@@ -6298,6 +6358,21 @@ EOT
 					TextEdit: lang.TextEdit{
 						NewText: "provider::framework::example()",
 						Snippet: "provider::framework::example(${0})",
+						Range: hcl.Range{
+							Filename: "test.tf",
+							Start:    hcl.Pos{Line: 1, Column: 23, Byte: 22},
+							End:      hcl.Pos{Line: 1, Column: 23, Byte: 22},
+						},
+					},
+				},
+				{
+					Label:       "split",
+					Detail:      "split(separator string, str string) list of string",
+					Description: lang.Markdown("`split` produces a list by dividing a given string at all occurrences of a given separator."),
+					Kind:        lang.FunctionCandidateKind,
+					TextEdit: lang.TextEdit{
+						NewText: "split()",
+						Snippet: "split(${0})",
 						Range: hcl.Range{
 							Filename: "test.tf",
 							Start:    hcl.Pos{Line: 1, Column: 23, Byte: 22},
