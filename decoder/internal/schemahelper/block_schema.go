@@ -31,6 +31,12 @@ func MergeBlockBodySchemas(block *hcl.Block, blockSchema *schema.BlockSchema) (*
 		for name, attr := range depSchema.Attributes {
 			mergedSchema.Attributes[name] = attr
 		}
+		// A dependent body may allow arbitrary attributes (e.g. a module
+		// block whose inputs are not known yet). Propagate AnyAttribute so
+		// that expressions within such attributes are still decoded.
+		if depSchema.AnyAttribute != nil {
+			mergedSchema.AnyAttribute = depSchema.AnyAttribute
+		}
 		for bType, block := range depSchema.Blocks {
 			copiedBlock := block.Copy()
 			// propagate DynamicBlocks extension to any nested blocks
