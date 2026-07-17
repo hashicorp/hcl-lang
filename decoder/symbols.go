@@ -104,6 +104,7 @@ func (d *PathDecoder) symbolsForBody(body hcl.Body, bodySchema *schema.BodySchem
 		symbols = append(symbols, &AttributeSymbol{
 			AttrName:      name,
 			ExprKind:      symbolExprKind(attr.Expr),
+			Attribute:     attr,
 			path:          d.path,
 			rng:           attr.Range,
 			nestedSymbols: d.nestedSymbolsForExpr(attr.Expr),
@@ -124,6 +125,7 @@ func (d *PathDecoder) symbolsForBody(body hcl.Body, bodySchema *schema.BodySchem
 		symbols = append(symbols, &BlockSymbol{
 			Type:          block.Type,
 			Labels:        block.Labels,
+			Block:         block.Block,
 			path:          d.path,
 			rng:           block.Range,
 			nestedSymbols: d.symbolsForBody(block.Body, bSchema),
@@ -171,6 +173,7 @@ func (d *PathDecoder) nestedSymbolsForExpr(expr hcl.Expression) []Symbol {
 			symbols = append(symbols, &ExprSymbol{
 				ExprName:      fmt.Sprintf("%d", i),
 				ExprKind:      symbolExprKind(item),
+				Expr:          item,
 				path:          d.path,
 				rng:           item.Range(),
 				nestedSymbols: d.nestedSymbolsForExpr(item),
@@ -187,6 +190,7 @@ func (d *PathDecoder) nestedSymbolsForExpr(expr hcl.Expression) []Symbol {
 			symbols = append(symbols, &ExprSymbol{
 				ExprName:      key.AsString(),
 				ExprKind:      symbolExprKind(item.ValueExpr),
+				Item:          item,
 				path:          d.path,
 				rng:           hcl.RangeBetween(item.KeyExpr.Range(), item.ValueExpr.Range()),
 				nestedSymbols: d.nestedSymbolsForExpr(item.ValueExpr),
