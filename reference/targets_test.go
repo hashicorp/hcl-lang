@@ -4,11 +4,13 @@
 package reference
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/hashicorp/hcl-lang/lang"
+	"github.com/hashicorp/hcl-lang/schema"
 	"github.com/hashicorp/hcl/v2"
 	"github.com/zclconf/go-cty-debug/ctydebug"
 	"github.com/zclconf/go-cty/cty"
@@ -528,6 +530,247 @@ func TestTargets_Match_localRefs(t *testing.T) {
 
 			if diff := cmp.Diff(tc.expectedTargets, refTarget, ctydebug.CmpOptions); diff != "" {
 				t.Fatalf("mismatch of reference target: %s", diff)
+			}
+		})
+	}
+}
+
+func TestTargets_MatchWalk_nestedBlockFiltering(t *testing.T) {
+	testCases := []struct {
+		name              string
+		targets           Targets
+		ref               schema.Reference
+		prefix            string
+		outermostBodyRng  hcl.Range
+		originRng         hcl.Range
+		innermostBlockRng hcl.Range
+		expectedTargets   Targets
+		expectedMatch     bool
+	}{
+		{
+			name: "reject block-scoped local from same nested block",
+			targets: Targets{
+				{
+					LocalAddr: lang.Address{
+						lang.RootStep{Name: "local"},
+						lang.AttrStep{Name: "key1"},
+					},
+					BlockScoped: true,
+					Type:        cty.Bool,
+					RangePtr: &hcl.Range{
+						Filename: "test.policy.hcl",
+						Start:    hcl.Pos{Line: 3, Column: 5, Byte: 50},
+						End:      hcl.Pos{Line: 3, Column: 17, Byte: 62},
+					},
+					TargetableFromRangePtr: &hcl.Range{
+						Filename: "test.policy.hcl",
+						Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
+						End:      hcl.Pos{Line: 10, Column: 2, Byte: 200},
+					},
+				},
+			},
+			ref:    schema.Reference{OfType: cty.Bool},
+			prefix: "local",
+			// outermostBodyRng is the resource_policy block body
+			outermostBodyRng: hcl.Range{
+				Filename: "test.policy.hcl",
+				Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
+				End:      hcl.Pos{Line: 10, Column: 2, Byte: 200},
+			},
+			// origin is inside the same locals block where key1 is defined
+			originRng: hcl.Range{
+				Filename: "test.policy.hcl",
+				Start:    hcl.Pos{Line: 4, Column: 13, Byte: 70},
+				End:      hcl.Pos{Line: 4, Column: 19, Byte: 76},
+			},
+			// innermostBlockRng is the locals block containing both target and origin
+			innermostBlockRng: hcl.Range{
+				Filename: "test.policy.hcl",
+				Start:    hcl.Pos{Line: 2, Column: 3, Byte: 30},
+				End:      hcl.Pos{Line: 5, Column: 4, Byte: 90},
+			},
+			expectedTargets: Targets{},
+			expectedMatch:   false,
+		},
+		{
+			name: "accept block-scoped local from sibling block",
+			targets: Targets{
+				{
+					// Block-scoped local defined in locals block
+					LocalAddr: lang.Address{
+						lang.RootStep{Name: "local"},
+						lang.AttrStep{Name: "key1"},
+					},
+					BlockScoped: true,
+					Type:        cty.Bool,
+					RangePtr: &hcl.Range{
+						Filename: "test.policy.hcl",
+						Start:    hcl.Pos{Line: 3, Column: 5, Byte: 50},
+						End:      hcl.Pos{Line: 3, Column: 17, Byte: 62},
+					},
+					TargetableFromRangePtr: &hcl.Range{
+						Filename: "test.policy.hcl",
+						Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
+						End:      hcl.Pos{Line: 10, Column: 2, Byte: 200},
+					},
+				},
+			},
+			ref:    schema.Reference{OfType: cty.Bool},
+			prefix: "local",
+			// outermostBodyRng is the resource_policy block body
+			outermostBodyRng: hcl.Range{
+				Filename: "test.policy.hcl",
+				Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
+				End:      hcl.Pos{Line: 10, Column: 2, Byte: 200},
+			},
+			// origin is inside an enforce block (sibling of locals)
+			originRng: hcl.Range{
+				Filename: "test.policy.hcl",
+				Start:    hcl.Pos{Line: 8, Column: 13, Byte: 150},
+				End:      hcl.Pos{Line: 8, Column: 25, Byte: 162},
+			},
+			// innermostBlockRng is the enforce block (different from locals block)
+			innermostBlockRng: hcl.Range{
+				Filename: "test.policy.hcl",
+				Start:    hcl.Pos{Line: 6, Column: 3, Byte: 100},
+				End:      hcl.Pos{Line: 9, Column: 4, Byte: 180},
+			},
+			expectedTargets: Targets{
+				{
+					LocalAddr: lang.Address{
+						lang.RootStep{Name: "local"},
+						lang.AttrStep{Name: "key1"},
+					},
+					BlockScoped: true,
+					Type:        cty.Bool,
+					RangePtr: &hcl.Range{
+						Filename: "test.policy.hcl",
+						Start:    hcl.Pos{Line: 3, Column: 5, Byte: 50},
+						End:      hcl.Pos{Line: 3, Column: 17, Byte: 62},
+					},
+					TargetableFromRangePtr: &hcl.Range{
+						Filename: "test.policy.hcl",
+						Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
+						End:      hcl.Pos{Line: 10, Column: 2, Byte: 200},
+					},
+				},
+			},
+			expectedMatch: true,
+		},
+		{
+			name: "reject block-scoped local from outside parent block",
+			targets: Targets{
+				{
+					LocalAddr: lang.Address{
+						lang.RootStep{Name: "local"},
+						lang.AttrStep{Name: "key1"},
+					},
+					BlockScoped: true,
+					Type:        cty.Bool,
+					RangePtr: &hcl.Range{
+						Filename: "test.policy.hcl",
+						Start:    hcl.Pos{Line: 3, Column: 5, Byte: 50},
+						End:      hcl.Pos{Line: 3, Column: 17, Byte: 62},
+					},
+					TargetableFromRangePtr: &hcl.Range{
+						Filename: "test.policy.hcl",
+						Start:    hcl.Pos{Line: 1, Column: 1, Byte: 0},
+						End:      hcl.Pos{Line: 10, Column: 2, Byte: 200},
+					},
+				},
+			},
+			ref:    schema.Reference{OfType: cty.Bool},
+			prefix: "local",
+			// outermostBodyRng is a different resource_policy block
+			outermostBodyRng: hcl.Range{
+				Filename: "test.policy.hcl",
+				Start:    hcl.Pos{Line: 12, Column: 1, Byte: 210},
+				End:      hcl.Pos{Line: 20, Column: 2, Byte: 400},
+			},
+			// origin is outside the TargetableFromRangePtr
+			originRng: hcl.Range{
+				Filename: "test.policy.hcl",
+				Start:    hcl.Pos{Line: 15, Column: 13, Byte: 300},
+				End:      hcl.Pos{Line: 15, Column: 25, Byte: 312},
+			},
+			innermostBlockRng: hcl.Range{
+				Filename: "test.policy.hcl",
+				Start:    hcl.Pos{Line: 12, Column: 1, Byte: 210},
+				End:      hcl.Pos{Line: 20, Column: 2, Byte: 400},
+			},
+			expectedTargets: Targets{},
+			expectedMatch:   false,
+		},
+		{
+			name: "accept non-block-scoped local (root-level)",
+			targets: Targets{
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "local"},
+						lang.AttrStep{Name: "rootKey1"},
+					},
+					Type: cty.Bool,
+					RangePtr: &hcl.Range{
+						Filename: "test.policy.hcl",
+						Start:    hcl.Pos{Line: 2, Column: 3, Byte: 15},
+						End:      hcl.Pos{Line: 2, Column: 19, Byte: 31},
+					},
+				},
+			},
+			ref:    schema.Reference{OfType: cty.Bool},
+			prefix: "local",
+			outermostBodyRng: hcl.Range{
+				Filename: "test.policy.hcl",
+				Start:    hcl.Pos{Line: 10, Column: 1, Byte: 200},
+				End:      hcl.Pos{Line: 20, Column: 2, Byte: 400},
+			},
+			originRng: hcl.Range{
+				Filename: "test.policy.hcl",
+				Start:    hcl.Pos{Line: 18, Column: 13, Byte: 350},
+				End:      hcl.Pos{Line: 18, Column: 25, Byte: 362},
+			},
+			innermostBlockRng: hcl.Range{
+				Filename: "test.policy.hcl",
+				Start:    hcl.Pos{Line: 12, Column: 10, Byte: 230},
+				End:      hcl.Pos{Line: 19, Column: 3, Byte: 380},
+			},
+			expectedTargets: Targets{
+				{
+					Addr: lang.Address{
+						lang.RootStep{Name: "local"},
+						lang.AttrStep{Name: "rootKey1"},
+					},
+					Type: cty.Bool,
+					RangePtr: &hcl.Range{
+						Filename: "test.policy.hcl",
+						Start:    hcl.Pos{Line: 2, Column: 3, Byte: 15},
+						End:      hcl.Pos{Line: 2, Column: 19, Byte: 31},
+					},
+				},
+			},
+			expectedMatch: true,
+		},
+	}
+
+	for i, tc := range testCases {
+		t.Run(fmt.Sprintf("%d-%s", i, tc.name), func(t *testing.T) {
+			ctx := context.Background()
+			matchedTargets := Targets{}
+
+			tc.targets.MatchWalk(ctx, tc.ref, tc.prefix, tc.outermostBodyRng, tc.originRng, tc.innermostBlockRng, func(target Target) error {
+				matchedTargets = append(matchedTargets, target)
+				return nil
+			})
+
+			// Check if we got a match
+			gotMatch := len(matchedTargets) > 0
+			if gotMatch != tc.expectedMatch {
+				t.Fatalf("expected match=%v, got match=%v (matched %d targets)", tc.expectedMatch, gotMatch, len(matchedTargets))
+			}
+
+			// Compare the actual targets returned
+			if diff := cmp.Diff(tc.expectedTargets, matchedTargets, ctydebug.CmpOptions); diff != "" {
+				t.Fatalf("mismatch of matched targets: %s", diff)
 			}
 		})
 	}

@@ -29,6 +29,21 @@ type Target struct {
 	// where count is declared (and extension enabled)
 	TargetableFromRangePtr *hcl.Range
 
+	// BlockScoped indicates this target is scoped to a specific block and should
+	// not be suggested for references defined in the same nested block where the
+	// target is defined. It is set when the body schema has TargetableFromCurrentBlock
+	// enabled.
+	//
+	// When true, reference matching will reject targets defined within the same
+	// innermost nested block as the origin, but still allow references from parent
+	// or sibling blocks within the TargetableFromRangePtr.
+	//
+	// e.g. in resource_policy { locals { foo = "bar" } }, local.foo defined in the
+	// nested locals block should not be suggested while still typing within that
+	// same locals block, but should be available in the enforce block.
+
+	BlockScoped bool
+
 	// ScopeId provides scope for matching/filtering
 	// (in addition to Type & Addr/LocalAddr).
 	//
@@ -83,6 +98,7 @@ func (ref Target) Copy() Target {
 		Addr:                   ref.Addr,
 		LocalAddr:              ref.LocalAddr,
 		TargetableFromRangePtr: copyHclRangePtr(ref.TargetableFromRangePtr),
+		BlockScoped:            ref.BlockScoped,
 		ScopeId:                ref.ScopeId,
 		RangePtr:               copyHclRangePtr(ref.RangePtr),
 		DefRangePtr:            copyHclRangePtr(ref.DefRangePtr),
