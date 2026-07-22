@@ -8,7 +8,7 @@ import (
 	"github.com/hashicorp/hcl/v2"
 )
 
-func TraversalToLocalOrigin(traversal hcl.Traversal, cons OriginConstraints, allowSelfRefs bool) (LocalOrigin, bool) {
+func TraversalToLocalOrigin(traversal hcl.Traversal, cons OriginConstraints, allowSelfRefs bool, rootBlockRange hcl.Range) (LocalOrigin, bool) {
 	// traversal should not be relative here, since the input to this
 	// function `expr.Variables()` only returns absolute traversals
 	if !traversal.IsRelative() && traversal.RootName() == "self" && !allowSelfRefs {
@@ -23,8 +23,9 @@ func TraversalToLocalOrigin(traversal hcl.Traversal, cons OriginConstraints, all
 	}
 
 	return LocalOrigin{
-		Addr:        addr,
-		Range:       traversal.SourceRange(),
-		Constraints: cons,
+		Addr:           addr,
+		Range:          traversal.SourceRange(),
+		RootBlockRange: rootBlockRange,
+		Constraints:    cons,
 	}, true
 }

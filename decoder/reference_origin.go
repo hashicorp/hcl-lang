@@ -9,8 +9,9 @@ import (
 )
 
 type ReferenceOrigin struct {
-	Path  lang.Path
-	Range hcl.Range
+	Path           lang.Path
+	Range          hcl.Range
+	RootBlockRange hcl.Range
 }
 
 type ReferenceOrigins []ReferenceOrigin

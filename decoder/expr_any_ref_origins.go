@@ -156,12 +156,13 @@ func (a Any) refOriginsForNonComplexExpr(ctx context.Context) reference.Origins 
 	}
 
 	allowSelfRefs := schema.ActiveSelfRefsFromContext(ctx)
+	rootBlockRange, _ := RootBlockRangeFromContext(ctx)
 	te, ok := a.expr.(*hclsyntax.ScopeTraversalExpr)
 	if ok {
 		oCons := reference.OriginConstraints{
 			{OfType: a.cons.OfType},
 		}
-		origin, ok := reference.TraversalToLocalOrigin(te.Traversal, oCons, allowSelfRefs)
+		origin, ok := reference.TraversalToLocalOrigin(te.Traversal, oCons, allowSelfRefs, rootBlockRange)
 		if ok {
 			return reference.Origins{origin}
 		}
@@ -177,7 +178,7 @@ func (a Any) refOriginsForNonComplexExpr(ctx context.Context) reference.Origins 
 		oCons := reference.OriginConstraints{
 			{OfType: cty.DynamicPseudoType},
 		}
-		origin, ok := reference.TraversalToLocalOrigin(traversal, oCons, allowSelfRefs)
+		origin, ok := reference.TraversalToLocalOrigin(traversal, oCons, allowSelfRefs, rootBlockRange)
 		if ok {
 			origins = append(origins, origin)
 		}
