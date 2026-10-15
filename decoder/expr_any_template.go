@@ -32,8 +32,11 @@ func (a Any) completeTemplateExprAtPos(ctx context.Context, pos hcl.Pos) ([]lang
 			// We're not checking the end byte position here, because we don't
 			// allow completion after the }
 			if partExpr.Range().ContainsPos(pos) || partExpr.Range().End.Byte == pos.Byte {
+				// Inside ${...} we accept any reference; composite-typed values
+				// (map, list, tuple, object, set) are reachable via subsequent
+				// indexing/access (e.g. ${var.m_map["k"]}) and should be offered.
 				cons := schema.AnyExpression{
-					OfType: cty.String,
+					OfType: cty.DynamicPseudoType,
 				}
 				return newExpression(a.pathCtx, partExpr, cons).CompletionAtPos(ctx, pos), true
 			}
@@ -45,7 +48,7 @@ func (a Any) completeTemplateExprAtPos(ctx context.Context, pos hcl.Pos) ([]lang
 
 				if trailingRune == '.' {
 					cons := schema.AnyExpression{
-						OfType: cty.String,
+						OfType: cty.DynamicPseudoType,
 					}
 					return newExpression(a.pathCtx, partExpr, cons).CompletionAtPos(ctx, pos), true
 				}
@@ -56,7 +59,7 @@ func (a Any) completeTemplateExprAtPos(ctx context.Context, pos hcl.Pos) ([]lang
 	case *hclsyntax.TemplateWrapExpr:
 		if eType.Wrapped.Range().ContainsPos(pos) || eType.Wrapped.Range().End.Byte == pos.Byte {
 			cons := schema.AnyExpression{
-				OfType: cty.String,
+				OfType: cty.DynamicPseudoType,
 			}
 			return newExpression(a.pathCtx, eType.Wrapped, cons).CompletionAtPos(ctx, pos), true
 		}
@@ -68,7 +71,7 @@ func (a Any) completeTemplateExprAtPos(ctx context.Context, pos hcl.Pos) ([]lang
 
 			if trailingRune == '.' {
 				cons := schema.AnyExpression{
-					OfType: cty.String,
+					OfType: cty.DynamicPseudoType,
 				}
 				return newExpression(a.pathCtx, eType.Wrapped, cons).CompletionAtPos(ctx, pos), true
 			}
