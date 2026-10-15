@@ -1719,6 +1719,91 @@ resource "any" "ref" {
 	}
 }
 
+func TestDecoder_CompletionAtPos_withLexerErrors(t *testing.T) {
+	ctx := context.Background()
+
+	bSchema := &schema.BlockSchema{
+		Body: &schema.BodySchema{
+			Blocks: map[string]*schema.BlockSchema{
+				"child": {
+					Body: &schema.BodySchema{
+						Attributes: map[string]*schema.AttributeSchema{
+							"src": {
+								IsRequired: true,
+								Constraint: schema.LiteralType{Type: cty.String},
+							},
+						},
+						Blocks: map[string]*schema.BlockSchema{
+							"repo": {
+								Body: &schema.BodySchema{
+									Attributes: map[string]*schema.AttributeSchema{
+										"name": {
+											IsRequired: true,
+											Constraint: schema.LiteralType{Type: cty.String},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	bodySchema := &schema.BodySchema{
+		Blocks: map[string]*schema.BlockSchema{
+			"res": bSchema,
+		},
+	}
+
+	src := `res {
+    child {
+        s
+        repo {
+            name = "unclosed string
+        }
+    }
+}`
+
+	f, _ := hclsyntax.ParseConfig([]byte(src), "test.tf", hcl.InitialPos)
+
+	d := testPathDecoder(t, &PathContext{
+		Schema: bodySchema,
+		Files: map[string]*hcl.File{
+			"test.tf": f,
+		},
+	})
+
+	pos := hcl.Pos{Line: 3, Column: 9, Byte: 27}
+	candidates, err := d.CompletionAtPos(ctx, "test.tf", pos)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	expectedCandidates := lang.CompleteCandidates([]lang.Candidate{
+		{
+			Label:  "src",
+			Detail: "required, string",
+			Kind:   lang.AttributeCandidateKind,
+			TextEdit: lang.TextEdit{
+				Range: hcl.Range{
+					Filename: "test.tf",
+					Start:    hcl.Pos{Line: 3, Column: 9, Byte: 26},
+					End:      hcl.Pos{Line: 3, Column: 10, Byte: 27},
+				},
+				NewText: "src",
+				Snippet: `src = "${1:value}"`,
+			},
+		},
+	})
+
+	diff := cmp.Diff(expectedCandidates, candidates, ctydebug.CmpOptions)
+	if diff != "" {
+		t.Fatalf("unexpected candidates: %s", diff)
+	}
+}
+
 var testConfig = []byte(`resource "azurerm_subnet" "example" {
   count = 3
 }
