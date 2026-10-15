@@ -166,6 +166,9 @@ func TestDecoder_Symbols_json_basic(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	body1 := bodyMustContent(t, f1.Body, bodySchema.ToHCLSchema())
+	body2 := bodyMustContent(t, f2.Body, bodySchema.ToHCLSchema())
+
 	expectedSymbols := []Symbol{
 		&BlockSymbol{
 			Type: "resource",
@@ -173,7 +176,8 @@ func TestDecoder_Symbols_json_basic(t *testing.T) {
 				"aws_vpc",
 				"main",
 			},
-			path: lang.Path{Path: dirPath},
+			Block: body1.Blocks[0],
+			path:  lang.Path{Path: dirPath},
 			rng: hcl.Range{
 				Filename: "first.tf.json",
 				Start:    hcl.Pos{Line: 4, Column: 15, Byte: 49},
@@ -181,8 +185,9 @@ func TestDecoder_Symbols_json_basic(t *testing.T) {
 			},
 			nestedSymbols: []Symbol{
 				&AttributeSymbol{
-					AttrName: "cidr_block",
-					path:     lang.Path{Path: dirPath},
+					AttrName:  "cidr_block",
+					Attribute: bodyMustJustAttributes(t, body1.Blocks[0].Body)["cidr_block"],
+					path:      lang.Path{Path: dirPath},
 					rng: hcl.Range{
 						Filename: "first.tf.json",
 						Start:    hcl.Pos{Line: 5, Column: 9, Byte: 59},
@@ -197,7 +202,8 @@ func TestDecoder_Symbols_json_basic(t *testing.T) {
 			Labels: []string{
 				"google",
 			},
-			path: lang.Path{Path: dirPath},
+			Block: body2.Blocks[0],
+			path:  lang.Path{Path: dirPath},
 			rng: hcl.Range{
 				Filename: "second.tf.json",
 				Start:    hcl.Pos{Line: 3, Column: 15, Byte: 32},
@@ -205,8 +211,9 @@ func TestDecoder_Symbols_json_basic(t *testing.T) {
 			},
 			nestedSymbols: []Symbol{
 				&AttributeSymbol{
-					AttrName: "project",
-					path:     lang.Path{Path: dirPath},
+					AttrName:  "project",
+					Attribute: bodyMustJustAttributes(t, body2.Blocks[0].Body)["project"],
+					path:      lang.Path{Path: dirPath},
 					rng: hcl.Range{
 						Filename: "second.tf.json",
 						Start:    hcl.Pos{Line: 4, Column: 7, Byte: 40},
@@ -215,8 +222,9 @@ func TestDecoder_Symbols_json_basic(t *testing.T) {
 					nestedSymbols: []Symbol{},
 				},
 				&AttributeSymbol{
-					AttrName: "region",
-					path:     lang.Path{Path: dirPath},
+					AttrName:  "region",
+					Attribute: bodyMustJustAttributes(t, body2.Blocks[0].Body)["region"],
+					path:      lang.Path{Path: dirPath},
 					rng: hcl.Range{
 						Filename: "second.tf.json",
 						Start:    hcl.Pos{Line: 5, Column: 7, Byte: 74},
@@ -302,6 +310,16 @@ func TestDecoder_Symbols_json_dependentBody(t *testing.T) {
 		t.Fatal(pDiags)
 	}
 
+	body := bodyMustContent(t, f.Body, bodySchema.ToHCLSchema())
+	bodyConfiguration := bodyMustContent(t, body.Blocks[0].Body, bodySchema.Blocks["resource"].DependentBody[schema.NewSchemaKey(schema.DependencyKeys{
+		Labels: []schema.LabelDependent{
+			{
+				Index: 0,
+				Value: "aws_instance",
+			},
+		},
+	})].ToHCLSchema())
+
 	dirPath := t.TempDir()
 	d := NewDecoder(&testPathReader{
 		paths: map[string]*PathContext{
@@ -323,6 +341,7 @@ func TestDecoder_Symbols_json_dependentBody(t *testing.T) {
 		&BlockSymbol{
 			Type:   "resource",
 			Labels: []string{"aws_instance", "test"},
+			Block:  body.Blocks[0],
 			path:   lang.Path{Path: dirPath},
 			rng: hcl.Range{
 				Filename: "test.tf.json",
@@ -331,8 +350,9 @@ func TestDecoder_Symbols_json_dependentBody(t *testing.T) {
 			},
 			nestedSymbols: []Symbol{
 				&AttributeSymbol{
-					AttrName: "subnet_ids",
-					path:     lang.Path{Path: dirPath},
+					AttrName:  "subnet_ids",
+					Attribute: bodyMustJustAttributes(t, body.Blocks[0].Body)["subnet_ids"],
+					path:      lang.Path{Path: dirPath},
 					rng: hcl.Range{
 						Filename: "test.tf.json",
 						Start:    hcl.Pos{Line: 5, Column: 9, Byte: 64},
@@ -343,6 +363,7 @@ func TestDecoder_Symbols_json_dependentBody(t *testing.T) {
 				&BlockSymbol{
 					Type:   "configuration",
 					Labels: []string{},
+					Block:  bodyConfiguration.Blocks[0],
 					path:   lang.Path{Path: dirPath},
 					rng: hcl.Range{
 						Filename: "test.tf.json",
@@ -351,8 +372,9 @@ func TestDecoder_Symbols_json_dependentBody(t *testing.T) {
 					},
 					nestedSymbols: []Symbol{
 						&AttributeSymbol{
-							AttrName: "name",
-							path:     lang.Path{Path: dirPath},
+							AttrName:  "name",
+							Attribute: bodyMustJustAttributes(t, bodyConfiguration.Blocks[0].Body)["name"],
+							path:      lang.Path{Path: dirPath},
 							rng: hcl.Range{
 								Filename: "test.tf.json",
 								Start:    hcl.Pos{Line: 7, Column: 11, Byte: 137},
@@ -361,8 +383,9 @@ func TestDecoder_Symbols_json_dependentBody(t *testing.T) {
 							nestedSymbols: []Symbol{},
 						},
 						&AttributeSymbol{
-							AttrName: "num",
-							path:     lang.Path{Path: dirPath},
+							AttrName:  "num",
+							Attribute: bodyMustJustAttributes(t, bodyConfiguration.Blocks[0].Body)["num"],
+							path:      lang.Path{Path: dirPath},
 							rng: hcl.Range{
 								Filename: "test.tf.json",
 								Start:    hcl.Pos{Line: 8, Column: 11, Byte: 163},
@@ -371,8 +394,9 @@ func TestDecoder_Symbols_json_dependentBody(t *testing.T) {
 							nestedSymbols: []Symbol{},
 						},
 						&AttributeSymbol{
-							AttrName: "boolattr",
-							path:     lang.Path{Path: dirPath},
+							AttrName:  "boolattr",
+							Attribute: bodyMustJustAttributes(t, bodyConfiguration.Blocks[0].Body)["boolattr"],
+							path:      lang.Path{Path: dirPath},
 							rng: hcl.Range{
 								Filename: "test.tf.json",
 								Start:    hcl.Pos{Line: 9, Column: 11, Byte: 184},
@@ -383,8 +407,9 @@ func TestDecoder_Symbols_json_dependentBody(t *testing.T) {
 					},
 				},
 				&AttributeSymbol{
-					AttrName: "random_kw",
-					path:     lang.Path{Path: dirPath},
+					AttrName:  "random_kw",
+					Attribute: bodyMustJustAttributes(t, body.Blocks[0].Body)["random_kw"],
+					path:      lang.Path{Path: dirPath},
 					rng: hcl.Range{
 						Filename: "test.tf.json",
 						Start:    hcl.Pos{Line: 11, Column: 9, Byte: 220},
@@ -461,6 +486,9 @@ func TestDecoder_Symbols_json_unknownExpression(t *testing.T) {
 		t.Fatal(pDiags)
 	}
 
+	body := bodyMustContent(t, f.Body, bodySchema.ToHCLSchema())
+	bodyConfiguration := bodyMustContent(t, body.Blocks[0].Body, bodySchema.Blocks["resource"].Body.ToHCLSchema())
+
 	dirPath := t.TempDir()
 	d := NewDecoder(&testPathReader{
 		paths: map[string]*PathContext{
@@ -482,6 +510,7 @@ func TestDecoder_Symbols_json_unknownExpression(t *testing.T) {
 		&BlockSymbol{
 			Type:   "resource",
 			Labels: []string{"aws_instance", "test"},
+			Block:  body.Blocks[0],
 			path:   lang.Path{Path: dirPath},
 			rng: hcl.Range{
 				Filename: "test.tf.json",
@@ -490,8 +519,9 @@ func TestDecoder_Symbols_json_unknownExpression(t *testing.T) {
 			},
 			nestedSymbols: []Symbol{
 				&AttributeSymbol{
-					AttrName: "subnet_ids",
-					path:     lang.Path{Path: dirPath},
+					AttrName:  "subnet_ids",
+					Attribute: bodyMustJustAttributes(t, body.Blocks[0].Body)["subnet_ids"],
+					path:      lang.Path{Path: dirPath},
 					rng: hcl.Range{
 						Filename: "test.tf.json",
 						Start:    hcl.Pos{Line: 5, Column: 9, Byte: 64},
@@ -502,6 +532,7 @@ func TestDecoder_Symbols_json_unknownExpression(t *testing.T) {
 				&BlockSymbol{
 					Type:   "configuration",
 					Labels: []string{},
+					Block:  bodyConfiguration.Blocks[0],
 					path:   lang.Path{Path: dirPath},
 					rng: hcl.Range{
 						Filename: "test.tf.json",
@@ -510,8 +541,9 @@ func TestDecoder_Symbols_json_unknownExpression(t *testing.T) {
 					},
 					nestedSymbols: []Symbol{
 						&AttributeSymbol{
-							AttrName: "num",
-							path:     lang.Path{Path: dirPath},
+							AttrName:  "num",
+							Attribute: bodyMustJustAttributes(t, bodyConfiguration.Blocks[0].Body)["num"],
+							path:      lang.Path{Path: dirPath},
 							rng: hcl.Range{
 								Filename: "test.tf.json",
 								Start:    hcl.Pos{Line: 8, Column: 11, Byte: 175},
@@ -522,8 +554,9 @@ func TestDecoder_Symbols_json_unknownExpression(t *testing.T) {
 					},
 				},
 				&AttributeSymbol{
-					AttrName: "random_kw",
-					path:     lang.Path{Path: dirPath},
+					AttrName:  "random_kw",
+					path:      lang.Path{Path: dirPath},
+					Attribute: bodyMustJustAttributes(t, body.Blocks[0].Body)["random_kw"],
 					rng: hcl.Range{
 						Filename: "test.tf.json",
 						Start:    hcl.Pos{Line: 12, Column: 9, Byte: 295},
