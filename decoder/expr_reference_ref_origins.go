@@ -16,10 +16,12 @@ import (
 
 func (ref Reference) ReferenceOrigins(ctx context.Context) reference.Origins {
 	allowSelfRefs := schema.ActiveSelfRefsFromContext(ctx)
+	rootBlockRange, _ := RootBlockRangeFromContext(ctx)
+
 	// deal with native HCL syntax first
 	te, ok := ref.expr.(*hclsyntax.ScopeTraversalExpr)
 	if ok {
-		origin, ok := reference.TraversalToLocalOrigin(te.Traversal, originConstraintsFromCons(ref.cons), allowSelfRefs)
+		origin, ok := reference.TraversalToLocalOrigin(te.Traversal, originConstraintsFromCons(ref.cons), allowSelfRefs, rootBlockRange)
 		if ok {
 			return reference.Origins{origin}
 		}
@@ -48,7 +50,7 @@ func (ref Reference) ReferenceOrigins(ctx context.Context) reference.Origins {
 			}
 
 			if rangesEqual(expectedExprRange, ref.expr.Range()) {
-				origin, ok := reference.TraversalToLocalOrigin(vars[0], originConstraintsFromCons(ref.cons), allowSelfRefs)
+				origin, ok := reference.TraversalToLocalOrigin(vars[0], originConstraintsFromCons(ref.cons), allowSelfRefs, rootBlockRange)
 				if ok {
 					return reference.Origins{origin}
 				}
@@ -75,7 +77,7 @@ func (ref Reference) ReferenceOrigins(ctx context.Context) reference.Origins {
 		if diags.HasErrors() {
 			return reference.Origins{}
 		}
-		origin, ok := reference.TraversalToLocalOrigin(traversal, originConstraintsFromCons(ref.cons), allowSelfRefs)
+		origin, ok := reference.TraversalToLocalOrigin(traversal, originConstraintsFromCons(ref.cons), allowSelfRefs, rootBlockRange)
 		if ok {
 			return reference.Origins{origin}
 		}

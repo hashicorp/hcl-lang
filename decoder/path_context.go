@@ -37,3 +37,14 @@ func PathCtx(ctx context.Context) (*PathContext, error) {
 	}
 	return pathCtx, nil
 }
+
+type rootBlockRangeCtxKey struct{}
+
+func WithRootBlockRange(ctx context.Context, rootBlockRange hcl.Range) context.Context {
+	return context.WithValue(ctx, rootBlockRangeCtxKey{}, rootBlockRange)
+}
+
+func RootBlockRangeFromContext(ctx context.Context) (hcl.Range, bool) {
+	rootBlockRange, ok := ctx.Value(rootBlockRangeCtxKey{}).(hcl.Range)
+	return rootBlockRange, ok
+}
